@@ -2,7 +2,6 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "EnumTypes_DX12.h"
-#include "MeshPrimitive.h"
 #include "RasterizationState.h"
 #include "PipelineState_DX12.h"
 #include "RootSignature_DX12.h"
