@@ -14,7 +14,7 @@ namespace gr
 
 	IndexedBufferManager::~IndexedBufferManager()
 	{
-		SEAssert(m_indexedBuffers.empty() && m_LUTBuffers.empty(),
+		SEAssert(m_indexedBuffers.empty() && m_LUTTypeToLUTMetadata.empty(),
 			"IndexedBufferManager dtor called before Destroy()");
 	}
 
@@ -29,7 +29,7 @@ namespace gr
 		}
 		m_indexedBuffers.clear();
 
-		m_LUTBuffers.clear();
+		m_LUTTypeToLUTMetadata.clear();
 	}
 
 

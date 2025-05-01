@@ -1,17 +1,16 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
-#include "BufferView.h"
 #include "Effect.h"
-#include "IndexedBuffer.h"
 #include "RenderObjectIDs.h"
 #include "GraphicsSystem.h"
 
 
-struct RefCountedIndex;
-
 namespace gr
 {
+	class IndexedBufferManager;
+
+
 	// Our goal is to minimize the number of draw calls by instancing as many batches together as possible.
 	// Theoretically, a system can afford to submit N batches per frame, the total number of triangles (or triangles
 	// per batch) is far less important
@@ -45,8 +44,6 @@ namespace gr
 	public:
 		BatchManagerGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~BatchManagerGraphicsSystem() override;
-
 		void InitPipeline(
 			re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
@@ -56,7 +53,7 @@ namespace gr
 
 
 	private:
-		void BuildViewBatches();
+		void BuildViewBatches(gr::IndexedBufferManager&);
 
 
 	private:
@@ -83,7 +80,5 @@ namespace gr
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
 		std::vector<re::Batch> m_allBatches; // Per-frame copy of m_permanentCachedBatches, with Buffers set
-
-		gr::IndexedBufferManager m_instanceBuffers;
 	};
 }

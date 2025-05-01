@@ -10,6 +10,9 @@
 
 namespace gr
 {
+	class IndexedBufferManager;
+
+
 	// Render-thread-side scene data. Data is set via the render command queue (on a single thread), and graphics
 	// systems index use constant forward iterators to access it
 	class RenderDataManager
@@ -17,16 +20,18 @@ namespace gr
 	public:
 		RenderDataManager();
 
-		~RenderDataManager() = default;
+		~RenderDataManager();
 		RenderDataManager(RenderDataManager const&) = default;
 		RenderDataManager(RenderDataManager&&) noexcept = default;
 		RenderDataManager& operator=(RenderDataManager const&) = default;
 		RenderDataManager& operator=(RenderDataManager&&) noexcept = default;
 
+
 	public:
 		void Destroy();
 
 		void BeginFrame(uint64_t currentFrame);
+		void Update();
 
 		// Render data interface:
 		void RegisterObject(gr::RenderDataID, gr::TransformID);
@@ -65,7 +70,7 @@ namespace gr
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDeletedData() const;
 
-		std::unordered_set<gr::RenderDataID> const& GetIDsWithAnyDeletedData() const;
+		std::vector<gr::RenderDataID> const& GetIDsWithAnyDeletedData() const;
 
 		// Get a list of IDs that had data of a specific type modified (i.e. SetObjectData() was called) this frame
 		template<typename T>
@@ -149,8 +154,13 @@ namespace gr
 		[[nodiscard]] std::vector<gr::TransformID> const& GetDeletedTransformIDs() const;
 
 		[[nodiscard]] gr::TransformID GetTransformIDFromRenderDataID(gr::RenderDataID) const;
+		[[nodiscard]] std::vector<gr::RenderDataID> GetRenderDataIDsReferencingTransformID(gr::TransformID) const;
 
 		[[nodiscard]] uint32_t GetNumTransforms() const;
+
+
+	public:
+		gr::IndexedBufferManager& GetInstancingIndexedBufferManager() const;
 
 
 	public:
@@ -204,7 +214,9 @@ namespace gr
 		
 		// IDs/IDs with data deleted in the current frame
 		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDeletedDataIDs;
-		std::unordered_set<gr::RenderDataID> m_perFrameDeletedDataIDs; // IDs with ANY deleted data, regardless of type
+
+		std::vector<gr::RenderDataID> m_perFrameDeletedDataIDs; // IDs with ANY deleted data, regardless of type
+		std::unordered_set<gr::RenderDataID> m_perFrameSeenDeletedDataIDs; 
 
 		// IDs that had data of a given type modified in the current frame. We track the IDs we've modified so we don't 
 		// double-add IDs to the vector
@@ -221,6 +233,10 @@ namespace gr
 
 		// Multiple RenderDataIDs can share the same TransformID
 		std::unordered_multimap<gr::TransformID, gr::RenderDataID> m_transformToRenderDataIDs;
+
+
+	private:
+		std::unique_ptr<gr::IndexedBufferManager> m_indexedBufferManager;
 
 
 	public:
@@ -816,7 +832,7 @@ namespace gr
 	}
 
 
-	inline std::unordered_set<gr::RenderDataID> const& RenderDataManager::GetIDsWithAnyDeletedData() const
+	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithAnyDeletedData() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -1012,7 +1028,6 @@ namespace gr
 	}
 
 
-
 	template<typename T>
 	bool RenderDataManager::IsDirty(gr::RenderDataID renderDataID) const
 	{
@@ -1124,6 +1139,25 @@ namespace gr
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		return renderObjectMetadata.m_transformID;
+	}
+
+
+	[[nodiscard]] inline std::vector<gr::RenderDataID> RenderDataManager::GetRenderDataIDsReferencingTransformID(
+		gr::TransformID transformID) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		std::vector<gr::TransformID> result;
+
+		auto resultsItr = m_transformToRenderDataIDs.equal_range(transformID);
+
+		result.reserve(std::distance(resultsItr.first, resultsItr.second));
+
+		for (auto& itr = resultsItr.first; itr != resultsItr.second; ++itr)
+		{
+			result.emplace_back(itr->second);
+		}
+		return result;
 	}
 
 
@@ -1255,7 +1289,12 @@ namespace gr
 
 		// Add the RenderDataID to the deleted data trackers:
 		m_perFramePerTypeDeletedDataIDs[dataTypeIndex].emplace_back(renderDataID);
-		m_perFrameDeletedDataIDs.emplace(renderDataID);
+
+		if (!m_perFrameSeenDeletedDataIDs.contains(renderDataID))
+		{
+			m_perFrameDeletedDataIDs.emplace_back(renderDataID);
+			m_perFrameSeenDeletedDataIDs.emplace(renderDataID);
+		}
 
 		// Finally, remove the index in the object's data index map:
 		renderObjectMetadata.m_dataTypeToDataIndexMap.erase(dataTypeIndex);

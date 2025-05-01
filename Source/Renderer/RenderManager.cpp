@@ -277,6 +277,8 @@ namespace re
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
+		m_renderData.Update(); // Post-render-command render data manager updates
+
 		re::Context* context = re::Context::Get();
 
 		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()

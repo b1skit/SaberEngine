@@ -12,6 +12,8 @@
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/MathUtils.h"
+
+#include "Core/Util/HashKey.h"
 #include "Core/Util/ThreadProtector.h"
 
 
@@ -47,7 +49,10 @@ namespace gr
 		class IIndexedBufferInternal : public virtual IIndexedBuffer
 		{
 		public:
-			IIndexedBufferInternal(IndexedBufferManager* ibm) : m_indexedBufferManager(ibm) {}
+			IIndexedBufferInternal(IndexedBufferManager* ibm)
+				: m_indexedBufferManager(ibm),
+				m_threadProtector(false)
+			{}
 
 			virtual ~IIndexedBufferInternal() = default;
 
@@ -56,7 +61,8 @@ namespace gr
 			virtual void Destroy() = 0;
 			virtual void UpdateBuffer(gr::RenderDataManager const&) = 0;
 			virtual std::shared_ptr<re::Buffer> GetBuffer() const = 0;
-			virtual std::string const& GetShaderName() const = 0;
+			virtual re::BufferInput GetBufferInput(char const* shaderName) const = 0;
+
 			
 		private:
 			virtual IndexType GetIndex(gr::RenderDataManager const&, IDType) const = 0;
@@ -66,11 +72,14 @@ namespace gr
 			template<typename LUTBuffer>
 			void WriteLUTData(gr::RenderDataManager const& renderData, IDType id, LUTBuffer* dst) const
 			{
+				// Note: May be invalid if ID is not associated with RenderData of the managed type
+				const IndexType lutIdx = GetIndex(renderData, id);
+
+				// Lock the thread protector now that we've got the index:
+				util::ScopedThreadProtector lock(m_threadProtector);
+
 				const std::type_index typeIdx = std::type_index(typeid(LUTBuffer));
 				SEAssert(m_writeLUTDataCallbacks.contains(typeIdx), "No registered LUT writer for this type");
-
-				const IndexType lutIdx = GetIndex(renderData, id);
-				SEAssert(lutIdx != k_invalidIdx, "About to write an invalid index. This is unexpected");
 
 				// Execute the callback:
 				m_writeLUTDataCallbacks.at(typeIdx)(lutIdx, dst);
@@ -82,6 +91,8 @@ namespace gr
 				std::type_index typeIdx,
 				void(*writeLUTDataCallback)(IndexType lutIdx, void* dst)) override
 			{
+				util::ScopedThreadProtector lock(m_threadProtector);
+
 				SEAssert(!m_writeLUTDataCallbacks.contains(typeIdx), "Callback already added for the given type");
 				m_writeLUTDataCallbacks.emplace(typeIdx, writeLUTDataCallback);
 
@@ -92,6 +103,10 @@ namespace gr
 		private:
 			std::unordered_map<std::type_index, void(*)(IndexType lutIdx, void* dst)> m_writeLUTDataCallbacks;
 			IndexedBufferManager* m_indexedBufferManager;
+
+
+		protected:
+			mutable util::ThreadProtector m_threadProtector;
 		};
 
 
@@ -103,7 +118,6 @@ namespace gr
 				IndexedBufferManager* ibm,
 				BufferDataType(*createBufferData)(RenderDataType const&),
 				char const* bufferName,
-				char const* shaderName,
 				re::Buffer::MemoryPoolPreference memPoolPreference,
 				re::Buffer::AccessMask accessMask,
 				RenderObjectFeature featureBits = RenderObjectFeature::None);
@@ -120,7 +134,7 @@ namespace gr
 		public:
 			void UpdateBuffer(gr::RenderDataManager const&) override;
 			std::shared_ptr<re::Buffer> GetBuffer() const override;
-			std::string const& GetShaderName() const override;
+			re::BufferInput GetBufferInput(char const* shaderName) const override;
 			IndexType GetIndex(gr::RenderDataManager const&, IDType id) const override;
 
 
@@ -130,8 +144,7 @@ namespace gr
 			// We use a priority queue to ensure that indexes closest to 0 are reused first, to keep packing as tight
 			std::priority_queue<IndexType, std::vector<IndexType>, std::greater<IndexType>> m_freeIndexes;
 
-			std::string m_bufferName;
-			std::string m_shaderName;
+			std::string m_bufferName; // Note: Used for ID/lookup - Is not the shader name
 			std::shared_ptr<re::Buffer> m_buffer;
 
 			BufferDataType(*m_createBufferData)(RenderDataType const&);
@@ -141,8 +154,6 @@ namespace gr
 			// Buffer create params:
 			re::Buffer::MemoryPoolPreference m_memPoolPreference;
 			re::Buffer::AccessMask m_accessMask;
-
-			mutable util::ThreadProtector m_threadProtector;
 
 			static constexpr uint32_t k_arraySizeAlignment = 16; // Buffer sizes are rounded up to nearest multiple
 			static constexpr float k_shrinkFactor = 2.f; // How much smaller before shrinking the Buffer?
@@ -164,18 +175,6 @@ namespace gr
 		void Destroy();
 
 
-	private:
-		static constexpr auto GetBufferInputRange = [](std::unique_ptr<IIndexedBufferInternal> const& indexedBuffer)
-			-> re::BufferInput
-			{
-				return re::BufferInput(indexedBuffer->GetShaderName(), indexedBuffer->GetBuffer());
-			};
-
-	public:
-		using BufferInputRange = decltype(std::declval<std::vector<std::unique_ptr<IIndexedBufferInternal>> const&>()
-			| std::views::transform(GetBufferInputRange));
-
-
 	public:
 		void Update(); // Must be called at the beginning of each frame
 
@@ -184,15 +183,15 @@ namespace gr
 		template<typename RenderDataType, typename BufferDataType>
 		IIndexedBuffer* AddIndexedBuffer(
 			char const* bufferName,
-			char const* shaderName,
 			BufferDataType(*createBufferData)(RenderDataType const&),
 			re::Buffer::MemoryPoolPreference,
 			RenderObjectFeature featureBits = RenderObjectFeature::None);
 
 		template<typename LUTBuffer>
-		re::BufferInput GetLUTBufferInput(std::ranges::range auto&& renderDataIDs, char const* shaderName);
+		re::BufferInput GetLUTBufferInput(std::ranges::range auto&& renderDataIDs);
 
-		BufferInputRange GetBufferInputs() const;
+		re::BufferInput GetIndexedBufferInput(util::HashKey bufferNameHash, char const* shaderName) const;
+		re::BufferInput GetIndexedBufferInput(char const* bufferName, char const* shaderName) const;
 
 
 	private:
@@ -205,6 +204,7 @@ namespace gr
 	private:
 		std::vector<std::unique_ptr<IIndexedBufferInternal>> m_indexedBuffers;
 		std::multimap<std::type_index, IIndexedBufferInternal*> m_lutWritingBuffers; // LUTBuffer type -> writers
+		std::unordered_map<util::HashKey, IIndexedBufferInternal*> m_bufferNameHashToIndexedBuffer;
 
 		gr::RenderDataManager const& m_renderData;
 
@@ -216,7 +216,8 @@ namespace gr
 			std::shared_ptr<re::Buffer> m_LUTBuffer;
 			IndexType m_firstFreeBaseIdx = 0;
 		};
-		std::unordered_map<std::type_index, LUTMetadata> m_LUTBuffers; // <LUTBuffer> -> LUTMetadata
+		std::unordered_map<std::type_index, LUTMetadata> m_LUTTypeToLUTMetadata; // <LUTBuffer> -> LUTMetadata
+		std::mutex m_LUTTypeToLUTMetadataMutex;
 
 		// Map RenderDataID -> re::BufferInput entries, so we can destroy (potentially) stale BufferInputs
 		std::unordered_multimap<IDType, std::pair<LUTMetadata*, util::HashKey>> m_IDToBufferInputs;
@@ -241,18 +242,15 @@ namespace gr
 		IndexedBufferManager* ibm,
 		BufferDataType(*createBufferData)(RenderDataType const&),
 		char const* bufferName,
-		char const* shaderName,
 		re::Buffer::MemoryPoolPreference memPoolPreference,
 		re::Buffer::AccessMask accessMask,
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
 		: IIndexedBufferInternal(ibm)
 		, m_createBufferData(createBufferData)
 		, m_bufferName(bufferName)
-		, m_shaderName(shaderName)
 		, m_featureBits(featureBits)
 		, m_memPoolPreference(memPoolPreference)
 		, m_accessMask(accessMask)
-		, m_threadProtector(false)
 	{
 		SEAssert(m_createBufferData != nullptr, "Invalid Buffer creation callback");
 	}
@@ -459,11 +457,10 @@ namespace gr
 
 
 	template<typename RenderDataType, typename BufferDataType>
-	std::string const& IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetShaderName() const
+	re::BufferInput IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetBufferInput(
+		char const* shaderName) const
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
-
-		return m_shaderName;
+		return re::BufferInput(shaderName, GetBuffer());
 	}
 
 
@@ -494,7 +491,6 @@ namespace gr
 	template<typename RenderDataType, typename BufferDataType>
 	IndexedBufferManager::IIndexedBuffer* IndexedBufferManager::AddIndexedBuffer(
 		char const* bufferName,
-		char const* shaderName,
 		BufferDataType(*createBufferData)(RenderDataType const&),
 		re::Buffer::MemoryPoolPreference memPool, 
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
@@ -507,14 +503,18 @@ namespace gr
 			access |= re::Buffer::Access::CPUWrite;
 		}
 
-		return m_indexedBuffers.emplace_back(std::make_unique<TypedIndexedBuffer<RenderDataType, BufferDataType>>(
-			this,
-			createBufferData,
-			bufferName,
-			shaderName,
-			memPool,
-			access,
-			featureBits)).get();
+		auto const& itr = m_indexedBuffers.emplace_back(
+			std::make_unique<TypedIndexedBuffer<RenderDataType, BufferDataType>>(
+				this,
+				createBufferData,
+				bufferName,
+				memPool,
+				access,
+				featureBits));
+
+		m_bufferNameHashToIndexedBuffer.emplace(util::HashKey(bufferName), itr.get());
+
+		return itr.get();
 	}
 
 
@@ -547,10 +547,9 @@ namespace gr
 				}
 			};
 
+		SEAssert(m_LUTTypeToLUTMetadata.contains(lutTypeIdx), "No LUT buffer entry exists. It should have already been added");
 
-		SEAssert(m_LUTBuffers.contains(lutTypeIdx), "No LUT buffer entry exists. It should have already been added");
-
-		auto lutMetadataItr = m_LUTBuffers.find(lutTypeIdx);
+		auto lutMetadataItr = m_LUTTypeToLUTMetadata.find(lutTypeIdx);
 		if (lutMetadataItr->second.m_LUTBuffer == nullptr ||
 			(lutMetadataItr->second.m_firstFreeBaseIdx + renderDataIDs.size()) >
 			lutMetadataItr->second.m_LUTBuffer->GetArraySize())			
@@ -632,70 +631,84 @@ namespace gr
 
 
 	template<typename LUTBuffer>
-	inline re::BufferInput IndexedBufferManager::GetLUTBufferInput(
-		std::ranges::range auto&& renderDataIDs, 
-		char const* shaderName)
+	inline re::BufferInput IndexedBufferManager::GetLUTBufferInput(std::ranges::range auto&& renderDataIDs)
 	{
 		const std::type_index lutTypeIdx = std::type_index(typeid(LUTBuffer));
 
 		// Hash the inputs so we can reuse Buffers/BufferInputs:
-		util::HashKey lutHash = util::HashCStr(shaderName);
+		util::HashKey lutHash = util::HashCStr(LUTBuffer::s_shaderName);
 		util::AddDataToHash(lutHash, lutTypeIdx.hash_code());
 		for (auto const& id : renderDataIDs)
 		{
 			util::AddDataToHash(lutHash, id);
 		}
 		util::AddDataToHash(lutHash, renderDataIDs.size());
-		
-		// Try and return an existing BufferInput:
-		auto metadataItr = m_LUTBuffers.find(lutTypeIdx);
-		if (metadataItr != m_LUTBuffers.end())
+
+		// Critical section: Get/create a LUT BufferInput
 		{
-			auto bufferInputItr = metadataItr->second.m_LUTBufferInputs.find(lutHash);
-			if (bufferInputItr != metadataItr->second.m_LUTBufferInputs.end())
+			std::lock_guard<std::mutex> lock(m_LUTTypeToLUTMetadataMutex);
+
+			// Try and return an existing BufferInput:
+			auto metadataItr = m_LUTTypeToLUTMetadata.find(lutTypeIdx);
+			if (metadataItr != m_LUTTypeToLUTMetadata.end())
 			{
-				return bufferInputItr->second;
+				auto bufferInputItr = metadataItr->second.m_LUTBufferInputs.find(lutHash);
+				if (bufferInputItr != metadataItr->second.m_LUTBufferInputs.end())
+				{
+					return bufferInputItr->second;
+				}
 			}
+
+			if (metadataItr == m_LUTTypeToLUTMetadata.end())
+			{
+				metadataItr = m_LUTTypeToLUTMetadata.emplace(lutTypeIdx, LUTMetadata{}).first;
+			}
+
+			IndexType firstElement = std::numeric_limits<IndexType>::max();
+
+			std::shared_ptr<re::Buffer> const& lutBuffer = GetLUTBuffer<LUTBuffer>(renderDataIDs, firstElement);
+			SEAssert(firstElement != std::numeric_limits<IndexType>::max(), "Failed to get a valid 1st element");
+
+			auto const& bufferInputItr = metadataItr->second.m_LUTBufferInputs.emplace(
+				lutHash,
+				re::BufferInput(
+					LUTBuffer::s_shaderName,
+					lutBuffer,
+					re::BufferView::BufferType{
+						.m_firstElement = firstElement,
+						.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
+						.m_structuredByteStride = sizeof(LUTBuffer),
+						.m_firstDestIdx = 0,
+					})).first;
+
+			// Map the RenderDataIDs to the BufferViews, so we can destroy the views if any data associated with the
+			// RenderDataIDs is ever destroyed
+			for (gr::RenderDataID renderDataID : renderDataIDs)
+			{
+				m_IDToBufferInputs.emplace(renderDataID,
+					std::make_pair(&metadataItr->second, lutHash));
+			}
+
+			return bufferInputItr->second;
 		}
-
-		if (metadataItr == m_LUTBuffers.end())
-		{
-			metadataItr = m_LUTBuffers.emplace(lutTypeIdx, LUTMetadata{}).first;
-		}
-
-		IndexType firstElement = std::numeric_limits<IndexType>::max();
-
-		std::shared_ptr<re::Buffer> const& lutBuffer = GetLUTBuffer<LUTBuffer>(renderDataIDs, firstElement);
-		SEAssert(firstElement != std::numeric_limits<IndexType>::max(), "Failed to get a valid 1st element");
-
-		auto const& bufferInputItr = metadataItr->second.m_LUTBufferInputs.emplace(
-			lutHash,
-			re::BufferInput(
-				shaderName,
-				lutBuffer,
-				re::BufferView::BufferType{
-					.m_firstElement = firstElement,
-					.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
-					.m_structuredByteStride = sizeof(LUTBuffer),
-					.m_firstDestIdx = 0,
-				})).first;
-
-		// Map the RenderDataIDs to the BufferViews, so we can destroy the views if any data associated with the
-		// RenderDataIDs is ever destroyed
-		for (gr::RenderDataID renderDataID : renderDataIDs)
-		{
-			m_IDToBufferInputs.emplace(renderDataID,
-				std::make_pair( &metadataItr->second, lutHash ));
-		}
-
-		return bufferInputItr->second;
 	}
 
 
-	inline IndexedBufferManager::BufferInputRange IndexedBufferManager::GetBufferInputs() const
+	inline re::BufferInput IndexedBufferManager::GetIndexedBufferInput(
+		util::HashKey bufferNameHash,
+		char const* shaderName) const
 	{
-		return m_indexedBuffers
-			| std::views::transform(GetBufferInputRange);
+		SEAssert(m_bufferNameHashToIndexedBuffer.contains(bufferNameHash), "No buffer with that name registered");
+
+		return m_bufferNameHashToIndexedBuffer.at(bufferNameHash)->GetBufferInput(shaderName);
+	}
+
+
+	inline re::BufferInput IndexedBufferManager::GetIndexedBufferInput(
+		char const* bufferName,
+		char const* shaderName) const
+	{
+		return GetIndexedBufferInput(util::HashKey(bufferName), shaderName);
 	}
 
 

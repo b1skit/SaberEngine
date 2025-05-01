@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
+#include "Buffer.h"
 #include "CameraRenderData.h"
+#include "IndexedBuffer.h"
 #include "LightRenderData.h"
 #include "Material_GLTF.h"
 #include "MeshPrimitive.h"
@@ -9,6 +11,9 @@
 #include "TransformRenderData.h"
 
 #include "Core/Util/CastUtils.h"
+
+#include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/MaterialParams.h"
 
 
 namespace
@@ -47,11 +52,36 @@ namespace gr
 		// Set a default identity Transform::RenderData for the gr::k_invalidTransformID:
 		RegisterTransform(gr::k_invalidTransformID);
 		SetTransformData(gr::k_invalidTransformID, gr::Transform::RenderData{ .m_transformID = gr::k_invalidTransformID, });
+
+		m_indexedBufferManager = std::make_unique<gr::IndexedBufferManager>(*this);
+
+		// Configure the indexed buffer manager:
+		IndexedBufferManager::IIndexedBuffer* indexedTransforms = m_indexedBufferManager->AddIndexedBuffer(
+			TransformData::s_shaderName, // Buffer name (not the shader name)
+			gr::Transform::CreateInstancedTransformData,
+			re::Buffer::DefaultHeap);
+
+		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteTransformIndex);
+
+		IndexedBufferManager::IIndexedBuffer* indexedMaterials = m_indexedBufferManager->AddIndexedBuffer(
+			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
+			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
+			re::Buffer::DefaultHeap,
+			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
+
+		indexedMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteMaterialIndex);
+	}
+
+
+	RenderDataManager::~RenderDataManager()
+	{
 	}
 
 
 	void RenderDataManager::Destroy()
 	{
+		m_indexedBufferManager->Destroy();
+
 		// Destroy the default identity Transform::RenderData for the gr::k_invalidTransformID:
 		UnregisterTransform(gr::k_invalidTransformID);
 
@@ -95,6 +125,7 @@ namespace gr
 				prevFrameDeletedTypes.clear();
 			}
 			m_perFrameDeletedDataIDs.clear();
+			m_perFrameSeenDeletedDataIDs.clear();
 			for (auto& prevFrameDirtyTypes : m_perFramePerTypeDirtyDataIDs)
 			{
 				prevFrameDirtyTypes.clear();
@@ -112,6 +143,18 @@ namespace gr
 		}
 
 		m_currentFrame = currentFrame;
+	}
+
+
+	void RenderDataManager::Update()
+	{
+		m_indexedBufferManager->Update(); // Must be called after render data has been populated for the current frame
+	}
+
+
+	gr::IndexedBufferManager& RenderDataManager::GetInstancingIndexedBufferManager() const
+	{
+		return *m_indexedBufferManager;
 	}
 
 
@@ -148,7 +191,7 @@ namespace gr
 
 	void RenderDataManager::DestroyObject(gr::RenderDataID renderDataID)
 	{
-		TransformID renderObjectTransformID = gr::k_invalidTransformID;
+		TransformID transformID = gr::k_invalidTransformID;
 
 		{
 			// Catch illegal accesses during RenderData modification
@@ -158,7 +201,7 @@ namespace gr
 				"Trying to destroy an object that does not exist");
 
 			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
-			renderObjectTransformID = renderObjectMetadata.m_transformID;
+			transformID = renderObjectMetadata.m_transformID;
 
 			renderObjectMetadata.m_referenceCount--;
 			if (renderObjectMetadata.m_referenceCount == 0)
@@ -174,7 +217,7 @@ namespace gr
 				RemoveIDFromTrackingList(m_registeredRenderObjectIDs, renderDataID);
 
 				// Remove the RenderDataID from our TransformID -> RenderDataID multi-map:
-				auto transformToRenderDataIDsItr = m_transformToRenderDataIDs.equal_range(renderObjectTransformID);
+				auto transformToRenderDataIDsItr = m_transformToRenderDataIDs.equal_range(transformID);
 				auto curItr = transformToRenderDataIDsItr.first;
 				while (curItr != transformToRenderDataIDsItr.second)
 				{
@@ -188,7 +231,7 @@ namespace gr
 			}
 		}
 
-		UnregisterTransform(renderObjectTransformID); // Decrement the Transform ref. count, and destroy it at 0
+		UnregisterTransform(transformID); // Decrement the Transform ref. count, and destroy it at 0
 	}
 
 
@@ -258,6 +301,11 @@ namespace gr
 
 		// Decriment our reference count. If it's zero, remove the record entirely
 		transformMetadataItr->second.m_referenceCount--;
+
+		SEAssert(transformMetadataItr->second.m_referenceCount == m_transformToRenderDataIDs.count(transformID) ||
+			(transformID == k_invalidTransformID && 
+				transformMetadataItr->second.m_referenceCount == m_transformToRenderDataIDs.count(transformID) + 1),
+			"TransformID to RenderDataID map is out of sync");
 
 		if (transformMetadataItr->second.m_referenceCount == 0)
 		{

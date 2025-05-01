@@ -11,6 +11,18 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "Debug", "Mode": "VertexIDInstancingLUTIdx" }
+				],
+				"Technique": "Debug_Line_VertexIDInstancingLUTIdx"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Debug", "Mode": "InstanceIDTransformIdx" }
+				],
+				"Technique": "Debug_Line_InstanceIDTransformIdx"
+			},
+			{
+				"Conditions": [
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "Debug", "Mode": "Wireframe" }
@@ -77,6 +89,8 @@
 			}
 		],
 
+		"Buffers": ["InstancedTransformParams"],
+
 		"Techniques": [
 			{
 				"Name": "Debug_Line",
@@ -84,6 +98,20 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Line",
 				"PShaderEntryPoint": "PShader",
+				"RasterizationState": "Debug_Line",
+				"VertexStream": "PositionColor"
+			},
+			{
+				"Name": "Debug_Line_VertexIDInstancingLUTIdx",
+				"Parent" : "Debug_Line",
+				"VShaderDefines" : ["VERTEXID_INSTANCING_LUT_IDX"],
+				"RasterizationState": "Debug_Line",
+				"VertexStream": "PositionColor"
+			},
+			{
+				"Name": "Debug_Line_InstanceIDTransformIdx",
+				"Parent" : "Debug_Line",
+				"VShaderDefines" : ["INSTANCEID_TRANSFORM_IDX"],
 				"RasterizationState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},

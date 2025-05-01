@@ -4,7 +4,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Core/Util/CHashKey.h"
+#include "Core/Util/CHashKey.h" // Required for DrawStyles.h
 
 #include "Generated/DrawStyles.h"
 
@@ -44,7 +44,8 @@ namespace effect
 		Technique const* GetResolvedTechnique(effect::drawstyle::Bitmask) const;
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> const& GetAllTechniques() const;
 
-		bool UsesBuffer(util::HashKey) const;
+		bool UsesBuffer(util::HashKey bufferNameHash) const;
+		std::set<util::HashKey> const& GetUsedBufferNameHashes() const;
 
 
 	public:
@@ -98,5 +99,11 @@ namespace effect
 	{
 		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
 		return m_buffers.contains(bufferNameHash);
+	}
+
+
+	inline std::set<util::HashKey> const& Effect::GetUsedBufferNameHashes() const
+	{
+		return m_buffers;
 	}
 }

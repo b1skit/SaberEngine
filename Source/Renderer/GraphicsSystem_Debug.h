@@ -65,8 +65,6 @@ namespace gr
 		float m_axisOpacity = 0.5f;
 		float m_axisScale = 0.2f;
 
-		std::unordered_map<gr::RenderDataID, re::BufferInput> m_meshPrimTransformBuffers;
-
 		bool m_showWorldCoordinateAxis = false;
 		std::unique_ptr<re::Batch> m_worldCoordinateAxisBatch;
 
@@ -75,7 +73,6 @@ namespace gr
 
 		bool m_showLightCoordinateAxis = false;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_lightCoordinateAxisBatches;
-		std::unordered_map<gr::RenderDataID, re::BufferInput> m_lightCoordinateAxisTransformBuffers;
 
 		bool m_showSceneBoundingBox = false;
 		glm::vec4 m_sceneBoundsColor = glm::vec4(1.f, 1.f, 1.f, 0.5f);
@@ -102,7 +99,6 @@ namespace gr
 		glm::vec4 m_cameraFrustumColor = glm::vec4(1.f, 1.f, 1.f, 0.5f);
 		std::unordered_map<gr::RenderDataID, std::pair<gr::Camera::RenderData const*, gr::Transform::RenderData const*>> m_camerasToDebug;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_cameraAxisBatches;
-		std::unordered_map<gr::RenderDataID, re::BufferInput> m_cameraAxisTransformBuffers;
 		std::unordered_map<gr::RenderDataID, std::vector<std::unique_ptr<re::Batch>>> m_cameraFrustumBatches;
 		std::unordered_map<gr::RenderDataID, std::vector<re::BufferInput>> m_cameraFrustumTransformBuffers;
 
@@ -111,11 +107,9 @@ namespace gr
 
 		bool m_showDeferredLightWireframe = false;
 		std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>> m_deferredLightWireframeBatches;
-		std::unordered_map<gr::RenderDataID, re::BufferInput> m_deferredLightWireframeTransformBuffers;
 
 		bool m_showAllTransforms = false;
 		std::unordered_map<gr::TransformID, std::unique_ptr<re::Batch>> m_transformAxisBatches;
-		std::unordered_map<gr::TransformID, re::BufferInput> m_transformAxisTransformBuffers;
 
 		bool m_showParentChildLinks = false;
 		std::unordered_map<gr::TransformID, std::unique_ptr<re::Batch>> m_transformParentChildLinkBatches;

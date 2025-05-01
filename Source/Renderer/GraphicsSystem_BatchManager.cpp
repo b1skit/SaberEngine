@@ -3,6 +3,7 @@
 #include "GraphicsSystem_BatchManager.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
+#include "IndexedBuffer.h"
 #include "Material.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
@@ -10,7 +11,6 @@
 #include "Core/ProfilingMarkers.h"
 
 #include "Shaders/Common/InstancingParams.h"
-#include "Shaders/Common/MaterialParams.h"
 
 
 namespace gr
@@ -19,30 +19,7 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_viewCullingResults(nullptr)
-		, m_instanceBuffers(re::RenderManager::Get()->GetRenderDataManager())
 	{
-		IndexedBufferManager::IIndexedBuffer* indexedTransforms = m_instanceBuffers.AddIndexedBuffer(
-			TransformData::s_shaderName, // Buffer name
-			TransformData::s_shaderName, // Shader name
-			gr::Transform::CreateInstancedTransformData,
-			re::Buffer::DefaultHeap);
-
-		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteTransformIndex);
-
-		IndexedBufferManager::IIndexedBuffer* indexedMaterials = m_instanceBuffers.AddIndexedBuffer(
-			PBRMetallicRoughnessData::s_shaderName, // Buffer name
-			PBRMetallicRoughnessData::s_shaderName, // Shader name
-			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
-			re::Buffer::DefaultHeap,
-			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
-
-		indexedMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteMaterialIndex);
-	}
-
-
-	BatchManagerGraphicsSystem::~BatchManagerGraphicsSystem()
-	{
-		m_instanceBuffers.Destroy();
 	}
 
 
@@ -191,7 +168,7 @@ namespace gr
 		}
 		SEEndCPUEvent(); // Create new batches
 
-		BuildViewBatches();
+		BuildViewBatches(renderData.GetInstancingIndexedBufferManager());
 
 		SEEndCPUEvent(); // BatchManagerGraphicsSystem::PreRender
 	}
@@ -204,15 +181,9 @@ namespace gr
 	}
 
 	
-	void BatchManagerGraphicsSystem::BuildViewBatches()
+	void BatchManagerGraphicsSystem::BuildViewBatches(gr::IndexedBufferManager& ibm)
 	{
 		SEBeginCPUEvent("BatchManagerGraphicsSystem::BuildViewBatches");
-
-
-
-		m_instanceBuffers.Update(); // TODO: MOVE THIS?!?!?!?!!?!?!?!?!
-
-
 
 		SEAssert(m_allBatches.empty(), "Batch vectors should have been cleared");
 
@@ -293,15 +264,25 @@ namespace gr
 					SEBeginCPUEvent("Attach instance buffers");
 					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
 
+					static const util::HashKey k_transformBufferNameHash("InstancedTransformParams");
+					static const util::HashKey k_materialBufferNameHash("InstancedPBRMetallicRoughnessParams");
+
 					bool setInstanceBuffer = false;
-					for (auto const& bufferInput : m_instanceBuffers.GetBufferInputs())
+					if (batchEffect->UsesBuffer(k_transformBufferNameHash))
 					{
-						if (batchEffect->UsesBuffer(bufferInput.GetBuffer()->GetNameHash()))
-						{
-							batches.back().SetBuffer(bufferInput);
-							setInstanceBuffer = true;
-						}
+						batches.back().SetBuffer(ibm.GetIndexedBufferInput(
+							k_transformBufferNameHash,
+							"InstancedTransformParams"));
+						setInstanceBuffer = true;
 					}
+					if (batchEffect->UsesBuffer(k_materialBufferNameHash))
+					{
+						batches.back().SetBuffer(ibm.GetIndexedBufferInput(
+							k_materialBufferNameHash,
+							"InstancedPBRMetallicRoughnessParams"));
+						setInstanceBuffer = true;
+					}
+
 					if (setInstanceBuffer)
 					{
 						SEBeginCPUEvent("GetSingleFrameLUTBufferInput");
@@ -315,8 +296,7 @@ namespace gr
 									return batchMetadata->m_renderDataID;
 								});
 
-						batches.back().SetBuffer(m_instanceBuffers.GetLUTBufferInput<InstanceIndexData>(
-							instancedBatchView, InstanceIndexData::s_shaderName));
+						batches.back().SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(instancedBatchView));
 
 						SEEndCPUEvent(); // GetSingleFrameLUTBufferInput
 					}
