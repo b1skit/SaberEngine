@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
 #include "LightRenderData.h"
 
 

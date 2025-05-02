@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "LightParamsHelpers.h"
 #include "Texture.h"
-#include "TextureTarget.h"
 
 #include "Shaders/Common/LightParams.h"
 
