@@ -17,8 +17,8 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	
-	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
-	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	const uint lightParamsIdx = LightIndexParams.g_lightShadowIdx.x;
+	const uint shadowTexIdx = LightIndexParams.g_lightShadowIdx.y;
 	
 	const LightData lightData = DirectionalLightParams[lightParamsIdx];
 	
@@ -40,7 +40,7 @@ float4 PShader(VertexOut In) : SV_Target
 			lightUVRadiusSize,
 			lightData.g_shadowMapTexelSize,
 			DirectionalShadows,
-			shadowIdx) : 1.f;
+			shadowTexIdx) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

@@ -256,7 +256,7 @@ namespace gr
 				AmbientLightData::s_shaderName,
 				re::Buffer::Create(
 					AmbientLightData::s_shaderName,
-					GetAmbientLightParamsData(
+					GetAmbientLightData(
 						1,
 						0.f,
 						0.f,

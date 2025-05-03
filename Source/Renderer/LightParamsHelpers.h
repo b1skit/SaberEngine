@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
-#include "LightRenderData.h"
 #include "ShadowMapRenderData.h"
 #include "TransformRenderData.h"
 
@@ -11,6 +10,11 @@ struct LightData;
 struct LightIndexData;
 struct PoissonSampleParamsData;
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
 namespace re
 {
 	class Texture;
@@ -19,7 +23,7 @@ namespace re
 
 namespace gr
 {
-	AmbientLightData GetAmbientLightParamsData(
+	AmbientLightData GetAmbientLightData(
 		uint32_t numPMREMMips,
 		float diffuseScale, 
 		float specularScale, 
@@ -27,7 +31,7 @@ namespace gr
 		core::InvPtr<re::Texture> const& ssaoTex);
 
 
-	LightData GetLightParamData(
+	LightData GetLightData(
 		void const* lightRenderData,
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,

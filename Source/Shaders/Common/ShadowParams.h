@@ -12,7 +12,7 @@ struct CubemapShadowData
 	float4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "CubemapShadowRenderParams";
+	static constexpr char const* const s_shaderName = "CubemapShadowParams";
 #endif
 };
 

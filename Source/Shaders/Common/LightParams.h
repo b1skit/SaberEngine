@@ -50,7 +50,7 @@ struct LightData
 
 struct LightIndexData
 {
-	uint4 g_lightIndex; // .x = index into respective light buffer. .yzw = unused
+	uint4 g_lightShadowIdx; // .x = light buffer idx, .y = shadow tex array idx, .zw = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "LightIndexParams";
@@ -66,8 +66,8 @@ struct AllLightIndexesData
 #define MAX_LIGHT_COUNT 1024
 
 	// uint elemements packed into uint4's due to buffer alignment rules
-	uint4 g_pointIndexes[MAX_LIGHT_COUNT / 4];
-	uint4 g_spotIndexes[MAX_LIGHT_COUNT / 4];
+	uint4 g_pointLightIndexes[MAX_LIGHT_COUNT / 4];
+	uint4 g_spotLightIndexes[MAX_LIGHT_COUNT / 4];
 
 #if defined(__cplusplus)
 	static constexpr char const* s_shaderName = "AllLightIndexesParams";

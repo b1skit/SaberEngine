@@ -706,7 +706,7 @@ namespace gr
 
 					const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
 
-					const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
+					const AmbientLightData ambientLightParamsData = GetAmbientLightData(
 						totalPMREMMipLevels,
 						ambientData.m_diffuseScale,
 						ambientData.m_specularScale,
@@ -765,7 +765,7 @@ namespace gr
 
 				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
 
-				const AmbientLightData ambientLightParamsData = GetAmbientLightParamsData(
+				const AmbientLightData ambientLightParamsData = GetAmbientLightData(
 					totalPMREMMipLevels,
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
@@ -1039,10 +1039,10 @@ namespace gr
 
 						const uint32_t lightIdx = GetLightDataBufferIdx(lightDataBufferIdxMap, lightID);
 
-						uint32_t shadowIdx = gr::k_invalidShadowIndex;
+						uint32_t shadowArrayIdx = gr::k_invalidShadowArrayIdx;
 						if (light.second.m_hasShadow)
 						{
-							shadowIdx = GetShadowArrayIdx(shadowArrayIdxMap, lightID);
+							shadowArrayIdx = GetShadowArrayIdx(shadowArrayIdxMap, lightID);
 
 							// Note: Shadow array textures may be reallocated at the beginning of any frame; Texture
 							// inputs/views must be re-set each frame (TODO: Skip recreating the views by tracking 
@@ -1059,7 +1059,7 @@ namespace gr
 							LightIndexData::s_shaderName,
 							re::Buffer::Create(
 								LightIndexData::s_shaderName,
-								GetLightIndexData(lightIdx, shadowIdx),
+								GetLightIndexData(lightIdx, shadowArrayIdx),
 								re::Buffer::BufferParams{
 									.m_lifetime = re::Lifetime::SingleFrame,
 									.m_stagingPool = re::Buffer::StagingPool::Temporary,

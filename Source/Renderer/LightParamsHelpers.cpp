@@ -1,13 +1,16 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "LightParamsHelpers.h"
+#include "LightRenderData.h"
 #include "Texture.h"
+
+#include "Core/InvPtr.h"
 
 #include "Shaders/Common/LightParams.h"
 
 
 namespace gr
 {
-	AmbientLightData GetAmbientLightParamsData(
+	AmbientLightData GetAmbientLightData(
 		uint32_t numPMREMMips,
 		float diffuseScale, 
 		float specularScale, 
@@ -36,7 +39,7 @@ namespace gr
 	}
 
 
-	LightData GetLightParamData(
+	LightData GetLightData(
 		void const* lightRenderData,
 		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
@@ -203,11 +206,11 @@ namespace gr
 	}
 
 
-	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowIndex)
+	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowTexArrayIdx)
 	{
 		return LightIndexData
 		{
-			.g_lightIndex = glm::uvec4(lightIndex, shadowIndex, 0, 0),
+			.g_lightShadowIdx = glm::uvec4(lightIndex, shadowTexArrayIdx, 0, 0),
 		};
 	}
 
@@ -224,13 +227,13 @@ namespace gr
 		{
 		case gr::Light::Point:
 		{
-			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_pointIndexes[arrayIdx]);
+			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_pointLightIndexes[arrayIdx]);
 			entryAsVec4[elementIdx] = value;
 		}
 		break;
 		case gr::Light::Spot:
 		{
-			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_spotIndexes[arrayIdx]);
+			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_spotLightIndexes[arrayIdx]);
 			entryAsVec4[elementIdx] = value;
 		}
 		break;

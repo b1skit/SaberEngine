@@ -13,7 +13,7 @@
 
 namespace
 {
-	CubemapShadowData GetCubemapShadowRenderParamsData(
+	CubemapShadowData GetCubemapShadowData(
 		gr::Camera::RenderData const& shadowCamData, gr::Transform::RenderData const& transformData)
 	{
 		SEAssert(shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap,
@@ -136,7 +136,7 @@ namespace gr
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
 		// Cubemap shadow buffer:
-		CubemapShadowData const& cubemapShadowParams = GetCubemapShadowRenderParamsData(camData, transformData);
+		CubemapShadowData const& cubemapShadowParams = GetCubemapShadowData(camData, transformData);
 
 		re::BufferInput cubeShadowBuf(
 			CubemapShadowData::s_shaderName,
@@ -433,7 +433,7 @@ namespace gr
 						gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
 
 						CubemapShadowData const& cubemapShadowParams =
-							GetCubemapShadowRenderParamsData(shadowCamData, transformData);
+							GetCubemapShadowData(shadowCamData, transformData);
 
 						m_pointShadowStageData.at(pointItr->GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(
 							cubemapShadowParams);

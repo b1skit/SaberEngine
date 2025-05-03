@@ -33,13 +33,13 @@ StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams :
 
 uint UnpackPointLightIndex(uint arrayIdx)
 {
-	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_pointIndexes)[arrayIdx];
+	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_pointLightIndexes)[arrayIdx];
 }
 
 
 uint UnpackSpotLightIndex(uint arrayIdx)
 {
-	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_spotIndexes)[arrayIdx];
+	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_spotLightIndexes)[arrayIdx];
 }
 
 
@@ -123,7 +123,7 @@ float4 PShader(VertexOut In) : SV_Target
 		{
 			const LightData lightData = DirectionalLightParams[directionalIdx];
 			
-			const uint shadowIdx = lightData.g_extraParams.w;
+			const uint shadowTexIdx = lightData.g_extraParams.w;
 			
 			const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
 			const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
@@ -143,7 +143,7 @@ float4 PShader(VertexOut In) : SV_Target
 				lightUVRadiusSize,
 				lightData.g_shadowMapTexelSize,
 				DirectionalShadows,
-				shadowIdx) : 1.f;
+				shadowTexIdx) : 1.f;
 		
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;
@@ -185,7 +185,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 			const LightData lightData = PointLightParams[pointLightDataIdx];
 			
-			const uint shadowIdx = lightData.g_extraParams.w;
+			const uint shadowTexIdx = lightData.g_extraParams.w;
 			
 			const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 			const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
@@ -215,7 +215,7 @@ float4 PShader(VertexOut In) : SV_Target
 				lightUVRadiusSize,
 				cubeFaceDimension,
 				PointShadows,
-				shadowIdx) : 1.f;
+				shadowTexIdx) : 1.f;
 			
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;
@@ -257,7 +257,7 @@ float4 PShader(VertexOut In) : SV_Target
 	
 			const LightData lightData = SpotLightParams[spotLightDataIdx];
 			
-			const uint shadowIdx = lightData.g_extraParams.w;
+			const uint shadowTexIdx = lightData.g_extraParams.w;
 			
 			const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 			const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
@@ -297,7 +297,7 @@ float4 PShader(VertexOut In) : SV_Target
 					lightUVRadiusSize,
 					lightData.g_shadowMapTexelSize,
 					SpotShadows,
-					shadowIdx) : 1.f;
+					shadowTexIdx) : 1.f;
 	
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;

@@ -18,7 +18,7 @@ struct GeometryOut
 	uint Face : SV_RenderTargetArrayIndex;
 };
 
-ConstantBuffer<CubemapShadowData> CubemapShadowRenderParams;
+ConstantBuffer<CubemapShadowData> CubemapShadowParams;
 
 
 [maxvertexcount(18)]
@@ -31,7 +31,7 @@ void GShader(triangle VertexOut In[3], inout TriangleStream<GeometryOut> StreamO
 		
 		for (uint vertIdx = 0; vertIdx < 3; vertIdx++)
 		{
-			Out.Position = mul(CubemapShadowRenderParams.g_cubemapShadowCam_VP[faceIdx], In[vertIdx].Position);
+			Out.Position = mul(CubemapShadowParams.g_cubemapShadowCam_VP[faceIdx], In[vertIdx].Position);
 			
 #if defined(VOUT_UV0)
 			Out.UV0 = In[vertIdx].UV0;

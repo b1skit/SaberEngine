@@ -119,7 +119,7 @@ void FindBlocker(
 	float nonLinearDepth,
 	float2 searchRegionRadiusUV,
 	Texture2DArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	float blockerSum = 0;
 	numBlockers = 0;
@@ -127,7 +127,7 @@ void FindBlocker(
 	for (uint i = 0; i < numBlockerSamples; ++i)
 	{
 		const float2 offset = GetPoissonBlockerSample(i, qualityMode) * searchRegionRadiusUV;
-		const float depthSample = shadowArray.SampleLevel(WhiteBorderMinMagMipPoint, float3(uv + offset, shadowIdx), 0);
+		const float depthSample = shadowArray.SampleLevel(WhiteBorderMinMagMipPoint, float3(uv + offset, shadowTexIdx), 0);
 		if (depthSample < nonLinearDepth)
 		{
 			blockerSum += depthSample;
@@ -147,14 +147,14 @@ float PCFPenumbra(
 	float nonLinearDepth, 
 	float2 filterRadiusUV,
 	Texture2DArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	float sum = 0;
 	
 	for (uint i = 0; i < numPenumbraSamples; ++i)
 	{
 		const float2 offset = GetPoissonPenumbraSample(i, qualityMode) * filterRadiusUV;
-		sum += shadowArray.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, float3(uv + offset, shadowIdx), nonLinearDepth);
+		sum += shadowArray.SampleCmpLevelZero(BorderCmpMinMagLinearMipPoint, float3(uv + offset, shadowTexIdx), nonLinearDepth);
 	}
 	return sum / numPenumbraSamples;
 }
@@ -170,7 +170,7 @@ float GetPCSSShadowFactor(
 	float2 shadowCamNearFar, 
 	float2 lightUVRadiusSize,
 	Texture2DArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	// Blocker search:
 	float numBlockers = 0.f;
@@ -185,7 +185,7 @@ float GetPCSSShadowFactor(
 		nonLinearDepth, 
 		searchRegionRadiusUV,
 		shadowArray,
-		shadowIdx);
+		shadowTexIdx);
 
 	if (numBlockers == 0.f)
 	{
@@ -200,7 +200,7 @@ float GetPCSSShadowFactor(
 	
 	// Filter the result:
 	return PCFPenumbra(
-		qualityMode, numPenumbraSamples, shadowmapUVs, nonLinearDepth, filterRadiusUV, shadowArray, shadowIdx);
+		qualityMode, numPenumbraSamples, shadowmapUVs, nonLinearDepth, filterRadiusUV, shadowArray, shadowTexIdx);
 }
 
 
@@ -209,7 +209,7 @@ float GetPCFShadowFactor(
 	float nonLinearDepth, 
 	float4 shadowMapTexelSize, 
 	Texture2DArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	// Compute a block of samples around our fragment, starting at the top-left. Note: MUST be a power of two.
 	// TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
@@ -226,7 +226,7 @@ float GetPCFShadowFactor(
 		for (uint col = 0; col < gridSize; col++)
 		{
 			depthSum += shadowArray.SampleCmpLevelZero(
-				BorderCmpMinMagLinearMipPoint, float3(shadowmapUVs, shadowIdx), nonLinearDepth);
+				BorderCmpMinMagLinearMipPoint, float3(shadowmapUVs, shadowTexIdx), nonLinearDepth);
 			
 			shadowmapUVs.x += shadowMapTexelSize.z;
 		}
@@ -261,9 +261,9 @@ float Get2DShadowFactor(
 	float2 lightUVRadiusSize,
 	float4 shadowMapTexelSize,
 	Texture2DArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
-	if (shadowIdx == INVALID_SHADOW_IDX)
+	if (shadowTexIdx == INVALID_SHADOW_IDX)
 	{
 		return 1.f;
 	}
@@ -301,7 +301,7 @@ float Get2DShadowFactor(
 				shadowCamNearFar, 
 				lightUVRadiusSize,
 				shadowArray,
-				shadowIdx);
+				shadowTexIdx);
 			}
 		break;
 		case 2: // PCSS high
@@ -319,13 +319,13 @@ float Get2DShadowFactor(
 				shadowCamNearFar, 
 				lightUVRadiusSize,
 				shadowArray,
-				shadowIdx);
+				shadowTexIdx);
 			}
 		break;
 		case 0: // PCF (lowest quality)
 		default:
 		{
-				return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize, shadowArray, shadowIdx);
+				return GetPCFShadowFactor(shadowmapUVs, nonLinearDepth, shadowMapTexelSize, shadowArray, shadowTexIdx);
 			}
 	}
 }
@@ -366,7 +366,7 @@ void FindCubeBlocker(
 	float nonLinearDepth,
 	float2 searchRegionRadiusUV,
 	TextureCubeArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	float blockerSum = 0;
 	numBlockers = 0;
@@ -375,7 +375,7 @@ void FindCubeBlocker(
 	{
 		const float2 uvOffset = GetPoissonBlockerSample(i, qualityMode) * searchRegionRadiusUV;
 		const float3 offsetDir = GetOffsetCubeSampleDir(cubeSampleDir, cubeSampleDirLength, uvOffset, lookAtMatrix);
-		const float depthSample = shadowArray.SampleLevel(ClampMinMagMipPoint, float4(offsetDir, shadowIdx), 0);
+		const float depthSample = shadowArray.SampleLevel(ClampMinMagMipPoint, float4(offsetDir, shadowTexIdx), 0);
 		if (depthSample < nonLinearDepth)
 		{
 			blockerSum += depthSample;
@@ -397,7 +397,7 @@ float PCFCubePenumbra(
 	float nonLinearDepth,
 	float2 filterRadiusUV,
 	TextureCubeArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	float sum = 0;	
 	
@@ -408,7 +408,7 @@ float PCFCubePenumbra(
 		
 		sum += shadowArray.SampleCmpLevelZero(
 			WrapCmpMinMagLinearMipPoint,
-			float4(offsetDir, shadowIdx),
+			float4(offsetDir, shadowTexIdx),
 			nonLinearDepth);
 	}
 	return sum / numPenumbraSamples;
@@ -425,7 +425,7 @@ float GetCubePCSSShadowFactor(
 	float2 shadowCamNearFar,
 	float2 lightUVRadiusSize,
 	TextureCubeArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {	
 	// Blocker search:
 	float numBlockers = 0.f;
@@ -448,7 +448,7 @@ float GetCubePCSSShadowFactor(
 		nonLinearDepth,
 		searchRegionRadiusUV,
 		shadowArray,
-		shadowIdx);
+		shadowTexIdx);
 
 	if (numBlockers == 0.f)
 	{
@@ -472,7 +472,7 @@ float GetCubePCSSShadowFactor(
 		nonLinearDepth, 
 		filterRadiusUV,
 		shadowArray,
-		shadowIdx);
+		shadowTexIdx);
 }
 
 
@@ -487,9 +487,9 @@ float GetCubePCFShadowFactor(
 	float2 shadowCamNearFar, 
 	float cubeFaceDim,
 	TextureCubeArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
-	if (shadowIdx == INVALID_SHADOW_IDX)
+	if (shadowTexIdx == INVALID_SHADOW_IDX)
 	{
 		return 1.f;
 	}
@@ -513,7 +513,7 @@ float GetCubePCFShadowFactor(
 	// Get the center sample:
 	float light = shadowArray.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		float4(cubeSampleDir, shadowIdx),
+		float4(cubeSampleDir, shadowTexIdx),
 		nonLinearDepth);
 	
 	// Get 4 extra samples at diagonal offsets:
@@ -522,25 +522,25 @@ float GetCubePCFShadowFactor(
 
 	light += shadowArray.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowTexIdx),
 		nonLinearDepth);
 	cubeSampleDir.xy += oxy * 2.f;
 
 	light += shadowArray.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowTexIdx),
 		nonLinearDepth);
 	cubeSampleDir.yz += oyz * 2.f;
 
 	light += shadowArray.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowTexIdx),
 		nonLinearDepth);
 	cubeSampleDir.xy -= oxy * 2.f;
 
 	light += shadowArray.SampleCmpLevelZero(
 		WrapCmpMinMagLinearMipPoint,
-		float4(clamp(cubeSampleDir, -limit, limit), shadowIdx),
+		float4(clamp(cubeSampleDir, -limit, limit), shadowTexIdx),
 		nonLinearDepth);
 
 	return (light * 0.2); // Return the average of our 5 samples
@@ -558,7 +558,7 @@ float GetCubeShadowFactor(
 	float2 lightUVRadiusSize,
 	float cubeFaceDim,
 	TextureCubeArray<float> shadowArray,
-	const uint shadowIdx)
+	const uint shadowTexIdx)
 {
 	float3 biasedShadowWPos;
 	GetBiasedShadowWorldPos(worldPos, worldNormal, lightWorldDir, minMaxShadowBias, biasedShadowWPos);
@@ -594,7 +594,7 @@ float GetCubeShadowFactor(
 				shadowCamNearFar,
 				lightUVRadiusSize,
 				shadowArray,
-				shadowIdx);
+				shadowTexIdx);
 			}
 		break;
 		case 2: // PCSS high
@@ -612,7 +612,7 @@ float GetCubeShadowFactor(
 				shadowCamNearFar,
 				lightUVRadiusSize,
 				shadowArray,
-				shadowIdx);
+				shadowTexIdx);
 			}
 		break;
 		case 0: // PCF (lowest quality)
@@ -627,7 +627,7 @@ float GetCubeShadowFactor(
 				shadowCamNearFar, 
 				cubeFaceDim,
 				shadowArray,
-				shadowIdx);
+				shadowTexIdx);
 		}
 	}
 }

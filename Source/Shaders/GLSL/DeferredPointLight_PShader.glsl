@@ -25,8 +25,8 @@ void PShader()
 
 	const vec2 screenUV = PixelCoordsToScreenUV(gl_FragCoord.xy, _TargetParams.g_targetDims.xy, vec2(0, 0), true);
 
-	const uint lightParamsIdx = _LightIndexParams.g_lightIndex.x;
-	const uint shadowIdx = _LightIndexParams.g_lightIndex.y;
+	const uint lightParamsIdx = _LightIndexParams.g_lightShadowIdx.x;
+	const uint shadowTexIdx = _LightIndexParams.g_lightShadowIdx.y;
 
 	const LightData lightData = _PointLightParams[lightParamsIdx];
 
@@ -60,7 +60,7 @@ void PShader()
 			lightUVRadiusSize,
 			cubeFaceDimension,
 			PointShadows,
-			shadowIdx) : 1.f;
+			shadowTexIdx) : 1.f;
 
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

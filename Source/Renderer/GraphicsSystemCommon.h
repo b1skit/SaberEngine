@@ -41,7 +41,7 @@ namespace gr
 	using LightDataBufferIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
 	
 	using ShadowArrayIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
-	static constexpr uint32_t k_invalidShadowIndex = std::numeric_limits<uint32_t>::max();
+	static constexpr uint32_t k_invalidShadowArrayIdx = std::numeric_limits<uint32_t>::max();
 
 
 	// Helper functions:

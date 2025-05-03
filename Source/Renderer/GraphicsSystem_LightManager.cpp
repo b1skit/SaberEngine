@@ -12,7 +12,7 @@
 namespace
 {
 	template<typename T>
-	LightData GetLightParamDataHelper(
+	LightData GetLightDataHelper(
 		gr::RenderDataManager const& renderData,
 		T const& lightRenderData,
 		gr::Transform::RenderData const& transformData,
@@ -29,7 +29,7 @@ namespace
 			shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
 		}
 
-		return gr::GetLightParamData(
+		return gr::GetLightData(
 			&lightRenderData,
 			lightType,
 			transformData,
@@ -464,7 +464,7 @@ namespace gr
 					T const& lightRenderData = lightItr->Get<T>();
 					gr::Transform::RenderData const& transformData = lightItr->GetTransformData();
 
-					lightData[lightIdx] = GetLightParamDataHelper(
+					lightData[lightIdx] = GetLightDataHelper(
 						renderData,
 						lightRenderData,
 						transformData,
@@ -512,7 +512,7 @@ namespace gr
 
 					const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, movedLightID);
 
-					LightData const& lightData = GetLightParamDataHelper(
+					LightData const& lightData = GetLightDataHelper(
 						renderData,
 						lightRenderData,
 						transformData,
@@ -554,7 +554,7 @@ namespace gr
 
 							const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
 
-							LightData const& lightData = GetLightParamDataHelper(
+							LightData const& lightData = GetLightDataHelper(
 								renderData,
 								lightRenderData,
 								transformData,

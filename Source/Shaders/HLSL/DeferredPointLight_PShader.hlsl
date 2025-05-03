@@ -15,8 +15,8 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 
-	const uint lightParamsIdx = LightIndexParams.g_lightIndex.x;
-	const uint shadowIdx = LightIndexParams.g_lightIndex.y;
+	const uint lightParamsIdx = LightIndexParams.g_lightShadowIdx.x;
+	const uint shadowTexIdx = LightIndexParams.g_lightShadowIdx.y;
 	const LightData lightData = PointLightParams[lightParamsIdx];
 	
 	const float3 worldPos = ScreenUVToWorldPos(screenUV, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
@@ -49,7 +49,7 @@ float4 PShader(VertexOut In) : SV_Target
 			lightUVRadiusSize,
 			cubeFaceDimension,
 			PointShadows,
-			shadowIdx) : 1.f;
+			shadowTexIdx) : 1.f;
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
