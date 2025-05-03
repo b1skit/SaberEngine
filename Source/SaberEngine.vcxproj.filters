@@ -112,7 +112,7 @@
     <ClInclude Include="Shaders\Common\MaterialParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Shaders\Common\ShadowRenderParams.h">
+    <ClInclude Include="Shaders\Common\ShadowParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h">

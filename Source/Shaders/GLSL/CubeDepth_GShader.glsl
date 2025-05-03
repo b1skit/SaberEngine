@@ -1,10 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberCommon.glsli"
 
-#include "../Common/ShadowRenderParams.h"
+#include "../Common/ShadowParams.h"
 
 
-layout(binding=11) uniform CubemapShadowRenderParams { CubemapShadowRenderData _CubemapShadowRenderParams; };
+layout(binding=11) uniform CubemapShadowRenderParams { CubemapShadowData _CubemapShadowRenderParams; };
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 18) out;

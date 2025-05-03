@@ -3,25 +3,23 @@
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
-#include "RenderManager.h"
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
 
-#include "Core/Config.h"
 #include "Core/InvPtr.h"
 
-#include "Shaders/Common/ShadowRenderParams.h"
+#include "Shaders/Common/ShadowParams.h"
 
 
 namespace
 {
-	CubemapShadowRenderData GetCubemapShadowRenderParamsData(
+	CubemapShadowData GetCubemapShadowRenderParamsData(
 		gr::Camera::RenderData const& shadowCamData, gr::Transform::RenderData const& transformData)
 	{
 		SEAssert(shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap,
 			"Invalid projection type");
 
-		CubemapShadowRenderData cubemapShadowParams{};
+		CubemapShadowData cubemapShadowParams{};
 		
 		std::vector<glm::mat4> const& cubeViewMatrices = 
 			gr::Camera::BuildAxisAlignedCubeViewMatrices(transformData.m_globalPosition);
@@ -52,18 +50,6 @@ namespace
 		default: SEAssertF("Invalid light type");
 		}
 		return re::TextureView(re::TextureView::Texture2DArrayView{0, 1, shadowArrayIdx, 1 }); // This should never happen
-	}
-
-
-	re::Viewport CreateShadowArrayWriteViewport(core::InvPtr<re::Texture> const& shadowArray)
-	{
-		return re::Viewport(0, 0, shadowArray->Width(), shadowArray->Height());
-	}
-
-
-	re::ScissorRect CreateShadowArrayWriteScissorRect(core::InvPtr<re::Texture> const& shadowArray)
-	{
-		return re::ScissorRect(0, 0, static_cast<long>(shadowArray->Width()), static_cast<long>(shadowArray->Height()));
 	}
 }
 
@@ -144,18 +130,18 @@ namespace gr
 					shadowData.m_lightType, 
 					GetShadowArrayIdx(m_pointShadowArrayIdxMap, lightID)) });
 
-		pointShadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(*m_pointShadowArrayTex));
-		pointShadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(*m_pointShadowArrayTex));
+		pointShadowTargetSet->SetViewport(*m_pointShadowArrayTex);
+		pointShadowTargetSet->SetScissorRect(*m_pointShadowArrayTex);
 
 		shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
 		// Cubemap shadow buffer:
-		CubemapShadowRenderData const& cubemapShadowParams = GetCubemapShadowRenderParamsData(camData, transformData);
+		CubemapShadowData const& cubemapShadowParams = GetCubemapShadowRenderParamsData(camData, transformData);
 
 		re::BufferInput cubeShadowBuf(
-			CubemapShadowRenderData::s_shaderName,
+			CubemapShadowData::s_shaderName,
 			re::Buffer::Create(
-				CubemapShadowRenderData::s_shaderName,
+				CubemapShadowData::s_shaderName,
 				cubemapShadowParams,
 				re::Buffer::BufferParams{
 					.m_stagingPool = re::Buffer::StagingPool::Permanent,
@@ -244,8 +230,8 @@ namespace gr
 					shadowData.m_lightType,
 					GetShadowArrayIdx(shadowArrayIdxMap, lightID)) });
 
-		shadowTargetSet->SetViewport(CreateShadowArrayWriteViewport(shadowArrayTex));;
-		shadowTargetSet->SetScissorRect(CreateShadowArrayWriteScissorRect(shadowArrayTex));	
+		shadowTargetSet->SetViewport(shadowArrayTex);
+		shadowTargetSet->SetScissorRect(shadowArrayTex);
 
 		shadowStage->SetTextureTargetSet(shadowTargetSet);
 
@@ -446,7 +432,7 @@ namespace gr
 						gr::Camera::RenderData const& shadowCamData = pointItr->Get<gr::Camera::RenderData>();
 						gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
 
-						CubemapShadowRenderData const& cubemapShadowParams =
+						CubemapShadowData const& cubemapShadowParams =
 							GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
 						m_pointShadowStageData.at(pointItr->GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(

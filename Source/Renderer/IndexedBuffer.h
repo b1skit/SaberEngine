@@ -61,7 +61,12 @@ namespace gr
 			virtual void Destroy() = 0;
 			virtual void UpdateBuffer(gr::RenderDataManager const&) = 0;
 			virtual std::shared_ptr<re::Buffer> GetBuffer() const = 0;
+
+			// Get a BufferInput for the entire managed array buffer:
 			virtual re::BufferInput GetBufferInput(char const* shaderName) const = 0;
+
+			// Get a BufferInput for a single element within the managed array buffer:
+			virtual re::BufferInput GetBufferInput(gr::RenderDataManager const&, IDType, char const* shaderName) const = 0;
 
 			
 		private:
@@ -134,8 +139,16 @@ namespace gr
 		public:
 			void UpdateBuffer(gr::RenderDataManager const&) override;
 			std::shared_ptr<re::Buffer> GetBuffer() const override;
+
+			// Get a BufferInput for the entire managed array buffer:
 			re::BufferInput GetBufferInput(char const* shaderName) const override;
-			IndexType GetIndex(gr::RenderDataManager const&, IDType id) const override;
+
+			// Get a BufferInput for a single element within the managed array buffer:
+			re::BufferInput GetBufferInput(gr::RenderDataManager const&, IDType, char const* shaderName) const override;
+
+
+		private:
+			IndexType GetIndex(gr::RenderDataManager const&, IDType) const override;
 
 
 		private:
@@ -190,8 +203,15 @@ namespace gr
 		template<typename LUTBuffer>
 		re::BufferInput GetLUTBufferInput(std::ranges::range auto&& renderDataIDs);
 
+		// Get an entire managed array buffer:
 		re::BufferInput GetIndexedBufferInput(util::HashKey bufferNameHash, char const* shaderName) const;
 		re::BufferInput GetIndexedBufferInput(char const* bufferName, char const* shaderName) const;
+
+		// Get a BufferInput for a single element of a managed array buffer:
+		re::BufferInput GetSingleElementBufferInput(
+			IDType, util::HashKey bufferNameHash, char const* shaderName) const;
+		re::BufferInput GetSingleElementBufferInput(
+			IDType, char const* bufferName, char const* shaderName) const;
 
 
 	private:
@@ -465,6 +485,25 @@ namespace gr
 
 
 	template<typename RenderDataType, typename BufferDataType>
+	re::BufferInput IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetBufferInput(
+		gr::RenderDataManager const& renderData, IDType id, char const* shaderName) const
+	{
+		const uint32_t idx = GetIndex(renderData, id);
+		SEAssert(idx != k_invalidIdx, "Failed to find a valid index for the given ID. Was it registered for this type?");
+
+		return re::BufferInput(
+			shaderName,
+			GetBuffer(),
+			re::BufferView::BufferType{
+				.m_firstElement = idx,
+				.m_numElements = 1,
+				.m_structuredByteStride = sizeof(BufferDataType),
+				.m_firstDestIdx = 0,
+			});
+	}
+
+
+	template<typename RenderDataType, typename BufferDataType>
 	IndexedBufferManager::IndexType IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetIndex(
 		gr::RenderDataManager const& renderData, IDType id) const
 	{
@@ -709,6 +748,20 @@ namespace gr
 		char const* shaderName) const
 	{
 		return GetIndexedBufferInput(util::HashKey(bufferName), shaderName);
+	}
+
+
+	inline re::BufferInput IndexedBufferManager::GetSingleElementBufferInput(
+		gr::RenderDataID renderDataID, util::HashKey bufferNameHash, char const* shaderName) const
+	{
+		return m_bufferNameHashToIndexedBuffer.at(bufferNameHash)->GetBufferInput(m_renderData, renderDataID, shaderName);
+	}
+
+
+	inline re::BufferInput IndexedBufferManager::GetSingleElementBufferInput(
+		gr::RenderDataID renderDataID, char const* bufferName, char const* shaderName) const
+	{		
+		return GetSingleElementBufferInput(renderDataID, util::HashKey(bufferName), shaderName);
 	}
 
 

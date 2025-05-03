@@ -220,7 +220,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
     <ClInclude Include="Shaders\Common\PlatformConversions.h" />
     <ClInclude Include="Shaders\Common\RayTracingParams.h" />
-    <ClInclude Include="Shaders\Common\ShadowRenderParams.h" />
+    <ClInclude Include="Shaders\Common\ShadowParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="Shaders\Common\TargetParams.h" />
     <ClInclude Include="Platform.h" />

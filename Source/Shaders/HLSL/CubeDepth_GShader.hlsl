@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberCommon.hlsli"
 
-#include "../Common/ShadowRenderParams.h"
+#include "../Common/ShadowParams.h"
 
 
 struct GeometryOut
@@ -18,7 +18,7 @@ struct GeometryOut
 	uint Face : SV_RenderTargetArrayIndex;
 };
 
-ConstantBuffer<CubemapShadowRenderData> CubemapShadowRenderParams;
+ConstantBuffer<CubemapShadowData> CubemapShadowRenderParams;
 
 
 [maxvertexcount(18)]
