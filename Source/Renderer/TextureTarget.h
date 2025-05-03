@@ -6,6 +6,7 @@
 #include "TextureView.h"
 
 #include "Core/Assert.h"
+#include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IPlatformObject.h"
@@ -75,6 +76,7 @@ namespace re
 	public:
 		Viewport();
 		Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
+		Viewport(core::InvPtr<re::Texture> const&); // Default Viewport about the entire texture
 
 		Viewport(Viewport const&) = default;
 		Viewport(Viewport&&) noexcept = default;
@@ -113,6 +115,7 @@ namespace re
 	public:
 		ScissorRect();
 		ScissorRect(long left, long top, long right, long bottom);
+		ScissorRect(core::InvPtr<re::Texture> const&); // Default rectangle about the entire texture
 
 		long& Left() { return m_left; }
 		long Left() const { return m_left; }

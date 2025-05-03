@@ -99,21 +99,30 @@ namespace re
 	/**********/
 	// Viewport
 	/**********/
-	Viewport::Viewport() :
-		m_xMin(0),
-		m_yMin(0),
-		m_width(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
-		m_height(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey))
+	Viewport::Viewport()
+		: m_xMin(0)
+		, m_yMin(0)
+		, m_width(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey))
+		, m_height(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey))
 	{
 	}
 
 
-	Viewport::Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height) :
-		m_xMin(xMin),
-		m_yMin(yMin),
-		m_width(width),
-		m_height(height)
+	Viewport::Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height)
+		: m_xMin(xMin)
+		, m_yMin(yMin)
+		, m_width(width)
+		, m_height(height)
 	{
+	}
+
+	Viewport::Viewport(core::InvPtr<re::Texture> const& texture)
+		: m_xMin(0)
+		, m_yMin(0)
+		, m_width(texture->Width())
+		, m_height(texture->Height())
+	{
+
 	}
 
 	/************/
@@ -133,6 +142,15 @@ namespace re
 		, m_top(top)
 		, m_right(right)
 		, m_bottom(bottom)
+	{
+	}
+
+
+	ScissorRect::ScissorRect(core::InvPtr<re::Texture> const& texture)
+		: m_left(0)
+		, m_top(0)
+		, m_right(util::CheckedCast<long>(texture->Width()))
+		, m_bottom(util::CheckedCast<long>(texture->Height()))
 	{
 	}
 
