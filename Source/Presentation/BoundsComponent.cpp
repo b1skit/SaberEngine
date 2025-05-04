@@ -7,8 +7,6 @@
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
 
-#include "Core/Util/ByteVector.h"
-
 
 namespace
 {

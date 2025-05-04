@@ -81,7 +81,7 @@ namespace gr
 
 		// Get a unique list of IDs that have all Ts, where any/all of the Ts have dirty data for this frame
 		template<typename... Ts>
-		[[nodiscard]] std::vector<gr::RenderDataID> GetIDsWithAnyDirtyData() const;
+		[[nodiscard]] std::vector<gr::RenderDataID> GetIDsWithAnyDirtyData(gr::FeatureBitmask = RenderObjectFeature::None) const;
 
 		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
@@ -117,10 +117,10 @@ namespace gr
 		[[nodiscard]] bool HasAnyDirtyDataInternal() const;
 
 		template<typename T>
-		[[nodiscard]] void GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>&) const;
+		[[nodiscard]] void GetIDsWithAnyDirtyDataInternal(std::vector<gr::RenderDataID>&) const;
 
 		template<typename T, typename Next, typename... Rest>
-		[[nodiscard]] void GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>&) const;
+		[[nodiscard]] void GetIDsWithAnyDirtyDataInternal(std::vector<gr::RenderDataID>&) const;
 
 		template<typename T>
 		[[nodiscard]] size_t GetNumberOfDirtyIDs() const;
@@ -802,10 +802,12 @@ namespace gr
 	template<typename T>
 	bool RenderDataManager::HasIDsWithDeletedData() const
 	{
-		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false),
-			"This function does not (currently) support gr::Transform::RenderData queries");
-
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		if constexpr (std::is_same_v<T, gr::Transform::RenderData>)
+		{
+			return m_perFrameDeletedTransformIDs.empty() == false;
+		}
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
@@ -897,7 +899,7 @@ namespace gr
 
 
 	template<typename T>
-	void RenderDataManager::GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>& dirtyIDs) const
+	void RenderDataManager::GetIDsWithAnyDirtyDataInternal(std::vector<gr::RenderDataID>& dirtyIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -927,17 +929,18 @@ namespace gr
 
 
 	template<typename T, typename Next, typename... Rest>
-	void RenderDataManager::GetIDsWithAnyDirtyData(std::vector<gr::RenderDataID>& uniqueDirtyIDs) const
+	void RenderDataManager::GetIDsWithAnyDirtyDataInternal(std::vector<gr::RenderDataID>& uniqueDirtyIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		GetIDsWithAnyDirtyData<T>(uniqueDirtyIDs);
-		GetIDsWithAnyDirtyData<Next, Rest...>(uniqueDirtyIDs);
+		GetIDsWithAnyDirtyDataInternal<T>(uniqueDirtyIDs);
+		GetIDsWithAnyDirtyDataInternal<Next, Rest...>(uniqueDirtyIDs);
 	}
 
 
 	template<typename... Ts>
-	std::vector<gr::RenderDataID> RenderDataManager::GetIDsWithAnyDirtyData() const
+	std::vector<gr::RenderDataID> RenderDataManager::GetIDsWithAnyDirtyData(
+		gr::FeatureBitmask featureBits /*= RenderObjectFeature::None*/) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -951,7 +954,7 @@ namespace gr
 		std::vector<gr::RenderDataID> dirtyIDs;
 		dirtyIDs.reserve(numDirtyIDs);
 		
-		GetIDsWithAnyDirtyData<Ts...>(dirtyIDs);
+		GetIDsWithAnyDirtyDataInternal<Ts...>(dirtyIDs);
 		SEAssert(dirtyIDs.size() <= numDirtyIDs, "Found more dirty IDs than anticipated. This should not be possible");
 
 		// Post-process the RenderDataIDs in-place to remove duplicates or IDs that don't own ALL of the required types
@@ -964,8 +967,10 @@ namespace gr
 			const gr::RenderDataID curID = *idItr;
 
 			// We return a list of unique IDs, that contains all of the types
-			// If we've seen this ID, or it doesn't have all the types, remove it
-			if (seenIDs.contains(curID) || !HasObjectData<Ts...>(curID))
+			// If we've seen this ID, or it doesn't have all the types/feature bits, remove it
+			if (seenIDs.contains(curID) || 
+				!HasObjectData<Ts...>(curID) ||
+				(featureBits != RenderObjectFeature::None && !HasAllFeatures(GetFeatureBits(curID), featureBits)))
 			{
 				bool isLast = false;
 				auto lastElementItr = std::prev(dirtyIDs.end());

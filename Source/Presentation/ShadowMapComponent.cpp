@@ -1,7 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
-#include "Core/Config.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -10,8 +9,6 @@
 #include "RenderDataComponent.h"
 #include "ShadowMapComponent.h"
 #include "TransformComponent.h"
-
-#include "Renderer/RenderManager.h"
 
 
 namespace

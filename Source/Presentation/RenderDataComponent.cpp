@@ -113,7 +113,6 @@ namespace fr
 	}
 
 
-
 	gr::TransformID RenderDataComponent::GetTransformID() const
 	{
 		return m_transformID;
@@ -123,20 +122,20 @@ namespace fr
 	void RenderDataComponent::SetFeatureBit(gr::RenderObjectFeature feature)
 	{
 		SEAssert(feature != gr::RenderObjectFeature::Invalid, "Invalid feature");
-		m_featureBits |= feature;
+		m_featureBits.fetch_or(feature);
 	}
 
 
 	bool RenderDataComponent::HasFeatureBit(gr::RenderObjectFeature feature) const
 	{
 		SEAssert(feature != gr::RenderObjectFeature::Invalid, "Invalid feature");
-		return (m_featureBits & feature);
+		return (m_featureBits.load() & feature);
 	}
 
 
 	gr::FeatureBitmask RenderDataComponent::GetFeatureBits() const
 	{
-		return m_featureBits;
+		return m_featureBits.load();
 	}
 
 

@@ -2,6 +2,8 @@
 #include "BufferView.h"
 #include "Buffer.h"
 
+#include "Core/Assert.h"
+
 #include "Core/Util/HashUtils.h"
 
 
@@ -25,6 +27,8 @@ namespace re
 	BufferView::BufferView(std::shared_ptr<re::Buffer> const& buffer)
 		: m_isVertexStreamView(false)
 	{
+		SEAssert(buffer, "Buffer is null");
+
 		const uint32_t bufferArraySize = buffer->GetArraySize();
 
 		m_bufferView = BufferView::BufferType{

@@ -48,7 +48,7 @@ namespace fr
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 
-		gr::FeatureBitmask m_featureBits;
+		std::atomic<gr::FeatureBitmask> m_featureBits; // RenderDataComponents are shared
 
 
 	private:
