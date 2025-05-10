@@ -1,9 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
-#include "Buffer.h"
-#include "BufferView.h"
 #include "Effect.h"
+#include "RenderObjectIDs.h"
 #include "Sampler.h"
 
 #include "Core/InvPtr.h"
@@ -19,6 +18,9 @@ namespace re
 
 namespace gr
 {
+	class RenderDataManager;
+
+
 	class Material : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
@@ -106,7 +108,8 @@ namespace gr
 		};
 
 		template<typename T>
-		static T CreateInstancedMaterialData(gr::Material::MaterialInstanceRenderData const&);
+		static T CreateInstancedMaterialData(
+			gr::Material::MaterialInstanceRenderData const&, IDType, gr::RenderDataManager const&);
 
 
 	public:
@@ -179,7 +182,8 @@ namespace gr
 
 
 	template<typename T>
-	static T Material::CreateInstancedMaterialData(gr::Material::MaterialInstanceRenderData const& materialInstanceData)
+	static T Material::CreateInstancedMaterialData(
+		gr::Material::MaterialInstanceRenderData const& materialInstanceData, IDType, gr::RenderDataManager const&)
 	{
 		SEAssert(sizeof(T) <= gr::Material::k_paramDataBlockByteSize, "Requested type is too large");
 		// TODO: We should assert that T is indeed what is packed in m_materialParamData

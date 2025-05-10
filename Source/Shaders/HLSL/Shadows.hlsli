@@ -11,9 +11,6 @@
 
 ConstantBuffer<PoissonSampleParamsData> PoissonSampleParams;
 
-Texture2DArray<float> SpotShadows;
-TextureCubeArray<float> PointShadows;
-
 
 void Float2ToFloat4SampleIndex(uint sampleIdx, out uint baseIdxOut, out uint offsetOut)
 {

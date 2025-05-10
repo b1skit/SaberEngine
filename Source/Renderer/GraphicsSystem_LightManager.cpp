@@ -9,37 +9,6 @@
 #include "Shaders/Common/LightParams.h"
 
 
-namespace
-{
-	template<typename T>
-	LightData GetLightDataHelper(
-		gr::RenderDataManager const& renderData,
-		T const& lightRenderData,
-		gr::Transform::RenderData const& transformData,
-		gr::RenderDataID lightID,
-		gr::Light::Type lightType,
-		core::InvPtr<re::Texture> const& shadowTex,
-		uint32_t shadowArrayIdx)
-	{
-		gr::ShadowMap::RenderData const* shadowData = nullptr;
-		gr::Camera::RenderData const* shadowCamData = nullptr;
-		if (lightRenderData.m_hasShadow)
-		{
-			shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(lightID);
-			shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(lightID);
-		}
-
-		return gr::GetLightData(
-			&lightRenderData,
-			lightType,
-			transformData,
-			shadowData,
-			shadowCamData,
-			shadowTex,
-			shadowArrayIdx);
-	}
-}
-
 namespace gr
 {
 	LightManagerGraphicsSystem::LightManagerGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
@@ -57,25 +26,12 @@ namespace gr
 
 	void LightManagerGraphicsSystem::RegisterOutputs()
 	{
-		// Monolithic light buffers:
-		RegisterBufferOutput(k_directionalLightDataBufferOutput, &m_directionalLightMetadata.m_lightData);
-		RegisterBufferOutput(k_pointLightDataBufferOutput, &m_pointLightMetadata.m_lightData);
-		RegisterBufferOutput(k_spotLightDataBufferOutput, &m_spotLightMetadata.m_lightData);
-
-		// RenderDataID -> monolithic light buffer index maps
-		RegisterDataOutput(k_IDToDirectionalIdxDataOutput, &m_directionalLightMetadata.m_renderDataIDToBufferIdx);
-		RegisterDataOutput(k_IDToPointIdxDataOutput, &m_pointLightMetadata.m_renderDataIDToBufferIdx);
-		RegisterDataOutput(k_IDToSpotIdxDataOutput, &m_spotLightMetadata.m_renderDataIDToBufferIdx);
-
 		// Shadow array textures:
 		RegisterTextureOutput(k_directionalShadowArrayTexOutput, &m_directionalShadowMetadata.m_shadowArray);
 		RegisterTextureOutput(k_pointShadowArrayTexOutput, &m_pointShadowMetadata.m_shadowArray);
 		RegisterTextureOutput(k_spotShadowArrayTexOutput, &m_spotShadowMetadata.m_shadowArray);
-
-		// RenderDataID -> shadow texture array index maps
-		RegisterDataOutput(k_IDToDirectionalShadowArrayIdxDataOutput, &m_directionalShadowMetadata.m_renderDataIDToTexArrayIdx);
-		RegisterDataOutput(k_IDToPointShadowArrayIdxDataOutput, &m_pointShadowMetadata.m_renderDataIDToTexArrayIdx);
-		RegisterDataOutput(k_IDToSpotShadowArrayIdxDataOutput, &m_spotShadowMetadata.m_renderDataIDToTexArrayIdx);
+		
+		RegisterDataOutput(k_lightIDToShadowRecordOutput, &m_lightIDToShadowRecords);
 
 		RegisterBufferOutput(k_PCSSSampleParamsBufferOutput, &m_poissonSampleParamsBuffer);
 	}
@@ -114,12 +70,12 @@ namespace gr
 	uint32_t LightManagerGraphicsSystem::GetShadowArrayIndex(
 		ShadowMetadata const& shadowMetadata, gr::RenderDataID lightID) const
 	{
-		uint32_t shadowArrayIdx = INVALID_SHADOW_IDX;
+		uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
 		if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
 		{
-			shadowArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+			shadowTexArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
 		}
-		return shadowArrayIdx;
+		return shadowTexArrayIdx;
 	};
 
 
@@ -151,63 +107,6 @@ namespace gr
 
 	void LightManagerGraphicsSystem::RemoveDeletedLights(gr::RenderDataManager const& renderData)
 	{
-		auto DeleteLightMetadata = [](
-			std::vector<gr::RenderDataID> const* lightIDs,
-			LightMetadata& lightMetadata)
-			{
-				if (lightIDs == nullptr || lightIDs->empty())
-				{
-					return;
-				}
-
-				for (gr::RenderDataID deletedID : *lightIDs)
-				{
-					SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(deletedID),
-						"Trying to delete a light RenderDataID that has not been registered");
-
-					const uint32_t deletedIdx = lightMetadata.m_renderDataIDToBufferIdx.at(deletedID);
-
-					SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(deletedIdx),
-						"Trying to delete a light index that has not been registered");
-
-					// Use the reverse iterator to get the details of the last entry:
-					const uint32_t lastIdx = lightMetadata.m_bufferIdxToRenderDataID.rbegin()->first;
-					const gr::RenderDataID lastLightID = lightMetadata.m_bufferIdxToRenderDataID.rbegin()->second;
-
-					SEAssert(lastIdx != deletedIdx ||
-						(lightMetadata.m_bufferIdxToRenderDataID.at(lastIdx) == deletedID &&
-							lightMetadata.m_renderDataIDToBufferIdx.at(deletedID) == lastIdx),
-						"IDs are out of sync");
-
-					// Move the last entry to replace the one being deleted:
-					if (lastIdx != deletedIdx)
-					{
-						// Record the index so we can update its buffer data later
-						lightMetadata.m_dirtyMovedIndexes.emplace_back(deletedIdx);
-
-						// Update the metadata: The last element is moved to the deleted location
-						lightMetadata.m_bufferIdxToRenderDataID.at(deletedIdx) = lastLightID;
-						lightMetadata.m_renderDataIDToBufferIdx.at(lastLightID) = deletedIdx;
-					}
-
-					// Update the metadata: We remove the deleted/final element:
-					lightMetadata.m_bufferIdxToRenderDataID.erase(lastIdx);
-					lightMetadata.m_renderDataIDToBufferIdx.erase(deletedID);
-
-					SEAssert(lightMetadata.m_numLights >= 1, "Removing this light will underflow the counter");
-					lightMetadata.m_numLights--;
-
-					// If there are no more lights, we don't need to update anything
-					if (lightMetadata.m_numLights == 0)
-					{
-						lightMetadata.m_dirtyMovedIndexes.clear();
-					}
-				}
-			};
-		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_directionalLightMetadata);
-		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointLightMetadata);
-		DeleteLightMetadata(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotLightMetadata);
-
 		std::vector<gr::RenderDataID> const* deletedShadows = renderData.GetIDsWithDeletedData<gr::ShadowMap::RenderData>();
 		if (deletedShadows && !deletedShadows->empty())
 		{
@@ -263,6 +162,10 @@ namespace gr
 					DeleteShadowEntry(m_directionalShadowMetadata);
 				}
 				SEAssert(foundShadow, "Trying to delete a light RenderDataID that has not been registered");
+
+				// Update the shadow record output:
+				SEAssert(m_lightIDToShadowRecords.contains(deletedID), "Failed to find the light ID");
+				m_lightIDToShadowRecords.erase(deletedID);
 			}
 		}
 	}
@@ -270,37 +173,6 @@ namespace gr
 
 	void LightManagerGraphicsSystem::RegisterNewLights(gr::RenderDataManager const& renderData)
 	{
-		auto AddToLightMetadata = [](
-			std::vector<gr::RenderDataID> const* lightIDs,
-			LightMetadata& lightMetadata)
-			{
-				if (!lightIDs || lightIDs->empty())
-				{
-					return;
-				}
-
-				for (gr::RenderDataID newID : *lightIDs)
-				{
-					SEAssert(!lightMetadata.m_renderDataIDToBufferIdx.contains(newID), "Light is already registered");
-
-					const uint32_t newLightIndex = lightMetadata.m_numLights++;
-
-					lightMetadata.m_renderDataIDToBufferIdx.emplace(newID, newLightIndex);
-					lightMetadata.m_bufferIdxToRenderDataID.emplace(newLightIndex, newID);
-
-					SEAssert(lightMetadata.m_renderDataIDToBufferIdx.size() == lightMetadata.m_numLights &&
-						lightMetadata.m_bufferIdxToRenderDataID.size() == lightMetadata.m_numLights,
-						"Number of lights is out of sync");
-
-					// Note: The render data dirty IDs list also contains new object IDs, so we don't need to add new
-					// objects to our dirty indexes list here
-				}
-			};
-		AddToLightMetadata(renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>(), m_directionalLightMetadata);
-		AddToLightMetadata(renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>(), m_pointLightMetadata);
-		AddToLightMetadata(renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>(), m_spotLightMetadata);
-
-
 		std::vector<gr::RenderDataID> const* newShadows = renderData.GetIDsWithNewData<gr::ShadowMap::RenderData>();
 		if (newShadows && !newShadows->empty())
 		{
@@ -310,7 +182,7 @@ namespace gr
 
 				gr::ShadowMap::RenderData const& shadowMapRenderData = shadowItr->Get<gr::ShadowMap::RenderData>();
 
-				auto AddShadowToMetadata = [&shadowID](ShadowMetadata& shadowMetadata)
+				auto AddShadowToMetadata = [&shadowID, this](ShadowMetadata& shadowMetadata)
 					{
 						SEAssert(!shadowMetadata.m_renderDataIDToTexArrayIdx.contains(shadowID),
 							"Shadow is already registered");
@@ -326,6 +198,15 @@ namespace gr
 
 						// Note: The render data dirty IDs list also contains new object IDs, so we don't need to add new
 						// objects to our dirty indexes list here
+
+						// Update the shadow record output:
+						SEAssert(m_lightIDToShadowRecords.contains(shadowID) == false, "RenderDataID already registered");
+						m_lightIDToShadowRecords.emplace(
+							shadowID,
+							gr::ShadowRecord{
+								.m_shadowTex = &shadowMetadata.m_shadowArray,
+								.m_shadowTexArrayIdx = newShadowIndex,
+							});
 					};
 
 				switch (shadowMapRenderData.m_lightType)
@@ -343,8 +224,7 @@ namespace gr
 
 	void LightManagerGraphicsSystem::UpdateLightBufferData(gr::RenderDataManager const& renderData)
 	{
-		// We update the shadows first, as we pack some shadow texture parameters into the LightData buffer
-		auto UpdateShadowTexture = [](
+		auto UpdateShadowTexture = [this](
 			gr::Light::Type lightType,
 			ShadowMetadata& shadowMetadata,
 			char const* shadowTexName)
@@ -412,191 +292,24 @@ namespace gr
 					shadowArrayParams.m_mipMode = re::Texture::MipMode::None;
 					shadowArrayParams.m_optimizedClear.m_depthStencil.m_depth = 1.f;
 
+					// Cache the current shadow texture address before we replace it:
+					core::InvPtr<re::Texture> const* prevShadowTex = &shadowMetadata.m_shadowArray;
+
 					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
+
+					// Update the existing shadow record outputs with the new texture:
+					for (auto& entry : m_lightIDToShadowRecords)
+					{
+						if (entry.second.m_shadowTex == prevShadowTex)
+						{
+							entry.second.m_shadowTex = &shadowMetadata.m_shadowArray;
+						}
+					}					
 				}
 			};
 		UpdateShadowTexture(gr::Light::Directional, m_directionalShadowMetadata, "Directional shadows");
 		UpdateShadowTexture(gr::Light::Point, m_pointShadowMetadata, "Point shadows");
 		UpdateShadowTexture(gr::Light::Spot, m_spotShadowMetadata, "Spot shadows");
-
-
-		auto UpdateLightBuffer = [&renderData, this]<typename T>(
-			gr::Light::Type lightType,
-			LightMetadata& lightMetadata,
-			ShadowMetadata const& shadowMetadata,
-			char const* bufferName)
-		{
-			// If the buffer does not exist we must create it:
-			bool mustReallocate = lightMetadata.m_lightData == nullptr;
-
-			if (!mustReallocate)
-			{
-				const uint32_t curNumBufferElements = lightMetadata.m_lightData->GetArraySize();
-
-				// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
-				mustReallocate = lightMetadata.m_numLights > 0 &&
-					(lightMetadata.m_numLights > curNumBufferElements ||
-						lightMetadata.m_numLights <= curNumBufferElements * k_shrinkReallocationFactor);
-			}
-
-			if (mustReallocate)
-			{
-				std::vector<LightData> lightData;
-				lightData.resize(lightMetadata.m_numLights);
-
-				// Populate the light data:
-				for (auto const& lightItr : gr::ObjectAdapter<T>(renderData))
-				{
-					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
-
-					SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
-						"Light ID has not been registered");
-
-					const uint32_t lightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-
-					const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
-
-					SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(lightIdx),
-						"Light index has not been registered");
-
-					SEAssert(lightIdx < lightMetadata.m_numLights, "Light index is OOB");
-
-					T const& lightRenderData = lightItr->Get<T>();
-					gr::Transform::RenderData const& transformData = lightItr->GetTransformData();
-
-					lightData[lightIdx] = GetLightDataHelper(
-						renderData,
-						lightRenderData,
-						transformData,
-						lightID,
-						lightType,
-						shadowMetadata.m_shadowArray,
-						shadowArrayIdx);
-				}
-				SEAssert(lightMetadata.m_numLights == lightData.size(),
-					"Number of lights is out of sync with render data");
-
-
-				// If there are 0 lights, create a single dummy entry so we have something to set
-				if (lightData.empty())
-				{
-					lightData.emplace_back(LightData{});
-				}
-
-				lightMetadata.m_lightData = re::Buffer::CreateArray<LightData>(
-					bufferName,
-					lightData.data(),
-					re::Buffer::BufferParams{
-						.m_stagingPool = re::Buffer::StagingPool::Permanent,
-						.m_memPoolPreference = re::Buffer::UploadHeap,
-						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-						.m_usageMask = re::Buffer::Structured,
-						.m_arraySize = util::CheckedCast<uint32_t>(lightData.size()),
-					});
-			}
-			else
-			{
-				// Update any entries that were moved:
-				std::unordered_set<gr::RenderDataID> seenIDs;
-
-				for (uint32_t movedLightIdx : lightMetadata.m_dirtyMovedIndexes)
-				{
-					SEAssert(lightMetadata.m_bufferIdxToRenderDataID.contains(movedLightIdx), "Invalid light index");
-
-					const gr::RenderDataID movedLightID = lightMetadata.m_bufferIdxToRenderDataID.at(movedLightIdx);
-
-					T const& lightRenderData = renderData.GetObjectData<T>(movedLightID);
-
-					gr::Transform::RenderData const& transformData =
-						renderData.GetTransformDataFromRenderDataID(movedLightID);
-
-					const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, movedLightID);
-
-					LightData const& lightData = GetLightDataHelper(
-						renderData,
-						lightRenderData,
-						transformData,
-						movedLightID,
-						lightType,
-						shadowMetadata.m_shadowArray,
-						shadowArrayIdx);
-
-					lightMetadata.m_lightData->Commit(&lightData, movedLightIdx, 1);
-
-					seenIDs.emplace(movedLightID);
-				}
-
-				// Note: We iterate over ALL lights (not just those that passed culling)
-				for (auto const& lightItr : gr::ObjectAdapter<T>(renderData))
-				{
-					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
-
-					if (!seenIDs.contains(lightID))// Don't double-update entries that were moved AND dirty
-					{
-						T const& lightRenderData = renderData.GetObjectData<T>(lightID);
-
-						// Check if any of the elements related to this light are dirty:
-						bool isDirty = lightItr->IsDirty<T>() || lightItr->TransformIsDirty();
-						if (!isDirty && lightRenderData.m_hasShadow)
-						{
-							SEAssert((renderData.HasObjectData<gr::Camera::RenderData>() &&
-								renderData.HasObjectData<gr::ShadowMap::RenderData>()),
-								"If a light has a shadow, it must have ShadowMap::RenderData and Camera::RenderData");
-
-							isDirty |= renderData.IsDirty<gr::Camera::RenderData>(lightID) ||
-								renderData.IsDirty<gr::ShadowMap::RenderData>(lightID);
-						}
-
-						if (isDirty)
-						{
-							gr::Transform::RenderData const& transformData =
-								renderData.GetTransformDataFromRenderDataID(lightID);
-
-							const uint32_t shadowArrayIdx = GetShadowArrayIndex(shadowMetadata, lightID);
-
-							LightData const& lightData = GetLightDataHelper(
-								renderData,
-								lightRenderData,
-								transformData,
-								lightID,
-								lightType,
-								shadowMetadata.m_shadowArray,
-								shadowArrayIdx);
-
-							SEAssert(lightMetadata.m_renderDataIDToBufferIdx.contains(lightID),
-								"Light ID has not been registered");
-
-							const uint32_t dirtyLightIdx = lightMetadata.m_renderDataIDToBufferIdx.at(lightID);
-
-							SEAssert(dirtyLightIdx < lightMetadata.m_numLights, "Light index is OOB");
-
-							lightMetadata.m_lightData->Commit(&lightData, dirtyLightIdx, 1);
-						}
-					}
-				}
-			}
-
-			// Clear the dirty indexes, regardless of whether we fully reallocated or partially updated:
-			lightMetadata.m_dirtyMovedIndexes.clear();
-		};
-
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataDirectional>(
-			gr::Light::Directional,
-			m_directionalLightMetadata,
-			m_directionalShadowMetadata,
-			LightData::s_directionalLightDataShaderName);
-
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataPoint>(
-			gr::Light::Point,
-			m_pointLightMetadata,
-			m_pointShadowMetadata,
-			LightData::s_pointLightDataShaderName);
-
-		UpdateLightBuffer.template operator()<gr::Light::RenderDataSpot>(
-			gr::Light::Spot,
-			m_spotLightMetadata,
-			m_spotShadowMetadata,
-			LightData::s_spotLightDataShaderName);
 	}
 
 
@@ -604,16 +317,6 @@ namespace gr
 	{
 		constexpr ImGuiTableFlags k_tableFlags =
 			ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
-
-		auto ShowLightMetadata = [&k_tableFlags](LightMetadata const& lightMetadata)
-			{
-				ImGui::Indent();
-				ImGui::Text(std::format("No. of lights: {}", lightMetadata.m_numLights).c_str());
-				ImGui::Text(std::format("LightData Buffer size{}: {}",
-					lightMetadata.m_numLights == 0 ? " (including dummy)" : "",
-					lightMetadata.m_lightData->GetArraySize()).c_str());
-				ImGui::Unindent();
-			};
 
 		auto ShowShadowMetadata = [](ShadowMetadata const& shadowMetadata)
 			{
@@ -629,78 +332,23 @@ namespace gr
 			};
 
 
-		auto ShowIndexMappings = [](LightMetadata const& lightMetadata, ShadowMetadata const& shadowMetadata)
-			{
-				const int numCols = 3;
-				if (ImGui::BeginTable("Light/Shadow index mappings", numCols, k_tableFlags))
-				{
-					// Headers:				
-					ImGui::TableSetupColumn("RenderDataID");
-					ImGui::TableSetupColumn("LightData buffer index");
-					ImGui::TableSetupColumn("Shadow array index");
-
-					ImGui::TableHeadersRow();
-
-					// Loop over light RenderDataIDs: All shadows have a light, but not all lights have a shadow
-					for (auto const& lightEntry : lightMetadata.m_renderDataIDToBufferIdx)
-					{
-						ImGui::TableNextRow();
-						ImGui::TableNextColumn();
-
-						const gr::RenderDataID lightID = lightEntry.first;
-						ImGui::Text(std::format("{}", lightID).c_str());
-
-						ImGui::TableNextColumn();
-
-						const uint32_t bufferIdx = lightEntry.second;
-						ImGui::Text(std::format("{}", bufferIdx).c_str());
-
-						ImGui::TableNextColumn();
-
-						if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
-						{
-							ImGui::Text(std::format("{}", shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID)).c_str());
-						}
-						else
-						{
-							ImGui::Text("-");
-						}
-					}
-
-					ImGui::EndTable();
-				}
-			};
-
-
 		if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ShowLightMetadata(m_directionalLightMetadata);
-			ImGui::NewLine();
 			ShowShadowMetadata(m_directionalShadowMetadata);
-			ImGui::NewLine();
-			ShowIndexMappings(m_directionalLightMetadata, m_directionalShadowMetadata);
 		}
 
 		ImGui::NewLine();
 
 		if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ShowLightMetadata(m_pointLightMetadata);
-			ImGui::NewLine();
 			ShowShadowMetadata(m_pointShadowMetadata);
-			ImGui::NewLine();
-			ShowIndexMappings(m_pointLightMetadata, m_pointShadowMetadata);
 		}
 
 		ImGui::NewLine();
 
 		if (ImGui::CollapsingHeader("Spot Lights", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ShowLightMetadata(m_spotLightMetadata);
-			ImGui::NewLine();
 			ShowShadowMetadata(m_spotShadowMetadata);
-			ImGui::NewLine();
-			ShowIndexMappings(m_spotLightMetadata, m_spotShadowMetadata);
 		}
 	}
 }

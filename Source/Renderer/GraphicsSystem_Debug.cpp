@@ -43,7 +43,8 @@ namespace
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
 			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
 
-		axisBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(std::views::single(renderDataID)));
+		axisBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+			InstanceIndexData::s_shaderName, std::views::single(renderDataID)));
 		axisBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
 
 		return axisBatch;
@@ -110,7 +111,8 @@ namespace
 			childRenderDataID };
 
 		// Our shader use the VertexID to index into this buffer:
-		lineBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(parentChildRenderDataIDs));
+		lineBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+			InstanceIndexData::s_shaderName, parentChildRenderDataIDs));
 
 		lineBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
 
@@ -226,7 +228,8 @@ namespace
 		SEAssert(!associatedRenderDataIDs.empty(),
 			"No RenderDataIDs assocated with the parent TransformID");
 
-		boundingBoxBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(std::views::single(associatedRenderDataIDs[0])));
+		boundingBoxBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+			InstanceIndexData::s_shaderName, std::views::single(associatedRenderDataIDs[0])));
 		boundingBoxBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
 
 		return boundingBoxBatch;
@@ -263,7 +266,8 @@ namespace
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
 			batchLifetime, normalBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
 
-		normalDebugBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(std::views::single(renderDataID)));
+		normalDebugBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+			InstanceIndexData::s_shaderName, std::views::single(renderDataID)));
 		normalDebugBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
 
 		return normalDebugBatch;
@@ -381,7 +385,8 @@ namespace
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
 			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);
 
-		wireframeBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(std::views::single(renderDataID)));
+		wireframeBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+			InstanceIndexData::s_shaderName, std::views::single(renderDataID)));
 		wireframeBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
 
 		return wireframeBatch;
@@ -704,7 +709,7 @@ namespace gr
 					if (!m_cameraFrustumTransformBuffers.at(camID)[faceIdx].IsValid())
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx] =
-							gr::Transform::CreateInstancedTransformBufferInput(
+							gr::Transform::CreateTransformBufferInput(
 								TransformData::s_shaderName,
 								re::Lifetime::Permanent,
 								re::Buffer::StagingPool::Permanent,
@@ -714,7 +719,7 @@ namespace gr
 					else if (camDataIsDirty)
 					{
 						m_cameraFrustumTransformBuffers.at(camID)[faceIdx].GetBuffer()->Commit(
-							gr::Transform::CreateInstancedTransformData(&invViewProjMats.at(faceIdx), nullptr));
+							gr::Transform::CreateTransformData(&invViewProjMats.at(faceIdx), nullptr));
 					}
 
 					if (m_cameraFrustumBatches.at(camID)[faceIdx] == nullptr)

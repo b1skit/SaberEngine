@@ -15,13 +15,27 @@
 #include "../Common/LightParams.h"
 #include "../Common/MaterialParams.h"
 
-
 Texture2D<float4> BaseColorTex;
 Texture2D<float4> NormalTex;
 Texture2D<float4> MetallicRoughnessTex;
 Texture2D<float4> OcclusionTex;
 
 Texture2DArray<float> DirectionalShadows;
+TextureCubeArray<float> PointShadows;
+Texture2DArray<float> SpotShadows;
+
+StructuredBuffer<LightData> DirectionalLightParams;
+StructuredBuffer<LightData> PointLightParams;
+StructuredBuffer<LightData> SpotLightParams;
+
+StructuredBuffer<ShadowData> ShadowParams;
+
+// We access all light types simultaneously, thus we need arrays of LightShadowLUTData for each
+StructuredBuffer<LightShadowLUTData> DirectionalLUT;
+StructuredBuffer<LightShadowLUTData> PointLUT;
+StructuredBuffer<LightShadowLUTData> SpotLUT;
+
+ConstantBuffer<LightMetadata> LightCounts;
 
 // Note: If a resource is used in multiple shader stages, we need to explicitely specify the register and space.
 // Otherwise, shader reflection will assign the resource different registers for each stage (while SE expects them to be
@@ -29,18 +43,6 @@ Texture2DArray<float> DirectionalShadows;
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space1);
-
-
-uint UnpackPointLightIndex(uint arrayIdx)
-{
-	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_pointLightIndexes)[arrayIdx];
-}
-
-
-uint UnpackSpotLightIndex(uint arrayIdx)
-{
-	return ((uint[MAX_LIGHT_COUNT])AllLightIndexesParams.g_spotLightIndexes)[arrayIdx];
-}
 
 
 float4 PShader(VertexOut In) : SV_Target
@@ -114,36 +116,48 @@ float4 PShader(VertexOut In) : SV_Target
 	
 		totalContribution += ComputeAmbientLighting(ambientLightParams);
 	}
+	
 
 	// Directional:
 	{
-		const uint numDirectionalLights = AllLightIndexesParams.g_numLights.x;
-		
+		const uint numDirectionalLights = LightCounts.g_numLights.x;
 		for (uint directionalIdx = 0; directionalIdx < numDirectionalLights; ++directionalIdx)
 		{
-			const LightData lightData = DirectionalLightParams[directionalIdx];
+			const LightShadowLUTData indexLUT = DirectionalLUT[directionalIdx];
 			
-			const uint shadowTexIdx = lightData.g_extraParams.w;
+			const uint lightBufferIdx = indexLUT.g_lightShadowIdx.x;
+			const uint shadowBufferIdx = indexLUT.g_lightShadowIdx.y;
+			const uint shadowTexIdx = indexLUT.g_lightShadowIdx.z;
 			
-			const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
-			const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
-			const float2 lightUVRadiusSize = lightData.g_shadowParams.zw;
-			const float shadowQualityMode = lightData.g_shadowParams.y;
-		
-			const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
-			const float shadowFactor = shadowEnabled ?
-			Get2DShadowFactor(
-				worldPos,
-				worldNormal,
-				lightData.g_lightWorldPosRadius.xyz,
-				lightData.g_shadowCam_VP,
-				shadowCamNearFar,
-				minMaxShadowBias,
-				shadowQualityMode,
-				lightUVRadiusSize,
-				lightData.g_shadowMapTexelSize,
-				DirectionalShadows,
-				shadowTexIdx) : 1.f;
+			const LightData lightData = DirectionalLightParams[lightBufferIdx];
+			
+			float shadowFactor = 1.f;
+			if (shadowBufferIdx != INVALID_SHADOW_IDX)
+			{
+				const ShadowData shadowData = ShadowParams[shadowBufferIdx];
+
+				const bool shadowEnabled = shadowData.g_shadowParams.x;	
+				if (shadowEnabled)
+				{
+					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
+					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
+					const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
+					const float shadowQualityMode = shadowData.g_shadowParams.y;
+					
+					shadowFactor = Get2DShadowFactor(
+						worldPos,
+						worldNormal,
+						lightData.g_lightWorldPosRadius.xyz,
+						shadowData.g_shadowCam_VP,
+						shadowCamNearFar,
+						minMaxShadowBias,
+						shadowQualityMode,
+						lightUVRadiusSize,
+						shadowData.g_shadowMapTexelSize,
+						DirectionalShadows,
+						shadowTexIdx);
+				}
+			}			
 		
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;
@@ -175,17 +189,19 @@ float4 PShader(VertexOut In) : SV_Target
 		}
 	}
 	
+	
 	// Point:
 	{
-		const uint numPointLights = AllLightIndexesParams.g_numLights.y;
-		
+		const uint numPointLights = LightCounts.g_numLights.y;
 		for (uint pointIdx = 0; pointIdx < numPointLights; ++pointIdx)
 		{
-			const uint pointLightDataIdx = UnpackPointLightIndex(pointIdx);
-
-			const LightData lightData = PointLightParams[pointLightDataIdx];
+			const LightShadowLUTData indexLUT = PointLUT[pointIdx];
 			
-			const uint shadowTexIdx = lightData.g_extraParams.w;
+			const uint lightBufferIdx = indexLUT.g_lightShadowIdx.x;
+			const uint shadowBufferIdx = indexLUT.g_lightShadowIdx.y;
+			const uint shadowTexIdx = indexLUT.g_lightShadowIdx.z;
+			
+			const LightData lightData = PointLightParams[lightBufferIdx];
 			
 			const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 			const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
@@ -196,26 +212,34 @@ float4 PShader(VertexOut In) : SV_Target
 			const float emitterRadius = lightData.g_lightWorldPosRadius.w;
 			const float attenuationFactor = ComputeNonSingularAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 			
-			const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
-			const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
-			const float cubeFaceDimension = lightData.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
-			const float2 lightUVRadiusSize = lightData.g_shadowParams.zw;
-			const float shadowQualityMode = lightData.g_shadowParams.y;
-	
-			const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
-			const float shadowFactor = shadowEnabled ?
-			GetCubeShadowFactor(
-				worldPos,
-				worldNormal,
-				lightWorldPos,
-				lightWorldDir,
-				shadowCamNearFar,
-				minMaxShadowBias,
-				shadowQualityMode,
-				lightUVRadiusSize,
-				cubeFaceDimension,
-				PointShadows,
-				shadowTexIdx) : 1.f;
+			float shadowFactor = 1.f;
+			if (shadowBufferIdx != INVALID_SHADOW_IDX)
+			{			
+				const ShadowData shadowData = ShadowParams[shadowBufferIdx];
+					
+				const bool shadowEnabled = shadowData.g_shadowParams.x > 0.f;
+				if (shadowEnabled)
+				{
+					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
+					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
+					const float cubeFaceDimension = shadowData.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
+					const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
+					const float shadowQualityMode = shadowData.g_shadowParams.y;
+				
+					shadowFactor = GetCubeShadowFactor(
+						worldPos,
+						worldNormal,
+						lightWorldPos,
+						lightWorldDir,
+						shadowCamNearFar,
+						minMaxShadowBias,
+						shadowQualityMode,
+						lightUVRadiusSize,
+						cubeFaceDimension,
+						PointShadows,
+						shadowTexIdx);
+				}
+			}			
 			
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;
@@ -249,15 +273,16 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	// Spot:
 	{
-		const uint numSpotLights = AllLightIndexesParams.g_numLights.z;
-		
+		const uint numSpotLights = LightCounts.g_numLights.z;
 		for (uint spotIdx = 0; spotIdx < numSpotLights; ++spotIdx)
-		{		
-			const uint spotLightDataIdx = UnpackSpotLightIndex(spotIdx);
-	
-			const LightData lightData = SpotLightParams[spotLightDataIdx];
+		{
+			const LightShadowLUTData indexLUT = SpotLUT[spotIdx];
 			
-			const uint shadowTexIdx = lightData.g_extraParams.w;
+			const uint lightBufferIdx = indexLUT.g_lightShadowIdx.x;
+			const uint shadowBufferIdx = indexLUT.g_lightShadowIdx.y;
+			const uint shadowTexIdx = indexLUT.g_lightShadowIdx.z;
+			
+			const LightData lightData = SpotLightParams[lightBufferIdx];
 			
 			const float3 lightWorldPos = lightData.g_lightWorldPosRadius.xyz;
 			const float3 lightWorldDir = normalize(lightWorldPos - worldPos);
@@ -278,26 +303,34 @@ float4 PShader(VertexOut In) : SV_Target
 				lightData.g_extraParams.z);
 	
 			const float combinedAttenuation = distanceAttenuation * angleAttenuation;
-	
-			const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
-			const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
-			const float2 lightUVRadiusSize = lightData.g_shadowParams.zw;
-			const float shadowQualityMode = lightData.g_shadowParams.y;
-	
-			const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
-			const float shadowFactor = shadowEnabled ?
-				Get2DShadowFactor(
-					worldPos,
-					worldNormal,
-					lightWorldPos,
-					lightData.g_shadowCam_VP,
-					shadowCamNearFar,
-					minMaxShadowBias,
-					shadowQualityMode,
-					lightUVRadiusSize,
-					lightData.g_shadowMapTexelSize,
-					SpotShadows,
-					shadowTexIdx) : 1.f;
+			
+			float shadowFactor = 1.f;
+			if (shadowBufferIdx != INVALID_SHADOW_IDX)
+			{
+				const ShadowData shadowData = ShadowParams[shadowBufferIdx];
+				
+				const bool shadowEnabled = shadowData.g_shadowParams.x;
+				if (shadowEnabled)
+				{
+					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
+					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
+					const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
+					const float shadowQualityMode = shadowData.g_shadowParams.y;
+					
+					shadowFactor = Get2DShadowFactor(
+						worldPos,
+						worldNormal,
+						lightWorldPos,
+						shadowData.g_shadowCam_VP,
+						shadowCamNearFar,
+						minMaxShadowBias,
+						shadowQualityMode,
+						lightUVRadiusSize,
+						shadowData.g_shadowMapTexelSize,
+						SpotShadows,
+						shadowTexIdx);
+				}	
+			}
 	
 			LightingParams lightingParams;
 			lightingParams.LinearAlbedo = linearAlbedo;

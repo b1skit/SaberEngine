@@ -13,12 +13,12 @@ struct InstanceIndexData
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "InstanceIndexParams";
 
-	inline static void WriteTransformIndex(uint32_t lutIdx, void* dst)
+	inline static void SetTransformIndex(uint32_t lutIdx, void* dst)
 	{
 		static_cast<InstanceIndexData*>(dst)->g_indexes.x = lutIdx;
 	}
 
-	inline static void WriteMaterialIndex(uint32_t lutIdx, void* dst)
+	inline static void SetMaterialIndex(uint32_t lutIdx, void* dst)
 	{
 		static_cast<InstanceIndexData*>(dst)->g_indexes.y = lutIdx;
 	}

@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
+#include "Shaders/Common/LightParams.h"
 
 
 namespace gr
@@ -35,16 +36,11 @@ namespace gr
 		static constexpr util::CHashKey k_ambientDFGTexInput = "AmbientDFGTex";
 		static constexpr util::CHashKey k_ambientParamsBufferInput = "AmbientParamsBuffer";
 
-		static constexpr util::CHashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
-		static constexpr util::CHashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
-		static constexpr util::CHashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
-
-		static constexpr util::CHashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::CHashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
-
 		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
 		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
 		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
+		
+		static constexpr util::CHashKey k_lightIDToShadowRecordInput = "LightIDToShadowRecordMap";
 
 		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
 
@@ -77,16 +73,14 @@ namespace gr
 		ViewBatches const* m_viewBatches;
 		AllBatches const* m_allBatches;
 
-		std::shared_ptr<re::Buffer> const* m_directionalLightDataBuffer;
-		std::shared_ptr<re::Buffer> const* m_pointLightDataBuffer;
-		std::shared_ptr<re::Buffer> const* m_spotLightDataBuffer;
-
-		LightDataBufferIdxMap const* m_pointLightDataBufferIdxMap;
-		LightDataBufferIdxMap const* m_spotLightDataBufferIdxMap;
-
 		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
 		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
 		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
+
+		std::unordered_map<gr::RenderDataID, gr::ShadowRecord> const* m_lightIDToShadowRecords;
+
+		LightMetadata m_lightMetadata;
+		re::BufferInput m_lightMetadataBuffer;
 
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
 	};

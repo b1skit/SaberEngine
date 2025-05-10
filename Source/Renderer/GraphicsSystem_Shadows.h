@@ -35,13 +35,7 @@ namespace gr
 		static constexpr util::CHashKey k_viewBatchesDataInput = "ViewBatches";
 		static constexpr util::CHashKey k_allBatchesDataInput = "AllBatches";
 
-		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
-		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
-		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
-
-		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
+		static constexpr util::CHashKey k_lightIDToShadowRecordInput = "LightIDToShadowRecordMap";
 
 		void RegisterInputs() override;
 
@@ -105,12 +99,6 @@ namespace gr
 		ViewBatches const* m_viewBatches;
 		AllBatches const* m_allBatches;
 
-		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
-		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
-		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
-
-		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
-		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;
-		ShadowArrayIdxMap const* m_spotShadowArrayIdxMap;
+		std::unordered_map<gr::RenderDataID, gr::ShadowRecord> const* m_lightIDToShadowRecords;
 	};
 }

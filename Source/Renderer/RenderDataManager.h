@@ -28,6 +28,7 @@ namespace gr
 
 
 	public:
+		void Initialize();
 		void Destroy();
 
 		void BeginFrame(uint64_t currentFrame);
@@ -101,7 +102,10 @@ namespace gr
 
 		// Get IDs associated with a type
 		template<typename T>
-		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const;
+		[[nodiscard]] std::vector<gr::RenderDataID> const* GetRegisteredRenderDataIDs() const;
+
+		template<typename T>
+		[[nodiscard]] std::span<const gr::RenderDataID> GetRegisteredRenderDataIDsSpan() const; // As a span
 
 		// Get all RenderDataIDs (regardless of associated data types)
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; 
@@ -1175,16 +1179,34 @@ namespace gr
 
 
 	template<typename T>
-	std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
+	std::vector<gr::RenderDataID> const* RenderDataManager::GetRegisteredRenderDataIDs() const
 	{
 		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false), "Invalid type for this function");
 
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert(dataTypeIndex != k_invalidDataTypeIdx, "No RenderDataIDs are associated with this type");
+		if (dataTypeIndex == k_invalidDataTypeIdx)
+		{
+			return nullptr;
+		}
+		return &m_perTypeRegisteredRenderDataIDs[dataTypeIndex];
+	}
 
-		return m_perTypeRegisteredRenderDataIDs[dataTypeIndex];
+
+	template<typename T>
+	std::span<const gr::RenderDataID> RenderDataManager::GetRegisteredRenderDataIDsSpan() const
+	{
+		SEStaticAssert((std::is_same_v<T, gr::Transform::RenderData> == false), "Invalid type for this function");
+
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+		if (dataTypeIndex == k_invalidDataTypeIdx)
+		{
+			return std::span<gr::RenderDataID>{};
+		}
+		return std::span{m_perTypeRegisteredRenderDataIDs[dataTypeIndex]};
 	}
 
 

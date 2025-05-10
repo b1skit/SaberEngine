@@ -5,16 +5,7 @@
 #include "MathConstants.hlsli"
 
 #include "../Common/LightParams.h"
-
-
-// Arrays of LightParams:
-StructuredBuffer<LightData> DirectionalLightParams;
-StructuredBuffer<LightData> PointLightParams;
-StructuredBuffer<LightData> SpotLightParams;
-
-ConstantBuffer<AllLightIndexesData> AllLightIndexesParams; // Forward/transparency: Index mappings for all lights
-
-ConstantBuffer<LightIndexData> LightIndexParams; // Light volumes: Single-frame buffer containing the index of a single light
+#include "../Common/ShadowParams.h"
 
 
 // As per Cem Yuksel's nonsingular point light attenuation function:

@@ -4,7 +4,7 @@
 #include "../Common/ShadowParams.h"
 
 
-layout(binding=11) uniform CubemapShadowParams { CubemapShadowData _CubemapShadowParams; };
+layout(binding=11) uniform CubeShadowRenderParams { CubeShadowRenderData _CubeShadowRenderParams; };
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 18) out;
@@ -22,7 +22,7 @@ void GShader()
 			gl_Layer = currentCubeFace;
 
 			gl_Position = 
-				_CubemapShadowParams.g_cubemapShadowCam_VP[currentCubeFace] * gl_in[currentVert].gl_Position;
+				_CubeShadowRenderParams.g_cubemapShadowCam_VP[currentCubeFace] * gl_in[currentVert].gl_Position;
 
 #if defined(SABER_INSTANCING)
 			InstanceParamsOut.InstanceID = InstanceParamsIn[currentVert].InstanceID;

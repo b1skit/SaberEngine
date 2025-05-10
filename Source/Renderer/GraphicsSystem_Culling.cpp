@@ -95,8 +95,8 @@ namespace
 				gr::Transform::RenderData const& lightTransform =
 					renderData.GetTransformDataFromTransformID(lightRenderData.m_transformID);
 
-				const bool lightIsVisible = TestBoundsVisibility(lightBounds, lightTransform, frustum);
-				if (lightIsVisible || !cullingEnabled)
+				if (!cullingEnabled ||
+					TestBoundsVisibility(lightBounds, lightTransform, frustum))
 				{
 					lightIDs.emplace_back(lightRenderData.m_renderDataID);
 				}
@@ -322,8 +322,10 @@ namespace gr
 			const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
 
 			// Cull every registered camera:
-			std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
-			for (auto const& cameraItr : gr::IDAdapter(renderData, cameraIDs))
+			std::vector<gr::RenderDataID> const* cameraIDs = 
+				renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
+			SEAssert(cameraIDs, "No cameras exist");
+			for (auto const& cameraItr : gr::IDAdapter(renderData, *cameraIDs))
 			{
 				// Gather the data we'll pass by value:
 				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();

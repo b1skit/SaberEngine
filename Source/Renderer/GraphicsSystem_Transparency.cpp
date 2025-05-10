@@ -1,92 +1,58 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "IndexedBuffer.h"
 #include "GraphicsSystem_Transparency.h"
 #include "GraphicsSystemManager.h"
 #include "LightParamsHelpers.h"
-#include "RenderManager.h"
 #include "Sampler.h"
 
 #include "Core/Config.h"
 
-#include "Shaders/Common/LightParams.h"
+#include "Shaders/Common/ShadowParams.h"
 
 
 namespace
 {
-	re::BufferInput CreateAllLightIndexesBuffer(
+	void CreateUpdateLightMetadata(
+		LightMetadata& lightMetadata,
+		re::BufferInput& lightMetadataBufferInput,
 		gr::RenderDataManager const& renderData,
 		gr::PunctualLightCullingResults const* pointCullingIDs,
 		gr::PunctualLightCullingResults const* spotCullingIDs,
-		gr::LightDataBufferIdxMap const* pointLightDataBufferIdxMap,
-		gr::LightDataBufferIdxMap const* spotLightDataBufferIdxMap,
 		char const* bufferName)
 	{
 		const uint32_t numDirectional = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>();
 		const uint32_t numPoint = pointCullingIDs ? util::CheckedCast<uint32_t>(pointCullingIDs->size()) : 0;
 		const uint32_t numSpot = spotCullingIDs ? util::CheckedCast<uint32_t>(spotCullingIDs->size()) : 0;
 
-		SEAssert(numDirectional < AllLightIndexesData::k_maxLights && 
-			numPoint < AllLightIndexesData::k_maxLights &&
-			numSpot < AllLightIndexesData::k_maxLights,
-			"Too many lights to pack into fixed size array");
-
-		// Note: We (currently) assume that all directional lights will contribute all the time
-
-		AllLightIndexesData allLightIndexesData{};
-
-		uint32_t contributingPoint = 0;
-		for (uint32_t lightIdx = 0; lightIdx < numPoint; ++lightIdx)
+		if (lightMetadataBufferInput.GetBuffer() != nullptr &&
+			lightMetadata.g_numLights.x == numDirectional &&
+			lightMetadata.g_numLights.y == numPoint &&
+			lightMetadata.g_numLights.z == numSpot)
 		{
-			const gr::RenderDataID pointID = pointCullingIDs->at(lightIdx);
-
-			gr::Light::RenderDataPoint const& pointData =
-				renderData.GetObjectData<gr::Light::RenderDataPoint>(pointID);
-
-			if (pointData.m_canContribute)
-			{
-				PackAllLightIndexesDataValue(
-					allLightIndexesData,
-					gr::Light::Point,
-					contributingPoint++,
-					gr::GetLightDataBufferIdx(pointLightDataBufferIdxMap, pointID));
-			}
+			return; // Nothing to update
 		}
 
-		uint32_t contributingSpot = 0;
-		for (uint32_t lightIdx = 0; lightIdx < numSpot; ++lightIdx)
+		lightMetadata.g_numLights = glm::uvec4(numDirectional, numPoint, numSpot, 0);
+
+		if (lightMetadataBufferInput.GetBuffer() == nullptr)
 		{
-			const gr::RenderDataID spotID = spotCullingIDs->at(lightIdx);
-
-			gr::Light::RenderDataSpot const& spotData =
-				renderData.GetObjectData<gr::Light::RenderDataSpot>(spotID);
-
-			if (spotData.m_canContribute)
-			{
-				PackAllLightIndexesDataValue(
-					allLightIndexesData,
-					gr::Light::Spot,
-					contributingSpot++,
-					gr::GetLightDataBufferIdx(spotLightDataBufferIdxMap, spotID));
-			}
-		}
-
-		allLightIndexesData.g_numLights = glm::uvec4(
-			numDirectional,
-			contributingPoint,
-			contributingSpot,
-			0);
-
-		return re::BufferInput(
-			bufferName,
-			re::Buffer::Create(
+			lightMetadataBufferInput = re::BufferInput(
 				bufferName,
-				allLightIndexesData, 
-				re::Buffer::BufferParams{
-					.m_lifetime = re::Lifetime::SingleFrame,
-					.m_stagingPool = re::Buffer::StagingPool::Temporary,
-					.m_memPoolPreference = re::Buffer::UploadHeap,
-					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-					.m_usageMask = re::Buffer::Constant,
-				}));
+				re::Buffer::Create(
+					bufferName,
+					lightMetadata,
+					re::Buffer::BufferParams{
+						.m_lifetime = re::Lifetime::Permanent,
+						.m_stagingPool = re::Buffer::StagingPool::Permanent,
+						.m_memPoolPreference = re::Buffer::UploadHeap,
+						.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+						.m_usageMask = re::Buffer::Constant,
+					}));
+		}
+		else
+		{
+			lightMetadataBufferInput.GetBuffer()->Commit(lightMetadata);
+		}
 	}
 }
 
@@ -99,14 +65,6 @@ namespace gr
 		, m_ambientPMREMTex(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
-		, m_directionalLightDataBuffer(nullptr)
-		, m_pointLightDataBuffer(nullptr)
-		, m_spotLightDataBuffer(nullptr)
-		, m_pointLightDataBufferIdxMap(nullptr)
-		, m_spotLightDataBufferIdxMap(nullptr)
-		, m_directionalShadowArrayTex(nullptr)
-		, m_pointShadowArrayTex(nullptr)
-		, m_spotShadowArrayTex(nullptr)
 		, m_PCSSSampleParamsBuffer(nullptr)
 	{
 	}
@@ -128,16 +86,11 @@ namespace gr
 		RegisterDataInput(k_viewBatchesDataInput);
 		RegisterDataInput(k_allBatchesDataInput);
 
-		RegisterBufferInput(k_directionalLightDataBufferInput);
-		RegisterBufferInput(k_pointLightDataBufferInput);
-		RegisterBufferInput(k_spotLightDataBufferInput);
-
-		RegisterDataInput(k_IDToPointIdxDataInput);
-		RegisterDataInput(k_IDToSpotIdxDataInput);
-
 		RegisterTextureInput(k_directionalShadowArrayTexInput);
 		RegisterTextureInput(k_pointShadowArrayTexInput);
 		RegisterTextureInput(k_spotShadowArrayTexInput);
+		
+		RegisterDataInput(k_lightIDToShadowRecordInput);
 
 		RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 	}
@@ -175,16 +128,11 @@ namespace gr
 		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
-		m_directionalLightDataBuffer = bufferDependencies.at(k_directionalLightDataBufferInput);
-		m_pointLightDataBuffer = bufferDependencies.at(k_pointLightDataBufferInput);
-		m_spotLightDataBuffer = bufferDependencies.at(k_spotLightDataBufferInput);
-
-		m_pointLightDataBufferIdxMap = GetDataDependency<LightDataBufferIdxMap>(k_IDToPointIdxDataInput, dataDependencies);
-		m_spotLightDataBufferIdxMap = GetDataDependency<LightDataBufferIdxMap>(k_IDToSpotIdxDataInput, dataDependencies);
-
 		m_directionalShadowArrayTex = texDependencies.at(k_directionalShadowArrayTexInput);
 		m_pointShadowArrayTex = texDependencies.at(k_pointShadowArrayTexInput);
 		m_spotShadowArrayTex = texDependencies.at(k_spotShadowArrayTexInput);
+		
+		m_lightIDToShadowRecords = GetDataDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
 
 		m_PCSSSampleParamsBuffer = bufferDependencies.at(k_PCSSSampleParamsBufferInput);
 
@@ -233,6 +181,16 @@ namespace gr
 		SEAssert(m_ambientIEMTex && m_ambientPMREMTex && m_ambientParams,
 			"Required inputs are null: We should at least have received any empty pointer");
 
+		// Early out:
+		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+		if ((m_viewBatches == nullptr || m_viewBatches->at(mainCamID).empty()) && m_allBatches->empty())
+		{
+			return;
+		}
+
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
+
 		// Add our inputs each frame in case the light changes/they're updated by the source GS
 		if (m_ambientIEMTex && m_ambientPMREMTex && *m_ambientParams)
 		{
@@ -271,19 +229,6 @@ namespace gr
 					}));
 		}
 
-		// Punctual light buffers:
-		m_transparencyStage->AddSingleFrameBuffer(LightData::s_directionalLightDataShaderName, *m_directionalLightDataBuffer);
-		m_transparencyStage->AddSingleFrameBuffer(LightData::s_pointLightDataShaderName, *m_pointLightDataBuffer);
-		m_transparencyStage->AddSingleFrameBuffer(LightData::s_spotLightDataShaderName, *m_spotLightDataBuffer);
-		
-		m_transparencyStage->AddSingleFrameBuffer(CreateAllLightIndexesBuffer(
-			m_graphicsSystemManager->GetRenderData(),
-			m_pointCullingResults,
-			m_spotCullingResults,
-			m_pointLightDataBufferIdxMap,
-			m_spotLightDataBufferIdxMap,
-			"AllLightIndexesParams"));
-
 		// Shadow texture arrays:
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"DirectionalShadows",
@@ -303,7 +248,82 @@ namespace gr
 			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+
+		// Indexed light data buffers:
+		auto PrePopulateLightShadowLUTData = [this](
+			std::span<const gr::RenderDataID> const& lightIDs,
+			gr::Light::Type lightType) -> std::vector<LightShadowLUTData>
+			{
+				std::vector<LightShadowLUTData> partialLUTData;
+				partialLUTData.resize(lightIDs.size());
+
+				for (size_t i = 0; i < lightIDs.size(); ++i)
+				{
+					uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
+					if (m_lightIDToShadowRecords)
+					{
+						auto shadowRecordItr = m_lightIDToShadowRecords->find(lightIDs[i]);
+						shadowTexArrayIdx = shadowRecordItr == m_lightIDToShadowRecords->end() ?
+							INVALID_SHADOW_IDX : shadowRecordItr->second.m_shadowTexArrayIdx;
+					}
+
+					partialLUTData[i].g_lightShadowIdx.z = shadowTexArrayIdx;
+					partialLUTData[i].g_lightShadowIdx.w = static_cast<uint32_t>(lightType);
+				}
+
+				return partialLUTData;
+			};
+
+		
+		// Directional light buffer:
+		m_transparencyStage->AddSingleFrameBuffer(ibm.GetIndexedBufferInput(
+			LightData::s_directionalLightDataShaderName, LightData::s_directionalLightDataShaderName));
+
+		// Get the directional light RenderDataIDs: We assume directional lights are always visible/never culled
+		std::span<const gr::RenderDataID> const& directionalIDs =
+			renderData.GetRegisteredRenderDataIDsSpan<gr::Light::RenderDataDirectional>();
+
+		// Directional light buffer LUT:
+		m_transparencyStage->AddSingleFrameBuffer(
+			ibm.GetLUTBufferInput<LightShadowLUTData>(
+				LightShadowLUTData::s_shaderNameDirectional,
+				PrePopulateLightShadowLUTData(directionalIDs, gr::Light::Type::Directional),
+				directionalIDs));
+
+		// Point light buffer:
+		m_transparencyStage->AddSingleFrameBuffer(ibm.GetIndexedBufferInput(
+			LightData::s_pointLightDataShaderName, LightData::s_pointLightDataShaderName));
+
+		// Point light buffer LUT:
+		m_transparencyStage->AddSingleFrameBuffer(
+			ibm.GetLUTBufferInput<LightShadowLUTData>(
+				LightShadowLUTData::s_shaderNamePoint,
+				PrePopulateLightShadowLUTData(*m_pointCullingResults, gr::Light::Type::Point),
+				*m_pointCullingResults));
+
+		// Spot light buffer:
+		m_transparencyStage->AddSingleFrameBuffer(ibm.GetIndexedBufferInput(
+			LightData::s_spotLightDataShaderName, LightData::s_spotLightDataShaderName));
+
+		// Spot light buffer LUT:
+		m_transparencyStage->AddSingleFrameBuffer(
+			ibm.GetLUTBufferInput<LightShadowLUTData>(
+				LightShadowLUTData::s_shaderNameSpot,
+				PrePopulateLightShadowLUTData(*m_spotCullingResults, gr::Light::Type::Spot),
+				*m_spotCullingResults));
+
+		// Indexed shadows:
+		m_transparencyStage->AddSingleFrameBuffer(
+			ibm.GetIndexedBufferInput(ShadowData::s_shaderName, ShadowData::s_shaderName));
+
+		// Light/shadow metadata (i.e. Light counts):
+		CreateUpdateLightMetadata(
+			m_lightMetadata, m_lightMetadataBuffer, renderData, m_pointCullingResults, m_spotCullingResults, "LightCounts");
+		
+		m_transparencyStage->AddSingleFrameBuffer(m_lightMetadataBuffer);
+
+		
+		// Finally, add the geometry batches:
 		if (m_viewBatches && mainCamID != gr::k_invalidRenderDataID)
 		{
 			SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");

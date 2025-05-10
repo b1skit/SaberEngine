@@ -27,29 +27,13 @@ namespace gr
 
 		void RegisterInputs() override;
 
-
-		// Monolithic light data buffers:
-		// NOTE: These buffers may be reallocated; They must be attached every frame as a single frame input ONLY
-		static constexpr util::CHashKey k_directionalLightDataBufferOutput = "DirectionalLightDataBuffer";
-		static constexpr util::CHashKey k_pointLightDataBufferOutput = "PointLightDataBuffer";
-		static constexpr util::CHashKey k_spotLightDataBufferOutput = "SpotLightDataBuffer";
-
-		// Maps from RenderDataID to monolithic light data buffer indexes:
-		static constexpr util::CHashKey k_IDToDirectionalIdxDataOutput = "RenderDataIDToDirectionalBufferIdxMap";
-		static constexpr util::CHashKey k_IDToPointIdxDataOutput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::CHashKey k_IDToSpotIdxDataOutput = "RenderDataIDToSpotBufferIdxMap";
-
 		// Shadow array textures:
-		// Note: Textures may be reallocated at the start of any frame; Texture inputs should be reset each frame
 		static constexpr util::CHashKey k_directionalShadowArrayTexOutput = "DirectionalShadowArrayTex";
 		static constexpr util::CHashKey k_pointShadowArrayTexOutput = "PointShadowArrayTex";
 		static constexpr util::CHashKey k_spotShadowArrayTexOutput = "SpotShadowArrayTex";
 
-		// Maps from RenderDataID to shadow array texture indexes:
-		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataOutput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataOutput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataOutput = "RenderDataIDToSpotShadowArrayIdxMap";
-
+		// Maps from light RenderDataID to shadow records:
+		static constexpr util::CHashKey k_lightIDToShadowRecordOutput = "LightIDToShadowRecordMap";
 		static constexpr util::CHashKey k_PCSSSampleParamsBufferOutput = "PCSSSampleParamsBuffer";
 
 		void RegisterOutputs() override;
@@ -76,22 +60,6 @@ namespace gr
 		static constexpr float k_shrinkReallocationFactor = 0.5f;
 
 
-	private: // Light management:
-		struct LightMetadata
-		{
-			std::unordered_map<gr::RenderDataID, uint32_t> m_renderDataIDToBufferIdx;
-			std::map<uint32_t, gr::RenderDataID> m_bufferIdxToRenderDataID;
-
-			std::vector<uint32_t> m_dirtyMovedIndexes; // Light entries that were moved during per-frame deletion
-
-			std::shared_ptr<re::Buffer> m_lightData; // Always has at least 1 element (i.e. a dummy if no lights exist)
-			uint32_t m_numLights = 0;
-		};
-		LightMetadata m_directionalLightMetadata;
-		LightMetadata m_pointLightMetadata;
-		LightMetadata m_spotLightMetadata;
-
-
 	private: // Shadow management:
 		struct ShadowMetadata
 		{
@@ -104,6 +72,8 @@ namespace gr
 		ShadowMetadata m_directionalShadowMetadata;
 		ShadowMetadata m_pointShadowMetadata;
 		ShadowMetadata m_spotShadowMetadata;
+		
+		std::unordered_map<gr::RenderDataID, gr::ShadowRecord> m_lightIDToShadowRecords;
 
 		std::shared_ptr<re::Buffer> m_poissonSampleParamsBuffer;
 

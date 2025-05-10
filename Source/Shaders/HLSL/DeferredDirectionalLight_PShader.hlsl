@@ -8,6 +8,10 @@
 #include "Shadows.hlsli"
 #include "Transformations.hlsli"
 
+StructuredBuffer<LightData> DirectionalLightParams;
+StructuredBuffer<LightShadowLUTData> DirectionalLUT;
+StructuredBuffer<ShadowData> ShadowParams;
+
 Texture2DArray<float> DirectionalShadows;
 
 
@@ -17,30 +21,41 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	
-	const uint lightParamsIdx = LightIndexParams.g_lightShadowIdx.x;
-	const uint shadowTexIdx = LightIndexParams.g_lightShadowIdx.y;
+	const LightShadowLUTData indexLUT = DirectionalLUT[0];
 	
-	const LightData lightData = DirectionalLightParams[lightParamsIdx];
+	const uint lightBufferIdx = indexLUT.g_lightShadowIdx.x;
+	const uint shadowBufferIdx = indexLUT.g_lightShadowIdx.y;
+	const uint shadowTexIdx = indexLUT.g_lightShadowIdx.z;
+			
+	const LightData lightData = DirectionalLightParams[lightBufferIdx];
 	
-	const float2 shadowCamNearFar = lightData.g_shadowCamNearFarBiasMinMax.xy;
-	const float2 minMaxShadowBias = lightData.g_shadowCamNearFarBiasMinMax.zw;
-	const float2 lightUVRadiusSize = lightData.g_shadowParams.zw;
-	const float shadowQualityMode = lightData.g_shadowParams.y;
-	
-	const bool shadowEnabled = lightData.g_shadowParams.x > 0.f;
-	const float shadowFactor = shadowEnabled ?
-		Get2DShadowFactor(
-			worldPos,
-			gbuffer.WorldNormal,
-			lightData.g_lightWorldPosRadius.xyz,
-			lightData.g_shadowCam_VP,
-			shadowCamNearFar,
-			minMaxShadowBias,
-			shadowQualityMode,
-			lightUVRadiusSize,
-			lightData.g_shadowMapTexelSize,
-			DirectionalShadows,
-			shadowTexIdx) : 1.f;
+	float shadowFactor = 1.f;
+	if (shadowBufferIdx != INVALID_SHADOW_IDX)
+	{
+		const ShadowData shadowData = ShadowParams[shadowBufferIdx];
+		
+		const bool shadowEnabled = shadowData.g_shadowParams.x;
+		if (shadowEnabled)
+		{
+			const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
+			const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
+			const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
+			const float shadowQualityMode = shadowData.g_shadowParams.y;
+					
+			shadowFactor = Get2DShadowFactor(
+				worldPos,
+				gbuffer.WorldNormal,
+				lightData.g_lightWorldPosRadius.xyz,
+				shadowData.g_shadowCam_VP,
+				shadowCamNearFar,
+				minMaxShadowBias,
+				shadowQualityMode,
+				lightUVRadiusSize,
+				shadowData.g_shadowMapTexelSize,
+				DirectionalShadows,
+				shadowTexIdx);
+		}
+	}
 	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;

@@ -1,12 +1,116 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "CameraRenderData.h"
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
-#include "Texture.h"
+#include "RenderDataManager.h"
 
+#include "Texture.h"
+#include "TransformRenderData.h"
+
+#include "Core/Config.h"
 #include "Core/InvPtr.h"
 
 #include "Shaders/Common/LightParams.h"
+#include "Shaders/Common/ShadowParams.h"
 
+
+namespace
+{
+	LightData CreateLightDataHelper(
+		void const* lightRenderData,
+		gr::Light::Type lightType,
+		gr::RenderDataID lightID,
+		gr::RenderDataManager const& renderData)
+	{
+		SEAssert(lightType != gr::Light::Type::AmbientIBL,
+			"Ambient lights do not use the LightData structure");
+
+		gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromRenderDataID(lightID);
+
+		LightData lightData{};
+
+		// Packed below as we go
+		bool diffuseEnabled = false;
+		bool specEnabled = false;
+		glm::vec4 intensityScale(0.f);
+		glm::vec4 extraParams(0.f);
+
+		switch (lightType)
+		{
+		case gr::Light::Type::Directional:
+		{
+			gr::Light::RenderDataDirectional const* directionalData =
+				static_cast<gr::Light::RenderDataDirectional const*>(lightRenderData);
+
+			lightData.g_lightColorIntensity = directionalData->m_colorIntensity;
+
+			// As per the KHR_lights_punctual, directional lights are at infinity and emit light in the direction of the
+			// local -Z axis. Thus, this direction is pointing towards the source of the light (saves a * -1 on the GPU)
+			// https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
+			lightData.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Dir to light
+
+			diffuseEnabled = directionalData->m_diffuseEnabled;
+			specEnabled = directionalData->m_specularEnabled;
+		}
+		break;
+		case gr::Light::Type::Point:
+		{
+			gr::Light::RenderDataPoint const* pointData =
+				static_cast<gr::Light::RenderDataPoint const*>(lightRenderData);
+
+			lightData.g_lightColorIntensity = pointData->m_colorIntensity;
+
+			lightData.g_lightWorldPosRadius = glm::vec4(transformData.m_globalPosition, pointData->m_emitterRadius);
+
+			diffuseEnabled = pointData->m_diffuseEnabled;
+			specEnabled = pointData->m_specularEnabled;
+		}
+		break;
+		case gr::Light::Type::Spot:
+		{
+			gr::Light::RenderDataSpot const* spotData = static_cast<gr::Light::RenderDataSpot const*>(lightRenderData);
+
+			lightData.g_lightColorIntensity = spotData->m_colorIntensity;
+
+			lightData.g_lightWorldPosRadius = glm::vec4(transformData.m_globalPosition, spotData->m_emitterRadius);
+
+			diffuseEnabled = spotData->m_diffuseEnabled;
+			specEnabled = spotData->m_specularEnabled;
+
+			intensityScale.z = spotData->m_innerConeAngle;
+			intensityScale.w = spotData->m_outerConeAngle;
+
+			// Extra params:
+			const float cosInnerAngle = glm::cos(spotData->m_innerConeAngle);
+			const float cosOuterAngle = glm::cos(spotData->m_outerConeAngle);
+
+			constexpr float k_divideByZeroEpsilon = 1.0e-5f;
+			const float scaleTerm = 1.f / std::max(cosInnerAngle - cosOuterAngle, k_divideByZeroEpsilon);
+
+			const float offsetTerm = -cosOuterAngle * scaleTerm;
+
+			extraParams.x = cosOuterAngle;
+			extraParams.y = scaleTerm;
+			extraParams.z = offsetTerm;
+		}
+		break;
+		default:
+			SEAssertF("Light type does not use this buffer");
+		}
+
+		intensityScale.x = diffuseEnabled;
+		intensityScale.y = specEnabled;
+
+		// Direction the light is emitting from the light source. SE uses a RHCS, so this is the local -Z direction
+		lightData.g_globalForwardDir = glm::vec4(transformData.m_globalForward * -1.f, 0.f);
+
+		lightData.g_intensityScale = intensityScale;
+
+		lightData.g_extraParams = extraParams;
+
+		return lightData;
+	}
+}
 
 namespace gr
 {
@@ -39,206 +143,100 @@ namespace gr
 	}
 
 
-	LightData GetLightData(
-		void const* lightRenderData,
-		gr::Light::Type lightType,
-		gr::Transform::RenderData const& transformData,
-		gr::ShadowMap::RenderData const* shadowData,
-		gr::Camera::RenderData const* shadowCamData,
-		core::InvPtr<re::Texture> const& shadowTex,
-		uint32_t shadowArrayIdx)
+	LightData CreateDirectionalLightData(
+		gr::Light::RenderDataDirectional const& lightRenderData,
+		IDType lightID,
+		gr::RenderDataManager const& renderData)
 	{
-		SEAssert(lightType != gr::Light::Type::AmbientIBL,
-			"Ambient lights do not use the LightData structure");
+		return CreateLightDataHelper(&lightRenderData, gr::Light::Directional, lightID, renderData);
+	}
 
-		SEAssert((shadowData != nullptr) == (shadowCamData != nullptr),
-			"Shadow data and shadow camera data depend on each other");
 
-		LightData lightParams{};
+	LightData CreatePointLightData(
+		gr::Light::RenderDataPoint const& lightRenderData,
+		IDType lightID,
+		gr::RenderDataManager const& renderData)
+	{
+		return CreateLightDataHelper(&lightRenderData, gr::Light::Point, lightID, renderData);
+	}
 
-		// Direction the light is emitting from the light source. SE uses a RHCS, so this is the local -Z direction
-		lightParams.g_globalForwardDir = glm::vec4(transformData.m_globalForward * -1.f, 0.f);
 
-		// Set type-specific params:
-		bool hasShadow = false;
-		bool shadowEnabled = false;
-		bool diffuseEnabled = false;
-		bool specEnabled = false;
-		glm::vec4 intensityScale(0.f); // Packed below as we go
-		glm::vec4 extraParams(0.f, 0.f, 0.f, shadowArrayIdx);
-		switch (lightType)
+	LightData CreateSpotLightData(
+		gr::Light::RenderDataSpot const& lightRenderData,
+		IDType lightID,
+		gr::RenderDataManager const& renderData)
+	{
+		return CreateLightDataHelper(&lightRenderData, gr::Light::Spot, lightID, renderData);
+	}
+
+
+	ShadowData CreateShadowData(
+		gr::ShadowMap::RenderData const& shadowRenderData,
+		IDType lightRenderDataID,
+		gr::RenderDataManager const& renderData)
+	{
+		gr::Camera::RenderData const& shadowCamRenderData =
+			renderData.GetObjectData<gr::Camera::RenderData>(lightRenderDataID);
+
+		bool usesShadowCamVP = true;
+		glm::vec4 shadowMapTexelSize;
+		switch (shadowRenderData.m_lightType)
 		{
 		case gr::Light::Type::Directional:
 		{
-			gr::Light::RenderDataDirectional const* directionalData =
-				static_cast<gr::Light::RenderDataDirectional const*>(lightRenderData);
+			const int defaultDirectionalWidthHeight =
+				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
 
-			SEAssert((directionalData->m_hasShadow == (shadowData != nullptr)) &&
-				(directionalData->m_hasShadow == (shadowCamData != nullptr)),
-				"A shadow requires both shadow and camera data");
-
-			lightParams.g_lightColorIntensity = directionalData->m_colorIntensity;
-
-			// As per the KHR_lights_punctual, directional lights are at infinity and emit light in the direction of the
-			// local -Z axis. Thus, this direction is pointing towards the source of the light (saves a * -1 on the GPU)
-			// https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_lights_punctual/README.md#directional
-			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Dir to light
-
-			hasShadow = directionalData->m_hasShadow;
-			shadowEnabled = hasShadow && shadowData->m_shadowEnabled;
-			diffuseEnabled = directionalData->m_diffuseEnabled;
-			specEnabled = directionalData->m_specularEnabled;
+			shadowMapTexelSize = glm::vec4(
+				defaultDirectionalWidthHeight,
+				defaultDirectionalWidthHeight,
+				1.f / defaultDirectionalWidthHeight,
+				1.f / defaultDirectionalWidthHeight);
 		}
 		break;
 		case gr::Light::Type::Point:
 		{
-			gr::Light::RenderDataPoint const* pointData =
-				static_cast<gr::Light::RenderDataPoint const*>(lightRenderData);
+			const int defaultPointWidthHeight =
+				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
 
-			SEAssert((pointData->m_hasShadow == (shadowData != nullptr)) &&
-				(pointData->m_hasShadow == (shadowCamData != nullptr)),
-				"A shadow requires both shadow and camera data");
+			shadowMapTexelSize = glm::vec4(
+				defaultPointWidthHeight,
+				defaultPointWidthHeight,
+				1.f / defaultPointWidthHeight,
+				1.f / defaultPointWidthHeight);
 
-			lightParams.g_lightColorIntensity = pointData->m_colorIntensity;
-
-			lightParams.g_lightWorldPosRadius =
-				glm::vec4(transformData.m_globalPosition, pointData->m_emitterRadius);
-
-			hasShadow = pointData->m_hasShadow;
-			shadowEnabled = hasShadow && shadowData->m_shadowEnabled;
-			diffuseEnabled = pointData->m_diffuseEnabled;
-			specEnabled = pointData->m_specularEnabled;
+			usesShadowCamVP = false;
 		}
 		break;
 		case gr::Light::Type::Spot:
 		{
-			gr::Light::RenderDataSpot const* spotData = static_cast<gr::Light::RenderDataSpot const*>(lightRenderData);
+			const int defaultSpotWidthHeight =
+				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
 
-			SEAssert((spotData->m_hasShadow == (shadowData != nullptr)) &&
-				(spotData->m_hasShadow == (shadowCamData != nullptr)),
-				"A shadow requires both shadow and camera data");
-
-			lightParams.g_lightColorIntensity = spotData->m_colorIntensity;
-
-			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalPosition, spotData->m_emitterRadius);
-
-			hasShadow = spotData->m_hasShadow;
-			shadowEnabled = hasShadow && shadowData->m_shadowEnabled;
-			diffuseEnabled = spotData->m_diffuseEnabled;
-			specEnabled = spotData->m_specularEnabled;
-
-			intensityScale.z = spotData->m_innerConeAngle;
-			intensityScale.w = spotData->m_outerConeAngle;
-
-			// Extra params:
-			const float cosInnerAngle = glm::cos(spotData->m_innerConeAngle);
-			const float cosOuterAngle = glm::cos(spotData->m_outerConeAngle);
-
-			constexpr float k_divideByZeroEpsilon = 1.0e-5f;
-			const float scaleTerm = 1.f / std::max(cosInnerAngle - cosOuterAngle, k_divideByZeroEpsilon);
-
-			const float offsetTerm = -cosOuterAngle * scaleTerm;
-
-			extraParams.x = cosOuterAngle;
-			extraParams.y = scaleTerm;
-			extraParams.z = offsetTerm;
+			shadowMapTexelSize = glm::vec4(
+				defaultSpotWidthHeight,
+				defaultSpotWidthHeight,
+				1.f / defaultSpotWidthHeight,
+				1.f / defaultSpotWidthHeight);
 		}
 		break;
-		default:
-			SEAssertF("Light type does not use this buffer");
+		default: SEAssertF("Invalid light type for ShadowData");
 		}
 
-		intensityScale.x = diffuseEnabled;
-		intensityScale.y = specEnabled;
-
-		lightParams.g_intensityScale = intensityScale;
-
-		// Shadow params:
-		if (hasShadow)
-		{
-			SEAssert(shadowTex, "Light has a shadow, but the shadow texture is null");
-
-			switch (lightType)
-			{
-			case gr::Light::Type::Directional:
-			{
-				lightParams.g_shadowCam_VP = shadowCamData->m_cameraParams.g_viewProjection;
-			}
-			break;
-			case gr::Light::Type::Point:
-			{
-				lightParams.g_shadowCam_VP = glm::mat4(0.0f); // Unused by point light cube map shadows
-			}
-			break;
-			case gr::Light::Type::Spot:
-			{
-				lightParams.g_shadowCam_VP = shadowCamData->m_cameraParams.g_viewProjection;
-			}
-			break;
-			default:
-				SEAssertF("Light shadow type does not use this buffer");
-			}
-
-			lightParams.g_shadowMapTexelSize = shadowTex->GetTextureDimenions();
-
-			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(
-				shadowCamData->m_cameraConfig.m_near,
-				shadowCamData->m_cameraConfig.m_far,
-				shadowData->m_minMaxShadowBias);
-
-			lightParams.g_shadowParams = glm::vec4(
-				static_cast<float>(shadowEnabled),
-				static_cast<float>(shadowData->m_shadowQuality),
-				shadowData->m_softness, // [0,1] uv radius X
-				shadowData->m_softness); // [0,1] uv radius Y
-		}
-		else
-		{
-			lightParams.g_shadowCam_VP = glm::mat4(0.0f);
-			lightParams.g_shadowMapTexelSize = glm::vec4(0.f);
-			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(0.f);
-			lightParams.g_shadowParams = glm::vec4(0.f);
-		}
-
-		lightParams.g_extraParams = extraParams;
-
-		return lightParams;
-	}
-
-
-	LightIndexData GetLightIndexData(uint32_t lightIndex, uint32_t shadowTexArrayIdx)
-	{
-		return LightIndexData
-		{
-			.g_lightShadowIdx = glm::uvec4(lightIndex, shadowTexArrayIdx, 0, 0),
+		return ShadowData {
+			.g_shadowCam_VP = usesShadowCamVP ? 
+				shadowCamRenderData.m_cameraParams.g_viewProjection : glm::mat4(0.f), // Unused by point lights
+			.g_shadowMapTexelSize = shadowMapTexelSize,
+			.g_shadowCamNearFarBiasMinMax = glm::vec4(
+				shadowCamRenderData.m_cameraConfig.m_near,
+				shadowCamRenderData.m_cameraConfig.m_far,
+				shadowRenderData.m_minMaxShadowBias),
+			.g_shadowParams = glm::vec4(
+				shadowRenderData.m_shadowEnabled,
+				static_cast<float>(shadowRenderData.m_shadowQuality),
+				shadowRenderData.m_softness, // [0,1] uv radius X
+				shadowRenderData.m_softness),
 		};
-	}
-
-
-	void PackAllLightIndexesDataValue(
-		AllLightIndexesData& allLightIndexesData, gr::Light::Type lightType, uint32_t lightIdx, uint32_t value)
-	{
-		const uint32_t arrayIdx = lightIdx / 4;
-		const uint32_t elementIdx = lightIdx % 4;
-
-		SEAssert(arrayIdx < AllLightIndexesData::k_maxLights && elementIdx <= 4, "OOB lightIdx");
-
-		switch (lightType)
-		{
-		case gr::Light::Point:
-		{
-			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_pointLightIndexes[arrayIdx]);
-			entryAsVec4[elementIdx] = value;
-		}
-		break;
-		case gr::Light::Spot:
-		{
-			glm::uvec4& entryAsVec4 = static_cast<glm::uvec4&>(allLightIndexesData.g_spotLightIndexes[arrayIdx]);
-			entryAsVec4[elementIdx] = value;
-		}
-		break;
-		default: SEAssertF("Invalid light type");
-		}
 	}
 
 

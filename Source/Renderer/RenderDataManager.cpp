@@ -3,6 +3,7 @@
 #include "Buffer.h"
 #include "CameraRenderData.h"
 #include "IndexedBuffer.h"
+#include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "Material_GLTF.h"
 #include "MeshPrimitive.h"
@@ -13,7 +14,9 @@
 #include "Core/Util/CastUtils.h"
 
 #include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/LightParams.h"
 #include "Shaders/Common/MaterialParams.h"
+#include "Shaders/Common/ShadowParams.h"
 
 
 namespace
@@ -49,32 +52,81 @@ namespace gr
 		: m_currentFrame(k_invalidDirtyFrameNum)
 		, m_threadProtector(true)
 	{
+	}
+
+
+	RenderDataManager::~RenderDataManager()
+	{
+	}
+
+
+	void RenderDataManager::Initialize()
+	{
+		SEAssert(GetRegisteredRenderDataIDs().empty() && 
+			GetRegisteredTransformIDs().empty() &&
+			m_indexedBufferManager == nullptr &&
+			m_currentFrame == k_invalidDirtyFrameNum,
+			"RenderDataManager already initialized");
+
 		// Set a default identity Transform::RenderData for the gr::k_invalidTransformID:
 		RegisterTransform(gr::k_invalidTransformID);
 		SetTransformData(gr::k_invalidTransformID, gr::Transform::RenderData{ .m_transformID = gr::k_invalidTransformID, });
 
-		m_indexedBufferManager = std::make_unique<gr::IndexedBufferManager>(*this);
+
+		// Catch illegal accesses during RenderData modification
+		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
 		// Configure the indexed buffer manager:
+		m_indexedBufferManager = std::make_unique<gr::IndexedBufferManager>(*this);
+
+		// Transforms:
 		IndexedBufferManager::IIndexedBuffer* indexedTransforms = m_indexedBufferManager->AddIndexedBuffer(
 			TransformData::s_shaderName, // Buffer name (not the shader name)
-			gr::Transform::CreateInstancedTransformData,
+			gr::Transform::CreateTransformData,
 			re::Buffer::DefaultHeap);
 
-		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteTransformIndex);
+		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
 
+		// Materials:
 		IndexedBufferManager::IIndexedBuffer* indexedMaterials = m_indexedBufferManager->AddIndexedBuffer(
 			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
 			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
 			re::Buffer::DefaultHeap,
 			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
-		indexedMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::WriteMaterialIndex);
-	}
+		indexedMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
 
 
-	RenderDataManager::~RenderDataManager()
-	{
+		// Lights:
+		IndexedBufferManager::IIndexedBuffer* indexedDirectionalLights = m_indexedBufferManager->AddIndexedBuffer(
+			LightData::s_directionalLightDataShaderName, // Buffer name (not the shader name)
+			gr::CreateDirectionalLightData,
+			re::Buffer::DefaultHeap);
+
+		indexedDirectionalLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+
+		IndexedBufferManager::IIndexedBuffer* indexedPointLights = m_indexedBufferManager->AddIndexedBuffer(
+			LightData::s_pointLightDataShaderName, // Buffer name (not the shader name)
+			gr::CreatePointLightData,
+			re::Buffer::DefaultHeap);
+
+		indexedPointLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+
+		IndexedBufferManager::IIndexedBuffer* indexedSpotLights = m_indexedBufferManager->AddIndexedBuffer(
+			LightData::s_spotLightDataShaderName, // Buffer name (not the shader name)
+			gr::CreateSpotLightData,
+			re::Buffer::DefaultHeap);
+
+		indexedSpotLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+
+
+		// Shadows:
+		IndexedBufferManager::IIndexedBuffer* indexedShadows = m_indexedBufferManager->AddIndexedBuffer(
+			ShadowData::s_shaderName, // Buffer name (not the shader name)
+			gr::CreateShadowData,
+			re::Buffer::DefaultHeap);
+
+		indexedShadows->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetShadowBufferIndex);
 	}
 
 

@@ -38,17 +38,14 @@ namespace gr
 	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
 	using AllBatches = std::vector<re::Batch>;
 
-	using LightDataBufferIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
-	
-	using ShadowArrayIdxMap = std::unordered_map<gr::RenderDataID, uint32_t>;
-	static constexpr uint32_t k_invalidShadowArrayIdx = std::numeric_limits<uint32_t>::max();
+	struct ShadowRecord
+	{
+		core::InvPtr<re::Texture> const* m_shadowTex;
+		uint32_t m_shadowTexArrayIdx;		
+	};
+	using LightIDToShadowRecordMap = std::unordered_map<gr::RenderDataID, gr::ShadowRecord>;
 
-
-	// Helper functions:
-	uint32_t GetLightDataBufferIdx(LightDataBufferIdxMap const*, gr::RenderDataID lightID);
-	uint32_t GetShadowArrayIdx(ShadowArrayIdxMap const*, gr::RenderDataID lightID);
-
-
+	// Helpers:
 	template<typename T>
 	T const* GetDataDependency(util::CHashKey const& scriptName, DataDependencies const& dataDependencies)
 	{

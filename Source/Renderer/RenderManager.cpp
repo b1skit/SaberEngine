@@ -227,6 +227,8 @@ namespace re
 
 		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
+		m_renderData.Initialize();
+
 		m_effectDB.LoadEffectManifest();
 
 		SEBeginCPUEvent("platform::RenderManager::Initialize");

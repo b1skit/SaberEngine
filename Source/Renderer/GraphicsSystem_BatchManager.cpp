@@ -296,7 +296,8 @@ namespace gr
 									return batchMetadata->m_renderDataID;
 								});
 
-						batches.back().SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(instancedBatchView));
+						batches.back().SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+							InstanceIndexData::s_shaderName, instancedBatchView));
 
 						SEEndCPUEvent(); // GetSingleFrameLUTBufferInput
 					}

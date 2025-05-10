@@ -12,10 +12,6 @@ namespace re
 
 namespace gr
 {
-	class ShadowsGraphicsSystem;
-	class XeGTAOGraphicsSystem;
-
-
 	class DeferredLightingGraphicsSystem final
 		: public virtual GraphicsSystem
 		, public virtual IScriptableGraphicsSystem<DeferredLightingGraphicsSystem>
@@ -40,22 +36,7 @@ namespace gr
 		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
-		static constexpr util::CHashKey k_directionalLightDataBufferInput = "DirectionalLightDataBuffer";
-		static constexpr util::CHashKey k_pointLightDataBufferInput = "PointLightDataBuffer";
-		static constexpr util::CHashKey k_spotLightDataBufferInput = "SpotLightDataBuffer";
-
-		static constexpr util::CHashKey k_IDToDirectionalIdxDataInput = "RenderDataIDToDirectionalBufferIdxMap";
-		static constexpr util::CHashKey k_IDToPointIdxDataInput = "RenderDataIDToPointBufferIdxMap";
-		static constexpr util::CHashKey k_IDToSpotIdxDataInput = "RenderDataIDToSpotBufferIdxMap";
-
-		static constexpr util::CHashKey k_directionalShadowArrayTexInput = "DirectionalShadowArrayTex";
-		static constexpr util::CHashKey k_pointShadowArrayTexInput = "PointShadowArrayTex";
-		static constexpr util::CHashKey k_spotShadowArrayTexInput = "SpotShadowArrayTex";
-
-		static constexpr util::CHashKey k_IDToDirectionalShadowArrayIdxDataInput = "RenderDataIDToDirectionalShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToPointShadowArrayIdxDataInput = "RenderDataIDToPointShadowArrayIdxMap";
-		static constexpr util::CHashKey k_IDToSpotShadowArrayIdxDataInput = "RenderDataIDToSpotShadowArrayIdxMap";
-
+		static constexpr util::CHashKey k_lightIDToShadowRecordInput = "LightIDToShadowRecordMap";
 		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
 
 		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
@@ -132,7 +113,6 @@ namespace gr
 		struct PunctualLightRenderData
 		{
 			gr::Light::Type m_type;
-			re::BufferInput m_transformParams;
 			re::Batch m_batch;
 			bool m_hasShadow = false;
 			bool m_canContribute = true;
@@ -154,22 +134,7 @@ namespace gr
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
 
-		std::shared_ptr<re::Buffer> const* m_directionalLightDataBuffer;
-		std::shared_ptr<re::Buffer> const* m_pointLightDataBuffer;
-		std::shared_ptr<re::Buffer> const* m_spotLightDataBuffer;
-
-		LightDataBufferIdxMap const* m_directionalLightDataBufferIdxMap;
-		LightDataBufferIdxMap const* m_pointLightDataBufferIdxMap;
-		LightDataBufferIdxMap const* m_spotLightDataBufferIdxMap;
-
-		core::InvPtr<re::Texture> const* m_directionalShadowArrayTex;
-		core::InvPtr<re::Texture> const* m_pointShadowArrayTex;
-		core::InvPtr<re::Texture> const* m_spotShadowArrayTex;
-
-		ShadowArrayIdxMap const* m_directionalShadowArrayIdxMap;
-		ShadowArrayIdxMap const* m_pointShadowArrayIdxMap;
-		ShadowArrayIdxMap const* m_spotShadowArrayIdxMap;
-
+		std::unordered_map<gr::RenderDataID, gr::ShadowRecord> const* m_lightIDToShadowRecords;
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
 
 
