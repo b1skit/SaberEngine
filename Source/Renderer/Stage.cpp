@@ -1137,7 +1137,8 @@ namespace re
 			[&bufferInput](re::BufferInput const& existingBuffer) {
 				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_singleFrameBuffers.end(),
-				"A single frame Buffer with this shader name has already been added");
+				"A single frame Buffer with shader name \"%s\" has already been added",
+				bufferInput.GetShaderName().c_str());
 
 		SEAssert(std::find_if(
 			m_permanentBuffers.begin(),
@@ -1145,7 +1146,8 @@ namespace re
 			[&bufferInput](re::BufferInput const& existingBuffer) {
 				return bufferInput.GetShaderNameHash() == existingBuffer.GetShaderNameHash();
 			}) == m_permanentBuffers.end(),
-				"A permanent Buffer with this shader name has already been added");
+				"A permanent Buffer with shader name \"%s\" has already been added",
+				bufferInput.GetShaderName().c_str());
 
 		m_singleFrameBuffers.emplace_back(std::move(bufferInput));
 	}
