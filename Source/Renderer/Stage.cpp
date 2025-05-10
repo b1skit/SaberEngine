@@ -1047,18 +1047,11 @@ namespace re
 	}
 
 
-	void Stage::AddPermanentBuffer(re::BufferInput const& bufferInput)
-	{
-		AddPermanentBuffer(re::BufferInput(bufferInput));
-	}
-
-
 	void Stage::AddPermanentBuffer(re::BufferInput&& bufferInput)
 	{
+		SEAssert(bufferInput.GetLifetime() == re::Lifetime::Permanent, "Invalid BufferInput lifetime");
+		SEAssert(bufferInput.GetBuffer()->GetLifetime() == re::Lifetime::Permanent, "Invalid Buffer lifetime");
 		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
-
-		SEAssert(bufferInput.GetBuffer()->GetLifetime() == re::Lifetime::Permanent,
-			"Buffer must have a permanent lifetime");
 
 		SEAssert(std::find_if(
 			m_permanentBuffers.begin(),
@@ -1108,6 +1101,12 @@ namespace re
 	}
 
 
+	void Stage::AddPermanentBuffer(re::BufferInput const& bufferInput)
+	{
+		AddPermanentBuffer(re::BufferInput(bufferInput));
+	}
+
+
 	void Stage::AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer));
@@ -1118,12 +1117,6 @@ namespace re
 		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 	{
 		AddSingleFrameBuffer(re::BufferInput(shaderName, buffer, view));
-	}
-
-
-	void Stage::AddSingleFrameBuffer(re::BufferInput const& bufferInput)
-	{
-		AddSingleFrameBuffer(re::BufferInput(bufferInput));
 	}
 
 
@@ -1150,5 +1143,11 @@ namespace re
 				bufferInput.GetShaderName().c_str());
 
 		m_singleFrameBuffers.emplace_back(std::move(bufferInput));
+	}
+
+
+	void Stage::AddSingleFrameBuffer(re::BufferInput const& bufferInput)
+	{
+		AddSingleFrameBuffer(re::BufferInput(bufferInput));
 	}
 }

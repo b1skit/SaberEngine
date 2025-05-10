@@ -14,11 +14,11 @@ namespace
 	constexpr size_t k_batchBufferIDsReserveAmount = 10;
 
 
-	void ValidateBufferLifetimeCompatibility(re::Lifetime batchLifetime, re::Lifetime bufferLifetime)
+	void ValidateBufferLifetimeCompatibility(re::Lifetime batchLifetime, re::BufferInput const& bufferInput)
 	{
 #if defined(_DEBUG)
-		SEAssert(batchLifetime == re::Lifetime::SingleFrame ||
-			(batchLifetime == re::Lifetime::Permanent && bufferLifetime == re::Lifetime::Permanent),
+		SEAssert(batchLifetime == bufferInput.GetLifetime() ||
+			(batchLifetime == re::Lifetime::SingleFrame && bufferInput.GetLifetime() == re::Lifetime::Permanent),
 			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
 			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
 			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "
@@ -688,9 +688,9 @@ namespace re
 		result.m_lifetime = newLifetime;
 
 #if defined(_DEBUG)
-		for (auto const& buf : result.m_batchBuffers)
+		for (auto const& bufferInput : result.m_batchBuffers)
 		{
-			ValidateBufferLifetimeCompatibility(result.m_lifetime, buf.GetBuffer()->GetLifetime());
+			ValidateBufferLifetimeCompatibility(result.m_lifetime, bufferInput);
 		}
 #endif
 
@@ -934,19 +934,13 @@ namespace re
 	}
 
 
-	void Batch::SetBuffer(re::BufferInput const& bufferInput)
-	{
-		SetBuffer(re::BufferInput(bufferInput));
-	}
-
-
 	void Batch::SetBuffer(re::BufferInput&& bufferInput)
 	{
 		SEAssert(!bufferInput.GetName().empty() &&
 			bufferInput.GetBuffer() != nullptr,
 			"Cannot set a unnamed or null buffer");
 
-		ValidateBufferLifetimeCompatibility(m_lifetime, bufferInput.GetBuffer()->GetLifetime());
+		ValidateBufferLifetimeCompatibility(m_lifetime, bufferInput);
 
 #if defined(_DEBUG)
 		for (auto const& existingBuffer : m_batchBuffers)
@@ -958,6 +952,12 @@ namespace re
 		AddDataBytesToHash(bufferInput.GetBuffer()->GetUniqueID());
 
 		m_batchBuffers.emplace_back(std::move(bufferInput));
+	}
+
+
+	void Batch::SetBuffer(re::BufferInput const& bufferInput)
+	{
+		SetBuffer(re::BufferInput(bufferInput));
 	}
 
 

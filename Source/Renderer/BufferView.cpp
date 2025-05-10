@@ -2,8 +2,6 @@
 #include "BufferView.h"
 #include "Buffer.h"
 
-#include "Core/Assert.h"
-
 #include "Core/Util/HashUtils.h"
 
 
@@ -63,52 +61,5 @@ namespace re
 		, m_isVertexStreamView(false)
 	{
 		/* Don't use this directly */
-	}
-
-
-	// -----------------------------------------------------------------------------------------------------------------
-
-
-	BufferInput::BufferInput()
-		: core::INamedObject("Invalid_DefaultConstructedBufferInput")
-		, m_buffer(nullptr)
-	{
-	}
-
-
-	BufferInput::BufferInput(
-		std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(view)
-	{
-	}
-
-
-	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(view)
-	{
-	}
-
-
-	BufferInput::BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const& buffer)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(buffer)
-	{
-	}
-
-
-	BufferInput::BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
-		:BufferInput(shaderName.c_str(), buffer)
-	{
-	}
-
-
-	void BufferInput::Release()
-	{
-		m_buffer = nullptr;
 	}
 }

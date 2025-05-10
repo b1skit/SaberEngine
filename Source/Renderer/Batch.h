@@ -166,8 +166,8 @@ namespace re
 		std::vector<BufferInput> const& GetBuffers() const;
 		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
 		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		void SetBuffer(re::BufferInput const&);
 		void SetBuffer(re::BufferInput&&);
+		void SetBuffer(re::BufferInput const&);
 
 		void AddTextureInput(
 			char const* shaderName,

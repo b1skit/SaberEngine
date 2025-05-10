@@ -549,7 +549,7 @@ namespace gr
 	re::BufferInput IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetBufferInput(
 		char const* shaderName) const
 	{
-		return re::BufferInput(shaderName, GetBuffer());
+		return re::BufferInput(shaderName, GetBuffer(), re::Lifetime::SingleFrame);
 	}
 
 
@@ -568,7 +568,8 @@ namespace gr
 				.m_numElements = 1,
 				.m_structuredByteStride = sizeof(BufferDataType),
 				.m_firstDestIdx = 0,
-			});
+			},
+			re::Lifetime::SingleFrame);
 	}
 
 
@@ -806,7 +807,8 @@ namespace gr
 						.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
 						.m_structuredByteStride = sizeof(LUTBuffer),
 						.m_firstDestIdx = 0,
-					})).first;
+					},
+					re::Lifetime::SingleFrame)).first;
 
 			// Map the RenderDataIDs to the BufferViews, so we can destroy the views if any data associated with the
 			// RenderDataIDs is ever destroyed
@@ -896,7 +898,8 @@ namespace gr
 						.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
 						.m_structuredByteStride = sizeof(LUTBuffer),
 						.m_firstDestIdx = 0,
-					})).first;
+					},
+					re::Lifetime::SingleFrame)).first;
 
 			// Map the initalDataHash to the lutHash
 			metadataItr->second.m_initialDataHashToLUTBufferInputsHash.emplace(initialLUTDataHash, lutHash);

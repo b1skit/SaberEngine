@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "BufferView.h"
 #include "Effect.h"
 #include "MeshFactory.h"
 #include "RootConstants.h"
@@ -194,14 +195,14 @@ namespace re
 
 		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&); // Infer a default BufferView
 		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		void AddPermanentBuffer(re::BufferInput const&);
 		void AddPermanentBuffer(re::BufferInput&&);
+		void AddPermanentBuffer(re::BufferInput const&);
 		inline std::vector<re::BufferInput> const& GetPermanentBuffers() const;
 
 		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&); // Infer a default BufferView
 		void AddSingleFrameBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		void AddSingleFrameBuffer(re::BufferInput const&);
 		void AddSingleFrameBuffer(re::BufferInput&&);
+		void AddSingleFrameBuffer(re::BufferInput const&);
 		inline std::vector<re::BufferInput> const& GetPerFrameBuffers() const;
 
 		void SetRootConstant(char const* shaderName, void const* src, re::DataType);

@@ -3,6 +3,7 @@
 #include "EnumTypes.h"
 #include "VertexStream.h"
 
+#include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
@@ -97,14 +98,41 @@ namespace re
 	class BufferInput : public virtual core::INamedObject
 	{
 	public:
-		BufferInput();
+		BufferInput(); // Default/invalid view
 
-		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		
+		BufferInput(
+			std::string_view shaderName,
+			std::shared_ptr<re::Buffer>&&,
+			re::BufferView&&,
+			re::Lifetime viewLifetime);
+
+		BufferInput(
+			std::string_view shaderName,
+			std::shared_ptr<re::Buffer>&&,
+			re::BufferView const&,
+			re::Lifetime viewLifetime);
+
+		BufferInput(
+			std::string_view shaderName,
+			std::shared_ptr<re::Buffer> const&,
+			re::BufferView&&,
+			re::Lifetime viewLifetime);
+
+		BufferInput(
+			std::string_view shaderName,
+			std::shared_ptr<re::Buffer> const&,
+			re::BufferView const&,
+			re::Lifetime viewLifetime); // Specify an equal or stricter lifetime than the Buffer's lifetime
+
+		// Infer a default lifetime from the Buffer
+		BufferInput(std::string_view shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView&&);
+		BufferInput(std::string_view shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
+
 		// Infer a default view from the Buffer
-		BufferInput(char const* shaderName, std::shared_ptr<re::Buffer> const&);
-		BufferInput(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
+		BufferInput(std::string_view shaderName, std::shared_ptr<re::Buffer> const&, re::Lifetime);
+
+		// Infer a default view and lifetime from the Buffer
+		BufferInput(std::string_view shaderName, std::shared_ptr<re::Buffer> const&);
 		
 
 	public:
@@ -126,6 +154,8 @@ namespace re
 
 		BufferView const& GetView() const;
 
+		re::Lifetime GetLifetime() const;
+
 		bool IsValid() const;
 		void Release();
 
@@ -133,7 +163,95 @@ namespace re
 	private:
 		std::shared_ptr<re::Buffer> m_buffer;
 		BufferView m_bufferView;
+		re::Lifetime m_viewLifetime;
 	};
+
+
+	inline BufferInput::BufferInput()
+		: core::INamedObject("Invalid_DefaultConstructedBufferInput")
+		, m_buffer(nullptr)
+		, m_viewLifetime(re::Lifetime::Permanent)
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName,
+		std::shared_ptr<re::Buffer>&& buffer,
+		re::BufferView&& view,
+		re::Lifetime viewLifetime)
+		: core::INamedObject(shaderName.data())
+		, m_buffer(std::move(buffer))
+		, m_bufferView(std::move(view))
+		, m_viewLifetime(viewLifetime)
+	{
+		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
+			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
+			"Incompatible BufferInput and Buffer lifetimes");
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName,
+		std::shared_ptr<re::Buffer>&& buffer,
+		re::BufferView const& view,
+		re::Lifetime viewLifetime)
+		: BufferInput(shaderName, std::move(buffer), re::BufferView(view), viewLifetime)
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName,
+		std::shared_ptr<re::Buffer> const& buffer,
+		re::BufferView&& view,
+		re::Lifetime viewLifetime)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), std::move(view), viewLifetime)
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName,
+		std::shared_ptr<re::Buffer> const& buffer,
+		re::BufferView const& view,
+		re::Lifetime viewLifetime)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), re::BufferView(view), viewLifetime)
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView&& view)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), std::move(view), buffer->GetLifetime())
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), re::BufferView(view), buffer->GetLifetime())
+	{
+	}
+
+
+	inline BufferInput::BufferInput(
+		std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::Lifetime lifetime)
+		: BufferInput(shaderName, buffer, re::BufferView(buffer), lifetime)
+	{
+	}
+
+
+	inline BufferInput::BufferInput(std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer)
+		: BufferInput(shaderName, buffer, re::BufferView(buffer), buffer->GetLifetime())
+	{
+	}
+
+
+	inline void BufferInput::Release()
+	{
+		m_buffer = nullptr;
+	}
 
 
 	inline re::Buffer const* BufferInput::GetBuffer() const
@@ -163,6 +281,12 @@ namespace re
 	inline BufferView const& BufferInput::GetView() const
 	{
 		return m_bufferView;
+	}
+
+
+	inline re::Lifetime BufferInput::GetLifetime() const
+	{
+		return m_viewLifetime;
 	}
 
 
