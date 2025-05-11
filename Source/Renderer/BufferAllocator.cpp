@@ -474,7 +474,7 @@ namespace re
 				auto GetSortedInsertionPointItr = [&](
 					MutableAllocation::PartialCommit const& newCommit) -> MutableAllocation::CommitRecord::iterator
 					{
-						return std::upper_bound(
+						return std::upper_bound( // Find first element *greater than*
 							commitRecord.begin(),
 							commitRecord.end(),
 							newCommit,
@@ -496,7 +496,11 @@ namespace re
 				auto prev = commitRecord.insert(GetSortedInsertionPointItr(newCommit), newCommit);
 				if (prev != commitRecord.begin())
 				{
-					--prev; // Start our search from the element before, incase it overlaps
+					auto previous = std::prev(prev);
+					if (previous->m_baseOffset + previous->m_numBytes >= prev->m_baseOffset)
+					{
+						--prev; // Prior element overlaps: Start our search from there
+					}
 				}
 				auto current = std::next(prev);
 
@@ -607,8 +611,25 @@ namespace re
 						++current;
 					}
 				}
+
+				
+			}
+
+//#define VALIDATE_COMMITS
+#if defined(VALIDATE_COMMITS)
+			for (auto itr = commitRecord.begin(); itr != commitRecord.end(); ++itr)
+			{
+				auto next = std::next(itr);
+
+				SEAssert(next == commitRecord.end() ||
+					itr->m_baseOffset < next->m_baseOffset && // Not overlapping
+					(itr->m_baseOffset + itr->m_numBytes < next->m_baseOffset || // Not contiguous
+						(itr->m_baseOffset + itr->m_numBytes == next->m_baseOffset && // Contiguous, but diff. updates
+							itr->m_numRemainingUpdates != next->m_numRemainingUpdates)),
+					"Commit records are out of sync");
 			}
 		}
+#endif
 
 		// Add the mutable buffer to our dirty list, so we can buffer the data when required
 		{
