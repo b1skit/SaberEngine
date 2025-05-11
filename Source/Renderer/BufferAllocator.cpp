@@ -628,8 +628,9 @@ namespace re
 							itr->m_numRemainingUpdates != next->m_numRemainingUpdates)),
 					"Commit records are out of sync");
 			}
-		}
 #endif
+		}
+
 
 		// Add the mutable buffer to our dirty list, so we can buffer the data when required
 		{
