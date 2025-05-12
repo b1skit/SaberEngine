@@ -423,6 +423,13 @@ namespace gr
 			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
 
+			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
+				"Shadow array index is out of bounds");
+
+			directionalStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				*shadowRecord.m_shadowTex,
+				CreateShadowWriteView(gr::Light::Directional, shadowRecord.m_shadowTexArrayIdx));
+
 			directionalStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*shadowRecord.m_shadowTex,
 				CreateShadowWriteView(gr::Light::Directional, shadowRecord.m_shadowTexArrayIdx));
@@ -440,6 +447,13 @@ namespace gr
 			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
 
+			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
+				"Shadow array index is out of bounds");
+
+			pointStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				*shadowRecord.m_shadowTex,
+				CreateShadowWriteView(gr::Light::Point, shadowRecord.m_shadowTexArrayIdx));
+
 			pointStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*shadowRecord.m_shadowTex,
 				CreateShadowWriteView(gr::Light::Point, shadowRecord.m_shadowTexArrayIdx));
@@ -456,6 +470,13 @@ namespace gr
 
 			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
+
+			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
+				"Shadow array index is out of bounds");
+
+			spotStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				*shadowRecord.m_shadowTex,
+				CreateShadowWriteView(gr::Light::Spot, shadowRecord.m_shadowTexArrayIdx));
 
 			spotStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
 				*shadowRecord.m_shadowTex,

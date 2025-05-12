@@ -298,11 +298,15 @@ namespace gr
 					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
 
 					// Update the existing shadow record outputs with the new texture:
+					uint32_t newArrayIdx = 0;
 					for (auto& entry : m_lightIDToShadowRecords)
 					{
 						if (entry.second.m_shadowTex == prevShadowTex)
 						{
+							SEAssert(newArrayIdx < shadowArrayParams.m_arraySize,
+								"New shadow texture array index is out of bounds");
 							entry.second.m_shadowTex = &shadowMetadata.m_shadowArray;
+							entry.second.m_shadowTexArrayIdx = newArrayIdx++;
 						}
 					}					
 				}
