@@ -115,6 +115,10 @@
               "Command": "-singlethreadeffectloading"
             },
             {
+              "Id": "f87418da-42c5-480e-af02-7ed4f9059295",
+              "Command": "-singlethreadindexedbufferupdates"
+            },
+            {
               "Id": "97a8f732-f326-4216-bbe6-cd030918b58b",
               "Command": "-numworkerthreads 12"
             }

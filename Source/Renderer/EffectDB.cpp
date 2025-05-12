@@ -574,12 +574,12 @@ namespace effect
 			std::vector<std::future<void>> taskFutures;
 			taskFutures.reserve(effectManifestJSON.at(key_effectsBlock).size());
 
-			const bool threadedEffectLoading = 
+			static const bool s_threadedEffectLoading = 
 				core::Config::Get()->KeyExists(core::configkeys::k_singleThreadEffectLoading) == false;
 
 			for (auto const& effectManifestEntry : effectManifestJSON.at(key_effectsBlock))
 			{
-				if (threadedEffectLoading)
+				if (s_threadedEffectLoading)
 				{
 					taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 						[&effectManifestEntry, this]()
@@ -607,7 +607,7 @@ namespace effect
 			}
 
 			// Wait for loading to complete:
-			if (threadedEffectLoading)
+			if (s_threadedEffectLoading)
 			{
 				for (auto const& taskFuture : taskFutures)
 				{

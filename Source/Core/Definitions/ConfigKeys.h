@@ -50,6 +50,7 @@ namespace core::configkeys
 	constexpr char const* k_singleThreadGSExecution					= "singlethreadgsexecution";
 	constexpr char const* k_singleThreadGPUResourceCreation			= "singlethreadgpuresourcecreation";
 	constexpr char const* k_singleThreadCmdListRecording			= "singlethreadcommandlistrecording";
+	constexpr char const* k_singleThreadIndexedBufferUpdates		= "singlethreadindexedbufferupdates";
 	
 	constexpr char const* k_numWorkerThreads						= "numworkerthreads";
 	constexpr char const* k_platformCmdLineArg						= "platform";
