@@ -255,26 +255,171 @@ namespace gr
 		// one to go out of scope via deferred deletion		
 		struct LUTMetadata
 		{
-			std::unordered_map<util::HashKey, re::BufferInput> m_LUTBufferInputs;
-			std::unordered_map<util::HashKey, util::HashKey> m_initialDataHashToLUTBufferInputsHash;
+			// lutHash -> {BufferInput, initialLUTDataHash}
+			std::unordered_map<util::HashKey, std::pair<re::BufferInput, util::HashKey>> m_LUTBufferInputs;
 
 			std::shared_ptr<re::Buffer> m_LUTBuffer;
-			IndexType m_firstFreeBaseIdx = 0;
+
+
+		public:
+			uint32_t GetLargestFreeBlock() const
+			{
+				return m_largestFreeBlock;
+			}
+
+			bool HasFreeBlock(uint32_t elementCount) const
+			{
+				return elementCount <= m_largestFreeBlock;
+			}
+
+			void Reset()
+			{
+				SEAssert(m_LUTBuffer != nullptr, "Trying to clear before a LUT Buffer has been created");
+
+				m_LUTBufferInputs.clear();
+
+				m_largestFreeBlock = m_LUTBuffer->GetArraySize();
+
+				m_freeBlocks = { LUTMetadata::LUTBlock{ 0, m_largestFreeBlock } };
+			}
+
+			uint32_t Allocate(uint32_t numElements)
+			{
+				SEAssert(numElements > 0, "Invalid allocation amount");
+				SEAssert(HasFreeBlock(numElements), "Trying to allocate a block but there is not enough room");
+
+				// Find an insertion point:
+				auto freeBlockItr = std::find_if(
+					m_freeBlocks.begin(),
+					m_freeBlocks.end(),
+					[numElements](LUTMetadata::LUTBlock const& block) { return block.m_count >= numElements; });
+
+				const uint32_t baseIdxOut = freeBlockItr->m_baseIdx;
+
+				// If we're (potentially) modifying the largest block, we must re-check
+				const bool mustRefindLargest = freeBlockItr->m_count == m_largestFreeBlock;
+
+				// Update the insertion point record:
+				if (numElements < freeBlockItr->m_count)
+				{
+					freeBlockItr->m_baseIdx += numElements;
+					freeBlockItr->m_count -= numElements;
+				}
+				else
+				{
+					m_freeBlocks.erase(freeBlockItr);
+				}
+
+				if (mustRefindLargest)
+				{
+					m_largestFreeBlock = 0;
+					for (auto const& entry : m_freeBlocks)
+					{
+						if (entry.m_count > m_largestFreeBlock)
+						{
+							m_largestFreeBlock = entry.m_count;
+						}
+					}
+				}
+
+				return baseIdxOut;
+			}
+
+			void Free(uint32_t baseIdx, uint32_t numElements)
+			{
+				auto freeBlocksItr = std::find_if( // Find the first block *greater than* our freed base idx
+					m_freeBlocks.begin(),
+					m_freeBlocks.end(),
+					[baseIdx](LUTMetadata::LUTBlock const& lutBlock)
+					{
+						return lutBlock.m_baseIdx > baseIdx;
+					});
+
+				SEAssert(numElements > 0 && baseIdx + numElements <= m_LUTBuffer->GetArraySize(),
+					"Trying to free out of bounds indexes");
+
+				bool mustRefindLargestBlock = false;
+
+				if (freeBlocksItr != m_freeBlocks.end())
+				{
+					// Merge with previous block
+					if (freeBlocksItr != m_freeBlocks.begin() &&
+						std::prev(freeBlocksItr)->m_baseIdx + std::prev(freeBlocksItr)->m_count == baseIdx) 
+					{
+						std::prev(freeBlocksItr)->m_count += numElements;
+
+						// Merge with current freeBlocksItr if we're now contiguous:
+						if (std::prev(freeBlocksItr)->m_baseIdx + std::prev(freeBlocksItr)->m_count == freeBlocksItr->m_baseIdx)
+						{
+							std::prev(freeBlocksItr)->m_count += freeBlocksItr->m_count;
+
+							m_freeBlocks.erase(freeBlocksItr);
+						}
+					}
+					else if (baseIdx + numElements == freeBlocksItr->m_baseIdx) // Merge contiguous blocks
+					{
+						freeBlocksItr->m_baseIdx = baseIdx;
+						freeBlocksItr->m_count += numElements;
+					}
+				}
+				else // Insert a new block
+				{
+					SEAssert(freeBlocksItr == m_freeBlocks.end() || baseIdx + numElements < freeBlocksItr->m_baseIdx,
+						"Invalid insertion point");
+
+					if (!m_freeBlocks.empty() && 
+						freeBlocksItr == m_freeBlocks.end() &&
+						std::prev(freeBlocksItr)->m_baseIdx + std::prev(freeBlocksItr)->m_count == baseIdx)
+					{
+						std::prev(freeBlocksItr)->m_count += numElements; // Merge with previous
+					}
+					else
+					{
+						freeBlocksItr = m_freeBlocks.insert(
+							freeBlocksItr, // Inserts *before* freeBlocksItr
+							LUTMetadata::LUTBlock{ .m_baseIdx = baseIdx, .m_count = numElements, });
+					}					
+				}
+
+				if (freeBlocksItr->m_count > m_largestFreeBlock)
+				{
+					m_largestFreeBlock = freeBlocksItr->m_count;
+				}
+
+#define VALIDATE_BLOCKS
+#if defined(VALIDATE_BLOCKS)
+				for (auto blockItr = m_freeBlocks.begin(); blockItr != m_freeBlocks.end(); ++blockItr)
+				{
+					SEAssert(std::next(blockItr) == m_freeBlocks.end() ||
+						blockItr->m_baseIdx + blockItr->m_count < std::next(blockItr)->m_baseIdx,
+						"Found overlapping or unmerged blocks");
+				}
+#endif
+			}
+
+		private:
+			struct LUTBlock
+			{
+				uint32_t m_baseIdx;
+				uint32_t m_count;
+			};
+			std::list<LUTBlock> m_freeBlocks; // Maintained in sorted order: Smallest -> largest base index
+			uint32_t m_largestFreeBlock;
 		};
 		std::unordered_map<std::type_index, LUTMetadata> m_LUTTypeToLUTMetadata; // <LUTBuffer> -> LUTMetadata
 		std::mutex m_LUTTypeToLUTMetadataMutex;
 
-		// Map RenderDataID -> re::BufferInput entries, so we can destroy (potentially) stale BufferInputs
+		// Map RenderDataID ->LUTMetadata entries, so we can destroy (potentially) stale BufferInputs
 		struct LUTMetadataRecord
 		{
 			LUTMetadata* m_lutMetadata;
 			util::HashKey m_lutHash;
-			util::HashKey m_intialDataHash;
 		};
 		std::unordered_multimap<IDType, LUTMetadataRecord> m_IDToLUTMetadataEntries;
 
-		static constexpr uint32_t k_defaultLUTBufferArraySize = 32;
+		static constexpr uint32_t k_defaultLUTBufferArraySize = 16;
 		static constexpr float k_LUTBufferGrowthFactor = 2.f;
+		static constexpr float k_LUTBufferShrinkFactor = 1.f / 1.75f; // Add some slop to prevent oscillation
 
 		util::ThreadProtector m_threadProtector;
 
@@ -449,6 +594,9 @@ namespace gr
 				{
 					for (gr::IDType deletedID : deletedIDs)
 					{
+						SEAssert(m_idToBufferIdx.contains(deletedID),
+							"Deleted ID was not found. This should not be possible");
+
 						const IndexType deletedIdx = m_idToBufferIdx.at(deletedID);
 						m_idToBufferIdx.erase(deletedID);
 						m_freeIndexes.emplace(deletedIdx);
@@ -659,7 +807,7 @@ namespace gr
 		SEAssert(m_lutWritingBuffers.contains(lutTypeIdx),
 			"No indexed buffers have a registered LUT data writer of this type ");
 
-		auto WriteLUTData = [this, &renderDataIDs, lutTypeIdx](std::span<LUTBuffer> lutBufferData)
+		auto PopulateLUTData = [this, &renderDataIDs, lutTypeIdx](std::span<LUTBuffer> lutBufferData)
 			{
 				// Multiple writers may write to the same LUTBuffer type:
 				auto entries = m_lutWritingBuffers.equal_range(lutTypeIdx);
@@ -675,28 +823,48 @@ namespace gr
 				}
 			};
 
-		SEAssert(m_LUTTypeToLUTMetadata.contains(lutTypeIdx), "No LUT buffer entry exists. It should have already been added");
+		SEAssert(m_LUTTypeToLUTMetadata.contains(lutTypeIdx),
+			"No LUT buffer entry exists. It should have already been added");
+
+		baseIdxOut = 0; // Initialize with a dummy value
+
+		// We'll pad the initial data out if we have too many/too few elements:
+		const uint32_t requiredSize = util::CheckedCast<uint32_t>(initialLUTData.size());
 
 		auto lutMetadataItr = m_LUTTypeToLUTMetadata.find(lutTypeIdx);
-		if (lutMetadataItr->second.m_LUTBuffer == nullptr ||
-			(lutMetadataItr->second.m_firstFreeBaseIdx + renderDataIDs.size()) >
-				lutMetadataItr->second.m_LUTBuffer->GetArraySize() ||
-			(lutMetadataItr->second.m_firstFreeBaseIdx + initialLUTData.size()) >
-				lutMetadataItr->second.m_LUTBuffer->GetArraySize())
+
+		const bool hasBuffer = lutMetadataItr->second.m_LUTBuffer != nullptr;
+		const bool mustGrow = hasBuffer && lutMetadataItr->second.HasFreeBlock(requiredSize) == false;
+
+		const bool mustShrink = hasBuffer &&
+			!mustGrow &&
+			requiredSize > 0 &&
+			lutMetadataItr->second.m_LUTBuffer->GetArraySize() > k_defaultLUTBufferArraySize * k_LUTBufferGrowthFactor &&
+			requiredSize * k_LUTBufferGrowthFactor * k_LUTBufferGrowthFactor < lutMetadataItr->second.GetLargestFreeBlock() &&
+			lutMetadataItr->second.GetLargestFreeBlock() * k_LUTBufferGrowthFactor > lutMetadataItr->second.m_LUTBuffer->GetArraySize();
+
+		const bool mustReallocate = !hasBuffer || mustGrow || mustShrink;
+		if (mustReallocate)
 		{
-			// Pad the initial data out if we have too many/too few elements:
-			const uint32_t requiredSize = 
-				util::CheckedCast<uint32_t>(lutMetadataItr->second.m_firstFreeBaseIdx + initialLUTData.size());
-			if (lutMetadataItr->second.m_LUTBuffer != nullptr &&
-				requiredSize > lutMetadataItr->second.m_LUTBuffer->GetArraySize() &&
-				requiredSize > k_defaultLUTBufferArraySize)
+			if (mustGrow)
 			{
-				const uint32_t expandedSize = std::max(requiredSize,
-					util::CheckedCast<uint32_t>(lutMetadataItr->second.m_LUTBuffer->GetArraySize() * k_LUTBufferGrowthFactor));
+				const uint32_t nextSize = 
+					static_cast<uint32_t>(lutMetadataItr->second.m_LUTBuffer->GetArraySize() * k_LUTBufferGrowthFactor);
+
+				const uint32_t expandedSize = std::max(requiredSize, nextSize);
 
 				initialLUTData.resize(expandedSize);
 			}
-			else if (initialLUTData.size() < k_defaultLUTBufferArraySize)
+			else if (mustShrink)
+			{
+				const uint32_t nextSize = 
+					static_cast<uint32_t>(lutMetadataItr->second.m_LUTBuffer->GetArraySize() * k_LUTBufferShrinkFactor);
+
+				const uint32_t reducedSize = std::max(std::max(requiredSize, nextSize), k_defaultLUTBufferArraySize);
+
+				initialLUTData.resize(reducedSize);
+			}
+			else if (initialLUTData.size() < k_defaultLUTBufferArraySize) // Ensure a minimum size
 			{
 				const bool createDummyBuffer = renderDataIDs.empty();
 				if (createDummyBuffer)
@@ -708,13 +876,15 @@ namespace gr
 					initialLUTData.resize(k_defaultLUTBufferArraySize);
 				}
 			}
+			const uint32_t finalBufferArraySize = util::CheckedCast<uint32_t>(initialLUTData.size());
 
-			LOG(std::format("Creating indexed buffer LUT for type \"{}\", with {} elements",
+			LOG(std::format("{} indexed buffer LUT for type \"{}\", ({} elements)",
+				(hasBuffer ? (mustGrow ? "Growing" : "Shrinking") : "Creating"),
 				lutTypeIdx.name(),
 				initialLUTData.size()));
 
 			// Populate the intial entries with LUT data for our RenderDataIDs:
-			WriteLUTData(std::span<LUTBuffer>(initialLUTData.begin(), renderDataIDs.size()));
+			PopulateLUTData(std::span<LUTBuffer>(initialLUTData.begin(), renderDataIDs.size()));
 
 			// Create the buffer:
 			lutMetadataItr->second.m_LUTBuffer = re::Buffer::CreateArray(
@@ -726,33 +896,34 @@ namespace gr
 					.m_memPoolPreference = re::Buffer::UploadHeap,
 					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
 					.m_usageMask = re::Buffer::Structured,
-					.m_arraySize = util::CheckedCast<uint32_t>(initialLUTData.size()),
+					.m_arraySize = finalBufferArraySize,
 				});
 
-			lutMetadataItr->second.m_LUTBufferInputs.clear(); // Clear the cached BufferInputs, as indexing may have changed
-			lutMetadataItr->second.m_initialDataHashToLUTBufferInputsHash.clear();
-			
-			// Set the initial the base index:
-			baseIdxOut = 0;
-			lutMetadataItr->second.m_firstFreeBaseIdx = util::CheckedCast<IndexType>(renderDataIDs.size());
+			lutMetadataItr->second.Reset(); // Reset the LUT block allocation tracking
+
+			if (!renderDataIDs.empty()) // Otherwise, will still return baseIdxOut = 0 for dummy buffers
+			{
+				baseIdxOut = lutMetadataItr->second.Allocate(util::CheckedCast<uint32_t>(renderDataIDs.size()));
+			}
 		}
 		else
 		{
+			SEAssert(lutMetadataItr->second.HasFreeBlock(requiredSize),
+				"Not enough space to place the new entries, this should not be possible");
+
 			if (!initialLUTData.empty())
 			{
+				baseIdxOut = lutMetadataItr->second.Allocate(requiredSize);
+
 				// Record our current entries:
-				WriteLUTData(std::span<LUTBuffer>(initialLUTData));
+				PopulateLUTData(std::span<LUTBuffer>(initialLUTData));
 
 				// Commit the updated data:
 				lutMetadataItr->second.m_LUTBuffer->Commit(
 					initialLUTData.data(),
-					lutMetadataItr->second.m_firstFreeBaseIdx,
+					baseIdxOut,
 					util::CheckedCast<uint32_t>(initialLUTData.size()));
 			}
-
-			// Update the base index:
-			baseIdxOut = lutMetadataItr->second.m_firstFreeBaseIdx;
-			lutMetadataItr->second.m_firstFreeBaseIdx += util::CheckedCast<IndexType>(renderDataIDs.size());
 		}
 
 		SEEndCPUEvent();
@@ -782,7 +953,7 @@ namespace gr
 				auto lutBufferInputItr = metadataItr->second.m_LUTBufferInputs.find(lutHash);
 				if (lutBufferInputItr != metadataItr->second.m_LUTBufferInputs.end())
 				{
-					return lutBufferInputItr->second;
+					return lutBufferInputItr->second.first;
 				}
 			}
 
@@ -793,22 +964,25 @@ namespace gr
 
 			IndexType firstElement = std::numeric_limits<IndexType>::max();
 
-			std::shared_ptr<re::Buffer> const& lutBuffer = 
+			std::shared_ptr<re::Buffer> const& lutBuffer =
 				GetLUTBuffer<LUTBuffer>(shaderName, renderDataIDs, firstElement);
 			SEAssert(firstElement != std::numeric_limits<IndexType>::max(), "Failed to get a valid 1st element");
 
 			auto const& lutBufferInputItr = metadataItr->second.m_LUTBufferInputs.emplace(
 				lutHash,
-				re::BufferInput(
-					shaderName,
-					lutBuffer,
-					re::BufferView::BufferType{
-						.m_firstElement = firstElement,
-						.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
-						.m_structuredByteStride = sizeof(LUTBuffer),
-						.m_firstDestIdx = 0,
-					},
-					re::Lifetime::SingleFrame)).first;
+				std::make_pair<re::BufferInput, util::HashKey>(
+					re::BufferInput(
+						shaderName,
+						lutBuffer,
+						re::BufferView::BufferType{
+							.m_firstElement = firstElement,
+							.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
+							.m_structuredByteStride = sizeof(LUTBuffer),
+							.m_firstDestIdx = 0,
+						},
+						re::Lifetime::SingleFrame),
+					util::HashKey() // No data hash
+					)).first;
 
 			// Map the RenderDataIDs to the BufferViews, so we can destroy the views if any data associated with the
 			// RenderDataIDs is ever destroyed
@@ -817,11 +991,10 @@ namespace gr
 				m_IDToLUTMetadataEntries.emplace(renderDataID,
 					LUTMetadataRecord{
 						.m_lutMetadata = &metadataItr->second,
-						.m_lutHash = lutHash,
-						.m_intialDataHash = 0});
+						.m_lutHash = lutHash});
 			}
 
-			return lutBufferInputItr->second;
+			return lutBufferInputItr->second.first;
 		}
 	}
 
@@ -857,22 +1030,20 @@ namespace gr
 				auto lutBufferInputItr = metadataItr->second.m_LUTBufferInputs.find(lutHash);
 				if (lutBufferInputItr != metadataItr->second.m_LUTBufferInputs.end())
 				{
-					// Have we seen this initialLUTDataHash before?
-					auto initialDataItr =
-						metadataItr->second.m_initialDataHashToLUTBufferInputsHash.find(initialLUTDataHash);
-					if (initialDataItr != metadataItr->second.m_initialDataHashToLUTBufferInputsHash.end())
+					if (lutBufferInputItr->second.second == initialLUTDataHash)
 					{
-						if (initialDataItr->second == lutHash)
-						{
-							return lutBufferInputItr->second; // Success! Return the existing LUT BufferInput
-						}
-						else
-						{
-							// We've seen the lutHash before, but with a different initialLUTDataHash. Erase both, we'll
-							// recreate everything:
-							metadataItr->second.m_LUTBufferInputs.erase(lutHash);
-							metadataItr->second.m_initialDataHashToLUTBufferInputsHash.erase(initialLUTDataHash);
-						}						
+						return lutBufferInputItr->second.first; // Success! Return the existing LUT BufferInput
+					}
+					else
+					{
+						const uint32_t freedBaseIdx = lutBufferInputItr->second.first.GetView().m_bufferView.m_firstElement;
+						const uint32_t freedSize = lutBufferInputItr->second.first.GetView().m_bufferView.m_numElements;
+
+						metadataItr->second.Free(freedBaseIdx, freedSize);
+
+						// We've seen the lutHash before, but with a different initialLUTDataHash. Erase the BufferInput,
+						// we'll recreate everything:
+						metadataItr->second.m_LUTBufferInputs.erase(lutHash);
 					}
 				}
 			}
@@ -890,19 +1061,18 @@ namespace gr
 
 			auto const& lutBufferInputItr = metadataItr->second.m_LUTBufferInputs.emplace(
 				lutHash,
-				re::BufferInput(
-					shaderName,
-					lutBuffer,
-					re::BufferView::BufferType{
-						.m_firstElement = firstElement,
-						.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
-						.m_structuredByteStride = sizeof(LUTBuffer),
-						.m_firstDestIdx = 0,
-					},
-					re::Lifetime::SingleFrame)).first;
-
-			// Map the initalDataHash to the lutHash
-			metadataItr->second.m_initialDataHashToLUTBufferInputsHash.emplace(initialLUTDataHash, lutHash);
+				std::make_pair<re::BufferInput, util::HashKey>(
+					re::BufferInput(
+						shaderName,
+						lutBuffer,
+						re::BufferView::BufferType{
+							.m_firstElement = firstElement,
+							.m_numElements = util::CheckedCast<uint32_t>(renderDataIDs.size()),
+							.m_structuredByteStride = sizeof(LUTBuffer),
+							.m_firstDestIdx = 0,
+						},
+						re::Lifetime::SingleFrame),
+					util::HashKey(initialLUTDataHash)));
 
 			// Map the RenderDataIDs to the BufferViews, so we can destroy the views if any data associated with the
 			// RenderDataIDs is ever destroyed
@@ -911,11 +1081,10 @@ namespace gr
 				m_IDToLUTMetadataEntries.emplace(renderDataID,
 					LUTMetadataRecord{
 						.m_lutMetadata = &metadataItr->second,
-						.m_lutHash = lutHash,
-						.m_intialDataHash = initialLUTDataHash });
+						.m_lutHash = lutHash});
 			}
 
-			return lutBufferInputItr->second;
+			return lutBufferInputItr.first->second.first;
 		}
 	}
 

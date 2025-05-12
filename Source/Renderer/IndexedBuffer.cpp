@@ -48,8 +48,15 @@ namespace gr
 			auto entries = m_IDToLUTMetadataEntries.equal_range(id);
 			for (auto& itr = entries.first; itr != entries.second; ++itr)
 			{
-				itr->second.m_lutMetadata->m_LUTBufferInputs.erase(itr->second.m_lutHash);
-				itr->second.m_lutMetadata->m_initialDataHashToLUTBufferInputsHash.erase(itr->second.m_intialDataHash);
+				auto bufferInputItr = itr->second.m_lutMetadata->m_LUTBufferInputs.find(itr->second.m_lutHash);
+				if (bufferInputItr != itr->second.m_lutMetadata->m_LUTBufferInputs.end())
+				{
+					itr->second.m_lutMetadata->Free(
+						bufferInputItr->second.first.GetView().m_bufferView.m_firstElement,
+						bufferInputItr->second.first.GetView().m_bufferView.m_numElements);
+
+					itr->second.m_lutMetadata->m_LUTBufferInputs.erase(itr->second.m_lutHash);
+				}
 			}
 			m_IDToLUTMetadataEntries.erase(id);
 		}
@@ -76,10 +83,8 @@ namespace gr
 
 							auto lutMetadataItr = m_LUTTypeToLUTMetadata.find(LUTBufferType);
 							if (lutMetadataItr != m_LUTTypeToLUTMetadata.end())
-							{
-								lutMetadataItr->second.m_LUTBufferInputs.clear();
-								lutMetadataItr->second.m_initialDataHashToLUTBufferInputsHash.clear();
-								lutMetadataItr->second.m_firstFreeBaseIdx = 0;
+							{								
+								lutMetadataItr->second.Reset(); // Reset the LUT block allocation tracking
 							}
 						}
 					}
