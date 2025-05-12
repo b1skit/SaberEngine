@@ -974,7 +974,7 @@ namespace gr
 			// If we've seen this ID, or it doesn't have all the types/feature bits, remove it
 			if (seenIDs.contains(curID) || 
 				!HasObjectData<Ts...>(curID) ||
-				(featureBits != RenderObjectFeature::None && !HasAllFeatures(GetFeatureBits(curID), featureBits)))
+				(featureBits != RenderObjectFeature::None && !HasAllFeatures(featureBits, GetFeatureBits(curID))))
 			{
 				bool isLast = false;
 				auto lastElementItr = std::prev(dirtyIDs.end());
