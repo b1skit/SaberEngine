@@ -189,9 +189,6 @@ namespace dx12
 	{
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
 		
-		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Structured, bufferParams) ||
-			bufferParams.m_arraySize <= 1024, "Maximum offset of 1024 allowed into an SRV");
-
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		SEAssert(!platObj->m_isCreated, "Buffer is already created");
 		platObj->m_isCreated = true;
