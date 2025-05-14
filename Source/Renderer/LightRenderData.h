@@ -3,9 +3,11 @@
 #include "RenderObjectIDs.h"
 #include "Texture.h"
 
+#include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
+
 
 
 namespace gr
@@ -22,6 +24,7 @@ namespace gr
 
 			Type_Count
 		};
+		static constexpr char const* LightTypeToCStr(Light::Type);
 
 
 		struct RenderDataAmbientIBL
@@ -134,4 +137,18 @@ namespace gr
 			RenderDataSpot() = delete;
 		};
 	};
+
+
+	inline constexpr char const* Light::LightTypeToCStr(Light::Type lightType)
+	{
+		switch (lightType)
+		{
+			case AmbientIBL: return "AmbientIBL";
+			case Directional: return "Directional";
+			case Point: return "Point";
+			case Spot: return "Spot";
+			default: return "INVALID_LIGHT_TYPE";
+		}
+		SEStaticAssert(Light::Type_Count == 4, "Light type count changed. This must be updated");
+	}
 }
