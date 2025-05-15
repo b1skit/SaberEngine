@@ -264,7 +264,7 @@ namespace gr
 			{
 				SEAssert(m_LUTBuffer != nullptr, "Trying to reset before a LUT Buffer has been created");
 
-				constexpr uint8_t k_maxConsecutiveShrinkFrames = 30;
+				constexpr uint8_t k_maxConsecutiveShrinkFrames = 120;
 
 				const uint32_t arraySize = m_LUTBuffer->GetArraySize();
 				const uint32_t freeElements = arraySize - m_baseIdx;
@@ -303,6 +303,12 @@ namespace gr
 			bool GetMustShrink() const
 			{
 				return m_mustShrink;
+			}
+
+			void MarkAsShrunk()
+			{
+				m_numConsecutiveShrinkFrames = 0;
+				m_mustShrink = false;
 			}
 
 
@@ -751,6 +757,8 @@ namespace gr
 						static_cast<uint32_t>(lutMetadataItr->second.m_LUTBuffer->GetArraySize() * k_LUTBufferShrinkFactor))));
 
 				initialLUTData.resize(nextSize);
+
+				lutMetadataItr->second.MarkAsShrunk();
 			}
 			else if (initialLUTData.size() < k_defaultLUTBufferArraySize) // Ensure a minimum size
 			{
