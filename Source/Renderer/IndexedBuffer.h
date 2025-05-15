@@ -238,9 +238,6 @@ namespace gr
 			std::ranges::range auto&& renderDataIDs,
 			IndexType& baseIdxOut);
 
-		util::HashKey ComputeLUTHash(
-			std::type_index, char const* shaderName, std::ranges::range auto const& renderDataIDs) const;
-
 
 	private:
 		std::vector<std::unique_ptr<IIndexedBufferInternal>> m_indexedBuffers;
@@ -837,8 +834,6 @@ namespace gr
 	{
 		const std::type_index lutTypeIdx = std::type_index(typeid(LUTBuffer));
 
-		const util::HashKey lutHash = ComputeLUTHash(lutTypeIdx, shaderName, renderDataIDs);
-
 		// Critical section: Get/create a LUT BufferInput
 		{
 			std::lock_guard<std::mutex> lock(m_LUTTypeToLUTMetadataMutex);
@@ -907,20 +902,5 @@ namespace gr
 		util::ScopedThreadProtector lock(m_threadProtector);
 
 		m_lutWritingBuffers.emplace(typeIdx, indexedBuffer);
-	}
-
-
-	inline util::HashKey IndexedBufferManager::ComputeLUTHash(
-		std::type_index lutTypeIdx, char const* shaderName, std::ranges::range auto const& renderDataIDs) const
-	{
-		util::HashKey lutHash = util::HashCStr(shaderName);
-		util::AddDataToHash(lutHash, lutTypeIdx.hash_code());
-		for (size_t i = 0; i < renderDataIDs.size(); ++i)
-		{
-			util::AddDataToHash(lutHash, renderDataIDs[i]);
-		}
-		util::AddDataToHash(lutHash, renderDataIDs.size());
-
-		return lutHash;
 	}
 }
