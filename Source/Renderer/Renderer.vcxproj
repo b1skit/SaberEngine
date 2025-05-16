@@ -163,7 +163,6 @@
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem_ImGui.h" />
-    <ClInclude Include="GraphicsSystem_LightManager.h" />
     <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h" />
     <ClInclude Include="GraphicsSystem_Shadows.h" />
     <ClInclude Include="GraphicsSystem_Skybox.h" />
@@ -293,7 +292,6 @@
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem_ImGui.cpp" />
-    <ClCompile Include="GraphicsSystem_LightManager.cpp" />
     <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp" />
     <ClCompile Include="GraphicsSystem_Shadows.cpp" />
     <ClCompile Include="GraphicsSystem_Skybox.cpp" />

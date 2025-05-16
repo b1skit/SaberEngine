@@ -45,9 +45,6 @@
 			]
 		},
 		{
-			"GraphicsSystem": "LightManager"
-		},
-		{
 			"GraphicsSystem": "GBuffer",
 			"Inputs": [
 				{
@@ -112,15 +109,6 @@
 							"DestinationName": "AllBatches"
 						}
 					]
-				},
-				{
-					"GraphicsSystem": "LightManager",
-					"DataDependencies": [
-						{
-							"SourceName": "LightIDToShadowRecordMap",
-							"DestinationName": "LightIDToShadowRecordMap"
-						}
-					]
 				}
 			]
 		},
@@ -141,7 +129,7 @@
 					]
 				},
 				{
-					"GraphicsSystem": "LightManager",
+					"GraphicsSystem": "Shadows",
 					"BufferDependencies": [
 						{
 							"SourceName": "PCSSSampleParamsBuffer",
@@ -244,7 +232,7 @@
 					]
 				},
 				{
-					"GraphicsSystem": "LightManager",
+					"GraphicsSystem": "Shadows",
 					"BufferDependencies": [
 						{
 							"SourceName": "PCSSSampleParamsBuffer",

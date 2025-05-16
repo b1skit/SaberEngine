@@ -2,14 +2,17 @@
 #include "CameraRenderData.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
+#include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
 #include "Texture.h"
 #include "TransformRenderData.h"
 
+#include "Core/Config.h"
 #include "Core/InvPtr.h"
 
+#include "Shaders/Common/LightParams.h"
 #include "Shaders/Common/ShadowParams.h"
 
 
@@ -64,7 +67,6 @@ namespace gr
 		, m_stagePipeline(nullptr)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
-		, m_lightIDToShadowRecords(nullptr)
 	{
 	}
 
@@ -83,13 +85,21 @@ namespace gr
 
 	void ShadowsGraphicsSystem::RegisterOutputs()
 	{
-		//
+		// Shadow array textures:
+		RegisterTextureOutput(k_directionalShadowArrayTexOutput, &m_directionalShadowTexMetadata.m_shadowArray);
+		RegisterTextureOutput(k_pointShadowArrayTexOutput, &m_pointShadowTexMetadata.m_shadowArray);
+		RegisterTextureOutput(k_spotShadowArrayTexOutput, &m_spotShadowTexMetadata.m_shadowArray);
+
+		RegisterDataOutput(k_lightIDToShadowRecordOutput, &m_lightIDToShadowRecords);
+
+		RegisterBufferOutput(k_PCSSSampleParamsBufferOutput, &m_poissonSampleParamsBuffer);
 	}
 
 
 	void ShadowsGraphicsSystem::CreateRegisterCubeShadowStage(
 		std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData,
 		gr::RenderDataID lightID,
+		gr::Light::Type lightType,
 		gr::ShadowMap::RenderData const& shadowData,
 		gr::Transform::RenderData const& transformData,
 		gr::Camera::RenderData const& camData)
@@ -111,8 +121,8 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
 			re::TextureTargetSet::Create(std::format("{}_CubeShadowTargetSet", lightName));
 		
-		SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-		gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
+		SEAssert(m_lightIDToShadowRecords.contains(lightID), "Failed to find a shadow record");
+		gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords.at(lightID);
 
 		SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
 			"Shadow array index is out of bounds");
@@ -156,13 +166,15 @@ namespace gr
 				.m_clearStage = shadowClearStage,
 				.m_stage = shadowStage,
 				.m_shadowTargetSet = pointShadowTargetSet,
-				.m_shadowCamParamBlock = cubeShadowBuf });
+				.m_shadowRenderCameraParams = cubeShadowBuf,
+				.m_lightType = lightType, });
 	}
 
 
 	void ShadowsGraphicsSystem::CreateRegister2DShadowStage(
 		std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData,
 		gr::RenderDataID lightID,
+		gr::Light::Type lightType,
 		gr::ShadowMap::RenderData const& shadowData,
 		gr::Camera::RenderData const& shadowCamData)
 	{
@@ -191,8 +203,8 @@ namespace gr
 
 		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_2D);
 
-		SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-		gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
+		SEAssert(m_lightIDToShadowRecords.contains(lightID), "Failed to find a shadow record");
+		gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords.at(lightID);
 
 		// Texture target set:
 		std::shared_ptr<re::TextureTargetSet> shadowTargetSet =
@@ -223,7 +235,8 @@ namespace gr
 				.m_clearStage = shadowClearStage,
 				.m_stage = shadowStage,
 				.m_shadowTargetSet = shadowTargetSet,
-				.m_shadowCamParamBlock = shadowCamParams });
+				.m_shadowRenderCameraParams = shadowCamParams,
+				.m_lightType = lightType, });
 	}
 
 
@@ -253,7 +266,162 @@ namespace gr
 		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
-		m_lightIDToShadowRecords = GetDataDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
+		// PCSS sample buffer::
+		m_poissonSampleParamsBuffer = re::Buffer::Create(
+			PoissonSampleParamsData::s_shaderName,
+			GetPoissonSampleParamsData(),
+			re::Buffer::BufferParams{
+				.m_stagingPool = re::Buffer::StagingPool::Temporary,
+				.m_memPoolPreference = re::Buffer::UploadHeap,
+				.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+				.m_usageMask = re::Buffer::Constant,
+			});
+	}
+
+
+	void ShadowsGraphicsSystem::RegisterNewShadowStages()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		std::vector<gr::RenderDataID> const* newShadowIDs = renderData.GetIDsWithNewData<gr::ShadowMap::RenderData>();
+
+		if (!newShadowIDs)
+		{
+			return;
+		}
+
+		for (auto const& itr : gr::IDAdapter(renderData, *newShadowIDs))
+		{
+			SEAssert(itr->HasObjectData<gr::ShadowMap::RenderData>(),
+				"No ShadowMap RenderData found. This should not be possible");
+
+			SEAssert(itr->HasObjectData<gr::Camera::RenderData>(),
+				"Shadow map and shadow camera render data are both required for shadows");
+
+			gr::ShadowMap::RenderData const& shadowData = itr->Get<gr::ShadowMap::RenderData>();
+
+			switch (shadowData.m_lightType)
+			{
+			case gr::Light::Directional:
+			case gr::Light::Spot:
+			{
+				CreateRegister2DShadowStage(
+					m_shadowStageData,
+					itr->GetRenderDataID(),
+					shadowData.m_lightType,
+					shadowData,
+					itr->Get<gr::Camera::RenderData>());
+			}
+			break;
+			case gr::Light::Point:
+			{
+				CreateRegisterCubeShadowStage(
+					m_shadowStageData,
+					itr->GetRenderDataID(),
+					shadowData.m_lightType,
+					shadowData,
+					itr->GetTransformData(),
+					itr->Get<gr::Camera::RenderData>());
+			}
+			break;
+			case gr::Light::AmbientIBL:
+			default: SEAssertF("Invalid light type");
+			}
+		}
+	}
+
+
+	void ShadowsGraphicsSystem::UpdateShadowStages()
+	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+		// Update dirty shadow buffer data:
+		std::vector<gr::RenderDataID> const& dirtyShadows = 
+			renderData.GetIDsWithAnyDirtyData<gr::ShadowMap::RenderData, gr::Camera::RenderData, gr::Transform::RenderData>();
+
+		for (auto const& itr : gr::IDAdapter(renderData, dirtyShadows))
+		{
+			SEAssert((itr->HasObjectData<gr::Camera::RenderData>() &&
+				itr->HasObjectData<gr::ShadowMap::RenderData>()),
+				"If a light has a shadow, it must have a shadow camera");
+
+			const gr::RenderDataID lightID = itr->GetRenderDataID();
+
+			ShadowStageData& shadowStageData = m_shadowStageData.at(lightID);
+
+			if (itr->IsDirty<gr::Camera::RenderData>() || itr->TransformIsDirty())
+			{
+				gr::ShadowMap::RenderData const& shadowData = itr->Get<gr::ShadowMap::RenderData>();
+				gr::Camera::RenderData const& shadowCamData = itr->Get<gr::Camera::RenderData>();
+
+				switch (shadowData.m_lightType)
+				{
+				case gr::Light::Directional:
+				case gr::Light::Spot:
+				{
+					shadowStageData.m_shadowRenderCameraParams.GetBuffer()->Commit(shadowCamData.m_cameraParams);
+				}
+				break;
+				case gr::Light::Point:
+				{
+					gr::Transform::RenderData const& transformData = itr->GetTransformData();
+
+					CubeShadowRenderData const& cubemapShadowParams =
+						CreateCubemapShadowData(shadowCamData, transformData);
+
+					shadowStageData.m_shadowRenderCameraParams.GetBuffer()->Commit(cubemapShadowParams);
+				}
+				break;
+				case gr::Light::AmbientIBL:
+				default: SEAssertF("Invalid light type");
+				}
+			}
+		}
+
+		// Update the stage depth target and append permanent render stages each frame to allow dynamic light
+		// creation/destruction, and in case the shadow texture buffer was reallocated
+		for (auto& itr : m_shadowStageData)
+		{
+			const gr::RenderDataID lightID = itr.first;
+
+			SEAssert(m_lightIDToShadowRecords.contains(lightID), "Failed to find a shadow record");
+			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords.at(lightID);
+
+			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
+				"Shadow array index is out of bounds");
+
+			itr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				*shadowRecord.m_shadowTex,
+				CreateShadowWriteView(itr.second.m_lightType, shadowRecord.m_shadowTexArrayIdx));
+
+			itr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
+				*shadowRecord.m_shadowTex,
+				CreateShadowWriteView(itr.second.m_lightType, shadowRecord.m_shadowTexArrayIdx));
+
+			re::StagePipeline::StagePipelineItr clearItr;
+			switch (itr.second.m_lightType)
+			{
+			case gr::Light::Directional:
+			{
+				clearItr = m_stagePipeline->AppendStageForSingleFrame(m_directionalParentStageItr, itr.second.m_clearStage);
+			}
+			break;
+			case gr::Light::Spot:
+			{
+				clearItr = m_stagePipeline->AppendStageForSingleFrame(m_spotParentStageItr, itr.second.m_clearStage);
+			}
+			break;
+			case gr::Light::Point:
+			{
+				clearItr = m_stagePipeline->AppendStageForSingleFrame(m_pointParentStageItr, itr.second.m_clearStage);
+			}
+			break;
+			case gr::Light::AmbientIBL:
+			default: SEAssertF("Invalid light type");
+			}
+
+			m_stagePipeline->AppendStageForSingleFrame(clearItr, itr.second.m_stage);
+		}
 	}
 
 
@@ -261,233 +429,13 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// Delete removed deleted lights:
-		auto DeleteLights = [&](
-			std::vector<gr::RenderDataID> const* deletedIDs,
-			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData)
-		{
-			if (!deletedIDs)
-			{
-				return;
-			}
-			for (gr::RenderDataID id : *deletedIDs)
-			{
-				stageData.erase(id);
-			}
-		};
-		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataDirectional>(), m_directionalShadowStageData);
-		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataPoint>(), m_pointShadowStageData);
-		DeleteLights(renderData.GetIDsWithDeletedData<gr::Light::RenderDataSpot>(), m_spotShadowStageData);
+		// Shadow texture arrays:
+		RemoveDeletedShadowRecords(renderData);
+		RegisterNewShadowTextureElements(renderData);
 
-		// Register new directional and spot lights:
-		auto Register2DShadowLights = [&](std::vector<gr::RenderDataID> const* newLightIDs,
-			std::unordered_map<gr::RenderDataID, ShadowStageData>& dstStageData)
-		{
-			if (!newLightIDs)
-			{
-				return;
-			}
-
-			for (auto const& lightItr : gr::IDAdapter(renderData, *newLightIDs))
-			{
-				if (lightItr->HasObjectData<gr::ShadowMap::RenderData>())
-				{
-					SEAssert(lightItr->HasObjectData<gr::Camera::RenderData>(),
-						"Shadow map and shadow camera render data are both required for shadows");
-
-					CreateRegister2DShadowStage(
-						dstStageData,
-						lightItr->GetRenderDataID(),
-						lightItr->Get<gr::ShadowMap::RenderData>(),
-						lightItr->Get<gr::Camera::RenderData>());
-				}
-			}
-		};
-		Register2DShadowLights(renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>(), m_directionalShadowStageData);
-		Register2DShadowLights(renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>(), m_spotShadowStageData);
-
-		// Register new point lights:
-		std::vector<gr::RenderDataID> const* newPointIDs =
-			renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
-		if (newPointIDs)
-		{
-			for (auto const& pointItr : gr::IDAdapter(renderData, *newPointIDs))
-			{
-				if (pointItr->HasObjectData<gr::ShadowMap::RenderData>())
-				{
-					SEAssert(pointItr->HasObjectData<gr::Camera::RenderData>(),
-						"Shadow map and shadow camera render data are both required for shadows");
-
-					CreateRegisterCubeShadowStage(
-						m_pointShadowStageData,
-						pointItr->GetRenderDataID(),
-						pointItr->Get<gr::ShadowMap::RenderData>(),
-						pointItr->GetTransformData(),
-						pointItr->Get<gr::Camera::RenderData>());
-				}
-			}
-		}
-
-
-		// Update directional and spot shadow buffers, if necessary:
-		auto Update2DShadowCamData = [](
-			gr::Light::Type lightType,
-			auto&& lightItr,
-			std::unordered_map<gr::RenderDataID, ShadowStageData>& stageData,
-			bool hasShadow)
-			{
-				SEAssert(hasShadow == false ||
-					(lightItr->HasObjectData<gr::Camera::RenderData>() &&
-						lightItr->HasObjectData<gr::ShadowMap::RenderData>()),
-					"If a light has a shadow, it must have a shadow camera");
-
-				if (hasShadow)
-				{
-					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
-
-					ShadowStageData& shadowStageData = stageData.at(lightID);
-
-					if (lightItr->IsDirty<gr::Camera::RenderData>() || lightItr->TransformIsDirty())
-					{
-						gr::Camera::RenderData const& shadowCamData = lightItr->Get<gr::Camera::RenderData>();
-
-						shadowStageData.m_shadowCamParamBlock.GetBuffer()->Commit(shadowCamData.m_cameraParams);
-					}
-				}
-			};
-		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
-		{
-			std::vector<gr::RenderDataID> const* directionalIDs = 
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
-
-			for (auto const& directionalItr : gr::IDAdapter(renderData, *directionalIDs))
-			{
-				const bool hasShadow = directionalItr->Get<gr::Light::RenderDataDirectional>().m_hasShadow;
-				Update2DShadowCamData(gr::Light::Directional, directionalItr, m_directionalShadowStageData, hasShadow);
-			}
-		}
-		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
-		{
-			std::vector<gr::RenderDataID> const* spotIDs = 
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
-
-			for (auto const& spotItr : gr::IDAdapter(renderData, *spotIDs))
-			{
-				const bool hasShadow = spotItr->Get<gr::Light::RenderDataSpot>().m_hasShadow;
-				Update2DShadowCamData(gr::Light::Spot, spotItr, m_spotShadowStageData, hasShadow);
-			}
-		}
-
-		// Update point shadow param blocks, if necessary: 
-		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
-		{
-			std::vector<gr::RenderDataID> const* pointIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
-
-			for (auto const& pointItr : gr::IDAdapter(renderData, *pointIDs))
-			{
-				const bool hasShadow = pointItr->Get<gr::Light::RenderDataPoint>().m_hasShadow;
-
-				SEAssert(hasShadow == false ||
-					(pointItr->HasObjectData<gr::Camera::RenderData>() &&
-						pointItr->HasObjectData<gr::ShadowMap::RenderData>()),
-					"If a light has a shadow, it must have a shadow camera");
-
-				if (hasShadow)
-				{
-					const gr::RenderDataID pointLightID = pointItr->GetRenderDataID();
-
-					ShadowStageData& pointShadowStageData = m_pointShadowStageData.at(pointLightID);
-
-					if (pointItr->IsDirty<gr::Camera::RenderData>() || pointItr->TransformIsDirty())
-					{
-						gr::Camera::RenderData const& shadowCamData = pointItr->Get<gr::Camera::RenderData>();
-						gr::Transform::RenderData const& transformData = pointItr->GetTransformData();
-
-						CubeShadowRenderData const& cubemapShadowParams =
-							CreateCubemapShadowData(shadowCamData, transformData);
-
-						m_pointShadowStageData.at(pointItr->GetRenderDataID()).m_shadowCamParamBlock.GetBuffer()->Commit(
-							cubemapShadowParams);
-					}
-				}
-			}
-		}
-
-		// Update the stage depth target and append permanent render stages each frame to allow dynamic light
-		// creation/destruction, and in case the shadow texture buffer was reallocated
-		for (auto& directionalStageItr : m_directionalShadowStageData)
-		{
-			const gr::RenderDataID lightID = directionalStageItr.first;
-
-			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
-
-			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
-				"Shadow array index is out of bounds");
-
-			directionalStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Directional, shadowRecord.m_shadowTexArrayIdx));
-
-			directionalStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Directional, shadowRecord.m_shadowTexArrayIdx));
-			
-			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
-				m_directionalParentStageItr, directionalStageItr.second.m_clearStage);
-
-			m_stagePipeline->AppendStageForSingleFrame(
-				clearItr, directionalStageItr.second.m_stage);
-		}
-		for (auto& pointStageItr : m_pointShadowStageData)
-		{
-			const gr::RenderDataID lightID = pointStageItr.first;
-
-			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
-
-			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
-				"Shadow array index is out of bounds");
-
-			pointStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Point, shadowRecord.m_shadowTexArrayIdx));
-
-			pointStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Point, shadowRecord.m_shadowTexArrayIdx));
-
-			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
-				m_pointParentStageItr, pointStageItr.second.m_clearStage);
-
-			m_stagePipeline->AppendStageForSingleFrame(
-				clearItr, pointStageItr.second.m_stage);
-		}
-		for (auto& spotStageItr : m_spotShadowStageData)
-		{
-			const gr::RenderDataID lightID = spotStageItr.first;
-
-			SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-			gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
-
-			SEAssert(shadowRecord.m_shadowTexArrayIdx < (*shadowRecord.m_shadowTex)->GetTextureParams().m_arraySize,
-				"Shadow array index is out of bounds");
-
-			spotStageItr.second.m_clearStage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Spot, shadowRecord.m_shadowTexArrayIdx));
-
-			spotStageItr.second.m_stage->GetTextureTargetSet()->ReplaceDepthStencilTargetTexture(
-				*shadowRecord.m_shadowTex,
-				CreateShadowWriteView(gr::Light::Spot, shadowRecord.m_shadowTexArrayIdx));
-
-			auto clearItr = m_stagePipeline->AppendStageForSingleFrame(
-				m_spotParentStageItr, spotStageItr.second.m_clearStage);
-
-			m_stagePipeline->AppendStageForSingleFrame(
-				clearItr, spotStageItr.second.m_stage);
-		}
+		// Stages and buffers:
+		RegisterNewShadowStages();
+		UpdateShadowStages();
 
 		CreateBatches();
 	}
@@ -496,130 +444,414 @@ namespace gr
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
-		
-		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
-		{
-			std::vector<gr::RenderDataID> const* directionalIDs =
-				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			for (auto const& directionalItr : gr::IDAdapter(renderData, *directionalIDs))
+
+		auto AddBatches = [&renderData, this](std::vector<gr::RenderDataID> const* lightIDs)
 			{
-				gr::Light::RenderDataDirectional const& directionalData = 
-					directionalItr->Get<gr::Light::RenderDataDirectional>();
-				if (directionalData.m_hasShadow && directionalData.m_canContribute)
+				if (!lightIDs || lightIDs->empty())
 				{
-					const gr::RenderDataID lightID = directionalData.m_renderDataID;
+					return;
+				}
 
-					re::Stage& directionalStage = 
-						*m_directionalShadowStageData.at(lightID).m_stage;
+				for (auto const& lightItr : gr::IDAdapter(renderData, *lightIDs))
+				{
+					if (!lightItr->HasObjectData<gr::ShadowMap::RenderData>())
+					{
+						continue;
+					}
 
-					if (m_viewBatches)
-					{
-						SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
-						directionalStage.AddBatches(m_viewBatches->at(lightID));
-					}
-					else
-					{
-						SEAssert(m_allBatches, "Must have all batches if view batches is null");
-						directionalStage.AddBatches(*m_allBatches);
-					}
+					const gr::RenderDataID lightID = lightItr->GetRenderDataID();
+
+					ShadowStageData& shadowStageData = m_shadowStageData.at(lightID);
 					
+					switch (shadowStageData.m_lightType)
+					{
+					case gr::Light::Directional:
+					case gr::Light::Spot:
+					{
+						bool canContribute = false;
+						if (shadowStageData.m_lightType == gr::Light::Directional)
+						{
+							canContribute = true;
+						}
+						else
+						{
+							gr::Light::RenderDataSpot const& spotData = lightItr->Get<gr::Light::RenderDataSpot>();
+							canContribute = spotData.m_canContribute;
+						}
+
+						if (canContribute)
+						{
+							if (m_viewBatches)
+							{
+								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
+								shadowStageData.m_stage->AddBatches(m_viewBatches->at(lightID));
+							}
+							else
+							{
+								SEAssert(m_allBatches, "Must have all batches if view batches is null");
+								shadowStageData.m_stage->AddBatches(*m_allBatches);
+							}
+						}
+					}
+					break;
+					case gr::Light::Point:
+					{
+						if (m_viewBatches)
+						{
+							// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so
+							// we need to add all batches to the same stage. This is wasteful, as 5/6 of the faces
+							// don't need a given batch. We should draw each face of the cubemap seperately instead
+							SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
+
+							std::unordered_set<util::HashKey> seenBatches;
+							for (uint8_t faceIdx = 0; faceIdx < 6; ++faceIdx)
+							{
+								const gr::Camera::View faceView(lightID, static_cast<gr::Camera::View::Face>(faceIdx));
+
+								for (auto const& batch : m_viewBatches->at(faceView))
+								{
+									// Different views may contain the same batch, so we only add unique ones
+									const util::HashKey batchDataHash = batch.GetDataHash();
+									if (!seenBatches.contains(batchDataHash))
+									{
+										shadowStageData.m_stage->AddBatch(batch);
+										seenBatches.emplace(batchDataHash);
+									}
+								}
+							}
+						}
+						else
+						{
+							SEAssert(m_allBatches, "Must have all batches if view batches is null");
+							shadowStageData.m_stage->AddBatches(*m_allBatches);
+						}
+					}
+					break;
+					case gr::Light::AmbientIBL:
+					default: SEAssertF("Invalid light type");
+					}
+				}
+			};
+
+		AddBatches(renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>());
+
+		if (m_spotCullingResults)
+		{
+			AddBatches(m_spotCullingResults);
+		}
+		else
+		{
+			AddBatches(renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>());
+		}
+
+		if (m_pointCullingResults)
+		{
+			AddBatches(m_pointCullingResults);
+		}
+		else
+		{
+			AddBatches(renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>());
+		}
+	}
+
+
+	uint32_t ShadowsGraphicsSystem::GetShadowArrayIndex(
+		ShadowTextureMetadata const& shadowMetadata, gr::RenderDataID lightID) const
+	{
+		uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
+		if (shadowMetadata.m_renderDataIDToTexArrayIdx.contains(lightID))
+		{
+			shadowTexArrayIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(lightID);
+		}
+		return shadowTexArrayIdx;
+	};
+
+
+	uint32_t ShadowsGraphicsSystem::GetShadowArrayIndex(gr::Light::Type lightType, gr::RenderDataID lightID) const
+	{
+		switch (lightType)
+		{
+		case gr::Light::Directional:
+		{
+			return GetShadowArrayIndex(m_directionalShadowTexMetadata, lightID);
+		}
+		break;
+		case gr::Light::Point:
+		{
+			return GetShadowArrayIndex(m_pointShadowTexMetadata, lightID);
+		}
+		break;
+		case gr::Light::Spot:
+		{
+			return GetShadowArrayIndex(m_spotShadowTexMetadata, lightID);
+		}
+		break;
+		case gr::Light::AmbientIBL:
+		default: SEAssertF("Invalid light type");
+		}
+		return 0; // This should never happen
+	}
+
+
+	void ShadowsGraphicsSystem::RemoveDeletedShadowRecords(gr::RenderDataManager const& renderData)
+	{
+		std::vector<gr::RenderDataID> const* deletedShadows =
+			renderData.GetIDsWithDeletedData<gr::ShadowMap::RenderData>();
+		if (deletedShadows && !deletedShadows->empty())
+		{
+			for (gr::RenderDataID deletedID : *deletedShadows)
+			{
+				// Delete stage data:
+				m_shadowStageData.erase(deletedID);
+
+				// Delete texture data:
+				bool foundShadow = false;
+				auto DeleteShadowTexEntry = [&deletedID, &foundShadow](ShadowTextureMetadata& shadowMetadata)
+					{
+						if (!shadowMetadata.m_renderDataIDToTexArrayIdx.contains(deletedID))
+						{
+							return;
+						}
+						foundShadow = true;
+
+						const uint32_t deletedIdx = shadowMetadata.m_renderDataIDToTexArrayIdx.at(deletedID);
+
+						SEAssert(shadowMetadata.m_texArrayIdxToRenderDataID.contains(deletedIdx),
+							"Trying to delete a light index that has not been registered");
+
+						// Use the reverse iterator to get the details of the last entry:
+						const uint32_t lastIdx = shadowMetadata.m_texArrayIdxToRenderDataID.rbegin()->first;
+						const gr::RenderDataID lastLightID = shadowMetadata.m_texArrayIdxToRenderDataID.rbegin()->second;
+
+						SEAssert(lastIdx != deletedIdx ||
+							(shadowMetadata.m_texArrayIdxToRenderDataID.at(lastIdx) == deletedID &&
+								shadowMetadata.m_renderDataIDToTexArrayIdx.at(deletedID) == lastIdx),
+							"IDs are out of sync");
+
+						// Move the last entry to replace the one being deleted:
+						if (lastIdx != deletedIdx)
+						{
+							// Update the metadata: The last element is moved to the deleted location
+							shadowMetadata.m_texArrayIdxToRenderDataID.at(deletedIdx) = lastLightID;
+							shadowMetadata.m_renderDataIDToTexArrayIdx.at(lastLightID) = deletedIdx;
+						}
+
+						// Update the metadata: We remove the deleted/final element:
+						shadowMetadata.m_texArrayIdxToRenderDataID.erase(lastIdx);
+						shadowMetadata.m_renderDataIDToTexArrayIdx.erase(deletedID);
+
+						SEAssert(shadowMetadata.m_numShadows >= 1, "Removing this light will underflow the counter");
+						shadowMetadata.m_numShadows--;
+					};
+				// Try to delete in order of most expected lights to least:
+				DeleteShadowTexEntry(m_pointShadowTexMetadata);
+				if (!foundShadow)
+				{
+					DeleteShadowTexEntry(m_spotShadowTexMetadata);
+				}
+				if (!foundShadow)
+				{
+					DeleteShadowTexEntry(m_directionalShadowTexMetadata);
+				}
+				SEAssert(foundShadow, "Trying to delete a light RenderDataID that has not been registered");
+
+				// Update the shadow record output:
+				SEAssert(m_lightIDToShadowRecords.contains(deletedID), "Failed to find the light ID");
+				m_lightIDToShadowRecords.erase(deletedID);
+			}
+		}
+	}
+
+
+	void ShadowsGraphicsSystem::RegisterNewShadowTextureElements(gr::RenderDataManager const& renderData)
+	{
+		std::vector<gr::RenderDataID> const* newShadows = renderData.GetIDsWithNewData<gr::ShadowMap::RenderData>();
+		if (newShadows && !newShadows->empty())
+		{
+			for (auto const& shadowItr : gr::IDAdapter(renderData, *newShadows))
+			{
+				const gr::RenderDataID shadowID = shadowItr->GetRenderDataID();
+
+				gr::ShadowMap::RenderData const& shadowMapRenderData = shadowItr->Get<gr::ShadowMap::RenderData>();
+
+				auto AddShadowToMetadata = [&shadowID, this](ShadowTextureMetadata& shadowMetadata)
+					{
+						SEAssert(!shadowMetadata.m_renderDataIDToTexArrayIdx.contains(shadowID),
+							"Shadow is already registered");
+
+						const uint32_t newShadowIndex = shadowMetadata.m_numShadows++;
+
+						shadowMetadata.m_renderDataIDToTexArrayIdx.emplace(shadowID, newShadowIndex);
+						shadowMetadata.m_texArrayIdxToRenderDataID.emplace(newShadowIndex, shadowID);
+
+						SEAssert(shadowMetadata.m_renderDataIDToTexArrayIdx.size() == shadowMetadata.m_numShadows &&
+							shadowMetadata.m_texArrayIdxToRenderDataID.size() == shadowMetadata.m_numShadows,
+							"Number of shadows counter is out of sync");
+
+						// Note: The render data dirty IDs list also contains new object IDs, so we don't need to add new
+						// objects to our dirty indexes list here
+
+						// Update the shadow record output:
+						SEAssert(m_lightIDToShadowRecords.contains(shadowID) == false, "RenderDataID already registered");
+						m_lightIDToShadowRecords.emplace(
+							shadowID,
+							gr::ShadowRecord{
+								.m_shadowTex = &shadowMetadata.m_shadowArray,
+								.m_shadowTexArrayIdx = newShadowIndex,
+							});
+					};
+
+				switch (shadowMapRenderData.m_lightType)
+				{
+				case gr::Light::Type::Directional: AddShadowToMetadata(m_directionalShadowTexMetadata); break;
+				case gr::Light::Type::Point: AddShadowToMetadata(m_pointShadowTexMetadata); break;
+				case gr::Light::Type::Spot: AddShadowToMetadata(m_spotShadowTexMetadata); break;
+				case gr::Light::Type::AmbientIBL:
+				default: SEAssertF("Invalid light type");
 				}
 			}
 		}
 
-		if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
-		{
-			auto AddSpotLightBatches = [&](auto const& spotObjects)
+		// (Re)Create the backing shadow array textures:
+		UpdateShadowTextures(renderData);
+	}
+
+
+	void ShadowsGraphicsSystem::UpdateShadowTextures(gr::RenderDataManager const& renderData)
+	{
+		auto UpdateShadowTexture = [this](
+			gr::Light::Type lightType,
+			ShadowTextureMetadata& shadowMetadata,
+			char const* shadowTexName)
+			{
+				// If the buffer does not exist we must create it:
+				bool mustReallocate = shadowMetadata.m_shadowArray == nullptr;
+
+				if (!mustReallocate)
 				{
-					for (auto const& spotItr : spotObjects)
+					const uint32_t curNumTexArrayElements = shadowMetadata.m_shadowArray->GetTextureParams().m_arraySize;
+
+					// If the buffer is too small, or if the no. of lights has shrunk by too much, we must reallocate:
+					mustReallocate = shadowMetadata.m_numShadows > 0 &&
+						(shadowMetadata.m_numShadows > curNumTexArrayElements ||
+							shadowMetadata.m_numShadows <= curNumTexArrayElements * k_shrinkReallocationFactor);
+				}
+
+				if (mustReallocate)
+				{
+					re::Texture::TextureParams shadowArrayParams;
+
+					switch (lightType)
 					{
-						gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
-						if (spotData.m_hasShadow && spotData.m_canContribute)
+					case gr::Light::Directional:
+					{
+						const int defaultDirectionalWidthHeight =
+							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
+
+						shadowArrayParams.m_width = defaultDirectionalWidthHeight;
+						shadowArrayParams.m_height = defaultDirectionalWidthHeight;
+						shadowArrayParams.m_dimension = re::Texture::Dimension::Texture2DArray;
+					}
+					break;
+					case gr::Light::Point:
+					{
+						const int defaultCubemapWidthHeight =
+							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
+
+						shadowArrayParams.m_width = defaultCubemapWidthHeight;
+						shadowArrayParams.m_height = defaultCubemapWidthHeight;
+						shadowArrayParams.m_dimension = re::Texture::Dimension::TextureCubeArray;
+					}
+					break;
+					case gr::Light::Spot:
+					{
+						const int defaultSpotWidthHeight =
+							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
+
+						shadowArrayParams.m_width = defaultSpotWidthHeight;
+						shadowArrayParams.m_height = defaultSpotWidthHeight;
+						shadowArrayParams.m_dimension = re::Texture::Dimension::Texture2DArray;
+					}
+					break;
+					case gr::Light::AmbientIBL:
+					default: SEAssertF("Invalid light type");
+					}
+
+					shadowArrayParams.m_arraySize = std::max(1u, shadowMetadata.m_numShadows);
+
+					LOG(std::format("Creating {} shadow array texture with {} elements",
+						gr::Light::LightTypeToCStr(lightType), shadowArrayParams.m_arraySize));
+
+					shadowArrayParams.m_usage =
+						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
+
+					shadowArrayParams.m_format = re::Texture::Format::Depth32F;
+					shadowArrayParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+					shadowArrayParams.m_mipMode = re::Texture::MipMode::None;
+					shadowArrayParams.m_optimizedClear.m_depthStencil.m_depth = 1.f;
+
+					// Cache the current shadow texture address before we replace it:
+					core::InvPtr<re::Texture> const* prevShadowTex = &shadowMetadata.m_shadowArray;
+
+					shadowMetadata.m_shadowArray = re::Texture::Create(shadowTexName, shadowArrayParams);
+
+					// Update the existing shadow record outputs with the new texture:
+					uint32_t newArrayIdx = 0;
+					for (auto& entry : m_lightIDToShadowRecords)
+					{
+						if (entry.second.m_shadowTex == prevShadowTex)
 						{
-							const gr::RenderDataID lightID = spotData.m_renderDataID;
-
-							re::Stage& spotStage = *m_spotShadowStageData.at(lightID).m_stage;
-
-							if (m_viewBatches)
-							{
-								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
-								spotStage.AddBatches(m_viewBatches->at(lightID));
-							}
-							else
-							{
-								SEAssert(m_allBatches, "Must have all batches if view batches is null");
-								spotStage.AddBatches(*m_allBatches);
-							}
+							SEAssert(newArrayIdx < shadowArrayParams.m_arraySize,
+								"New shadow texture array index is out of bounds");
+							entry.second.m_shadowTex = &shadowMetadata.m_shadowArray;
+							entry.second.m_shadowTexArrayIdx = newArrayIdx++;
 						}
 					}
-				};
+				}
+			};
+		UpdateShadowTexture(gr::Light::Directional, m_directionalShadowTexMetadata, "Directional shadows");
+		UpdateShadowTexture(gr::Light::Point, m_pointShadowTexMetadata, "Point shadows");
+		UpdateShadowTexture(gr::Light::Spot, m_spotShadowTexMetadata, "Spot shadows");
+	}
 
-			if (m_spotCullingResults)
+
+	void ShadowsGraphicsSystem::ShowImGuiWindow()
+	{
+		constexpr ImGuiTableFlags k_tableFlags =
+			ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+
+		auto ShowShadowMetadata = [](ShadowTextureMetadata const& shadowMetadata)
 			{
-				AddSpotLightBatches(gr::IDAdapter(renderData, *m_spotCullingResults));
-			}
-			else
-			{
-				AddSpotLightBatches(gr::LinearAdapter<gr::Light::RenderDataSpot>(renderData));
-			}
+				ImGui::Indent();
+				ImGui::Text(std::format("No. of shadows: {}", shadowMetadata.m_numShadows).c_str());
+				ImGui::Text(std::format("Shadow array size: {}",
+					shadowMetadata.m_shadowArray->GetTextureParams().m_arraySize).c_str());
+				ImGui::Text(std::format("Shadow array element width: {}",
+					shadowMetadata.m_shadowArray->GetTextureParams().m_width).c_str());
+				ImGui::Text(std::format("Shadow array element height: {}",
+					shadowMetadata.m_shadowArray->GetTextureParams().m_height).c_str());
+				ImGui::Unindent();
+			};
+
+
+		if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ShowShadowMetadata(m_directionalShadowTexMetadata);
 		}
 
-		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
+		ImGui::NewLine();
+
+		if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			auto AddPointLightBatches = [&](auto&& pointObjects)
-				{
-					for (auto const& pointItr : pointObjects)
-					{
-						gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
-						if (pointData.m_hasShadow && pointData.m_canContribute)
-						{
-							const gr::RenderDataID lightID = pointData.m_renderDataID;
+			ShowShadowMetadata(m_pointShadowTexMetadata);
+		}
 
-							if (m_viewBatches)
-							{
-								// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so
-								// we need to add all batches to the same stage. This is wasteful, as 5/6 of the faces
-								// don't need a given batch. We should draw each face of the cubemap seperately instead
-								SEAssert(m_viewBatches->contains(lightID), "Cannot find light camera ID in view batches");
-								
-								std::unordered_set<util::HashKey> seenBatches;
-								for (uint8_t faceIdx = 0; faceIdx < 6; ++faceIdx)
-								{
-									const gr::Camera::View faceView(
-										pointData.m_renderDataID, static_cast<gr::Camera::View::Face>(faceIdx));
+		ImGui::NewLine();
 
-									for (auto const& batch : m_viewBatches->at(faceView))
-									{
-										// Different views may contain the same batch, so we only add unique ones
-										const util::HashKey batchDataHash = batch.GetDataHash();
-										if (!seenBatches.contains(batchDataHash))
-										{
-											m_pointShadowStageData.at(
-												pointData.m_renderDataID).m_stage->AddBatch(batch);
-											seenBatches.emplace(batchDataHash);
-										}
-									}
-								}
-							}
-							else
-							{
-								SEAssert(m_allBatches, "Must have all batches if view batches is null");
-								m_pointShadowStageData.at(pointData.m_renderDataID).m_stage->AddBatches(
-									*m_allBatches);
-							}
-						}
-					}
-				};
-
-			if (m_pointCullingResults)
-			{
-				AddPointLightBatches(gr::IDAdapter(renderData, *m_pointCullingResults));
-			}
-			else
-			{
-				AddPointLightBatches(gr::LinearAdapter<gr::Light::RenderDataPoint>(renderData));
-			}
+		if (ImGui::CollapsingHeader("Spot Lights", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ShowShadowMetadata(m_spotShadowTexMetadata);
 		}
 	}
 }
