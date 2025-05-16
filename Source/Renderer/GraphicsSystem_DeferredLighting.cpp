@@ -937,13 +937,7 @@ namespace gr
 				(light.second.m_type == gr::Light::Type::Spot &&
 					renderData.IsDirty<gr::Light::RenderDataSpot>(lightID));
 
-			const bool shadowDataIsDirty = 
-				(renderData.HasObjectData<gr::ShadowMap::RenderData>(lightID) && 
-					renderData.IsDirty<gr::ShadowMap::RenderData>(lightID) ) ||
-				(renderData.HasObjectData<gr::Camera::RenderData>(lightID) &&
-					renderData.IsDirty<gr::Camera::RenderData>(lightID));
-
-			if (lightRenderDataDirty || shadowDataIsDirty)
+			if (lightRenderDataDirty)
 			{
 				switch (light.second.m_type)
 				{
@@ -1018,7 +1012,7 @@ namespace gr
 
 							// Add the Transform and instanced index LUT:
 							duplicatedBatch->SetBuffer(
-								ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
+								ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 
 							duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 								InstanceIndexData::s_shaderName, std::views::single(lightID)));
@@ -1030,7 +1024,7 @@ namespace gr
 
 							// Add the Transform and instanced index LUT:
 							duplicatedBatch->SetBuffer(
-								ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
+								ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 
 							duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 								InstanceIndexData::s_shaderName, std::views::single(lightID)));
@@ -1042,7 +1036,11 @@ namespace gr
 
 						// Pre-populate and add our light data LUT buffer:
 						const LightShadowLUTData lightShadowLUT{
-							.g_lightShadowIdx = glm::uvec4(0, 0, shadowTexArrayIdx, light.second.m_type),
+							.g_lightShadowIdx = glm::uvec4(
+								0,					// Light buffer idx
+								INVALID_SHADOW_IDX, // Shadow buffer idx: Will be overwritten IFF a shadow exists
+								shadowTexArrayIdx,
+								light.second.m_type),
 						};
 
 						duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<LightShadowLUTData>(

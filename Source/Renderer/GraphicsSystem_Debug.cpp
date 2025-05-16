@@ -19,7 +19,6 @@ namespace
 
 
 	std::unique_ptr<re::Batch> BuildAxisBatch(
-		gr::IndexedBufferManager& ibm,
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime)
 	{
@@ -49,7 +48,6 @@ namespace
 
 	std::unique_ptr<re::Batch> BuildParentChildLinkBatch(
 		gr::RenderDataManager const& renderData,
-		gr::IndexedBufferManager& ibm,
 		re::Lifetime lifetime,
 		glm::vec4 const& parentColor,
 		glm::vec4 const& childColor,
@@ -95,30 +93,12 @@ namespace
 		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
 			lifetime, lineBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_VertexIDInstancingLUTIdx);
 
-		// Our LUT Buffers are built from RenderDataIDs; Get a list of ALL RenderDataIDs referencing the parent
-		// transform, and arbitrarily use the first element to build our BufferInput
-		std::vector<gr::RenderDataID> const& associatedParentRenderDataIDs =
-			renderData.GetRenderDataIDsReferencingTransformID(parentTransformID);
-		SEAssert(!associatedParentRenderDataIDs.empty(),
-			"No RenderDataIDs assocated with the parent TransformID");
-
-		const std::vector<gr::RenderDataID> parentChildRenderDataIDs{
-			associatedParentRenderDataIDs[0], // Arbitrary: Use the 1st referencing RenderDataID
-			childRenderDataID };
-
-		// Our shader use the VertexID to index into this buffer:
-		lineBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
-			InstanceIndexData::s_shaderName, parentChildRenderDataIDs));
-
-		lineBatch->SetBuffer(ibm.GetIndexedBufferInput("InstancedTransformParams", "InstancedTransformParams"));
-
 		return lineBatch;
 	}
 
 
 	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
 		gr::RenderDataManager const& renderData,
-		gr::IndexedBufferManager& ibm,
 		gr::RenderDataID renderDataID, 
 		re::Lifetime batchLifetime,
 		gr::Bounds::RenderData const& bounds,
@@ -223,7 +203,6 @@ namespace
 
 
 	std::unique_ptr<re::Batch> BuildVertexNormalsBatch(
-		gr::IndexedBufferManager& ibm,
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
@@ -346,7 +325,6 @@ namespace
 	
 
 	std::unique_ptr<re::Batch> BuildWireframeBatch(
-		gr::IndexedBufferManager& ibm,
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
@@ -471,7 +449,7 @@ namespace gr
 			const gr::RenderDataID identityID = identityObjects[0];
 			if (m_worldCoordinateAxisBatch == nullptr)
 			{
-				m_worldCoordinateAxisBatch = BuildAxisBatch(ibm, identityObjects[0], re::Lifetime::Permanent);
+				m_worldCoordinateAxisBatch = BuildAxisBatch(identityObjects[0], re::Lifetime::Permanent);
 			}
 			re::Batch* batch = m_debugStage->AddBatchWithLifetime(*m_worldCoordinateAxisBatch, re::Lifetime::SingleFrame);
 
@@ -529,7 +507,6 @@ namespace gr
 								m_meshPrimBoundsBatches[meshPrimRenderDataID] =
 									BuildBoundingBoxBatch(
 										renderData,
-										ibm, 
 										meshPrimRenderDataID, 
 										re::Lifetime::Permanent, 
 										boundsRenderData, 
@@ -554,7 +531,6 @@ namespace gr
 							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
 							{
 								std::unique_ptr<re::Batch> normalsBatch = BuildVertexNormalsBatch(
-										ibm,
 										meshPrimRenderDataID,
 										re::Lifetime::Permanent,
 										meshPrimRenderData);
@@ -580,7 +556,7 @@ namespace gr
 						{
 							m_meshCoordinateAxisBatches.emplace(
 								meshPrimRenderDataID, 
-								BuildAxisBatch(ibm, meshPrimRenderDataID, re::Lifetime::Permanent));
+								BuildAxisBatch(meshPrimRenderDataID, re::Lifetime::Permanent));
 						}
 						re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 							*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID), re::Lifetime::SingleFrame);
@@ -620,7 +596,7 @@ namespace gr
 									boundsItr->IsDirty<gr::Bounds::RenderData>())
 								{
 									boundsBatches[objectID] = BuildBoundingBoxBatch(
-										renderData, ibm, objectID, re::Lifetime::Permanent, boundsRenderData, boundsColor);
+										renderData, objectID, re::Lifetime::Permanent, boundsRenderData, boundsColor);
 								}
 								re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 									*boundsBatches.at(objectID), re::Lifetime::SingleFrame);
@@ -673,7 +649,7 @@ namespace gr
 				{
 					m_cameraAxisBatches.emplace(
 						camID, 
-						BuildAxisBatch(ibm, camID, re::Lifetime::Permanent));
+						BuildAxisBatch(camID, re::Lifetime::Permanent));
 				}
 				re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 					*m_cameraAxisBatches.at(camID), re::Lifetime::SingleFrame);
@@ -773,7 +749,7 @@ namespace gr
 						m_deferredLightWireframeBatches.emplace(
 							pointID,
 							BuildWireframeBatch(
-								ibm, pointID, re::Lifetime::Permanent, pointItr->Get<gr::MeshPrimitive::RenderData>()));
+								pointID, re::Lifetime::Permanent, pointItr->Get<gr::MeshPrimitive::RenderData>()));
 					}
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_deferredLightWireframeBatches.at(pointID), re::Lifetime::SingleFrame);
@@ -795,7 +771,7 @@ namespace gr
 						m_deferredLightWireframeBatches.emplace(
 							spotID,
 							BuildWireframeBatch(
-								ibm, spotID, re::Lifetime::Permanent, spotItr->Get<gr::MeshPrimitive::RenderData>()));
+								spotID, re::Lifetime::Permanent, spotItr->Get<gr::MeshPrimitive::RenderData>()));
 					}
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_deferredLightWireframeBatches.at(spotID), re::Lifetime::SingleFrame);
@@ -819,7 +795,7 @@ namespace gr
 				{
 					m_lightCoordinateAxisBatches.emplace(
 						lightID,
-						BuildAxisBatch(ibm, lightID, re::Lifetime::Permanent));
+						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
@@ -836,7 +812,7 @@ namespace gr
 				{
 					m_lightCoordinateAxisBatches.emplace(
 						lightID,
-						BuildAxisBatch(ibm, lightID, re::Lifetime::Permanent));
+						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
@@ -854,7 +830,7 @@ namespace gr
 				{
 					m_lightCoordinateAxisBatches.emplace(
 						lightID,
-						BuildAxisBatch(ibm, lightID, re::Lifetime::Permanent));
+						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
@@ -887,7 +863,7 @@ namespace gr
 					{
 						m_transformAxisBatches.emplace(
 							transformID, 
-							BuildAxisBatch(ibm, renderDataID, re::Lifetime::Permanent));
+							BuildAxisBatch(renderDataID, re::Lifetime::Permanent));
 					}
 					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
 						*m_transformAxisBatches.at(transformID), re::Lifetime::SingleFrame);
@@ -910,14 +886,31 @@ namespace gr
 									transformID, 
 									BuildParentChildLinkBatch(
 										renderData,
-										ibm,
 										re::Lifetime::Permanent,
 										m_parentColor,
 										m_childColor,
 										parentTransformID,
 										renderDataID));
 							}
-							m_debugStage->AddBatch(*m_transformParentChildLinkBatches.at(transformID));
+							re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+								*m_transformParentChildLinkBatches.at(transformID), re::Lifetime::SingleFrame);
+
+							// Our LUT Buffers are built from RenderDataIDs; Get a list of ALL RenderDataIDs referencing the parent
+							// transform, and arbitrarily use the first element to build our BufferInput
+							std::vector<gr::RenderDataID> const& associatedParentRenderDataIDs =
+								renderData.GetRenderDataIDsReferencingTransformID(parentTransformID);
+							SEAssert(!associatedParentRenderDataIDs.empty(),
+								"No RenderDataIDs assocated with the parent TransformID");
+
+							const std::vector<gr::RenderDataID> parentChildRenderDataIDs{
+								associatedParentRenderDataIDs[0], // Arbitrary: Use the 1st referencing RenderDataID
+								renderDataID };
+
+							batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+								InstanceIndexData::s_shaderName, parentChildRenderDataIDs));
+
+							batch->SetBuffer(ibm.GetIndexedBufferInput(
+								TransformData::s_shaderName, TransformData::s_shaderName));
 						}
 					}
 				}

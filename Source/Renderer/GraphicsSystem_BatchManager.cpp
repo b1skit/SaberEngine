@@ -11,6 +11,7 @@
 #include "Core/ProfilingMarkers.h"
 
 #include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/MaterialParams.h"
 
 
 namespace gr
@@ -264,22 +265,20 @@ namespace gr
 					SEBeginCPUEvent("Attach instance buffers");
 					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
 
-					static const util::HashKey k_transformBufferNameHash("InstancedTransformParams");
-					static const util::HashKey k_materialBufferNameHash("InstancedPBRMetallicRoughnessParams");
+					static const util::HashKey k_transformBufferNameHash(TransformData::s_shaderName);
+					static const util::HashKey k_materialBufferNameHash(PBRMetallicRoughnessData::s_shaderName);
 
 					bool setInstanceBuffer = false;
 					if (batchEffect->UsesBuffer(k_transformBufferNameHash))
 					{
-						batches.back().SetBuffer(ibm.GetIndexedBufferInput(
-							k_transformBufferNameHash,
-							"InstancedTransformParams"));
+						batches.back().SetBuffer(
+							ibm.GetIndexedBufferInput(k_transformBufferNameHash, TransformData::s_shaderName));
 						setInstanceBuffer = true;
 					}
 					if (batchEffect->UsesBuffer(k_materialBufferNameHash))
 					{
-						batches.back().SetBuffer(ibm.GetIndexedBufferInput(
-							k_materialBufferNameHash,
-							"InstancedPBRMetallicRoughnessParams"));
+						batches.back().SetBuffer(
+							ibm.GetIndexedBufferInput(k_materialBufferNameHash, PBRMetallicRoughnessData::s_shaderName));
 						setInstanceBuffer = true;
 					}
 
