@@ -105,16 +105,15 @@ namespace re
 
 
 	public:
-		TextureView(TextureView::Texture1DView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::Texture1DArrayView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::Texture2DView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::Texture2DArrayView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::Texture3DView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::TextureCubeView const& view, ViewFlags const& = ViewFlags{});
-		TextureView(TextureView::TextureCubeArrayView const& view, ViewFlags const& = ViewFlags{});
+		TextureView(TextureView::Texture1DView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::Texture1DArrayView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::Texture2DView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::Texture2DArrayView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::Texture3DView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::TextureCubeView&& view, ViewFlags&& = ViewFlags{});
+		TextureView(TextureView::TextureCubeArrayView&& view, ViewFlags&& = ViewFlags{});
 
-		TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags const& = ViewFlags{}); // Create a default view that includes all subresources
-		TextureView(std::shared_ptr<re::Texture const> const& tex, ViewFlags const& = ViewFlags{});
+		TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags&& = ViewFlags{}); // Create a default view that includes all subresources
 
 		TextureView(/* Don't use this directly */);
 
@@ -152,7 +151,7 @@ namespace re
 
 
 	private:
-		TextureView CreateDefaultView(re::Texture const& tex, ViewFlags const& = ViewFlags{});
+		TextureView CreateDefaultView(re::Texture const& tex, ViewFlags&& = ViewFlags{});
 	};
 
 

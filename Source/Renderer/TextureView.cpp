@@ -4,10 +4,10 @@
 
 namespace re
 {
-	TextureView::TextureView(TextureView::Texture1DView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::Texture1DView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Texture1D)
-		, Texture1D{ view }
-		, Flags(flags)
+		, Texture1D(std::forward<TextureView::Texture1DView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::Texture1D);
 		AddDataBytesToHash<Texture1DView>(Texture1D);
@@ -15,10 +15,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::Texture1DArrayView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::Texture1DArrayView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Texture1DArray)
-		, Texture1DArray{ view }
-		, Flags(flags)
+		, Texture1DArray(std::forward<TextureView::Texture1DArrayView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::Texture1DArray);
 		AddDataBytesToHash<Texture1DArrayView>(Texture1DArray);
@@ -26,10 +26,11 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::Texture2DView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+
+	TextureView::TextureView(TextureView::Texture2DView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Texture2D)
-		, Texture2D{ view }
-		, Flags(flags)
+		, Texture2D(std::forward<TextureView::Texture2DView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::Texture2D);
 		AddDataBytesToHash<Texture2DView>(Texture2D);
@@ -37,10 +38,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::Texture2DArrayView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::Texture2DArrayView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Texture2DArray)
-		, Texture2DArray{ view }
-		, Flags(flags)
+		, Texture2DArray(std::forward<TextureView::Texture2DArrayView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::Texture2DArray);
 		AddDataBytesToHash<Texture2DArrayView>(Texture2DArray);
@@ -48,10 +49,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::Texture3DView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::Texture3DView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Texture3D)
-		, Texture3D{ view }
-		, Flags(flags)
+		, Texture3D(std::forward<TextureView::Texture3DView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::Texture3D);
 		AddDataBytesToHash<Texture3DView>(Texture3D);
@@ -59,10 +60,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::TextureCubeView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::TextureCubeView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::TextureCube)
-		, TextureCube{ view }
-		, Flags(flags)
+		, TextureCube(std::forward<TextureView::TextureCubeView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::TextureCube);
 		AddDataBytesToHash<TextureCubeView>(TextureCube);
@@ -70,10 +71,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(TextureView::TextureCubeArrayView const& view, ViewFlags const& flags /*= ViewFlags{}*/)
+	TextureView::TextureView(TextureView::TextureCubeArrayView&& view, ViewFlags&& flags /*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::TextureCubeArray)
-		, TextureCubeArray{ view }
-		, Flags(flags)
+		, TextureCubeArray(std::forward<TextureView::TextureCubeArrayView>(view))
+		, Flags(std::forward<ViewFlags>(flags))
 	{
 		AddDataBytesToHash<uint8_t>(re::Texture::TextureCubeArray);
 		AddDataBytesToHash<TextureCubeArrayView>(TextureCubeArray);
@@ -81,17 +82,10 @@ namespace re
 	};
 
 
-	TextureView::TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
+	TextureView::TextureView(core::InvPtr<re::Texture> const& tex, ViewFlags&& flags/*= ViewFlags{}*/)
 		: m_viewDimension(re::Texture::Dimension_Invalid)
 	{
-		*this = CreateDefaultView(*tex, viewFlags);
-	};
-
-
-	TextureView::TextureView(std::shared_ptr<re::Texture const> const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
-		: m_viewDimension(re::Texture::Dimension_Invalid)
-	{
-		*this = CreateDefaultView(*tex.get(), viewFlags);
+		*this = CreateDefaultView(*tex, std::forward<ViewFlags>(flags));
 	};
 
 
@@ -512,26 +506,26 @@ namespace re
 	}
 
 
-	TextureView TextureView::CreateDefaultView(re::Texture const& tex, ViewFlags const& viewFlags/*= ViewFlags{}*/)
+	TextureView TextureView::CreateDefaultView(re::Texture const& tex, ViewFlags&& viewFlags/*= ViewFlags{}*/)
 	{
 		re::Texture::TextureParams const& texParams = tex.GetTextureParams();
 
 		switch (texParams.m_dimension)
 		{
 		case re::Texture::Dimension::Texture1D: return TextureView(
-			TextureView::Texture1DView(0, re::Texture::k_allMips, 0.f), viewFlags);
+			TextureView::Texture1DView(0, re::Texture::k_allMips, 0.f), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::Texture1DArray: return TextureView(
-			TextureView::Texture1DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), viewFlags);
+			TextureView::Texture1DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::Texture2D: return TextureView(
-			TextureView::Texture2DView(0, re::Texture::k_allMips, 0, 0.f), viewFlags);
+			TextureView::Texture2DView(0, re::Texture::k_allMips, 0, 0.f), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::Texture2DArray: return TextureView(
-			TextureView::Texture2DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0, 0.f), viewFlags);
+			TextureView::Texture2DArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0, 0.f), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::Texture3D: return TextureView(
-			TextureView::Texture3DView(0, re::Texture::k_allMips, 0.f, 0, texParams.m_arraySize), viewFlags);
+			TextureView::Texture3DView(0, re::Texture::k_allMips, 0.f, 0, texParams.m_arraySize), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::TextureCube: return TextureView(
-			TextureView::TextureCubeView(0, re::Texture::k_allMips, 0.f), viewFlags);
+			TextureView::TextureCubeView(0, re::Texture::k_allMips, 0.f), std::forward<ViewFlags>(viewFlags));
 		case re::Texture::Dimension::TextureCubeArray: return TextureView(
-			TextureView::TextureCubeArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), viewFlags);
+			TextureView::TextureCubeArrayView(0, re::Texture::k_allMips, 0, texParams.m_arraySize, 0.f), std::forward<ViewFlags>(viewFlags));
 		default: SEAssertF("Invalid dimension");
 		}
 		return TextureView(TextureView::Texture2DView()); // This should never happen

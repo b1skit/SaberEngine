@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 #include "Texture.h"
 #include "TextureView.h"
@@ -185,7 +184,7 @@ namespace opengl
 		case re::Texture::Format::R8_UINT:
 		{
 			m_format = GL_R;
-			m_internalFormat = GL_R8;
+			m_internalFormat = GL_R8UI;
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;

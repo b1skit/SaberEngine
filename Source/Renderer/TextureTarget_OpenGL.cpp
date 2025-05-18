@@ -4,7 +4,6 @@
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
-#include "Texture_Platform.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
