@@ -1,19 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Buffer.h"
 #include "BufferView.h"
 #include "Texture.h"
 #include "TextureView.h"
 
-#include "Core/Assert.h"
 #include "Core/InvPtr.h"
-
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/INamedObject.h"
 
-struct TargetData;
 
+struct TargetData;
 
 namespace re
 {
@@ -166,11 +163,13 @@ namespace re
 
 		// Color targets must be set in monotonically-increasing order from 0
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
+		void SetColorTarget(uint8_t slot, core::InvPtr<re::Texture> const&); // Target MIP0
 		void SetColorTarget(uint8_t slot, core::InvPtr<re::Texture> const&, TextureTarget::TargetParams const&);
 
 		re::TextureTarget const& GetDepthStencilTarget() const;
 
 		void SetDepthStencilTarget(re::TextureTarget const&);
+		void SetDepthStencilTarget(core::InvPtr<re::Texture> const&); // Target MIP0
 		void SetDepthStencilTarget(core::InvPtr<re::Texture> const&, re::TextureTarget::TargetParams const&);
 
 		// Replace a TargetTexture with a pipeline-compatible alternative

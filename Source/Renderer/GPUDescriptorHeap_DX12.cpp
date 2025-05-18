@@ -584,11 +584,13 @@ namespace dx12
 			{
 				if (m_unsetInlineDescriptors & (1llu << rootParam.m_index))
 				{
-					unsetInlineDescriptorNames += m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index) + " ";
+					unsetInlineDescriptorNames += std::format("{} (index {}), ",
+						m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index),
+						rootParam.m_index);
 				}
 			}
 			
-			SEAssertF(std::format("An inline descriptor has not been set. Shader access will result in undefined "
+			SEAssertF(std::format("Inline descriptor(s) have not been set. Shader access will result in undefined "
 				"behavior: {}",
 				unsetInlineDescriptorNames).c_str());
 		}

@@ -57,11 +57,6 @@ namespace gr
 
 
 	private:
-		// Instanced Transforms buffer name. Used to match Effects to Buffers
-		static constexpr char const* k_instancedTransformBufferName = "InstancedTransforms";
-
-
-	private:
 		// We store our batches contiguously in a vector, and maintain a doubly-linked map to associate RenderDataIDs
 		// with the associated cached batch indexes
 		struct BatchMetadata

@@ -263,6 +263,15 @@ namespace re
 	}
 
 
+	void TextureTargetSet::SetColorTarget(uint8_t slot, core::InvPtr<re::Texture> const& texture)
+	{
+		SetColorTarget(
+			slot, 
+			texture, 
+			TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
+	}
+
+
 	void TextureTargetSet::SetColorTarget(
 		uint8_t slot, core::InvPtr<re::Texture> const& texture, TextureTarget::TargetParams const& targetParams)
 	{
@@ -289,6 +298,14 @@ namespace re
 			depthStencilTarget.GetTargetParams().m_textureView);
 
 		m_depthStencilTarget = re::TextureTarget(depthStencilTarget);
+	}
+
+
+	void TextureTargetSet::SetDepthStencilTarget(core::InvPtr<re::Texture> const& depthStencilTargetTex)
+	{
+		SetDepthStencilTarget(
+			depthStencilTargetTex,
+			TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 	}
 
 
