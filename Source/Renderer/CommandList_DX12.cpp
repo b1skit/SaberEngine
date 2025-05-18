@@ -360,6 +360,11 @@ namespace dx12
 		SEAssert(m_type == CommandListType::Direct || m_type == CommandListType::Compute,
 			"Unexpected command list type for setting a buffer on");
 
+		if (bufferInputs.empty())
+		{
+			return;
+		}
+
 		// Batch our resource transitions into a single call:
 		std::vector<TransitionMetadata> resourceTransitions;
 		resourceTransitions.reserve(bufferInputs.size());
@@ -988,6 +993,11 @@ namespace dx12
 			"This function should only be called from direct or compute command lists");
 		SEAssert(m_currentRootSignature, "Root signature is not currently set");
 
+		if (rwTexInputs.empty())
+		{
+			return;
+		}
+
 		// Batch our resource transitions together:
 		std::vector<TransitionMetadata> resourceTransitions;
 		resourceTransitions.reserve(rwTexInputs.size());
@@ -1280,6 +1290,11 @@ namespace dx12
 		SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE ||
 			m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT,
 			"Unexpected command list type");
+
+		if (texInputs.empty())
+		{
+			return;
+		}
 
 		// Batch our resource transitions into a single call:
 		std::vector<TransitionMetadata> resourceTransitions;
