@@ -26,12 +26,27 @@ namespace effect
 		{
 			return true;
 		}
-		const bool isSame = GetNameHash() == rhs.GetNameHash();
+		bool isSame = GetNameHash() == rhs.GetNameHash();
 
-		SEAssert(!isSame ||
-			((m_resolvedShader == rhs.m_resolvedShader) &&
-				GetUniqueID() == rhs.GetUniqueID()),
-			"Multiple Techniques with the same name detected");
+#if defined(DEBUG)
+		isSame &= m_shaderMetadata.size() == rhs.m_shaderMetadata.size();
+		if (isSame)
+		{
+			for (size_t i = 0; i < m_shaderMetadata.size(); ++i)
+			{
+				isSame &= m_shaderMetadata[i].m_extensionlessFilename == rhs.m_shaderMetadata[i].m_extensionlessFilename &&
+					m_shaderMetadata[i].m_entryPoint == rhs.m_shaderMetadata[i].m_entryPoint &&
+					m_shaderMetadata[i].m_type == rhs.m_shaderMetadata[i].m_type;
+
+				if (!isSame)
+				{
+					break;
+				}
+			}
+
+			SEAssert(isSame, "Multiple Techniques with the same name but different configuration detected");
+		}
+#endif
 
 		return isSame;
 	}

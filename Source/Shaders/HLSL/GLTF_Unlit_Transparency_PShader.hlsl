@@ -1,9 +1,13 @@
-// © 2023 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
+#define VOUT_UV0
+#define VOUT_COLOR
+#define SABER_INSTANCING
 #include "SaberCommon.hlsli"
+
+#include "UVUtils.hlsli"
 
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
-
 
 Texture2D<float4> BaseColorTex;
 
@@ -12,18 +16,18 @@ Texture2D<float4> BaseColorTex;
 // consistent). We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
-StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t1, space1);
+StructuredBuffer<UnlitData> UnlitParams : register(t2, space1);
 
 
 float4 PShader(VertexOut In) : SV_Target
 {
 	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
-	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, In.UV0);
+	const float2 albedoUV = GetUV(In, UnlitParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
 	
-	// Alpha clipping:
-	const float alphaCutoff = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.w;
-	clip(matAlbedo.a < alphaCutoff ? -1 : 1);
+	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, albedoUV);
+	const float4 baseColorFactor = UnlitParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
+	const float4 albedoAlpha = matAlbedo * In.Color * baseColorFactor;
 	
-	return float4(In.Position.z, In.Position.z, In.Position.z, 1.f);
+	return albedoAlpha;
 }

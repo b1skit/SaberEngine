@@ -18,11 +18,6 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
-namespace gr
-{
-	class Material;
-}
-
 namespace re
 {
 	class Buffer;

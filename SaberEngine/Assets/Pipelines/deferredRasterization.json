@@ -163,6 +163,10 @@
 							"DestinationName": "GBufferMatProp0"
 						},
 						{
+							"SourceName": "GBufferMaterialID",
+							"DestinationName": "GBufferMaterialID"
+						},
+						{
 							"SourceName": "GBufferDepth",
 							"DestinationName": "GBufferDepth"
 						}

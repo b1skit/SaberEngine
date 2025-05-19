@@ -3,9 +3,9 @@
 #define VOUT_TBN
 #define VOUT_COLOR
 #define SABER_INSTANCING
-
 #include "SaberCommon.hlsli"
 
+#include "GBufferCommon.hlsli"
 #include "NormalMapUtils.hlsli"
 #include "UVUtils.hlsli"
 
@@ -24,17 +24,7 @@ Texture2D<float4> EmissiveTex;
 // consistent). We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
-StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space1);
-
-
-struct GBufferOut
-{
-	float4 Albedo		: SV_Target0;
-	float4 WorldNormal	: SV_Target1;
-	float4 RMAOVn		: SV_Target2;	
-	float4 Emissive		: SV_Target3;
-	float4 MatProp0Vn	: SV_Target4;
-};
+StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t2, space1);
 
 
 GBufferOut PShader(VertexOut In)
@@ -44,31 +34,30 @@ GBufferOut PShader(VertexOut In)
 	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	const float2 albedoUV = GetUV(In, 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
 	
 	const float2 metallicRoughnessUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.y);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.y);
 	
 	const float2 normalUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.z);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.z);
 	
 	const float2 occlusionUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.w);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.w);
 	
 	const float2 emissiveUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.x);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.x);
 	
 	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, albedoUV);
 	
 	// Alpha clipping
 #if defined(DO_ALPHA_CLIP)
-	const float alphaCutoff = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.w;
+	const float alphaCutoff = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.w;
 	clip(matAlbedo.a < alphaCutoff ? -1 : 1); 
 #endif
 	
-	const float4 baseColorFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
-	output.Albedo = matAlbedo * baseColorFactor * In.Color;
+	const float4 baseColorFactor = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
+	output.Albedo = matAlbedo * In.Color * baseColorFactor;
 
 	// Vertex normal:
 	const float3 vertexNormal = float3(In.TBN[0].z, In.TBN[1].z, In.TBN[2].z);
@@ -77,33 +66,33 @@ GBufferOut PShader(VertexOut In)
 	// World-space normal:
 	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
 	const float normalScaleFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
 	const float3 texNormal = NormalTex.Sample(WrapAnisotropic, normalUV).xyz;
 	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
 	// RMAOVn:
 	const float roughnessFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.y;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.y;
 	
 	const float metallicFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metalness
 	const float2 roughnessMetalness = 
 		MetallicRoughnessTex.Sample(WrapAnisotropic, metallicRoughnessUV).gb * float2(roughnessFactor, metallicFactor);
 	
 	const float occlusionStrength = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
 	const float occlusion = OcclusionTex.Sample(WrapAnisotropic, occlusionUV).r * occlusionStrength;
 	
 	output.RMAOVn = float4(roughnessMetalness, occlusion, encodedVertexNormal.x);
 	
 	// Emissive:
 	const float3 emissiveFactor = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_emissiveFactorStrength.rgb;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_emissiveFactorStrength.rgb;
 	const float emissiveStrength = 
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_emissiveFactorStrength.w;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_emissiveFactorStrength.w;
 	
 	const float3 emissive = 
 		EmissiveTex.Sample(WrapAnisotropic, emissiveUV).rgb * emissiveFactor * emissiveStrength;
@@ -111,8 +100,12 @@ GBufferOut PShader(VertexOut In)
 	output.Emissive = float4(emissive, 1.f);
 	
 	output.MatProp0Vn = float4(
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.xyz,
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.xyz,
 		encodedVertexNormal.y);
+	
+	// Material ID:
+	const uint materialID = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.y;
+	output.MaterialID = materialID;
 	
 	return output;
 }

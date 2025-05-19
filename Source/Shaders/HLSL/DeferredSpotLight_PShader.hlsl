@@ -5,6 +5,7 @@
 #include "Shadows.hlsli"
 
 #include "../Common/LightParams.h"
+#include "../Common/MaterialParams.h"
 #include "../Common/ShadowParams.h"
 #include "../Common/TargetParams.h"
 
@@ -22,6 +23,11 @@ Texture2DArray<float> SpotShadows;
 float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
+	
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		return float4(0.f, 0.f, 0.f, 0.f);
+	}
 	
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 	

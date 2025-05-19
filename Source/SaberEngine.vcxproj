@@ -240,6 +240,10 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\Tonemapping.json" />
     <None Include="Effects\VertexAnimation.json" />
     <None Include="Effects\XeGTAO.json" />
+    <None Include="Shaders\GLSL\Deferred_Fullscreen_CShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
     <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
     <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
     <None Include="Shaders\HLSL\BindlessResources.hlsli" />
@@ -724,6 +728,26 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\GLTF_Unlit_VShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

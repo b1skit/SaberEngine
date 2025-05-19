@@ -4,6 +4,7 @@
 #include "SaberCommon.hlsli"
 #include "Shadows.hlsli"
 
+#include "../Common/MaterialParams.h"
 #include "../Common/TargetParams.h"
 
 ConstantBuffer<TargetData> TargetParams;
@@ -19,6 +20,11 @@ StructuredBuffer<ShadowData> ShadowParams;
 float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
+	
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		return float4(0.f, 0.f, 0.f, 0.f);
+	}
 	
 	const float2 screenUV = PixelCoordsToScreenUV(In.Position.xy, TargetParams.g_targetDims.xy, float2(0.f, 0.f));
 	

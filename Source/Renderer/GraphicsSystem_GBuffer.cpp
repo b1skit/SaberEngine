@@ -36,47 +36,49 @@ namespace gr
 		m_owningPipeline = &pipeline;
 
 		// Create GBuffer color targets:
-		re::Texture::TextureParams gBufferColorParams;
-		gBufferColorParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		gBufferColorParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-		gBufferColorParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
-		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
-		gBufferColorParams.m_format = re::Texture::Format::RGBA8_UNORM;
-		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		gBufferColorParams.m_mipMode = re::Texture::MipMode::None;
+		const re::Texture::TextureParams RGBA8Params{
+			.m_width = util::CheckedCast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
+			.m_height = util::CheckedCast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
+			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc),
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8_UNORM,
+			.m_colorSpace = re::Texture::ColorSpace::Linear,
+			.m_mipMode = re::Texture::MipMode::None,
+		};
+
+		re::Texture::TextureParams R8Params = RGBA8Params;
+		R8Params.m_format = re::Texture::Format::R8_UINT;
 
 		// World normal may have negative components, emissive values may be > 1
-		re::Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
-		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
-
-		re::TextureTarget::TargetParams defaultTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
+		re::Texture::TextureParams RGBA16Params = RGBA8Params;
+		RGBA16Params.m_format = re::Texture::Format::RGBA16F; 
 
 		m_gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
-		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
-		{
-			if (i == GBufferWNormal || i == GBufferEmissive)
-			{
-				m_gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNameHashKeys[i].GetKey(), gbuffer16bitParams), defaultTargetParams);
-			}
-			else
-			{
-				m_gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNameHashKeys[i].GetKey(), gBufferColorParams), defaultTargetParams);
-			}
-		}
+
+		m_gBufferTargets->SetColorTarget(
+			GBufferAlbedo, re::Texture::Create(GBufferTexNameHashKeys[GBufferAlbedo].GetKey(), RGBA8Params));
+		m_gBufferTargets->SetColorTarget(
+			GBufferWNormal, re::Texture::Create(GBufferTexNameHashKeys[GBufferWNormal].GetKey(), RGBA16Params));
+		m_gBufferTargets->SetColorTarget(
+			GBufferRMAO, re::Texture::Create(GBufferTexNameHashKeys[GBufferRMAO].GetKey(), RGBA8Params));
+		m_gBufferTargets->SetColorTarget(
+			GBufferEmissive, re::Texture::Create(GBufferTexNameHashKeys[GBufferEmissive].GetKey(), RGBA16Params));
+		m_gBufferTargets->SetColorTarget(
+			GBufferMatProp0, re::Texture::Create(GBufferTexNameHashKeys[GBufferMatProp0].GetKey(), RGBA8Params));
+
+		m_gBufferTargets->SetColorTarget(
+			GBufferMaterialID, re::Texture::Create(GBufferTexNameHashKeys[GBufferMaterialID].GetKey(), R8Params));
 		
 		// Create GBuffer depth target:
-		re::Texture::TextureParams depthTexParams(gBufferColorParams);
-		depthTexParams.m_usage = static_cast<re::Texture::Usage>(
-			re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
+		re::Texture::TextureParams depthTexParams(RGBA8Params);
+		depthTexParams.m_usage = 
+			static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthTexParams.m_optimizedClear.m_depthStencil.m_depth = 1.f;
 
 		m_gBufferTargets->SetDepthStencilTarget(
-			re::Texture::Create(GBufferTexNameHashKeys[GBufferTexIdx::GBufferDepth].GetKey(), depthTexParams),
-			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
+			re::Texture::Create(GBufferTexNameHashKeys[GBufferDepth].GetKey(), depthTexParams));
 
 		m_gBufferStage->SetTextureTargetSet(m_gBufferTargets);
 

@@ -6,6 +6,7 @@
 		"DeferredLighting",
 		"FullscreenQuad",
 		"GLTF_PBRMetallicRoughness",
+		"GLTF_Unlit",
 		"MipGeneration",
 		"RayTracing",
 		"Skybox",

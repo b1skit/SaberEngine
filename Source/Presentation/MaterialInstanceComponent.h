@@ -32,7 +32,7 @@ namespace fr
 		core::InvPtr<gr::Material> const& GetMaterial() const;
 
 
-	public:
+	private:
 		gr::Material::MaterialInstanceRenderData m_instanceData;
 		const core::InvPtr<gr::Material> m_srcMaterial;
 		bool m_isDirty;

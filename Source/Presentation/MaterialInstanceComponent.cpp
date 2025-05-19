@@ -5,6 +5,7 @@
 #include "MeshPrimitiveComponent.h"
 #include "RenderDataComponent.h"
 
+#include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Util/ImGuiUtils.h"
@@ -43,6 +44,7 @@ namespace fr
 
 	MaterialInstanceComponent::MaterialInstanceComponent(PrivateCTORTag, core::InvPtr<gr::Material> const& srcMat)
 		: m_srcMaterial(srcMat)
+		, m_isDirty(true)
 	{
 		// Copy data from the source material to make a material instance:
 		m_srcMaterial->InitializeMaterialInstanceData(m_instanceData);

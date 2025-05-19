@@ -42,7 +42,7 @@ ConstantBuffer<LightMetadata> LightCounts;
 // consistent). We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
-StructuredBuffer<PBRMetallicRoughnessData> InstancedPBRMetallicRoughnessParams : register(t2, space1);
+StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t2, space1);
 
 
 float4 PShader(VertexOut In) : SV_Target
@@ -50,45 +50,44 @@ float4 PShader(VertexOut In) : SV_Target
 	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
 	
 	const float2 albedoUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.x);
 	
 	const float2 metallicRoughnessUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.y);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.y);
 	
 	const float2 normalUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.z);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.z);
 	
 	const float2 occlusionUV = GetUV(In,
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.w);
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes0.w);
 	
 	//const float2 emissiveUV = GetUV(In,
-	//	InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.x);
+	//	PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_uvChannelIndexes1.x);
 	
 	const float3 worldPos = In.WorldPos;
 	
 	const float4 matAlbedo = BaseColorTex.Sample(WrapAnisotropic, albedoUV);
-	const float4 baseColorFactor =
-			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
-	const float3 linearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
+	const float4 baseColorFactor = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_baseColorFactor;
+	const float3 linearAlbedo = (matAlbedo * In.Color * baseColorFactor).rgb;
 	
 	const float normalScaleFactor =
-		InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
+		PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.z;
 	const float3 normalScale = float3(normalScaleFactor, normalScaleFactor, 1.f);
 	const float3 texNormal = NormalTex.Sample(WrapAnisotropic, normalUV).xyz;
 	const float3 worldNormal = WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN);
 	
 	const float linearRoughnessFactor =
-			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.y;
+			PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.y;
 	
 	const float metallicFactor =
-			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
+			PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.x;
 	
 	const float2 roughnessMetalness =
 			MetallicRoughnessTex.Sample(WrapAnisotropic, metallicRoughnessUV).gb * float2(linearRoughnessFactor, metallicFactor);
 	
 	const float remappedRoughness = RemapRoughness(roughnessMetalness.x);
 	
-	const float3 f0 = InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.xyz;
+	const float3 f0 = PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_f0AlphaCutoff.xyz;
 	
 	float3 totalContribution = 0.f;
 	
@@ -108,7 +107,7 @@ float4 PShader(VertexOut In) : SV_Target
 		ambientLightParams.RemappedRoughness = remappedRoughness;
 
 		const float occlusionStrength =
-			InstancedPBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
+			PBRMetallicRoughnessParams[NonUniformResourceIndex(materialIdx)].g_metRoughNmlOccScales.w;
 		const float occlusion = OcclusionTex.Sample(WrapAnisotropic, occlusionUV).r * occlusionStrength;
 	
 		ambientLightParams.FineAO = occlusion;

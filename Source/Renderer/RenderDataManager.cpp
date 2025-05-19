@@ -5,7 +5,7 @@
 #include "IndexedBuffer.h"
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
-#include "Material_GLTF.h"
+#include "Material_GLTF_PBRMetallicRoughness.h"
 #include "MeshPrimitive.h"
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
@@ -88,13 +88,21 @@ namespace gr
 		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
 
 		// Materials:
-		IndexedBufferManager::IIndexedBuffer* indexedMaterials = m_indexedBufferManager->AddIndexedBuffer(
+		IndexedBufferManager::IIndexedBuffer* indexedPBRMetRoughMaterials = m_indexedBufferManager->AddIndexedBuffer(
 			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
 			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
 			re::Buffer::DefaultHeap,
 			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
-		indexedMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+
+		IndexedBufferManager::IIndexedBuffer* indexedUnlitMaterials = m_indexedBufferManager->AddIndexedBuffer(
+			UnlitData::s_shaderName, // Buffer name (not the shader name)
+			gr::Material::CreateInstancedMaterialData<UnlitData>,
+			re::Buffer::DefaultHeap,
+			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
+
+		indexedUnlitMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
 
 
 		// Lights:

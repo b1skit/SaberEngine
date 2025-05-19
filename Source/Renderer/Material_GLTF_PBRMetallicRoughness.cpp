@@ -1,16 +1,18 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BufferView.h"
-#include "Material_GLTF.h"
+#include "Material_GLTF_PBRMetallicRoughness.h"
 #include "Sampler.h"
 
 #include "Core/Assert.h"
 
 #include "Core/Util/ImGuiUtils.h"
 
+#include "Shaders/Common/MaterialParams.h"
+
 
 namespace gr
 {
-	PBRMetallicRoughnessData Material_GLTF::GetPBRMetallicRoughnessParamsData() const
+	PBRMetallicRoughnessData Material_GLTF_PBRMetallicRoughness::GetPBRMetallicRoughnessParamsData() const
 	{
 		return PBRMetallicRoughnessData
 		{
@@ -36,7 +38,7 @@ namespace gr
 
 			.g_uvChannelIndexes1 = glm::uvec4(
 				m_texSlots[TextureSlotIdx::Emissive].m_uvChannelIdx,
-				0,
+				m_materialID,
 				0,
 				0),
 		};
@@ -48,15 +50,14 @@ namespace gr
 	}
 
 
-	Material_GLTF::Material_GLTF(std::string const& name)
-		: Material(name, gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness)
+	Material_GLTF_PBRMetallicRoughness::Material_GLTF_PBRMetallicRoughness(std::string const& name)
+		: Material(name, gr::Material::MaterialID::GLTF_PBRMetallicRoughness)
 		, INamedObject(name)
 	{
 		// GLTF defaults:
 		m_alphaMode = AlphaMode::Opaque;
 		m_alphaCutoff = 0.5f;
 		m_isDoubleSided = false;
-
 		m_isShadowCaster = true;
 
 		m_texSlots.resize(TextureSlotIdx::TextureSlotIdx_Count);
@@ -77,20 +78,20 @@ namespace gr
 	}
 
 
-	void Material_GLTF::PackMaterialParamsData(void* dst, size_t maxSize) const
+	void Material_GLTF_PBRMetallicRoughness::PackMaterialParamsData(void* dst, size_t maxSize) const
 	{
-		SEAssert(maxSize <= sizeof(PBRMetallicRoughnessData), "Not enough space to pack material instance data");
+		SEAssert(sizeof(PBRMetallicRoughnessData) <= maxSize, "Not enough space to pack material instance data");
 
-		PBRMetallicRoughnessData const& materialParamData = GetPBRMetallicRoughnessParamsData();
-		memcpy(dst, &materialParamData, sizeof(PBRMetallicRoughnessData));
+		PBRMetallicRoughnessData* typedDst = static_cast<PBRMetallicRoughnessData*>(dst);
+		*typedDst = GetPBRMetallicRoughnessParamsData();
 	}
 
 
-	bool Material_GLTF::ShowImGuiWindow(MaterialInstanceRenderData& instanceData)
+	bool Material_GLTF_PBRMetallicRoughness::ShowImGuiWindow(MaterialInstanceRenderData& instanceData)
 	{
 		bool isDirty = false;
 
-		if (ImGui::CollapsingHeader(std::format("Material_GLTF: {}##{}", 
+		if (ImGui::CollapsingHeader(std::format("Material_GLTF_PBRMetallicRoughness: {}##{}", 
 			instanceData.m_materialName, util::PtrToID(&instanceData)).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
@@ -151,7 +152,7 @@ namespace gr
 	}
 
 
-	void Material_GLTF::Destroy()
+	void Material_GLTF_PBRMetallicRoughness::Destroy()
 	{
 		m_texSlots.clear();
 		m_namesToSlotIndex.clear();

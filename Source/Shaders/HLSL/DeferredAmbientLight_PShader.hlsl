@@ -4,6 +4,7 @@
 #include "AmbientCommon.hlsli"
 #include "GBufferCommon.hlsli"
 
+#include "../Common/MaterialParams.h"
 
 Texture2D<uint> SSAOTex;
 
@@ -19,6 +20,11 @@ float GetSSAO(float2 screenUV, uint2 screenPxDims)
 float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
+	
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		return float4(0.f, 0.f, 0.f, 0.f);
+	}
 	
 	// Reconstruct the world position:
 	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);

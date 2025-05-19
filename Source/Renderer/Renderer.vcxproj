@@ -174,7 +174,8 @@
     <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="Material_GLTF.h" />
+    <ClInclude Include="Material_GLTF_PBRMetallicRoughness.h" />
+    <ClInclude Include="Material_GLTF_Unlit.h" />
     <ClInclude Include="MeshFactory.h" />
     <ClInclude Include="MeshPrimitive.h" />
     <ClInclude Include="pch\pch.h" />
@@ -303,7 +304,8 @@
     <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Material_GLTF.cpp" />
+    <ClCompile Include="Material_GLTF_PBRMetallicRoughness.cpp" />
+    <ClCompile Include="Material_GLTF_Unlit.cpp" />
     <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="MeshPrimitive.cpp" />
     <ClCompile Include="pch\pch.cpp">

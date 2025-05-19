@@ -2,7 +2,8 @@
 #include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "Material.h"
-#include "Material_GLTF.h"
+#include "Material_GLTF_PBRMetallicRoughness.h"
+#include "Material_GLTF_Unlit.h"
 #include "RenderManager.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
@@ -13,28 +14,28 @@
 
 namespace gr
 {
-	Material::EffectMaterial Material::EffectIDToEffectMaterial(EffectID effectID)
+	Material::MaterialID Material::EffectIDToMaterialID(EffectID effectID)
 	{
-		constexpr uint64_t k_GLTF_PBRMetallicRoughnessHash =
-			util::CHashKey(k_effectMaterialNames[GLTF_PBRMetallicRoughness]).GetHash();
-
 		util::CHashKey matEffectHashKey =
 			util::CHashKey::Create(re::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
 
 		switch (matEffectHashKey.GetHash())
 		{
-		case k_GLTF_PBRMetallicRoughnessHash: return GLTF_PBRMetallicRoughness;
-		default: SEAssertF("Invalid EffectID . Material names and Effect names must be the same to be associated "
-			"via an Effect Buffers definition");
+		case util::CHashKey(k_materialNames[GLTF_PBRMetallicRoughness]): return GLTF_PBRMetallicRoughness;
+		case util::CHashKey(k_materialNames[GLTF_Unlit]): return GLTF_Unlit;
+		default: SEAssertF("Invalid EffectID. Material names and Effect names must be the same to be associated via an "
+			"Effect Buffers definition");
 		}
-		return EffectMaterial_Count; // This should never happen
+		SEStaticAssert(MaterialID_Count == 2, "Number of materials has changed. This must be updated");
+
+		return MaterialID_Count; // This should never happen
 	}
 
 
-	Material::Material(std::string const& name, EffectMaterial effectMaterial)
+	Material::Material(std::string const& name, MaterialID materialID)
 		: INamedObject(name)
-		, m_effectMaterial(effectMaterial)
-		, m_effectID(effect::Effect::ComputeEffectID(k_effectMaterialNames[effectMaterial]))
+		, m_materialID(materialID)
+		, m_effectID(effect::Effect::ComputeEffectID(k_materialNames[materialID]))
 		, m_alphaMode(AlphaMode::AlphaMode_Count)
 		, m_alphaCutoff(0.f)
 		, m_isDoubleSided(false)
@@ -61,7 +62,9 @@ namespace gr
 
 
 	void Material::PackMaterialInstanceTextureSlotDescs(
-		core::InvPtr<re::Texture>* textures, core::InvPtr<re::Sampler>* samplers, char shaderNames[][k_shaderSamplerNameLength]) const
+		core::InvPtr<re::Texture>* textures,
+		core::InvPtr<re::Sampler>* samplers,
+		char shaderNames[][k_shaderSamplerNameLength]) const
 	{
 		SEAssert(m_texSlots.size() <= k_numTexInputs, "Too many texture slot descriptions");
 
@@ -201,7 +204,7 @@ namespace gr
 
 		ImGui::Text("Source material name: \"%s\"", instanceData.m_materialName);
 		ImGui::Text("Source material Type: %s",
-			gr::Material::k_effectMaterialNames[EffectIDToEffectMaterial(instanceData.m_effectID)]);
+			gr::Material::k_materialNames[EffectIDToMaterialID(instanceData.m_effectID)]);
 		ImGui::Text(std::format("Source material UniqueID: {}", instanceData.m_srcMaterialUniqueID).c_str());
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"",
@@ -242,15 +245,21 @@ namespace gr
 		isDirty |= ImGui::Checkbox(
 			std::format("Casts shadows?##{}", util::PtrToID(&instanceData)).c_str(), &instanceData.m_isShadowCaster);
 
-		switch (EffectIDToEffectMaterial(instanceData.m_effectID))
+		switch (EffectIDToMaterialID(instanceData.m_effectID))
 		{
-		case gr::Material::EffectMaterial::GLTF_PBRMetallicRoughness:
+		case gr::Material::MaterialID::GLTF_PBRMetallicRoughness:
 		{
-			isDirty |= gr::Material_GLTF::ShowImGuiWindow(instanceData);
+			isDirty |= gr::Material_GLTF_PBRMetallicRoughness::ShowImGuiWindow(instanceData);
+		}
+		break;
+		case gr::Material::MaterialID::GLTF_Unlit:
+		{
+			isDirty |= gr::Material_GLTF_Unlit::ShowImGuiWindow(instanceData);
 		}
 		break;
 		default: SEAssertF("Invalid type");
 		}
+		SEStaticAssert(MaterialID_Count == 2, "Number of materials has changed. This must be updated");
 
 		return isDirty;
 	}

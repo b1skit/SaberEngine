@@ -313,6 +313,10 @@
           "Command": "-import Scenes\\MultiUVTest\\glTF\\MultiUVTest.gltf"
         },
         {
+          "Id": "cdc4a0a1-fb6e-4fb7-9c07-c82be9efb60a",
+          "Command": "-import Scenes\\UnlitTest\\glTF-Binary\\UnlitTest.glb"
+        },
+        {
           "Id": "3dcb8108-054d-490a-90fa-9618e5101ff2",
           "Command": "Vertex colors",
           "Items": [

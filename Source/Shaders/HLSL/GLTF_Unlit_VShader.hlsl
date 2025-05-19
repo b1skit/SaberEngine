@@ -1,15 +1,13 @@
-// © 2023 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #define VOUT_UV0
-#define VOUT_TBN
 #define VOUT_COLOR
 #define SABER_INSTANCING
-#include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
 
-#include "../Generated/HLSL/VertexStreams_PosNmlTanUvCol.hlsli"
+#include "../Generated/HLSL/VertexStreams_PosUvCol.hlsli"
 
 
 // Note: If a resource is used in multiple shader stages, we need to explicitely specify the register and space.
@@ -18,7 +16,7 @@
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<TransformData> InstancedTransformParams : register(t1, space1);
-StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t2, space1);
+StructuredBuffer<UnlitData> UnlitParams : register(t2, space1);
 
 
 VertexOut VShader(VertexIn In)
@@ -33,21 +31,15 @@ VertexOut VShader(VertexIn In)
 	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(position, 1.0f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 
-#if defined(VOUT_WORLD_POS)
-	Out.WorldPos = worldPos.xyz;
-#endif
-	
 	Out.UV0 = In.UV0;
 	
 #if MAX_UV_CHANNEL_IDX >= 1
 	Out.UV1 = In.UV1;
 #endif
-
-	Out.Color = In.Color; // Note: We apply the base color factor in the PShader
 	
-	Out.TBN = BuildTBN(In.Normal, In.Tangent, InstancedTransformParams[transformIdx].g_transposeInvModel);
+	Out.Color = UnlitParams[materialIdx].g_baseColorFactor * In.Color;
 	
 	Out.InstanceID = In.InstanceID;
 	
-	return Out;	
+	return Out;
 }

@@ -44,6 +44,12 @@
 					{ "Rule": "DeferredLighting", "Mode": "DeferredSpot" }
 				],
 				"Technique": "DeferredSpot"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "Fullscreen" }
+				],
+				"Technique": "Deferred_Fullscreen"
 			}
 		],
 
@@ -106,6 +112,11 @@
 				"PShaderEntryPoint": "PShader",
 				"RasterizationState": "DeferredMesh",
 				"VertexStream": "PositionOnly"
+			},
+			{
+				"Name": "Deferred_Fullscreen",
+				"CShader": "Deferred_Fullscreen_CShader",
+				"CShaderEntryPoint" :  "CShader"
 			}
 		]
 	},

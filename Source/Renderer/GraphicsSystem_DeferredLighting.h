@@ -109,6 +109,12 @@ namespace gr
 		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;
 
 
+		// TODO: Convert all fullscreen lights (i.e. ambient, directional) to this stage
+		std::shared_ptr<re::Stage> m_fullscreenStage;
+		std::unique_ptr<re::Batch> m_fullscreenComputeBatch;
+		static constexpr uint32_t k_dispatchXYThreadDims = 8;
+
+
 	private: // Punctual lights:
 		struct PunctualLightRenderData
 		{

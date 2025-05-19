@@ -8,12 +8,13 @@
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "Sampler.h"
-#include "ShadowMapRenderData.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
 #include "Stage.h"
 
 #include "Core/Config.h"
+
+#include "Core/Util/MathUtils.h"
 
 #include "Shaders/Common/IBLGenerationParams.h"
 #include "Shaders/Common/LightParams.h"
@@ -454,6 +455,8 @@ namespace gr
 		m_pointStage = re::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
 		m_spotStage = re::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
 
+		m_fullscreenStage = re::Stage::CreateComputeStage("Deferred Fullscreen stage", re::Stage::ComputeStageParams{});
+
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
 		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
@@ -521,6 +524,36 @@ namespace gr
 		pipeline.AppendStage(m_directionalStage);
 
 
+		// Fullscreen stage:
+		//------------------
+		m_fullscreenStage->AddPermanentRWTextureInput(
+			"LightingTarget",
+			m_lightingTargetSet->GetColorTarget(0).GetTexture(),
+			re::TextureView(m_lightingTargetSet->GetColorTarget(0).GetTexture()));
+
+		m_fullscreenStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
+
+		m_fullscreenStage->SetDrawStyle(effect::drawstyle::DeferredLighting_Fullscreen);
+
+		pipeline.AppendStage(m_fullscreenStage);
+
+		// Construct a permanent compute batch for the fullscreen stage:
+		const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
+			m_lightingTargetSet->GetViewport().Width() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
+			1u);
+
+		const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
+			m_lightingTargetSet->GetViewport().Height() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
+			1u);
+
+		m_fullscreenComputeBatch = std::make_unique<re::Batch>(
+			re::Lifetime::Permanent,
+			re::Batch::ComputeParams{
+				.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u)
+			},
+			k_deferredLightingEffectID);
+
+
 		// Point light stage:
 		//-------------------
 		m_pointStage->SetTextureTargetSet(m_lightingTargetSet);
@@ -566,16 +599,18 @@ namespace gr
 			util::CHashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
 			core::InvPtr<re::Texture> const& gbufferTex = *texDependencies.at(texName);
 			
-			re::TextureView gbufferTexView = re::TextureView(gbufferTex);
-
 			m_ambientStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
 			m_directionalStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
+
+			m_fullscreenStage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
+
 			m_pointStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
 			m_spotStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, gbufferTexView);
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
 		}
 
 
@@ -584,17 +619,19 @@ namespace gr
 		util::CHashKey const& depthName = GBufferGraphicsSystem::GBufferTexNameHashKeys[depthBufferSlot];
 		core::InvPtr<re::Texture> const& depthTex = *texDependencies.at(depthName);
 
-		const re::TextureView gbufferDepthTexView = re::TextureView(depthTex);
-
-		m_directionalStage->AddPermanentTextureInput(
-			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
-		m_pointStage->AddPermanentTextureInput(
-			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
-		m_spotStage->AddPermanentTextureInput(
-			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
 		m_ambientStage->AddPermanentTextureInput(
-			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, gbufferDepthTexView);
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, re::TextureView(depthTex));
+		m_directionalStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, re::TextureView(depthTex));
 
+		m_fullscreenStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, re::TextureView(depthTex));
+
+		m_pointStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, re::TextureView(depthTex));
+		m_spotStage->AddPermanentTextureInput(
+			depthName.GetKey(), depthTex, wrapMinMagLinearMipPoint, re::TextureView(depthTex));
+		
 		m_ambientStage->AddPermanentTextureInput(
 			"DFG", m_BRDF_integrationMap, clampMinMagMipPoint, re::TextureView(m_BRDF_integrationMap));
 	}
@@ -872,7 +909,7 @@ namespace gr
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		// TODO: Instance deferred mesh lights draws via a single batch
-		
+		// TODO: Convert fullscreen lights into a single compute shader dispatch
 	
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
@@ -884,8 +921,9 @@ namespace gr
 
 			m_ambientStage->AddBatch(m_ambientLightData.at(m_activeAmbientLightData.m_renderDataID).m_batch);
 		}
-		
 
+		m_fullscreenStage->AddBatch(*m_fullscreenComputeBatch);
+		
 		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
 		std::unordered_set<gr::RenderDataID> visibleLightIDs;
 

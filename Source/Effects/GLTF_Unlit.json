@@ -1,0 +1,140 @@
+{
+	"Effect": {
+		"Name": "GLTF_Unlit",
+		"Parents": ["Common", "Debug", "GLTF_PBRMetallicRoughness"],
+		"DrawStyles": [
+			// Fill GBuffer:
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "FillGBuffer_UnlitSingleSidedOpaque"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "FillGBuffer_UnlitSingleSidedAlphaClip"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "FillGBuffer_UnlitDoubleSidedOpaque"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Deferred" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "FillGBuffer_UnlitDoubleSidedAlphaClip"
+			},
+
+			// Transparency:
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Forward" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "AlphaBlend_UnlitSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Forward" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "AlphaBlend_UnlitDoubleSided"
+			}		
+		],
+
+		"Buffers": ["InstancedTransformParams", "UnlitParams"],
+
+		"Techniques": [
+			{
+				"Name": "FillGBuffer_UnlitSingleSidedOpaque",
+				"VShader": "GLTF_Unlit_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
+				"VShaderEntryPoint": "VShader",
+				"PShader": "GLTF_Unlit_GBufferFill_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
+				"PShaderEntryPoint": "PShader",
+				"RasterizationState": "SingleSided",
+				"VertexStream": "PosUvCol"
+			},
+			{
+				"Name": "FillGBuffer_UnlitSingleSidedAlphaClip",
+				"Parent" :  "FillGBuffer_UnlitSingleSidedOpaque",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "DO_ALPHA_CLIP"]
+			},
+			{
+				"Name": "FillGBuffer_UnlitDoubleSidedOpaque",
+				"Parent" :  "FillGBuffer_UnlitSingleSidedOpaque",
+				"RasterizationState": "DoubleSided"
+			},
+			{
+				"Name": "FillGBuffer_UnlitDoubleSidedAlphaClip",
+				"Parent" :  "FillGBuffer_UnlitSingleSidedAlphaClip",
+				"RasterizationState": "DoubleSided"
+			},
+			{
+				"Name": "AlphaBlend_UnlitSingleSided",
+				"VShader": "GLTF_Unlit_VShader",
+				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"PShader": "GLTF_Unlit_Transparency_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"PShaderEntryPoint": "PShader",
+				"RasterizationState": "SingleSided_AlphaBlend",
+				"VertexStream": "PosUvCol"				
+			},
+			{
+				"Name": "AlphaBlend_UnlitDoubleSided",
+				"VShader": "GLTF_Unlit_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"VShaderEntryPoint": "VShader",
+				"PShader": "GLTF_Unlit_Transparency_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"RasterizationState": "DoubleSided_AlphaBlend",
+				"VertexStream": "PosUvCol"
+			}
+		]
+	},
+
+	"VertexStreams": [
+		{
+			"Name" : "PosUvCol",
+			"Slots" : [
+				{
+					"DataType" : "float3",
+					"Name" : "Position",
+					"Semantic" : "SV_Position"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV0",
+					"Semantic" : "TEXCOORD0"
+				},
+				{
+					"DataType" : "float2",
+					"Name" : "UV1",
+					"Semantic" : "TEXCOORD1"
+				},
+				{
+					"DataType" : "float4",
+					"Name" : "Color",
+					"Semantic" : "COLOR0"
+				}
+			]
+		}
+	]
+}

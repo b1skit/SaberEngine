@@ -20,7 +20,7 @@
 
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 
-layout(std430, binding = 2) readonly buffer InstancedPBRMetallicRoughnessParams {	PBRMetallicRoughnessData _InstancedPBRMetallicRoughnessParams[]; };
+layout(std430, binding=2) readonly buffer PBRMetallicRoughnessParams {	PBRMetallicRoughnessData _PBRMetallicRoughnessParams[]; };
 
 layout(std430, binding = 3) readonly buffer DirectionalLightParams { LightData _DirectionalLightParams[]; };
 layout(std430, binding = 4) readonly buffer PointLightParams { LightData _PointLightParams[]; };
@@ -51,45 +51,44 @@ void PShader()
 	const uint materialIdx = _InstanceIndexParams[InstanceParamsIn.InstanceID].g_indexes.y;
 
 	const vec2 albedoUV = GetUV(In, 
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.x);
+		_PBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.x);
 	
 	const vec2 metallicRoughnessUV = GetUV(In,
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.y);
+		_PBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.y);
 	
 	const vec2 normalUV = GetUV(In,
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.z);
+		_PBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.z);
 	
 	const vec2 occlusionUV = GetUV(In,
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.w);
+		_PBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes0.w);
 	
 	//const vec2 emissiveUV = GetUV(In,
-	//	_InstancedPBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes1.x);
+	//	_PBRMetallicRoughnessParams[materialIdx].g_uvChannelIndexes1.x);
 
 	const vec3 worldPos = In.WorldPos;
 
 	const vec4 matAlbedo = texture(BaseColorTex, albedoUV);
-	const vec4 baseColorFactor =
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
-	const vec3 linearAlbedo = (matAlbedo * baseColorFactor * In.Color).rgb;
+	const vec4 baseColorFactor = _PBRMetallicRoughnessParams[materialIdx].g_baseColorFactor;
+	const vec3 linearAlbedo = (matAlbedo * In.Color * baseColorFactor).rgb;
 
 	const float normalScaleFactor =
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
+		_PBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.z;
 	const vec3 normalScale = vec3(normalScaleFactor, normalScaleFactor, 1.f);
 	const vec3 texNormal = texture(NormalTex, normalUV).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, In.TBN) * normalScale;
 
 	const float linearRoughnessFactor =
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.y;
+		_PBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.y;
 	
 	const float metallicFactor =
-		_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.x;
+		_PBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.x;
 	
 	const vec2 roughnessMetalness =
 		texture(MetallicRoughnessTex, metallicRoughnessUV).gb * vec2(linearRoughnessFactor, metallicFactor);
 
 	const float remappedRoughness = RemapRoughness(roughnessMetalness.x);
 
-	const vec3 f0 = _InstancedPBRMetallicRoughnessParams[materialIdx].g_f0AlphaCutoff.rgb;
+	const vec3 f0 = _PBRMetallicRoughnessParams[materialIdx].g_f0AlphaCutoff.rgb;
 
 	vec3 totalContribution = vec3(0.f);
 
@@ -109,7 +108,7 @@ void PShader()
 		ambientLightParams.RemappedRoughness = remappedRoughness;
 
 		const float occlusionStrength =
-			_InstancedPBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
+			_PBRMetallicRoughnessParams[materialIdx].g_metRoughNmlOccScales.w;
 		const float occlusion = texture(OcclusionTex, occlusionUV).r * occlusionStrength;
 	
 		ambientLightParams.FineAO = occlusion;

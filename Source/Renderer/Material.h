@@ -4,17 +4,13 @@
 #include "Effect.h"
 #include "RenderObjectIDs.h"
 #include "Sampler.h"
+#include "Texture.h"
 
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
-
-namespace re
-{
-	class Texture;
-}
 
 namespace gr
 {
@@ -24,22 +20,24 @@ namespace gr
 	class Material : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
-		enum EffectMaterial : uint32_t
+		enum MaterialID : uint8_t
 		{
-			GLTF_PBRMetallicRoughness, // GLTF 2.0's PBR metallic-roughness material model
+			GLTF_Unlit					= 0, // GLTF 2.0: KHR_materials_unlit
+			GLTF_PBRMetallicRoughness	= 1, // GLTF 2.0: PBR metallic-roughness material model
 
-			EffectMaterial_Count
+			MaterialID_Count
 		};
-		SEStaticAssert(EffectMaterial_Count < std::numeric_limits<uint32_t>::max(), "Too many material types");
+		SEStaticAssert(MaterialID_Count < std::numeric_limits<uint8_t>::max(), "Too many MaterialIDs");
 
 		// Note: Material Buffer names are used to associate Effects with Buffers (e.g. when building batches)
-		static constexpr char const* k_effectMaterialNames[] =
+		static constexpr char const* k_materialNames[] =
 		{
-			ENUM_TO_STR(GLTF_PBRMetallicRoughness)
+			ENUM_TO_STR(GLTF_Unlit),
+			ENUM_TO_STR(GLTF_PBRMetallicRoughness),
 		};
-		SEStaticAssert(_countof(k_effectMaterialNames) == EffectMaterial_Count, "Names and enum are out of sync");
+		SEStaticAssert(_countof(k_materialNames) == MaterialID_Count, "Names and enum are out of sync");
 
-		static EffectMaterial EffectIDToEffectMaterial(EffectID);
+		static MaterialID EffectIDToMaterialID(EffectID);
 
 
 	public:
@@ -86,9 +84,9 @@ namespace gr
 			std::array<uint8_t, gr::Material::k_paramDataBlockByteSize> m_materialParamData;
 
 			// Material flags. Note: This data is NOT sent to the GPU
-			AlphaMode m_alphaMode;
-			bool m_isDoubleSided;
-			bool m_isShadowCaster;
+			AlphaMode m_alphaMode = AlphaMode::AlphaMode_Count;
+			bool m_isDoubleSided = false;
+			bool m_isShadowCaster = true;
 
 			// Material metadata:
 			EffectID m_effectID;
@@ -138,7 +136,7 @@ namespace gr
 
 		void SetShadowCastMode(bool);
 
-		EffectMaterial GetMaterialType() const;
+		MaterialID GetMaterialType() const;
 		EffectID GetEffectID() const;
 
 
@@ -153,7 +151,7 @@ namespace gr
 
 
 	protected:
-		const EffectMaterial m_effectMaterial;
+		const MaterialID m_materialID;
 		const EffectID m_effectID;
 
 
@@ -171,7 +169,7 @@ namespace gr
 
 
 	protected:
-		Material(std::string const& name, EffectMaterial); // Use Create()
+		Material(std::string const& name, MaterialID); // Use Create()
 
 
 	private:
@@ -195,6 +193,7 @@ namespace gr
 	template <typename T>
 	inline T Material::GetAs()
 	{
+		SEAssert(dynamic_cast<T>(this) != nullptr, "dynamic_cast failed");
 		return dynamic_cast<T>(this);
 	}
 
@@ -246,9 +245,9 @@ namespace gr
 	}
 
 
-	inline Material::EffectMaterial Material::GetMaterialType() const
+	inline Material::MaterialID Material::GetMaterialType() const
 	{
-		return m_effectMaterial;
+		return m_materialID;
 	}
 
 

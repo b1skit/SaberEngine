@@ -35,28 +35,30 @@ namespace gr
 
 
 	public:
-		// These enums must align with the layout binding indexes defined in SaberCommon.glsl
 		enum GBufferTexIdx : uint8_t
 		{
-			GBufferAlbedo	= 0,
-			GBufferWNormal	= 1,
-			GBufferRMAO		= 2,
-			GBufferEmissive = 3,
-			GBufferMatProp0 = 4,
+			GBufferAlbedo		= 0,
+			GBufferWNormal		= 1,
+			GBufferRMAO			= 2,
+			GBufferEmissive		= 3,
+			GBufferMatProp0		= 4,
+			GBufferMaterialID	= 5,
 
-			GBufferDepth	= 5,
+			GBufferDepth		= 6,
 
 			GBufferTexIdx_Count,
-			GBufferColorTex_Count = 5 // Helper for iterating over color indexes only
+			GBufferColorTex_Count = 6 // Helper for iterating over color indexes only
 		};
 		static constexpr std::array<util::CHashKey, GBufferTexIdx_Count> GBufferTexNameHashKeys =
 		{
 			util::CHashKey(ENUM_TO_STR(GBufferAlbedo)),		// 0
-			util::CHashKey(ENUM_TO_STR(GBufferWNormal)),		// 1
+			util::CHashKey(ENUM_TO_STR(GBufferWNormal)),	// 1
 			util::CHashKey(ENUM_TO_STR(GBufferRMAO)),		// 2
 			util::CHashKey(ENUM_TO_STR(GBufferEmissive)),	// 3
 			util::CHashKey(ENUM_TO_STR(GBufferMatProp0)),	// 4
-			util::CHashKey(ENUM_TO_STR(GBufferDepth)),		// 5
+			util::CHashKey(ENUM_TO_STR(GBufferMaterialID)),	// 5
+			util::CHashKey(ENUM_TO_STR(GBufferDepth)),		// 6
+
 		};
 		SEStaticAssert(GBufferGraphicsSystem::GBufferTexNameHashKeys.size() ==
 			GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count,

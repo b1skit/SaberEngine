@@ -433,6 +433,30 @@
     <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\GLTF_Unlit_VShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Deferred_Fullscreen_CShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">

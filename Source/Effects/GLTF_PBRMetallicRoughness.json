@@ -156,7 +156,7 @@
 			}
 		],
 
-		"Buffers": ["InstancedTransformParams", "InstancedPBRMetallicRoughnessParams"],
+		"Buffers": ["InstancedTransformParams", "PBRMetallicRoughnessParams"],
 
 		"Techniques": [
 			{

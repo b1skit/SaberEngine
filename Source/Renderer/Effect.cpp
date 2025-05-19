@@ -2,7 +2,6 @@
 #include "Effect.h"
 
 #include "Core/Assert.h"
-#include "Core/Definitions/ConfigKeys.h"
 
 
 namespace effect::drawstyle
@@ -104,9 +103,8 @@ namespace effect
 
 	void Effect::AddTechnique(effect::drawstyle::Bitmask drawStyleBitmask, effect::Technique const* technique)
 	{
-		SEAssert(!m_techniques.contains(drawStyleBitmask),
-			"A Technique has already been added for the given draw style bitmask");
-
+		// Note: We use emplace here, which (intentionally) only inserts if no existing element already exists. This
+		// allows children to override their parent Techniques, as they won't be replaced
 		m_techniques.emplace(drawStyleBitmask, technique);
 	}
 

@@ -1,12 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #version 460
 #define SABER_VEC4_OUTPUT
-#define READ_GBUFFER
 
 #include "AmbientCommon.glsli"
 #include "GBufferCommon.glsli"
 
 #include "../Common/CameraParams.h"
+#include "../Common/MaterialParams.h"
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 
@@ -20,6 +20,11 @@ float GetSSAO(vec2 screenUV, uvec2 screenPxDims)
 void PShader()
 {
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
+
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		discard;
+	}
 
 	// Reconstruct the world position:
 	const vec3 worldPos = ScreenUVToWorldPos(In.UV0.xy, gbuffer.NonLinearDepth, _CameraParams.g_invViewProjection);

@@ -5,7 +5,12 @@
 #include "PlatformConversions.h"
 
 
-// GLTF metallic roughness PBR material buffer
+// gr::Material::MaterialID:
+#define MAT_ID_GLTF_Unlit 0
+#define MAT_ID_GLTF_PBRMetallicRoughness 1
+
+
+// GLTF PBR metallic roughness material
 // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material
 struct PBRMetallicRoughnessData
 {
@@ -19,11 +24,25 @@ struct PBRMetallicRoughnessData
 
 	float4 g_f0AlphaCutoff; // .xyz = f0 (non-metals only), .w = alpha cutoff
 
-	uint4 g_uvChannelIndexes0;	// UV channel semantic index:  .xyzw = albedo, metallicRoughness, normal, occlusion
-	uint4 g_uvChannelIndexes1;	// UV channel semantic index: .x = emissive, .yzw = unused
+	uint4 g_uvChannelIndexes0;	// UV channel index:  .xyzw = albedo, metallicRoughness, normal, occlusion
+	uint4 g_uvChannelIndexes1;	// UV channel index: .x = emissive, .y = MaterialID, .zw = unused
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "InstancedPBRMetallicRoughnessParams";
+	static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
+#endif
+};
+
+
+// GLTF Unlit material
+//https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_unlit
+struct UnlitData
+{
+	float4 g_baseColorFactor;
+	float4 g_alphaCutuff; // .x = alpha cutoff, .yzw = unused
+	uint4 g_uvChannelIndexes0;	// .x = base color (& alpha) uv index, .y = MaterialID, .zw = unused
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "UnlitParams";
 #endif
 };
 

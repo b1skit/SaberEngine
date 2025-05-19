@@ -215,7 +215,7 @@
     <ClInclude Include="LightParamsHelpers.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="Material_GLTF.h">
+    <ClInclude Include="Material_GLTF_PBRMetallicRoughness.h">
       <Filter>Header Files\gr\Materials</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
@@ -485,6 +485,9 @@
     <ClInclude Include="BindlessResource_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
+    <ClInclude Include="Material_GLTF_Unlit.h">
+      <Filter>Header Files\gr\Materials</Filter>
+    </ClInclude>
     <ClInclude Include="IndexedBuffer.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -688,7 +691,7 @@
     <ClCompile Include="MeshFactory.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="Material_GLTF.cpp">
+    <ClCompile Include="Material_GLTF_PBRMetallicRoughness.cpp">
       <Filter>Source Files\gr\Materials</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
@@ -859,8 +862,6 @@
     <ClCompile Include="BindlessResourceManager.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="IndexedBuffer.cpp">
-      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,8 @@
 #include "Shadows.hlsli"
 #include "Transformations.hlsli"
 
+#include "../Common/MaterialParams.h"
+
 StructuredBuffer<LightData> DirectionalLightParams;
 StructuredBuffer<LightShadowLUTData> DirectionalLUT;
 StructuredBuffer<ShadowData> ShadowParams;
@@ -18,6 +20,11 @@ Texture2DArray<float> DirectionalShadows;
 float4 PShader(VertexOut In) : SV_Target
 {
 	const GBuffer gbuffer = UnpackGBuffer(In.Position.xy);
+	
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		return float4(0.f, 0.f, 0.f, 0.f);
+	}
 	
 	const float3 worldPos = ScreenUVToWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection);
 	

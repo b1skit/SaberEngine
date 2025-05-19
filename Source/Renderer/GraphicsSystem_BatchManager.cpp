@@ -117,34 +117,43 @@ namespace gr
 		}
 		SEEndCPUEvent(); // Remove deleted batches
 
-		// Create batches for newly added IDs
-		SEBeginCPUEvent("Create new batches");
-		std::vector<gr::RenderDataID> const* newMeshPrimIDs =
-			renderData.GetIDsWithNewData<gr::MeshPrimitive::RenderData>();
-		if (newMeshPrimIDs)
+		// Create/update batches for new/dirty objects
+		SEBeginCPUEvent("Create/update batches");
+
+		std::vector<gr::RenderDataID> const& dirtyIDs =
+			renderData.GetIDsWithAnyDirtyData<gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceRenderData>(
+				gr::RenderObjectFeature::IsMeshPrimitiveConcept);
+
+		if (!dirtyIDs.empty())
 		{
-			for (auto const& newMeshPrimDataItr : gr::IDAdapter(renderData, *newMeshPrimIDs))
+			for (auto const& itr : gr::IDAdapter(renderData, dirtyIDs))
 			{
-				const gr::RenderDataID newMeshPrimID = newMeshPrimDataItr->GetRenderDataID();
+				const gr::RenderDataID renderDataID = itr->GetRenderDataID();
 
-				if (gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, newMeshPrimDataItr->GetFeatureBits()))
+				SEAssert(itr->HasObjectData<gr::MeshPrimitive::RenderData>() &&
+					itr->HasObjectData<gr::Material::MaterialInstanceRenderData>() &&
+					gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveConcept, itr->GetFeatureBits()),
+					"Render data object does not have the expected configuration");
+
+				gr::MeshPrimitive::RenderData const& meshPrimRenderData = itr->Get<gr::MeshPrimitive::RenderData>();
+				
+				gr::Material::MaterialInstanceRenderData const& materialRenderData =
+					itr->Get<gr::Material::MaterialInstanceRenderData>();
+
+				// Get any animated vertex streams overrides, if they exist
+				re::Batch::VertexStreamOverride const* vertexStreamOverrides = nullptr;
+				auto const& animatedStreams = m_animatedVertexStreams->find(renderDataID);
+				if (animatedStreams != m_animatedVertexStreams->end())
 				{
-					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
-						newMeshPrimDataItr->Get<gr::MeshPrimitive::RenderData>();
-					gr::Material::MaterialInstanceRenderData const& materialRenderData =
-						newMeshPrimDataItr->Get<gr::Material::MaterialInstanceRenderData>();
+					vertexStreamOverrides = &animatedStreams->second;
+				}
+				SEAssert(!meshPrimRenderData.m_hasMorphTargets || vertexStreamOverrides,
+					"Morph target flag and vertex stream override results are out of sync");
 
+				auto batchMetadataItr = m_renderDataIDToBatchMetadata.find(renderDataID);
+				if (batchMetadataItr == m_renderDataIDToBatchMetadata.end()) // Add a new batch
+				{
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
-
-					// Get any animated vertex streams overrides, if they exist
-					re::Batch::VertexStreamOverride const* vertexStreamOverrides = nullptr;
-					auto const& animatedStreams = m_animatedVertexStreams->find(newMeshPrimID);
-					if (animatedStreams != m_animatedVertexStreams->end())
-					{
-						vertexStreamOverrides = &animatedStreams->second;
-					}
-					SEAssert(!meshPrimRenderData.m_hasMorphTargets || vertexStreamOverrides,
-						"Morph target flag and vertex stream override results are out of sync");
 
 					m_permanentCachedBatches.emplace_back(
 						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData, vertexStreamOverrides));
@@ -152,22 +161,33 @@ namespace gr
 					const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
 
 					// Update the metadata:
-					m_cacheIdxToRenderDataID.emplace(newBatchIdx, newMeshPrimID);
+					m_cacheIdxToRenderDataID.emplace(newBatchIdx, renderDataID);
 
 					const EffectID matEffectID = materialRenderData.m_effectID;
 
 					m_renderDataIDToBatchMetadata.emplace(
-						newMeshPrimID,
+						renderDataID,
 						BatchMetadata{
 							.m_batchHash = batchHash,
-							.m_renderDataID = newMeshPrimID,
+							.m_renderDataID = renderDataID,
 							.m_matEffectID = matEffectID,
 							.m_cacheIndex = newBatchIdx
 						});
 				}
+				else // Update existing batch
+				{
+					BatchMetadata& batchMetadata = m_renderDataIDToBatchMetadata.at(renderDataID);
+
+					m_permanentCachedBatches[batchMetadata.m_cacheIndex] = 
+						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData, vertexStreamOverrides);
+
+					// Update the batch metadata:
+					batchMetadata.m_batchHash = m_permanentCachedBatches[batchMetadata.m_cacheIndex].GetDataHash();
+					batchMetadata.m_matEffectID = materialRenderData.m_effectID;
+				}
 			}
 		}
-		SEEndCPUEvent(); // Create new batches
+		SEEndCPUEvent(); // Create/update batches for new/dirty objects
 
 		BuildViewBatches(renderData.GetInstancingIndexedBufferManager());
 
@@ -266,8 +286,10 @@ namespace gr
 					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
 
 					static const util::HashKey k_transformBufferNameHash(TransformData::s_shaderName);
-					static const util::HashKey k_materialBufferNameHash(PBRMetallicRoughnessData::s_shaderName);
+					static const util::HashKey k_pbrMetRoughMatBufferNameHash(PBRMetallicRoughnessData::s_shaderName);
+					static const util::HashKey k_unlitMaterialBufferNameHash(UnlitData::s_shaderName);
 
+					// TODO: Set these buffers automatically as a post-processing step
 					bool setInstanceBuffer = false;
 					if (batchEffect->UsesBuffer(k_transformBufferNameHash))
 					{
@@ -275,10 +297,16 @@ namespace gr
 							ibm.GetIndexedBufferInput(k_transformBufferNameHash, TransformData::s_shaderName));
 						setInstanceBuffer = true;
 					}
-					if (batchEffect->UsesBuffer(k_materialBufferNameHash))
+					if (batchEffect->UsesBuffer(k_pbrMetRoughMatBufferNameHash))
 					{
 						batches.back().SetBuffer(
-							ibm.GetIndexedBufferInput(k_materialBufferNameHash, PBRMetallicRoughnessData::s_shaderName));
+							ibm.GetIndexedBufferInput(k_pbrMetRoughMatBufferNameHash, PBRMetallicRoughnessData::s_shaderName));
+						setInstanceBuffer = true;
+					}
+					if (batchEffect->UsesBuffer(k_unlitMaterialBufferNameHash))
+					{
+						batches.back().SetBuffer(
+							ibm.GetIndexedBufferInput(k_unlitMaterialBufferNameHash, UnlitData::s_shaderName));
 						setInstanceBuffer = true;
 					}
 
@@ -295,8 +323,8 @@ namespace gr
 									return batchMetadata->m_renderDataID;
 								});
 
-						batches.back().SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
-							InstanceIndexData::s_shaderName, instancedBatchView));
+						batches.back().SetBuffer(
+							ibm.GetLUTBufferInput<InstanceIndexData>(InstanceIndexData::s_shaderName, instancedBatchView));
 
 						SEEndCPUEvent(); // GetSingleFrameLUTBufferInput
 					}

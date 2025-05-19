@@ -1,5 +1,4 @@
 #define SABER_VEC4_OUTPUT
-#define READ_GBUFFER
 
 #include "SaberCommon.glsli"
 #include "Lighting.glsli"
@@ -8,6 +7,7 @@
 
 #include "../Common/CameraParams.h"
 #include "../Common/LightParams.h"
+#include "../Common/MaterialParams.h"
 #include "../Common/ShadowParams.h"
 
 
@@ -23,6 +23,11 @@ layout(binding = 10) uniform sampler2DArrayShadow DirectionalShadows;
 void PShader()
 {
 	const GBuffer gbuffer = UnpackGBuffer(gl_FragCoord.xy);
+
+	if (gbuffer.MaterialID != MAT_ID_GLTF_PBRMetallicRoughness)
+	{
+		discard;
+	}
 
 	const vec2 screenUV = In.UV0.xy; // Directional light is drawn with a fullscreen quad
 
