@@ -56,7 +56,7 @@
 			}		
 		],
 
-		"Buffers": ["InstancedTransformParams", "UnlitParams"],
+		"Buffers": ["TransformParams", "UnlitParams"],
 
 		"Techniques": [
 			{

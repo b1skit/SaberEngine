@@ -12,7 +12,7 @@
 layout(binding = 7) uniform CameraParams { CameraData _CameraParams; };
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 
-layout(std430, binding = 1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
+layout(std430, binding = 1) readonly buffer TransformParams { TransformData _TransformParams[]; };
 layout(std430, binding = 2) readonly buffer UnlitParams { UnlitData _UnlitParams[]; };
 
 
@@ -23,7 +23,7 @@ void VShader()
 
 	vec3 position = Position;
 	
-	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * vec4(position, 1.0f);
+	const vec4 worldPos = _TransformParams[transformIdx].g_model * vec4(position, 1.0f);
 	gl_Position = _CameraParams.g_viewProjection * worldPos;
 	
 	Out.UV0 = UV0;

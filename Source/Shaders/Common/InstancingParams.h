@@ -32,7 +32,7 @@ struct TransformData
 	float4x4 g_transposeInvModel;
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "InstancedTransformParams";
+	static constexpr char const* const s_shaderName = "TransformParams";
 #endif
 };
 

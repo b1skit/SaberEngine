@@ -24,7 +24,7 @@
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
-layout(std430, binding = 1) readonly buffer InstancedTransformParams { TransformData _InstancedTransformParams[]; };
+layout(std430, binding = 1) readonly buffer TransformParams { TransformData _TransformParams[]; };
 
 
 struct LineVertexOut
@@ -82,7 +82,7 @@ void VShader()
 #endif
 
 	vec4 ndcPos = 
-		_CameraParams.g_viewProjection * _InstancedTransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);
+		_CameraParams.g_viewProjection * _TransformParams[transformIdx].g_model * vec4(Position.xyz, 1.0);
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
 	gl_Position = ndcPos;
@@ -113,7 +113,7 @@ void GShader()
 {
 	const uint transformIdx = _InstanceIndexParams[InstanceID[0]].g_indexes.x;
 
-	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * gl_in[0].gl_Position;
+	const vec4 worldPos = _TransformParams[transformIdx].g_model * gl_in[0].gl_Position;
 	vec4 ndcPos = _CameraParams.g_viewProjection * worldPos;
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 
@@ -123,7 +123,7 @@ void GShader()
 
 	// In[0], extended in the direction of the normal:
 	const vec4 offsetWorldPos = 
-		_InstancedTransformParams[transformIdx].g_model * vec4(gl_in[0].gl_Position.xyz + In[0].Normal.xyz, 1.f);
+		_TransformParams[transformIdx].g_model * vec4(gl_in[0].gl_Position.xyz + In[0].Normal.xyz, 1.f);
 
 	const vec3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * _DebugParams.g_scales.x;
 
@@ -144,7 +144,7 @@ void GShader()
 	const uint transformIdx = _InstanceIndexParams[InstanceID[0]].g_indexes.x;
 
 	// Origin:		
-	const vec4 worldPos = _InstancedTransformParams[transformIdx].g_model * gl_in[0].gl_Position;
+	const vec4 worldPos = _TransformParams[transformIdx].g_model * gl_in[0].gl_Position;
 	vec4 ndcPos = _CameraParams.g_viewProjection * worldPos;
 	ndcPos.y *= -1.f; // Flip the Y axis in NDC space, as we're writing directly to the backbuffer
 	
@@ -163,7 +163,7 @@ void GShader()
 		
 		// Axis offset:
 		const vec4 offsetWorldPos = 
-			_InstancedTransformParams[transformIdx].g_model * vec4(gl_in[0].gl_Position.xyz + axisDirs[i], 1.f);
+			_TransformParams[transformIdx].g_model * vec4(gl_in[0].gl_Position.xyz + axisDirs[i], 1.f);
 
 		const vec3 scaledOffsetDir = normalize(offsetWorldPos.xyz - worldPos.xyz) * axisScale;
 

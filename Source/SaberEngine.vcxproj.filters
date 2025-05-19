@@ -457,6 +457,9 @@
     <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Effects\GLTF_Unlit.json">
+      <Filter>Effects</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">

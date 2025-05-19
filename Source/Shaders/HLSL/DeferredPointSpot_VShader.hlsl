@@ -6,7 +6,7 @@
 #include "../Generated/HLSL/VertexStreams_PositionOnly.hlsli"
 
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
-StructuredBuffer<TransformData> InstancedTransformParams : register(t1, space1);
+StructuredBuffer<TransformData> TransformParams : register(t1, space1);
 
 
 VertexOut VShader(VertexIn In)
@@ -15,7 +15,7 @@ VertexOut VShader(VertexIn In)
 
 	const uint transformIdx = InstanceIndexParams[NonUniformResourceIndex(In.InstanceID)].g_indexes.x;
 	
-	const float4 worldPos = mul(InstancedTransformParams[NonUniformResourceIndex(transformIdx)].g_model, float4(In.Position, 1.f));
+	const float4 worldPos = mul(TransformParams[NonUniformResourceIndex(transformIdx)].g_model, float4(In.Position, 1.f));
 	
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	

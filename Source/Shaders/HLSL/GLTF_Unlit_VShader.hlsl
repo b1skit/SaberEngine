@@ -15,7 +15,7 @@
 // consistent). We (currently) use space1 for all explicit bindings, preventing conflicts with non-explicit bindings in
 // space0
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
-StructuredBuffer<TransformData> InstancedTransformParams : register(t1, space1);
+StructuredBuffer<TransformData> TransformParams : register(t1, space1);
 StructuredBuffer<UnlitData> UnlitParams : register(t2, space1);
 
 
@@ -28,7 +28,7 @@ VertexOut VShader(VertexIn In)
 	
 	float3 position = In.Position;
 	
-	const float4 worldPos = mul(InstancedTransformParams[transformIdx].g_model, float4(position, 1.0f));
+	const float4 worldPos = mul(TransformParams[transformIdx].g_model, float4(position, 1.0f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 
 	Out.UV0 = In.UV0;

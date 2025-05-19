@@ -89,7 +89,7 @@
 			}
 		],
 
-		"Buffers": ["InstancedTransformParams"],
+		"Buffers": ["TransformParams"],
 
 		"Techniques": [
 			{
