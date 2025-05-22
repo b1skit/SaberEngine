@@ -4,8 +4,6 @@
 #include "GraphicsSystem_Bloom.h"
 #include "Sampler.h"
 
-#include "Core/Definitions/ConfigKeys.h"
-
 #include "Shaders/Common/BloomComputeParams.h"
 
 
