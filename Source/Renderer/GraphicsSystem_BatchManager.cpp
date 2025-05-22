@@ -174,7 +174,7 @@ namespace gr
 							.m_cacheIndex = newBatchIdx
 						});
 				}
-				else // Update existing batch
+				else if (itr->IsDirty<gr::Material::MaterialInstanceRenderData>())// Update existing batch
 				{
 					BatchMetadata& batchMetadata = m_renderDataIDToBatchMetadata.at(renderDataID);
 
