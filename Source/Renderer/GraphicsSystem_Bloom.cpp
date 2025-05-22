@@ -2,6 +2,7 @@
 #include "CameraRenderData.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
+#include "GraphicsUtils.h"
 #include "Sampler.h"
 
 #include "Shaders/Common/BloomComputeParams.h"
@@ -308,16 +309,19 @@ namespace gr
 	void BloomGraphicsSystem::CreateBatches()
 	{
 		const uint32_t numBloomTexMips = m_bloomTargetTex->GetNumMips();
-
+		
 		uint32_t downsampleDstMipLevel = 0;
 		for (std::shared_ptr<re::Stage> downStage : m_bloomDownStages)
 		{
-			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
-
+			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
+			
 			re::Batch computeBatch = re::Batch(
 				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
-					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
+					.m_threadGroupCount = glm::uvec3(
+						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
+						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
+						1u) },
 				k_bloomEffectID);
 
 			downStage->AddBatch(computeBatch);
@@ -326,12 +330,15 @@ namespace gr
 		uint32_t upsampleDstMipLevel = m_firstUpsampleSrcMipLevel - 1;
 		for (std::shared_ptr<re::Stage> upStage : m_bloomUpStages)
 		{
-			glm::vec2 dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
-
+			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
+			
 			re::Batch computeBatch = re::Batch(
 				re::Lifetime::SingleFrame,
 				re::Batch::ComputeParams{
-					.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) },
+					.m_threadGroupCount = glm::uvec3(
+						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
+						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
+						1u) },
 				k_bloomEffectID);
 
 			upStage->AddBatch(computeBatch);

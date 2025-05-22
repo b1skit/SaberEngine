@@ -5,6 +5,8 @@
 #include "PlatformConversions.h"
 
 
+#define BLOOM_DISPATCH_XY_DIMS 8
+
 struct BloomComputeData
 {
 	float4 g_srcTexDimensions;

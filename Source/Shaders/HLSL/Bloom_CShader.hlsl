@@ -207,7 +207,7 @@ void BilinearDown(ComputeIn In)
 }
 
 
-[numthreads(1, 1, 1)]
+[numthreads(BLOOM_DISPATCH_XY_DIMS, BLOOM_DISPATCH_XY_DIMS, 1)]
 void CShader(ComputeIn In)
 {
 	static const bool isDownStage = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.w > 0.5f;

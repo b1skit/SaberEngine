@@ -208,7 +208,7 @@ void BilinearDown(in const uvec3 DTId)
 }
 
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = BLOOM_DISPATCH_XY_DIMS, local_size_y = BLOOM_DISPATCH_XY_DIMS, local_size_z = 1) in;
 void CShader()
 {
 	const bool isDownStage = _BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.w > 0.5f;
