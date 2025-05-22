@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
+#include "GraphicsUtils.h"
 #include "Sampler.h"
 #include "Texture.h"
 #include "TextureView.h"
@@ -8,7 +9,6 @@
 #include "Core/InvPtr.h"
 
 #include "Core/Util/ImGuiUtils.h"
-#include "Core/Util/MathUtils.h"
 
 
 namespace
@@ -69,13 +69,8 @@ namespace gr
 		pipeline.AppendStage(m_tonemappingStage);
 
 		// Create a permanent compute batch:
-		const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-			lightingTex->Width() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
-			1u);
-
-		const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-			lightingTex->Height() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
-			1u);
+		const uint32_t roundedXDim = grutil::GetRoundedDispatchDimension(lightingTex->Width(), k_dispatchXYThreadDims);
+		const uint32_t roundedYDim = grutil::GetRoundedDispatchDimension(lightingTex->Height(), k_dispatchXYThreadDims);
 
 		m_tonemappingComputeBatch = std::make_unique<re::Batch>(
 			re::Lifetime::Permanent,

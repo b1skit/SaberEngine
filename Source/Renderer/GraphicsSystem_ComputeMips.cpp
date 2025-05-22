@@ -1,9 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsUtils.h"
 #include "RenderManager.h"
 #include "Sampler.h"
-
-#include "Core/Definitions/ConfigKeys.h"
 
 #include "Core/Util/MathUtils.h"
 
@@ -271,10 +270,10 @@ namespace gr
 
 						// We want to dispatch enough k_numThreadsX x k_numThreadsY threadgroups to cover every pixel in
 						// our 1st mip level (each thread samples a 2x2 block in the source level above the 1st mip target)
-						const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-							firstTargetMipDimensions.x / k_numThreadsX, k_numThreadsX), 1u);
-						const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-							firstTargetMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
+						const uint32_t roundedXDim = 
+							grutil::GetRoundedDispatchDimension(firstTargetMipDimensions.x, k_numThreadsY);
+						const uint32_t roundedYDim = 
+							grutil::GetRoundedDispatchDimension(firstTargetMipDimensions.y, k_numThreadsY);
 
 						// Add our dispatch information to a compute batch:
 						re::Batch computeBatch = re::Batch(

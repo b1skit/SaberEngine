@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystemManager.h"
+#include "GraphicsUtils.h"
 #include "Sampler.h"
 
 #include "Core/Config.h"
@@ -445,11 +446,10 @@ namespace gr
 			// Thus, we perform a total of (width, height) / (16, 16) dispatches, but round up via an integer floor) to
 			// handle the edges
 			constexpr int k_blockSize = 16;
-			constexpr int k_extra = k_blockSize - 1;
 			
 			prefilterDepthBatchParams.m_threadGroupCount = glm::uvec3(
-				(m_xRes + k_extra) / k_blockSize,
-				(m_yRes + k_extra) / k_blockSize,
+				grutil::GetRoundedDispatchDimension(m_xRes, k_blockSize),
+				grutil::GetRoundedDispatchDimension(m_yRes, k_blockSize),
 				1);
 
 			m_prefilterDepthComputeBatch = std::make_unique<re::Batch>(
@@ -472,8 +472,8 @@ namespace gr
 			constexpr int k_extraY = XE_GTAO_NUMTHREADS_Y - 1;
 
 			mainBatchParams.m_threadGroupCount = glm::uvec3(
-				(m_xRes + k_extraX) / XE_GTAO_NUMTHREADS_X,
-				(m_yRes + k_extraY) / XE_GTAO_NUMTHREADS_Y,
+				grutil::GetRoundedDispatchDimension(m_xRes, XE_GTAO_NUMTHREADS_X),
+				grutil::GetRoundedDispatchDimension(m_yRes, XE_GTAO_NUMTHREADS_Y),
 				1);
 
 			m_mainBatch = std::make_unique<re::Batch>(
@@ -491,12 +491,9 @@ namespace gr
 		{
 			re::Batch::ComputeParams denoiseBatchParams{};
 
-			constexpr int k_extraX = (XE_GTAO_NUMTHREADS_X * 2) - 1;
-			constexpr int k_extraY = XE_GTAO_NUMTHREADS_Y - 1;
-
 			denoiseBatchParams.m_threadGroupCount = glm::uvec3(
-				(m_xRes + k_extraX) / (XE_GTAO_NUMTHREADS_X * 2),
-				(m_yRes + k_extraY) / (XE_GTAO_NUMTHREADS_Y),
+				grutil::GetRoundedDispatchDimension(m_xRes, XE_GTAO_NUMTHREADS_X * 2),
+				grutil::GetRoundedDispatchDimension(m_yRes, XE_GTAO_NUMTHREADS_Y),
 				1);
 
 			m_denoiseBatch = std::make_unique<re::Batch>(

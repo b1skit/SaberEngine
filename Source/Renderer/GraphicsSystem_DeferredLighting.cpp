@@ -4,6 +4,7 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
+#include "GraphicsUtils.h"
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
@@ -13,8 +14,6 @@
 #include "Stage.h"
 
 #include "Core/Config.h"
-
-#include "Core/Util/MathUtils.h"
 
 #include "Shaders/Common/IBLGenerationParams.h"
 #include "Shaders/Common/LightParams.h"
@@ -538,13 +537,10 @@ namespace gr
 		pipeline.AppendStage(m_fullscreenStage);
 
 		// Construct a permanent compute batch for the fullscreen stage:
-		const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-			m_lightingTargetSet->GetViewport().Width() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
-			1u);
-
-		const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-			m_lightingTargetSet->GetViewport().Height() / k_dispatchXYThreadDims, k_dispatchXYThreadDims),
-			1u);
+		const uint32_t roundedXDim = 
+			grutil::GetRoundedDispatchDimension(m_lightingTargetSet->GetViewport().Width(), k_dispatchXYThreadDims);
+		const uint32_t roundedYDim = 
+			grutil::GetRoundedDispatchDimension(m_lightingTargetSet->GetViewport().Height(), k_dispatchXYThreadDims);
 
 		m_fullscreenComputeBatch = std::make_unique<re::Batch>(
 			re::Lifetime::Permanent,

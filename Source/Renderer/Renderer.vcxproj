@@ -170,6 +170,7 @@
     <ClInclude Include="GraphicsSystem_Transparency.h" />
     <ClInclude Include="GraphicsSystem_VertexAnimation.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
+    <ClInclude Include="GraphicsUtils.h" />
     <ClInclude Include="IndexedBuffer.h" />
     <ClInclude Include="LightParamsHelpers.h" />
     <ClInclude Include="LightRenderData.h" />
