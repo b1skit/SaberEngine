@@ -281,7 +281,7 @@ namespace opengl
 		m_hDeviceContext = GetDC(windowPlatObj->m_hWindow);
 
 		// Now we can choose a pixel format using wglChoosePixelFormatARB:
-		int pixel_format_attribs[] = {
+		int pixelFormatAttribs[] = {
 			WGL_DRAW_TO_WINDOW_ARB,     GL_TRUE,
 			WGL_SUPPORT_OPENGL_ARB,     GL_TRUE,
 			WGL_DOUBLE_BUFFER_ARB,      GL_TRUE,
@@ -292,18 +292,19 @@ namespace opengl
 			WGL_STENCIL_BITS_ARB,       8,
 			0
 		};
+		constexpr re::Texture::Format k_swapchainFormat = re::Texture::Format::RGBA8_UNORM;
 
-		int pixel_format;
-		UINT num_formats;
-		wglChoosePixelFormatARBFn(m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
-		if (!num_formats)
+		int pixelFormat;
+		UINT numFormats;
+		wglChoosePixelFormatARBFn(m_hDeviceContext, pixelFormatAttribs, 0, 1, &pixelFormat, &numFormats);
+		if (!numFormats)
 		{
 			SEAssertF("Failed to set the OpenGL pixel format");
 		}
 
 		PIXELFORMATDESCRIPTOR pfd;
-		DescribePixelFormat(m_hDeviceContext, pixel_format, sizeof(pfd), &pfd);
-		if (!SetPixelFormat(m_hDeviceContext, pixel_format, &pfd))
+		DescribePixelFormat(m_hDeviceContext, pixelFormat, sizeof(pfd), &pfd);
+		if (!SetPixelFormat(m_hDeviceContext, pixelFormat, &pfd))
 		{
 			SEAssertF("Failed to set the OpenGL pixel format");
 		}
@@ -338,7 +339,7 @@ namespace opengl
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
 		// Create the (implied) swap chain
-		GetSwapChain().Create();
+		GetSwapChain().Create(k_swapchainFormat);
 		
 
 		// Initialize glew:

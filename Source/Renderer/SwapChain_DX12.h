@@ -1,14 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CPUDescriptorHeapManager_DX12.h"
-#include "RenderManager_DX12.h"
 #include "SwapChain.h"
-#include "TextureTarget.h"
+#include "Texture.h"
 
 #include <wrl.h>
-#include <d3d12.h>
 #include <dxgi1_6.h>
 
+
+namespace re
+{
+	class TextureTargetSet;
+}
 
 namespace dx12
 {
@@ -27,13 +29,16 @@ namespace dx12
 
 
 	public:
-		static void Create(re::SwapChain& swapChain);
-		static void Destroy(re::SwapChain& swapChain);
-		static bool ToggleVSync(re::SwapChain const& swapChain);
+		static void Create(re::SwapChain&, re::Texture::Format);
+		static void Destroy(re::SwapChain&);
+		static bool ToggleVSync(re::SwapChain const&);
 
-		// DX12-specific functionality:
-		static uint8_t GetCurrentBackBufferIdx(re::SwapChain const& swapChain);
-		static uint8_t IncrementBackBufferIdx(re::SwapChain& swapChain); // Returns new backbuffer idx
-		static std::shared_ptr<re::TextureTargetSet> GetBackBufferTargetSet(re::SwapChain const& swapChain);
+		static std::shared_ptr<re::TextureTargetSet> GetBackBufferTargetSet(re::SwapChain const&);
+		static re::Texture::Format GetBackbufferFormat(re::SwapChain const&);
+		static glm::uvec2 GetBackbufferDimensions(re::SwapChain const&);
+
+	public: // DX12-specific functionality:
+		static uint8_t GetCurrentBackBufferIdx(re::SwapChain const&);
+		static uint8_t IncrementBackBufferIdx(re::SwapChain&); // Returns new backbuffer idx
 	};
 }

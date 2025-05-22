@@ -2,8 +2,6 @@
 #pragma once
 #include "Effect.h"
 
-#include "Core/Interfaces/INamedObject.h"
-
 
 namespace effect
 {

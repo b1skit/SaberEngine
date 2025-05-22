@@ -247,6 +247,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
     <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
     <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
+    <None Include="Shaders\GLSL\Tonemapping_CShader.glsl" />
     <None Include="Shaders\HLSL\BindlessResources.hlsli" />
     <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
@@ -363,7 +364,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Shaders\GLSL\SaberCommon.glsli" />
     <None Include="Shaders\GLSL\Shadows.glsli" />
     <None Include="Shaders\GLSL\Skybox_PShader.glsl" />
-    <None Include="Shaders\GLSL\ToneMap_PShader.glsl" />
     <None Include="Shaders\GLSL\Transformations.glsli" />
     <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl" />
     <None Include="Shaders\GLSL\UVUtils.glsli" />
@@ -681,21 +681,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\ToneMap_PShader.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SaberEngine.rc" />
@@ -749,6 +734,11 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\Tonemapping_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

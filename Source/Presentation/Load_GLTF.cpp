@@ -1064,6 +1064,7 @@ namespace
 		{
 			SEAssertF("TODO: Support additional shading models");
 		}
+		return nullptr; // This should never happen
 	}
 
 

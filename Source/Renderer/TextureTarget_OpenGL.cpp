@@ -781,19 +781,41 @@ namespace opengl
 
 			glNamedFramebufferReadBuffer(srcFBO, GL_COLOR_ATTACHMENT0);
 
+			// Construct the appropriate copy mask:
+			GLbitfield copyMask = 0;
+			if (src->HasUsageBit(re::Texture::Usage::ColorTarget))
+			{
+				copyMask |= GL_COLOR_BUFFER_BIT;
+			}
+			if (src->HasUsageBit(re::Texture::Usage::DepthTarget) || 
+				src->HasUsageBit(re::Texture::Usage::DepthStencilTarget))
+			{
+				copyMask |= GL_DEPTH_BUFFER_BIT;
+			}
+			if (src->HasUsageBit(re::Texture::Usage::StencilTarget) ||
+				src->HasUsageBit(re::Texture::Usage::DepthStencilTarget))
+			{
+				copyMask |= GL_STENCIL_BUFFER_BIT;
+			}
+			SEAssert(copyMask != 0, "No copy mask bits set");
+
+			// Get the backbuffer to read its dimensions
+			std::shared_ptr<re::TextureTargetSet> const& backbufferTargets = 
+				opengl::SwapChain::GetBackBufferTargetSet(re::Context::GetAs<opengl::Context*>()->GetSwapChain());
+
 			glBlitNamedFramebuffer(
-				srcFBO,
-				backbufferPlatObj->m_frameBufferObject,
-				0,
-				0,
-				src->Width(),
-				src->Height(),
-				0,
-				0,
-				src->Width(), // dstX1: We assume src has the same dimensions as the backbuffer
-				src->Height(), // dstY1: We assume src has the same dimensions as the backbuffer
-				GL_COLOR_BUFFER_BIT,
-				GL_NEAREST // 
+				srcFBO,										// GLuint readFramebuffer
+				backbufferPlatObj->m_frameBufferObject,		// GLuint drawFramebuffer
+				0,											// GLint srcX0
+				src->Height(),								// GLint srcY0: Note: We *intentionally* flip Y0/Y1 here to invert the result
+				src->Width(),								// GLint srcX1
+				0,											// GLint srcY1: Note: We *intentionally* flip Y0/Y1 here to invert the result
+				0,											// GLint dstX0
+				0,											// GLint dstY0
+				backbufferTargets->GetViewport().Width(),	// GLint dstX1
+				backbufferTargets->GetViewport().Height(),	// GLint dstY1
+				copyMask,				// GLbitfield mask: GL_COLOR_BUFFER_BIT/GL_DEPTH_BUFFER_BIT/GL_STENCIL_BUFFER_BIT
+				GL_LINEAR									// GLenum filter: Must be GL_NEAREST/GL_LINEAR
 			);
 
 			// Cleanup:

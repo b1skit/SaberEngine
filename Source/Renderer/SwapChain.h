@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Texture.h"
+
 #include "Core/Interfaces/IPlatformObject.h"
 
 
@@ -20,7 +22,7 @@ namespace re
 		SwapChain();
 		~SwapChain();
 
-		void Create();
+		void Create(re::Texture::Format);
 		void Destroy();
 
 		bool GetVSyncState() const;

@@ -141,7 +141,7 @@ namespace opengl
 
 				if (doSetStageInputs)
 				{
-					// Set stage param blocks:
+					// Set stage buffers:
 					for (re::BufferInput const& bufferInput : stage->GetPermanentBuffers())
 					{
 						opengl::Shader::SetBuffer(*shader, bufferInput);
@@ -199,8 +199,8 @@ namespace opengl
 					if (isNewStagePipeline)
 					{
 						SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
-						stagePipelineTimer =
-							gpuTimer.StartTimer(nullptr, stagePipeline.GetName().c_str(), renderPipeline.GetName().c_str());
+						stagePipelineTimer = gpuTimer.StartTimer(
+							nullptr, stagePipeline.GetName().c_str(), renderPipeline.GetName().c_str());
 						isNewStagePipeline = false;
 					}
 
@@ -431,8 +431,8 @@ namespace opengl
 								glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
 								// Barrier to prevent reading before texture writes have finished.
-								// TODO: Is this always necessary?
-								glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+								// TODO: Make this more granular: Use knowledge of future use to set required bits only
+								glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
 
 								// TODO: I suspect we'll need this when sharing SSBOs between stages
 								//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

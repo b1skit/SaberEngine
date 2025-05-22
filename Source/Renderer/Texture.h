@@ -156,6 +156,7 @@ namespace re
 
 			Invalid
 		};
+		static constexpr bool IsCompatibleGroupFormat(Format, Format);
 
 		enum class ColorSpace : uint8_t
 		{
@@ -383,6 +384,75 @@ namespace re
 		default: SEAssertF("Invalid view type");
 		}
 		return k_invalidResourceHandle; // This should never happen
+	}
+
+
+	inline constexpr bool Texture::IsCompatibleGroupFormat(re::Texture::Format a, re::Texture::Format b)
+	{
+		// Return true if the formats are from the same type group
+		switch (a)
+		{
+		case re::Texture::Format::RGBA32F:
+		{
+			return b == re::Texture::Format::RGBA32F;
+		}
+		break;
+		case re::Texture::Format::RG32F:
+		{
+			return b == re::Texture::Format::RG32F;
+		}
+		break;
+		case re::Texture::Format::R32F:
+		case re::Texture::Format::R32_UINT:
+		{
+			return b == re::Texture::Format::R32F || 
+				b == re::Texture::Format::R32F;
+		}
+		break;
+		case re::Texture::Format::RGBA16F:
+		{
+			return b == re::Texture::Format::RGBA16F;
+		}
+		break;
+		case re::Texture::Format::RG16F:
+		{
+			return b == re::Texture::Format::RG16F;
+		}
+		break;
+		case re::Texture::Format::R16F:
+		case re::Texture::Format::R16_UNORM:
+		{
+			return b == re::Texture::Format::R16F ||
+				b == re::Texture::Format::R16_UNORM;
+		}
+		break;
+		case re::Texture::Format::RGBA8_UNORM:
+		{
+			return b == re::Texture::Format::RGBA8_UNORM;
+		}
+		break;
+		case re::Texture::Format::RG8_UNORM:
+		{
+			return b == re::Texture::Format::RG8_UNORM;
+		}
+		break;
+		case re::Texture::Format::R8_UNORM:
+		case re::Texture::Format::R8_UINT:
+		{
+			return b == re::Texture::Format::R8_UNORM ||
+				b == re::Texture::Format::R8_UINT;
+		}
+		break;
+		case re::Texture::Format::Depth32F:
+		{
+			return b == re::Texture::Format::Depth32F;
+		}
+		break;
+		case re::Texture::Format::Invalid:
+		default: return false; // This should never happen
+		}
+		SEStaticAssert(static_cast<uint32_t>(re::Texture::Format::Invalid) == 13,
+			"Number of texture formats changed, this must be updated");
 	}
 }
 

@@ -24,11 +24,11 @@ namespace re
 	}
 
 
-	void SwapChain::Create()
+	void SwapChain::Create(re::Texture::Format format)
 	{
 		m_platObj->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 
-		platform::SwapChain::Create(*this);
+		platform::SwapChain::Create(*this, format);
 
 		// Broadcast the starting VSync state:
 		core::EventManager::Get()->Notify(core::EventManager::EventInfo{

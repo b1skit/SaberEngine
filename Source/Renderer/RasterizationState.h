@@ -294,6 +294,73 @@ namespace re
 	};
 
 
+	inline util::HashKey RasterizationState::GetDataHash() const
+	{
+		SEAssert(!m_isDirty, "Trying to get the data hash from a dirty pipeline state");
+		return core::IHashedDataObject::GetDataHash();
+	}
+
+
+	inline RasterizationState::PrimitiveTopologyType RasterizationState::GetPrimitiveTopologyType() const
+	{
+		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		return m_primitiveTopologyType;
+	}
+
+
+	inline RasterizationState::FillMode RasterizationState::GetFillMode() const
+	{
+		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		return m_fillMode;
+	}
+
+
+	inline void RasterizationState::SetFillMode(FillMode fillMode)
+	{
+		m_fillMode = fillMode;
+		m_isDirty = true;
+		ComputeDataHash();
+	}
+
+
+	inline RasterizationState::FaceCullingMode RasterizationState::GetFaceCullingMode() const
+	{
+		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		return m_faceCullingMode;
+	}
+
+
+	inline void RasterizationState::SetFaceCullingMode(RasterizationState::FaceCullingMode faceCullingMode)
+	{
+		m_faceCullingMode = faceCullingMode;
+		m_isDirty = true;
+		ComputeDataHash();
+	}
+
+
+	inline RasterizationState::WindingOrder RasterizationState::GetWindingOrder() const
+	{
+		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		return m_windingOrder;
+	}
+
+
+	inline void RasterizationState::SetWindingOrder(RasterizationState::WindingOrder windingOrder)
+	{
+		m_windingOrder = windingOrder;
+		m_isDirty = true;
+		ComputeDataHash();
+	}
+
+
+	inline void RasterizationState::SetPrimitiveTopologyType(RasterizationState::PrimitiveTopologyType topologyType)
+	{
+		m_primitiveTopologyType = topologyType;
+		m_isDirty = true;
+		ComputeDataHash();
+	}
+
+
 	inline int RasterizationState::GetDepthBias() const
 	{
 		return m_depthBias;
@@ -303,6 +370,8 @@ namespace re
 	inline void RasterizationState::SetDepthBias(int depthBias)
 	{
 		m_depthBias = depthBias;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -315,6 +384,8 @@ namespace re
 	inline void RasterizationState::SetDepthBiasClamp(float depthBiasClamp)
 	{
 		m_depthBiasClamp = depthBiasClamp;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -327,6 +398,8 @@ namespace re
 	inline void RasterizationState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
 	{
 		m_slopeScaledDepthBias = slopeScaledDepthBias;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -339,6 +412,8 @@ namespace re
 	inline void RasterizationState::SetDepthClipEnabled(bool depthClipEnable)
 	{
 		m_depthClipEnable = depthClipEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -351,6 +426,8 @@ namespace re
 	inline void RasterizationState::SetMultiSampleEnabled(bool multisampleEnable)
 	{
 		m_multisampleEnable = multisampleEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -363,6 +440,8 @@ namespace re
 	inline void RasterizationState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
 	{
 		m_antialiasedLineEnable = antialiasedLineEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -381,6 +460,8 @@ namespace re
 			forcedSampleCount == 16,
 			"Invalid forced sample count");
 		m_forcedSampleCount = forcedSampleCount;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -393,6 +474,8 @@ namespace re
 	inline void RasterizationState::SetConservativeRaster(bool conservativeRaster)
 	{
 		m_conservativeRaster = conservativeRaster;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -405,6 +488,8 @@ namespace re
 	inline void RasterizationState::SetDepthTestEnabled(bool depthTestEnable)
 	{
 		m_depthTestEnable = depthTestEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -417,6 +502,23 @@ namespace re
 	inline void RasterizationState::SetDepthWriteMask(DepthWriteMask depthWriteMask)
 	{
 		m_depthWriteMask = depthWriteMask;
+		m_isDirty = true;
+		ComputeDataHash();
+	}
+
+
+	inline RasterizationState::ComparisonFunc RasterizationState::GetDepthComparison() const
+	{
+		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		return m_depthFunc;
+	}
+
+
+	inline void RasterizationState::SetDepthComparison(RasterizationState::ComparisonFunc depthTestMode)
+	{
+		m_depthFunc = depthTestMode;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -429,6 +531,8 @@ namespace re
 	inline void RasterizationState::SetStencilEnabled(bool stencilEnabled)
 	{
 		m_stencilEnabled = stencilEnabled;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -441,6 +545,8 @@ namespace re
 	inline void RasterizationState::SetStencilReadMask(uint8_t stencilReadMask)
 	{
 		m_stencilReadMask = stencilReadMask;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -453,6 +559,8 @@ namespace re
 	inline void RasterizationState::SetStencilWriteMask(uint8_t stencilWriteMask)
 	{
 		m_stencilWriteMask = stencilWriteMask;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -465,6 +573,8 @@ namespace re
 	inline void RasterizationState::SetFrontFaceStencilOpDesc(StencilOpDesc const& frontFace)
 	{
 		m_frontFace = frontFace;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -477,6 +587,8 @@ namespace re
 	inline void RasterizationState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
 	{
 		m_backFace = backFace;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -489,6 +601,8 @@ namespace re
 	inline void RasterizationState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
 	{
 		m_alphaToCoverageEnable = alphaToCoverageEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -501,6 +615,8 @@ namespace re
 	inline void RasterizationState::SetIndependentBlendEnabled(bool independentBlendEnable)
 	{
 		m_independentBlendEnable = independentBlendEnable;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
@@ -518,5 +634,7 @@ namespace re
 			"It is not valid for logic op and blend to both be enabled");
 
 		m_renderTargetBlendDescs[index] = blendDesc;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 }

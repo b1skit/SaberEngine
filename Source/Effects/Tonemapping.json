@@ -2,19 +2,78 @@
 	"Effect": {
 		"Name": "Tonemapping",
 		"Parents": ["FullscreenQuad"],
-		"DefaultTechnique": "Tonemapping_Default",
-
+		"DefaultTechnique": "Tonemapping_ACES",
+		"DrawStyles": [
+			{
+				"Conditions": [
+					{ "Rule": "Tonemapping", "Mode": "ACES" }
+				],
+				"Technique": "Tonemapping_ACES"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Tonemapping", "Mode": "ACES_Fast" }
+				],
+				"Technique": "Tonemapping_ACES_Fast"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Tonemapping", "Mode": "Reinhard" }
+				],
+				"Technique": "Tonemapping_Reinhard"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "Tonemapping", "Mode": "SwapchainBlit" }
+				],
+				"Technique": "SwapchainBlit"
+				// Note: Need to do a manual blit here, as we can't blit HDR to SDR
+			}
+		],
 		"Techniques": [
 			{
-				"Name": "Tonemapping_Default",
+				"Name": "Tonemapping_ACES",
+				"CShader": "Tonemapping_CShader",
+				"CShaderEntryPoint": "Tonemapping_ACES"
+			},
+			{
+				"Name": "Tonemapping_ACES_Fast",
+				"CShader": "Tonemapping_CShader",
+				"CShaderEntryPoint": "Tonemapping_ACES",
+				"CShaderDefines": ["ACES_FAST"]
+			},
+			{
+				"Name": "Tonemapping_Reinhard",
+				"CShader": "Tonemapping_CShader",
+				"CShaderEntryPoint": "Tonemapping_Reinhard"
+			},
+			{
+				"Name": "SwapchainBlit",
 				"VShader": "FullscreenQuad_VShader",
 				"VShaderEntryPoint": "VShader",
-				"VShaderDefines": ["FLIP_FULLSCREEN_QUAD_UVS"], // OpenGL only
-				"PShader": "ToneMap_PShader",
+				"VShaderDefines": ["GLSL_FLIP_FULLSCREEN_QUAD_UVS"], // OpenGL only
+				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "FullscreenQuad_Always",
+				"RasterizationState": "SwapchainBlitRasterState",
 				"VertexStream": "PositionUV"
 			}
 		]
-	}
+	},
+		"RasterizationStates": [
+			{
+				"Name": "SwapchainBlitRasterState",
+				"DepthStencilState" : {
+					"DepthTestEnabled" : false,
+					"DepthComparison": "Always",
+					"DepthWriteMask": "Zero"
+				},
+				"BlendState" : {
+					"RenderTargets": [
+						{
+							"BlendEnable" : false
+						}
+					]
+				}
+			}
+		]
 }

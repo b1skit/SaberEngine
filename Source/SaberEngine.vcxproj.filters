@@ -270,9 +270,6 @@
     <None Include="Shaders\GLSL\Skybox_PShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\ToneMap_PShader.glsl">
-      <Filter>Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\GLSL\Transformations.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
@@ -359,9 +356,6 @@
       <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\Skybox_PShader.hlsl">
-      <Filter>Shaders\HLSL</Filter>
-    </None>
-    <None Include="Shaders\HLSL\ToneMap_PShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\XeGTAO_Denoise.hlsl">
@@ -459,6 +453,12 @@
     </None>
     <None Include="Effects\GLTF_Unlit.json">
       <Filter>Effects</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Tonemapping_CShader.glsl">
+      <Filter>Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Tonemapping_CShader.hlsl">
+      <Filter>Shaders\HLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

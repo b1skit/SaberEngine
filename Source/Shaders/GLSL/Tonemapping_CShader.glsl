@@ -1,17 +1,18 @@
-// © 2023 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #version 460
-#define SABER_VEC4_OUTPUT
+
 #include "Color.glsli"
 #include "SaberCommon.glsli"
 #include "Lighting.glsli"
+#include "UVUtils.glsli"
 
 #include "../Common/CameraParams.h"
 
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 
-layout(binding=0) uniform sampler2D Tex0;
-layout(binding=1) uniform sampler2D Tex1;
+layout(location = 0, rgba16f) coherent uniform image2D Lighting;
+layout(binding = 1) uniform sampler2D Bloom;
 
 
 // Attribution: 
@@ -74,13 +75,12 @@ vec3 ACESFilm(vec3 x)
 }
 
 
-//#define FAST_ACES
+vec3 ApplyBloom(uvec2 texelCoord, uint2 lightingWidthHeight)
+{
+	const vec2 uvs = PixelCoordsToScreenUV(texelCoord, vec2(lightingWidthHeight), vec2(0.5f, 0.5f), false);
 
-void PShader()
-{	
-	// NOTE: UV0.y was flipped in toneMapShader.glsl to account for SaberEngine's use of a (0,0) top-left uv convention
-	const vec3 color = texture(Tex0, In.UV0.xy).rgb;
-	const vec3 bloom = texture(Tex1, In.UV0.xy).rgb;
+	const vec3 color = imageLoad(Lighting, ivec2(texelCoord)).rgb;
+	const vec3 bloom = texture(Bloom, uvs).rgb;
 
 	// Apply exposure:
 	const float bloomExposure = _CameraParams.g_bloomSettings.w;
@@ -93,15 +93,54 @@ void PShader()
 	// Blend the exposed bloom and scene color:
 	const float bloomStrength = _CameraParams.g_bloomSettings.x;
 	const vec3 blendedColor = mix(exposedColor, exposedBloom, bloomStrength);
+
+	return blendedColor;
+}
+
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+void Tonemapping_ACES()
+{
+	const uvec2 texelCoord = gl_GlobalInvocationID.xy;
+
+	const ivec2 lightingWidthHeight = imageSize(Lighting);
+
+	if (texelCoord.x >= lightingWidthHeight.x || texelCoord.y >= lightingWidthHeight.y)
+	{
+		return;
+	}
+
+	const vec3 blendedColor = ApplyBloom(texelCoord, lightingWidthHeight);
 	
-	// Tone mapping:
 #if defined(FAST_ACES)
-	vec3 toneMappedColor = ACESFilm(blendedColor);
+	const vec3 toneMappedColor = ACESFilm(blendedColor);
 #else
-	vec3 toneMappedColor = ACESFitted(blendedColor);
+	const vec3 toneMappedColor = ACESFitted(blendedColor);
 #endif
 
 	const vec3 sRGBColor = LinearToSRGB(toneMappedColor);
+
+	imageStore(Lighting, ivec2(texelCoord), vec4(sRGBColor, 1.f));
+}
+
+
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+void Tonemapping_Reinhard()
+{
+	const uvec2 texelCoord = gl_GlobalInvocationID.xy;
+
+	const ivec2 lightingWidthHeight = imageSize(Lighting);
+
+	if (texelCoord.x >= lightingWidthHeight.x || texelCoord.y >= lightingWidthHeight.y)
+	{
+		return;
+	}
+
+	const vec3 blendedColor = ApplyBloom(texelCoord, lightingWidthHeight);
 	
-	FragColor = vec4(sRGBColor, 1.f);
-} 
+	const vec3 toneMappedColor = blendedColor / (blendedColor + vec3(1.f, 1.f, 1.f));
+	
+	const vec3 sRGBColor = LinearToSRGB(toneMappedColor);
+	
+	imageStore(Lighting, ivec2(texelCoord), vec4(sRGBColor, 1.f));
+}

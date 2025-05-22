@@ -147,10 +147,12 @@ namespace platform
 			platform::SysInfo::BindlessResourcesSupported	= &opengl::SysInfo::BindlessResourcesSupported;
 
 			// Swap chain:
-			platform::SwapChain::Create					= &opengl::SwapChain::Create;
-			platform::SwapChain::Destroy				= &opengl::SwapChain::Destroy;
-			platform::SwapChain::ToggleVSync			= &opengl::SwapChain::ToggleVSync;
-			platform::SwapChain::GetBackBufferTargetSet = &opengl::SwapChain::GetBackBufferTargetSet;
+			platform::SwapChain::Create						= &opengl::SwapChain::Create;
+			platform::SwapChain::Destroy					= &opengl::SwapChain::Destroy;
+			platform::SwapChain::ToggleVSync				= &opengl::SwapChain::ToggleVSync;
+			platform::SwapChain::GetBackBufferTargetSet		= &opengl::SwapChain::GetBackBufferTargetSet;
+			platform::SwapChain::GetBackbufferFormat		= &opengl::SwapChain::GetBackbufferFormat;
+			platform::SwapChain::GetBackbufferDimensions	= &opengl::SwapChain::GetBackbufferDimensions;
 
 			// Texture:
 			platform::Texture::Create			= &opengl::Texture::Create;
@@ -224,10 +226,12 @@ namespace platform
 			platform::SysInfo::BindlessResourcesSupported	= &dx12::SysInfo::BindlessResourcesSupported;
 
 			// Swap chain:
-			platform::SwapChain::Create					= &dx12::SwapChain::Create;
-			platform::SwapChain::Destroy				= &dx12::SwapChain::Destroy;
-			platform::SwapChain::ToggleVSync			= &dx12::SwapChain::ToggleVSync;
-			platform::SwapChain::GetBackBufferTargetSet = &dx12::SwapChain::GetBackBufferTargetSet;
+			platform::SwapChain::Create						= &dx12::SwapChain::Create;
+			platform::SwapChain::Destroy					= &dx12::SwapChain::Destroy;
+			platform::SwapChain::ToggleVSync				= &dx12::SwapChain::ToggleVSync;
+			platform::SwapChain::GetBackBufferTargetSet		= &dx12::SwapChain::GetBackBufferTargetSet;
+			platform::SwapChain::GetBackbufferFormat		= &dx12::SwapChain::GetBackbufferFormat;
+			platform::SwapChain::GetBackbufferDimensions	= &dx12::SwapChain::GetBackbufferDimensions;
 
 			// Texture:
 			platform::Texture::Create			= &dx12::Texture::Create;

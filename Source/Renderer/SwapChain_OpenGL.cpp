@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "TextureTarget.h"
 #include "SwapChain_OpenGL.h"
 
 #include "Core/Assert.h"
@@ -10,10 +11,16 @@
 
 namespace opengl
 {
-	void SwapChain::Create(re::SwapChain& swapChain)
+	void SwapChain::Create(re::SwapChain& swapChain, re::Texture::Format format)
 	{
 		opengl::SwapChain::PlatObj* swapChainParams = 
 			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
+
+		swapChainParams->m_backbufferDimensions = glm::uvec2(
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
+			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)));
+
+		swapChainParams->m_backbufferFormat = format;
 
 		// Default target set:
 		LOG("Creating default texure target set");
@@ -23,10 +30,10 @@ namespace opengl
 		{
 			0,
 			0,
-			(uint32_t)core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey),
-			(uint32_t)core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)
+			swapChainParams->m_backbufferDimensions.x,
+			swapChainParams->m_backbufferDimensions.y
 		});
-		// Note: OpenGL framebuffer has no texture targets
+		// Note: OpenGL framebuffer has no texture targets		
 	}
 
 
@@ -89,5 +96,28 @@ namespace opengl
 			"Swap chain params and backbuffer cannot be null");
 
 		return swapChainParams->m_backbufferTargetSet;
+	}
+
+
+	re::Texture::Format SwapChain::GetBackbufferFormat(re::SwapChain const& swapChain)
+	{
+		opengl::SwapChain::PlatObj const* platObj =
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj const*>();
+
+		SEAssert(platObj->m_backbufferFormat != re::Texture::Format::Invalid, "Swapchain is not correctly configured");
+
+		return platObj->m_backbufferFormat;
+	}
+
+
+	glm::uvec2 SwapChain::GetBackbufferDimensions(re::SwapChain const& swapChain)
+	{
+		opengl::SwapChain::PlatObj const* platObj =
+			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj const*>();
+
+		SEAssert(platObj->m_backbufferDimensions.x > 0 && platObj->m_backbufferDimensions.y > 0,
+			"Swapchain is not correctly configured");
+
+		return platObj->m_backbufferDimensions;
 	}
 }

@@ -5,6 +5,7 @@
 #include "Stage.h"
 #include "RLibrary_Platform.h"
 #include "Sampler.h"
+#include "SwapChain_Platform.h"
 #include "Texture.h"
 
 #include "Core/Config.h"
@@ -371,8 +372,12 @@ namespace re
 		SEAssert(m_src != m_dst, "Can only copy different resources");
 
 #if defined(_DEBUG)
+		// Validate the copy complies with D3D12 restrictions (OpenGL is far more permissive) 
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copyresource
 		if (dst.IsValid())
 		{
+			SEAssert(src != dst, "Copy source and destination must be different resources");
+
 			SEAssert(m_src->GetTotalBytesPerFace() == dst->GetTotalBytesPerFace(),
 				"Can only copy textures of the same size");
 
@@ -382,8 +387,9 @@ namespace re
 				m_src->GetNumMips() == dst->GetNumMips(),
 				"Can only copy textures with identical dimensions");
 
-			SEAssert(m_src->GetTextureParams().m_format == dst->GetTextureParams().m_format,
-				"Formats must be compatible. For now, we assume they'll be identical, but this is overly strict");
+			SEAssert(re::Texture::IsCompatibleGroupFormat(
+				m_src->GetTextureParams().m_format, dst->GetTextureParams().m_format),
+				"Formats must be identical or from the same type group");
 
 			SEAssert((m_src->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) &&
 				((dst->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy) ||
@@ -394,16 +400,15 @@ namespace re
 		}
 		else
 		{
-			// Hail mary: We're copying to the backbuffer, but we don't have a platform-agnostic way of accessing it in
-			// a clean manor to validate against. So, we do the best we can
+			re::SwapChain const& swapchain = re::Context::Get()->GetSwapChain();
+			glm::uvec2 const& swapchainDims = platform::SwapChain::GetBackbufferDimensions(swapchain);
 
-			SEAssert(m_src->Width() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) &&
-				m_src->Height() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+			SEAssert(m_src->Width() == swapchainDims.x && m_src->Height() == swapchainDims.y,
 				"Can only copy to the backbuffer from textures with identical dimensions");
 
-			SEAssert(m_src->GetTextureParams().m_format == re::Texture::Format::RGBA8_UNORM,
-				"Source format must be compatible with the backbuffer format. For now, we assume they'll be identical, "
-				"but this is overly strict");
+			SEAssert(re::Texture::IsCompatibleGroupFormat(
+				m_src->GetTextureParams().m_format, platform::SwapChain::GetBackbufferFormat(swapchain)),
+				"Formats must be identical or from the same type group");
 
 			SEAssert((m_src->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc),
 				"Source texture flags are incorrect");

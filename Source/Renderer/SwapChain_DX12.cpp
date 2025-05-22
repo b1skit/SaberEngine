@@ -4,7 +4,6 @@
 #include "RenderManager.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
-#include "TextureTarget_DX12.h"
 #include "Texture.h"
 #include "Texture_DX12.h"
 
@@ -13,7 +12,6 @@
 
 #include "Core/Host/Window_Win32.h"
 
-#include <d3dx12.h>
 #include <dxgi1_6.h>
 
 using Microsoft::WRL::ComPtr;
@@ -21,7 +19,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
-	void SwapChain::Create(re::SwapChain& swapChain)
+	void SwapChain::Create(re::SwapChain& swapChain, re::Texture::Format format)
 	{
 		dx12::SwapChain::PlatObj* swapChainParams =
 			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
@@ -53,7 +51,7 @@ namespace dx12
 		colorParams.m_height = height;
 		colorParams.m_usage = re::Texture::Usage::SwapchainColorProxy;
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
-		colorParams.m_format = re::Texture::Format::RGBA8_UNORM;
+		colorParams.m_format = format;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_mipMode = re::Texture::MipMode::None;
 
@@ -196,5 +194,29 @@ namespace dx12
 		const uint8_t backbufferIdx = swapChainPlatObj->m_backBufferIdx;
 
 		return swapChainPlatObj->m_backbufferTargetSets[backbufferIdx];
+	}
+
+
+	re::Texture::Format SwapChain::GetBackbufferFormat(re::SwapChain const& swapChain)
+	{
+		dx12::SwapChain::PlatObj const* platObj = swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj const*>();
+		
+		SEAssert(!platObj->m_backbufferTargetSets.empty() && platObj->m_backbufferTargetSets[0]->HasColorTarget(),
+			"Swapchain is not correctly configured");
+
+		return platObj->m_backbufferTargetSets[0]->GetColorTarget(0).GetTexture()->GetTextureParams().m_format;
+	}
+
+
+	glm::uvec2 SwapChain::GetBackbufferDimensions(re::SwapChain const& swapChain)
+	{
+		dx12::SwapChain::PlatObj const* platObj = swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj const*>();
+
+		SEAssert(!platObj->m_backbufferTargetSets.empty() && platObj->m_backbufferTargetSets[0]->HasColorTarget(),
+			"Swapchain is not correctly configured");
+
+		return glm::uvec2(
+			platObj->m_backbufferTargetSets[0]->GetColorTarget(0).GetTexture()->Width(),
+			platObj->m_backbufferTargetSets[0]->GetColorTarget(0).GetTexture()->Height());
 	}
 }

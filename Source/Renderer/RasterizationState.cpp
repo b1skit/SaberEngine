@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "RasterizationState.h"
 
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/TextUtils.h"
 
 
@@ -87,282 +88,181 @@ namespace re
 	}
 
 
-	util::HashKey RasterizationState::GetDataHash() const
-	{
-		SEAssert(!m_isDirty, "Trying to get the data hash from a dirty pipeline state");
-		return core::IHashedDataObject::GetDataHash();
-	}
-
-
-	RasterizationState::PrimitiveTopologyType RasterizationState::GetPrimitiveTopologyType() const
-	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
-		return m_primitiveTopologyType;
-	}
-
-
-	void RasterizationState::SetPrimitiveTopologyType(RasterizationState::PrimitiveTopologyType topologyType)
-	{
-		m_primitiveTopologyType = topologyType;
-		m_isDirty = true;
-		ComputeDataHash();
-	}
-
-
 	RasterizationState::PrimitiveTopologyType RasterizationState::CStrToPrimitiveTopologyType(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::PrimitiveTopologyType> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"triangle", RasterizationState::PrimitiveTopologyType::Triangle},
-			{"point", RasterizationState::PrimitiveTopologyType::Point},
-			{"line", RasterizationState::PrimitiveTopologyType::Line},
-			{"patch", RasterizationState::PrimitiveTopologyType::Patch},
-		};
-		
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
-	}
-
-
-	RasterizationState::FillMode RasterizationState::GetFillMode() const
-	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
-		return m_fillMode;
-	}
-
-	void RasterizationState::SetFillMode(FillMode fillMode)
-	{
-		m_fillMode = fillMode;
-		m_isDirty = true;
-		ComputeDataHash();
+		case util::CHashKey("triangle"): return RasterizationState::PrimitiveTopologyType::Triangle;
+		case util::CHashKey("point"): return RasterizationState::PrimitiveTopologyType::Point;
+		case util::CHashKey("line"): return RasterizationState::PrimitiveTopologyType::Line;
+		case util::CHashKey("patch"): return RasterizationState::PrimitiveTopologyType::Patch;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::PrimitiveTopologyType::Triangle; // This should never happen
 	}
 
 
 	RasterizationState::FillMode RasterizationState::GetFillModeByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::FillMode> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"solid", RasterizationState::FillMode::Solid},
-			{"wireframe", RasterizationState::FillMode::Wireframe},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
-	}
-
-
-	RasterizationState::FaceCullingMode RasterizationState::GetFaceCullingMode() const
-	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
-		return m_faceCullingMode;
-	}
-
-
-	void RasterizationState::SetFaceCullingMode(RasterizationState::FaceCullingMode faceCullingMode)
-	{
-		m_faceCullingMode = faceCullingMode;
-		m_isDirty = true;
-		ComputeDataHash();
+		case util::CHashKey("solid"): return RasterizationState::FillMode::Solid;
+		case util::CHashKey("wireframe"): return RasterizationState::FillMode::Wireframe;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::FillMode::Solid; // This should never happen
 	}
 
 
 	RasterizationState::FaceCullingMode RasterizationState::GetFaceCullingModeByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::FaceCullingMode> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"back", RasterizationState::FaceCullingMode::Back},
-			{"front", RasterizationState::FaceCullingMode::Front},
-			{"disabled", RasterizationState::FaceCullingMode::Disabled},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
-	}
-
-
-	RasterizationState::WindingOrder RasterizationState::GetWindingOrder() const
-	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
-		return m_windingOrder;
-	}
-
-
-	void RasterizationState::SetWindingOrder(RasterizationState::WindingOrder windingOrder)
-	{
-		m_windingOrder = windingOrder;
-		m_isDirty = true;
-		ComputeDataHash();
+		case util::CHashKey("back"): return RasterizationState::FaceCullingMode::Back;
+		case util::CHashKey("front"): return RasterizationState::FaceCullingMode::Front;
+		case util::CHashKey("disabled"): return RasterizationState::FaceCullingMode::Disabled;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::FaceCullingMode::Back; // This should never happen
 	}
 
 
 	RasterizationState::WindingOrder RasterizationState::GetWindingOrderByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::WindingOrder> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"ccw", RasterizationState::WindingOrder::CCW},
-			{"cw", RasterizationState::WindingOrder::CW},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
-	}
-
-
-	RasterizationState::ComparisonFunc RasterizationState::GetDepthComparison() const
-	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
-		return m_depthFunc;
-	}
-
-
-	void RasterizationState::SetDepthComparison(RasterizationState::ComparisonFunc depthTestMode)
-	{
-		m_depthFunc = depthTestMode;
-		m_isDirty = true;
-		ComputeDataHash();
+		case util::CHashKey("ccw"): return RasterizationState::WindingOrder::CCW;
+		case util::CHashKey("cw"): return RasterizationState::WindingOrder::CW;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::WindingOrder::CCW; // This should never happen
 	}
 
 
 	RasterizationState::ComparisonFunc RasterizationState::GetComparisonByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::ComparisonFunc> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"less", RasterizationState::ComparisonFunc::Less},
-			{"never", RasterizationState::ComparisonFunc::Never},
-			{"equal", RasterizationState::ComparisonFunc::Equal},
-			{"lequal", RasterizationState::ComparisonFunc::LEqual},
-			{"greater", RasterizationState::ComparisonFunc::Greater},
-			{"notequal", RasterizationState::ComparisonFunc::NotEqual},
-			{"gequal", RasterizationState::ComparisonFunc::GEqual},
-			{"always", RasterizationState::ComparisonFunc::Always},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		case util::CHashKey("less"): return RasterizationState::ComparisonFunc::Less;
+		case util::CHashKey("never"): return RasterizationState::ComparisonFunc::Never;
+		case util::CHashKey("equal"): return RasterizationState::ComparisonFunc::Equal;
+		case util::CHashKey("lequal"): return RasterizationState::ComparisonFunc::LEqual;
+		case util::CHashKey("greater"): return RasterizationState::ComparisonFunc::Greater;
+		case util::CHashKey("notequal"): return RasterizationState::ComparisonFunc::NotEqual;
+		case util::CHashKey("gequal"): return RasterizationState::ComparisonFunc::GEqual;
+		case util::CHashKey("always"): return RasterizationState::ComparisonFunc::Always;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::ComparisonFunc::Less; // This should never happen
 	}
 
 
 	RasterizationState::DepthWriteMask RasterizationState::GetDepthWriteMaskByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::DepthWriteMask> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"zero", RasterizationState::DepthWriteMask::Zero},
-			{"all", RasterizationState::DepthWriteMask::All},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		case util::CHashKey("zero"): return RasterizationState::DepthWriteMask::Zero;
+		case util::CHashKey("all"): return RasterizationState::DepthWriteMask::All;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::DepthWriteMask::All; // This should never happen
 	}
 
 
 	RasterizationState::StencilOp RasterizationState::GetStencilOpByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::StencilOp> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"keep", RasterizationState::StencilOp::Keep},
-			{"zero", RasterizationState::StencilOp::Zero},
-			{"replace", RasterizationState::StencilOp::Replace},
-			{"incrementsaturate", RasterizationState::StencilOp::IncrementSaturate},
-			{"decrementsaturate", RasterizationState::StencilOp::DecrementSaturate},
-			{"invert", RasterizationState::StencilOp::Invert},
-			{"increment", RasterizationState::StencilOp::Increment},
-			{"decrement", RasterizationState::StencilOp::Decrement},
-		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		case util::CHashKey("keep"): return RasterizationState::StencilOp::Keep;
+		case util::CHashKey("zero"): return RasterizationState::StencilOp::Zero;
+		case util::CHashKey("replace"): return RasterizationState::StencilOp::Replace;
+		case util::CHashKey("incrementsaturate"): return RasterizationState::StencilOp::IncrementSaturate;
+		case util::CHashKey("decrementsaturate"): return RasterizationState::StencilOp::DecrementSaturate;
+		case util::CHashKey("invert"): return RasterizationState::StencilOp::Invert;
+		case util::CHashKey("increment"): return RasterizationState::StencilOp::Increment;
+		case util::CHashKey("decrement"): return RasterizationState::StencilOp::Decrement;
+		default: SEAssertF("Invalid type name string");
+		}
+		return RasterizationState::StencilOp::Keep; // This should never happen
 	}
 
 
 	RasterizationState::BlendMode RasterizationState::GetBlendModeByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::BlendMode> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"zero", RasterizationState::BlendMode::Zero},
-			{"one", RasterizationState::BlendMode::One},
-			{"srccolor", RasterizationState::BlendMode::SrcColor},
-			{"invsrccolor", RasterizationState::BlendMode::InvSrcColor},
-			{"srcalpha", RasterizationState::BlendMode::SrcAlpha},
-			{"invsrcalpha", RasterizationState::BlendMode::InvSrcAlpha},
-			{"dstalpha", RasterizationState::BlendMode::DstAlpha},
-			{"invdstalpha", RasterizationState::BlendMode::InvDstAlpha},
-			{"dstcolor", RasterizationState::BlendMode::DstColor},
-			{"invdstcolor", RasterizationState::BlendMode::InvDstColor},
-			{"srcalphasat", RasterizationState::BlendMode::SrcAlphaSat},
-			{"blendfactor", RasterizationState::BlendMode::BlendFactor},
-			{"invblendfactor", RasterizationState::BlendMode::InvBlendFactor},
-			{"srconecolor", RasterizationState::BlendMode::SrcOneColor},
-			{"invsrconecolor", RasterizationState::BlendMode::InvSrcOneColor},
-			{"srconealpha", RasterizationState::BlendMode::SrcOneAlpha},
-			{"invsrconealpha", RasterizationState::BlendMode::InvSrcOneAlpha},
-			{"alphafactor", RasterizationState::BlendMode::AlphaFactor},
-			{"invalphafactor", RasterizationState::BlendMode::InvAlphaFactor},
+		case util::CHashKey("zero"): return RasterizationState::BlendMode::Zero;
+		case util::CHashKey("one"): return RasterizationState::BlendMode::One;
+		case util::CHashKey("srccolor"): return RasterizationState::BlendMode::SrcColor;
+		case util::CHashKey("invsrccolor"): return RasterizationState::BlendMode::InvSrcColor;
+		case util::CHashKey("srcalpha"): return RasterizationState::BlendMode::SrcAlpha;
+		case util::CHashKey("invsrcalpha"): return RasterizationState::BlendMode::InvSrcAlpha;
+		case util::CHashKey("dstalpha"): return RasterizationState::BlendMode::DstAlpha;
+		case util::CHashKey("invdstalpha"): return RasterizationState::BlendMode::InvDstAlpha;
+		case util::CHashKey("dstcolor"): return RasterizationState::BlendMode::DstColor;
+		case util::CHashKey("invdstcolor"): return RasterizationState::BlendMode::InvDstColor;
+		case util::CHashKey("srcalphasat"): return RasterizationState::BlendMode::SrcAlphaSat;
+		case util::CHashKey("blendfactor"): return RasterizationState::BlendMode::BlendFactor;
+		case util::CHashKey("invblendfactor"): return RasterizationState::BlendMode::InvBlendFactor;
+		case util::CHashKey("srconecolor"): return RasterizationState::BlendMode::SrcOneColor;
+		case util::CHashKey("invsrconecolor"): return RasterizationState::BlendMode::InvSrcOneColor;
+		case util::CHashKey("srconealpha"): return RasterizationState::BlendMode::SrcOneAlpha;
+		case util::CHashKey("invsrconealpha"): return RasterizationState::BlendMode::InvSrcOneAlpha;
+		case util::CHashKey("alphafactor"): return RasterizationState::BlendMode::AlphaFactor;
+		case util::CHashKey("invalphafactor"): return RasterizationState::BlendMode::InvAlphaFactor;
+		default: SEAssertF("Invalid type name string");
 		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		return RasterizationState::BlendMode::Zero; // This should never happen
 	}
 
 
 	RasterizationState::BlendOp RasterizationState::GetBlendOpByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::BlendOp> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"add", RasterizationState::BlendOp::Add},
-			{"subtract", RasterizationState::BlendOp::Subtract},
-			{"revsubtract", RasterizationState::BlendOp::RevSubtract},
-			{"min", RasterizationState::BlendOp::Min},
-			{"max", RasterizationState::BlendOp::Max},
+			case util::CHashKey("add"): return RasterizationState::BlendOp::Add;
+			case util::CHashKey("subtract"): return RasterizationState::BlendOp::Subtract;
+			case util::CHashKey("revsubtract"): return RasterizationState::BlendOp::RevSubtract;
+			case util::CHashKey("min"): return RasterizationState::BlendOp::Min;
+			case util::CHashKey("max"): return RasterizationState::BlendOp::Max;
+			default: SEAssertF("Invalid type name string");
 		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		return RasterizationState::BlendOp::Add; // This should never happen
 	}
 
 
 	RasterizationState::LogicOp RasterizationState::GetLogicOpByName(char const* name)
 	{
-		static const std::map<std::string, RasterizationState::LogicOp> s_nameToType =
+		util::CHashKey const& nameHash = util::CHashKey::Create(util::ToLower(name));
+		switch (nameHash)
 		{
-			{"clear", RasterizationState::LogicOp::Clear},
-			{"set", RasterizationState::LogicOp::Set},
-			{"copy", RasterizationState::LogicOp::Copy},
-			{"copyinverted", RasterizationState::LogicOp::CopyInverted},
-			{"noop", RasterizationState::LogicOp::NoOp},
-			{"invert", RasterizationState::LogicOp::Invert},
-			{"and", RasterizationState::LogicOp::AND},
-			{"nand", RasterizationState::LogicOp::NAND},
-			{"or", RasterizationState::LogicOp::OR},
-			{"nor", RasterizationState::LogicOp::NOR},
-			{"xor", RasterizationState::LogicOp::XOR},
-			{"equiv", RasterizationState::LogicOp::EQUIV},
-			{"andreverse", RasterizationState::LogicOp::ANDReverse},
-			{"andinverted", RasterizationState::LogicOp::AndInverted},
-			{"orreverse", RasterizationState::LogicOp::ORReverse},
-			{"orinverted", RasterizationState::LogicOp::ORInverted},
+			case util::CHashKey("clear"): return RasterizationState::LogicOp::Clear;
+			case util::CHashKey("set"): return RasterizationState::LogicOp::Set;
+			case util::CHashKey("copy"): return RasterizationState::LogicOp::Copy;
+			case util::CHashKey("copyinverted"): return RasterizationState::LogicOp::CopyInverted;
+			case util::CHashKey("noop"): return RasterizationState::LogicOp::NoOp;
+			case util::CHashKey("invert"): return RasterizationState::LogicOp::Invert;
+			case util::CHashKey("and"): return RasterizationState::LogicOp::AND;
+			case util::CHashKey("nand"): return RasterizationState::LogicOp::NAND;
+			case util::CHashKey("or"): return RasterizationState::LogicOp::OR;
+			case util::CHashKey("nor"): return RasterizationState::LogicOp::NOR;
+			case util::CHashKey("xor"): return RasterizationState::LogicOp::XOR;
+			case util::CHashKey("equiv"): return RasterizationState::LogicOp::EQUIV;
+			case util::CHashKey("andreverse"): return RasterizationState::LogicOp::ANDReverse;
+			case util::CHashKey("andinverted"): return RasterizationState::LogicOp::AndInverted;
+			case util::CHashKey("orreverse"): return RasterizationState::LogicOp::ORReverse;
+			case util::CHashKey("orinverted"): return RasterizationState::LogicOp::ORInverted;
+			default: SEAssertF("Invalid type name string");
 		};
-
-		std::string const& lowerCaseName = util::ToLower(name);
-		SEAssert(s_nameToType.contains(lowerCaseName), "Invalid type name string");
-
-		return s_nameToType.at(lowerCaseName);
+		return RasterizationState::LogicOp::Clear; // This should never happen
 	}
 }
