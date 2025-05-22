@@ -8,10 +8,7 @@
 #include "SwapChain_Platform.h"
 #include "Texture.h"
 
-#include "Core/Config.h"
 #include "Core/ProfilingMarkers.h"
-
-#include "Core/Definitions/ConfigKeys.h"
 
 
 namespace re

@@ -410,7 +410,7 @@ namespace gr
 		m_wireframeStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 		m_wireframeStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_wireframeStage->AddPermanentBuffer(m_debugParams);
-		m_wireframeStage->SetDrawStyle(effect::drawstyle::Debug_Wireframe);
+		m_wireframeStage->AddDrawStyleBits(effect::drawstyle::Debug_Wireframe);
 
 		stagePipeline.AppendStage(m_wireframeStage);
 

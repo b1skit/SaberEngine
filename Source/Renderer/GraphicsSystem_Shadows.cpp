@@ -113,7 +113,7 @@ namespace gr
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, re::Stage::FilterMode::Require, true);
 		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
 
-		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_Cube);
+		shadowStage->AddDrawStyleBits(effect::drawstyle::Shadow_Cube);
 		
 		SEAssert(shadowData.m_lightType == gr::Light::Point, "Unexpected light type for a cube stage");
 
@@ -201,7 +201,7 @@ namespace gr
 
 		shadowStage->AddPermanentBuffer(shadowCamParams);
 
-		shadowStage->SetDrawStyle(effect::drawstyle::Shadow_2D);
+		shadowStage->AddDrawStyleBits(effect::drawstyle::Shadow_2D);
 
 		SEAssert(m_lightIDToShadowRecords.contains(lightID), "Failed to find a shadow record");
 		gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords.at(lightID);

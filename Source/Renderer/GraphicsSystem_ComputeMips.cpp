@@ -184,7 +184,7 @@ namespace gr
 						case re::Texture::Dimension::Texture1D:
 						case re::Texture::Dimension::Texture1DArray:
 						{
-							mipGenerationStage->SetDrawStyle(effect::drawstyle::TextureDimension_1D);
+							mipGenerationStage->AddDrawStyleBits(effect::drawstyle::TextureDimension_1D);
 						}
 						break;
 						case re::Texture::Dimension::Texture2D:
@@ -192,12 +192,12 @@ namespace gr
 						case re::Texture::Dimension::TextureCube:
 						case re::Texture::Dimension::TextureCubeArray:
 						{
-							mipGenerationStage->SetDrawStyle(effect::drawstyle::TextureDimension_2D);
+							mipGenerationStage->AddDrawStyleBits(effect::drawstyle::TextureDimension_2D);
 						}
 						break;
 						case re::Texture::Dimension::Texture3D:
 						{
-							mipGenerationStage->SetDrawStyle(effect::drawstyle::TextureDimension_3D);
+							mipGenerationStage->AddDrawStyleBits(effect::drawstyle::TextureDimension_3D);
 						}
 						break;
 						default: SEAssertF("Invalid dimension");

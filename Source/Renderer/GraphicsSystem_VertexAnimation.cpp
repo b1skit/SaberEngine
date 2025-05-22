@@ -148,13 +148,13 @@ namespace gr
 
 		m_morphAnimationStage = 
 			re::Stage::CreateComputeStage("Morph Animation Stage", re::Stage::ComputeStageParams{});
-		m_morphAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Morph);
+		m_morphAnimationStage->AddDrawStyleBits(effect::drawstyle::VertexAnimation_Morph);
 		
 		pipeline.AppendStage(m_morphAnimationStage);
 
 		m_skinAnimationStage =
 			re::Stage::CreateComputeStage("Skinned Animation Stage", re::Stage::ComputeStageParams{});
-		m_skinAnimationStage->SetDrawStyle(effect::drawstyle::VertexAnimation_Skinning);
+		m_skinAnimationStage->AddDrawStyleBits(effect::drawstyle::VertexAnimation_Skinning);
 
 		pipeline.AppendStage(m_skinAnimationStage);
 	}

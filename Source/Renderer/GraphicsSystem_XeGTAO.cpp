@@ -189,7 +189,7 @@ namespace gr
 		// Depth prefilter stage:
 		m_prefilterDepthsStage = 
 			re::Stage::CreateComputeStage("XeGTAO: Prefilter depths stage", re::Stage::ComputeStageParams{});
-		m_prefilterDepthsStage->SetDrawStyle(effect::drawstyle::XeGTAO_PrefilterDepths);
+		m_prefilterDepthsStage->AddDrawStyleBits(effect::drawstyle::XeGTAO_PrefilterDepths);
 
 		// Depth prefilter texture:	
 		const re::Texture::TextureParams prefilterDepthTexParams{
@@ -334,11 +334,11 @@ namespace gr
 			const bool isLastPass = passIdx == lastPassIdx;
 			if (isLastPass)
 			{
-				m_denoiseStages[passIdx]->SetDrawStyle(effect::drawstyle::XeGTAO_DenoiseLastPass);
+				m_denoiseStages[passIdx]->AddDrawStyleBits(effect::drawstyle::XeGTAO_DenoiseLastPass);
 			}
 			else
 			{
-				m_denoiseStages[passIdx]->SetDrawStyle(effect::drawstyle::XeGTAO_Denoise);
+				m_denoiseStages[passIdx]->AddDrawStyleBits(effect::drawstyle::XeGTAO_Denoise);
 			}
 			
 			// Set the appropriate ping/pong target set, and add the working AO target as input 
@@ -534,15 +534,15 @@ namespace gr
 	{
 		m_XeGTAOQuality = quality;
 
-		m_mainStage->ClearDrawStyle();
+		m_mainStage->ClearDrawStyleBits();
 
 		switch (m_XeGTAOQuality)
 		{
 		case Quality::Disabled: // We still need a shader, even if the quality mode is disabled
-		case Quality::Low: m_mainStage->SetDrawStyle(effect::drawstyle::XeGTAO_LowQuality); break;
-		case Quality::Med: m_mainStage->SetDrawStyle(effect::drawstyle::XeGTAO_MedQuality); break;
-		case Quality::High: m_mainStage->SetDrawStyle(effect::drawstyle::XeGTAO_HighQuality); break;
-		case Quality::Ultra: m_mainStage->SetDrawStyle(effect::drawstyle::XeGTAO_UltraQuality); break;
+		case Quality::Low: m_mainStage->AddDrawStyleBits(effect::drawstyle::XeGTAO_LowQuality); break;
+		case Quality::Med: m_mainStage->AddDrawStyleBits(effect::drawstyle::XeGTAO_MedQuality); break;
+		case Quality::High: m_mainStage->AddDrawStyleBits(effect::drawstyle::XeGTAO_HighQuality); break;
+		case Quality::Ultra: m_mainStage->AddDrawStyleBits(effect::drawstyle::XeGTAO_UltraQuality); break;
 		default: SEAssertF("Invalid quality");
 		}
 

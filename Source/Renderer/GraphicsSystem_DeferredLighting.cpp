@@ -148,7 +148,7 @@ namespace gr
 		std::shared_ptr<re::Stage> brdfStage =
 			re::Stage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
 
-		brdfStage->SetDrawStyle(effect::drawstyle::DeferredLighting_BRDFIntegration);
+		brdfStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_BRDFIntegration);
 
 		const uint32_t brdfTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
@@ -220,7 +220,7 @@ namespace gr
 			std::shared_ptr<re::Stage> iemStage = re::Stage::CreateSingleFrameGraphicsStage(
 				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
-			iemStage->SetDrawStyle(effect::drawstyle::DeferredLighting_IEMGeneration);
+			iemStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_IEMGeneration);
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
@@ -297,7 +297,7 @@ namespace gr
 				std::shared_ptr<re::Stage> pmremStage = re::Stage::CreateSingleFrameGraphicsStage(
 					stageName.c_str(), gfxStageParams);
 
-				pmremStage->SetDrawStyle(effect::drawstyle::DeferredLighting_PMREMGeneration);
+				pmremStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_PMREMGeneration);
 
 				pmremStage->AddPermanentTextureInput(
 					"Tex0",
@@ -496,7 +496,7 @@ namespace gr
 		// --------------
 		m_ambientStage->SetTextureTargetSet(m_lightingTargetSet);
 
-		m_ambientStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredAmbient);
+		m_ambientStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredAmbient);
 
 		m_ambientStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());	
 
@@ -516,7 +516,7 @@ namespace gr
 		//-------------------------
 		m_directionalStage->SetTextureTargetSet(m_lightingTargetSet);
 		
-		m_directionalStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredDirectional);
+		m_directionalStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredDirectional);
 
 		m_directionalStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_directionalStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
@@ -533,7 +533,7 @@ namespace gr
 
 		m_fullscreenStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
 
-		m_fullscreenStage->SetDrawStyle(effect::drawstyle::DeferredLighting_Fullscreen);
+		m_fullscreenStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_Fullscreen);
 
 		pipeline.AppendStage(m_fullscreenStage);
 
@@ -562,7 +562,7 @@ namespace gr
 		m_pointStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_pointStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
-		m_pointStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredPoint);
+		m_pointStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredPoint);
 
 		pipeline.AppendStage(m_pointStage);
 
@@ -575,7 +575,7 @@ namespace gr
 		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_spotStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
-		m_spotStage->SetDrawStyle(effect::drawstyle::DeferredLighting_DeferredSpot);
+		m_spotStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredSpot);
 
 		pipeline.AppendStage(m_spotStage);
 

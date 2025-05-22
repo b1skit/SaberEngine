@@ -23,7 +23,7 @@ namespace gr
 		m_gBufferStage->SetBatchFilterMaskBit(
 			re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
 
-		m_gBufferStage->SetDrawStyle(effect::drawstyle::RenderPath_Deferred);
+		m_gBufferStage->AddDrawStyleBits(effect::drawstyle::RenderPath_Deferred);
 	}
 
 

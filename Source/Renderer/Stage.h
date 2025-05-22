@@ -141,8 +141,8 @@ namespace re
 		re::Lifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
-		void SetDrawStyle(effect::drawstyle::Bitmask);
-		void ClearDrawStyle();
+		void AddDrawStyleBits(effect::drawstyle::Bitmask);
+		void ClearDrawStyleBits();
 
 		re::TextureTargetSet const* GetTextureTargetSet() const;
 		re::TextureTargetSet* GetTextureTargetSet();
@@ -660,7 +660,7 @@ namespace re
 	}
 
 
-	inline void Stage::SetDrawStyle(effect::drawstyle::Bitmask drawStyleBits)
+	inline void Stage::AddDrawStyleBits(effect::drawstyle::Bitmask drawStyleBits)
 	{
 		SEAssert(m_type == re::Stage::Type::Graphics || m_type == re::Stage::Type::Compute,
 			"Unexpected stage type for setting a drawstyle on");
@@ -668,7 +668,7 @@ namespace re
 	}
 
 
-	inline void Stage::ClearDrawStyle()
+	inline void Stage::ClearDrawStyleBits()
 	{
 		m_drawStyleBits = 0;
 	}

@@ -44,7 +44,7 @@ namespace gr
 	{
 		m_tonemappingStage = re::Stage::CreateComputeStage("Tonemapping stage", re::Stage::ComputeStageParams{});
 
-		m_tonemappingStage->SetDrawStyle(effect::drawstyle::Tonemapping_ACES);
+		m_tonemappingStage->AddDrawStyleBits(effect::drawstyle::Tonemapping_ACES);
 
 		// Buffers:
 		m_tonemappingStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -128,13 +128,13 @@ namespace gr
 
 		if (util::ShowBasicComboBox(k_comboTitle, k_tonemappingModes, TonemappingMode::Count, m_currentMode))
 		{
-			m_tonemappingStage->ClearDrawStyle();
+			m_tonemappingStage->ClearDrawStyleBits();
 
 			switch (m_currentMode)
 			{
-			case TonemappingMode::ACES: m_tonemappingStage->SetDrawStyle(effect::drawstyle::Tonemapping_ACES); break;
-			case TonemappingMode::ACES_FAST: m_tonemappingStage->SetDrawStyle(effect::drawstyle::Tonemapping_ACES_Fast); break;
-			case TonemappingMode::Reinhard: m_tonemappingStage->SetDrawStyle(effect::drawstyle::Tonemapping_Reinhard); break;
+			case TonemappingMode::ACES: m_tonemappingStage->AddDrawStyleBits(effect::drawstyle::Tonemapping_ACES); break;
+			case TonemappingMode::ACES_FAST: m_tonemappingStage->AddDrawStyleBits(effect::drawstyle::Tonemapping_ACES_Fast); break;
+			case TonemappingMode::Reinhard: m_tonemappingStage->AddDrawStyleBits(effect::drawstyle::Tonemapping_Reinhard); break;
 			case TonemappingMode::PassThrough: /*Do nothing*/ break;
 			default: SEAssertF("Invalid tonemapping mode");
 			}

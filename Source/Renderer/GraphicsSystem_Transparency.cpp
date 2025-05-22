@@ -143,7 +143,7 @@ namespace gr
 		m_transparencyStage->SetBatchFilterMaskBit(
 			re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Require, true);
 
-		m_transparencyStage->SetDrawStyle(effect::drawstyle::RenderPath_Forward);
+		m_transparencyStage->AddDrawStyleBits(effect::drawstyle::RenderPath_Forward);
 
 		// Targets:
 		std::shared_ptr<re::TextureTargetSet> transparencyTarget = re::TextureTargetSet::Create("Transparency Targets");
