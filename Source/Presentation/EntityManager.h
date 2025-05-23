@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EntityCommands.h"
+#include "EntityCommands.h" // Required for EnqueueEntityCommand
 
-#include "Core/Assert.h"
 #include "Core/CommandQueue.h"
 #include "Core/Inventory.h"
 

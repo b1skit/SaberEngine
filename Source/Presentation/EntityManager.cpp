@@ -13,11 +13,10 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "SceneManager.h"
-#include "SceneNodeConcept.h"
 #include "ShadowMapComponent.h"
 #include "SkinningComponent.h"
 
+#include "Core/Assert.h"
 #include "Core/Config.h"
 
 #include "Core/Definitions/ConfigKeys.h"

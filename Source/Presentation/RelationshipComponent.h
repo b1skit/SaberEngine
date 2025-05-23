@@ -29,7 +29,8 @@ namespace fr
 
 		entt::entity GetThisEntity() const;
 
-		std::vector<entt::entity> GetAllDescendents() const;
+		std::vector<entt::entity> GetAllDescendents() const; // Recursive: All entities in the parent/child hierarchy
+		std::vector<entt::entity> GetAllChildren() const; // Immediate children only (no descendents)
 
 
 	public:

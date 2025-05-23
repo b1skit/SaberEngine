@@ -89,9 +89,13 @@ namespace fr
 		while (curChild != entt::null)
 		{
 			fr::Relationship& childRelationship = em.GetComponent<fr::Relationship>(curChild);
+
+			// Cache the next child entity before we remove the current one
+			const entt::entity nextChild = childRelationship.GetNext();
+
 			childRelationship.SetParent(em, entt::null);
 
-			curChild = childRelationship.GetNext();
+			curChild = nextChild;
 		}
 	}
 
@@ -310,5 +314,31 @@ namespace fr
 		}
 
 		return descendents;
+	}
+
+
+	std::vector<entt::entity> Relationship::GetAllChildren() const
+	{
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
+		std::vector<entt::entity> siblings;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+
+			if (m_firstChild != entt::null)
+			{
+				entt::entity cur = m_firstChild;
+				while (cur != m_lastChild)
+				{
+					siblings.emplace_back(cur);
+
+					fr::Relationship const& siblingRelationship = em.GetComponent<fr::Relationship>(cur);
+
+					cur = siblingRelationship.GetNext();
+				}
+				siblings.emplace_back(m_lastChild);
+			}
+		}
+		return siblings;
 	}
 }
