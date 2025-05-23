@@ -183,7 +183,10 @@ namespace gr
 
 		// Early out:
 		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
-		if ((m_viewBatches == nullptr || m_viewBatches->at(mainCamID).empty()) && m_allBatches->empty())
+		if ((m_viewBatches == nullptr || 
+				mainCamID == gr::k_invalidRenderDataID ||
+				m_viewBatches->at(mainCamID).empty()) &&
+			(m_allBatches == nullptr || m_allBatches->empty()))
 		{
 			return;
 		}
