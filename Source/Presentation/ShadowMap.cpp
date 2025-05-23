@@ -94,7 +94,9 @@ namespace fr
 		m_isDirty |= ImGui::Checkbox(std::format("Shadow enabled?##{}", uniqueID).c_str(), &m_isEnabled);
 
 		constexpr char const* k_qualityNames[] = { "PCS", "PCSS Low", "PCSS High" };
-		static int currentQuality = static_cast<int>(m_typeProperties.m_shadowQuality);
+
+		int currentQuality = static_cast<int>(m_typeProperties.m_shadowQuality);
+
 		if (ImGui::Combo(
 			std::format("Quality##{}", uniqueID).c_str(), &currentQuality, k_qualityNames, IM_ARRAYSIZE(k_qualityNames)))
 		{
