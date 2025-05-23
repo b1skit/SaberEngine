@@ -50,9 +50,6 @@
 			]
 		},
 		{
-			"GraphicsSystem": "LightManager"
-		},
-		{
 			"GraphicsSystem": "GBuffer",
 			"Inputs": [
 				{

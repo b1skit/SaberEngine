@@ -219,7 +219,7 @@ namespace dx12
 
 			Unset,
 		} m_currentDescriptorHeapSource;
-		void SetDescriptorHeap(ID3D12DescriptorHeap*, DescriptorHeapSource);
+		void SetDescriptorHeap(ID3D12DescriptorHeap*);
 
 
 	public:
@@ -368,8 +368,10 @@ namespace dx12
 
 	inline void CommandList::CommitGPUDescriptors()
 	{
-		SEAssert(m_currentDescriptorHeapSource == DescriptorHeapSource::Own,
-			"Committing our own descriptor heap with the wrong heap attached");
+		if (m_currentDescriptorHeapSource != DescriptorHeapSource::Own)
+		{
+			SetDescriptorHeap(m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap());
+		}
 
 		m_gpuCbvSrvUavDescriptorHeap->Commit(*this);
 	}

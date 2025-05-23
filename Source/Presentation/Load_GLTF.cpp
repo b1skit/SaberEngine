@@ -1960,13 +1960,17 @@ namespace
 						}).first->second;
 
 
-					// Load the Material and add it as a dependency of the MeshPrimitive:
-					std::shared_ptr<MaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>> matLoadCtx =
-						std::make_shared<MaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>>();
-
-					// Load the Material and add it as a dependency of the MeshPrimitive:
-					meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(
-						LoadGLTFMaterial(inventory, fileMetadata, data, curMesh->primitives[primIdx].material));					
+					if (curMesh->primitives[primIdx].material)
+					{
+						// Load the Material and add it as a dependency of the MeshPrimitive:
+						meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(
+							LoadGLTFMaterial(inventory, fileMetadata, data, curMesh->primitives[primIdx].material));
+					}
+					else
+					{
+						meshPrimMetadata.m_material = inventory->Get<gr::Material>(
+							util::HashKey(en::DefaultResourceNames::k_defaultGLTFMaterialName));
+					}
 				}
 			}
 		}

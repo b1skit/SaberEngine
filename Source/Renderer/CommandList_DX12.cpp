@@ -233,7 +233,7 @@ namespace dx12
 			// Reset the GPU descriptor heap managers:
 			m_gpuCbvSrvUavDescriptorHeap->Reset();
 
-			SetDescriptorHeap(m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap(), DescriptorHeapSource::Own);
+			SetDescriptorHeap(m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap());
 		}
 
 		m_commandAllocatorReuseFenceValue = 0;
@@ -1166,7 +1166,7 @@ namespace dx12
 		ID3D12DescriptorHeap* brmDescriptorHeap = 
 			dx12::BindlessResourceManager::GetDescriptorHeap(brm, re::RenderManager::Get()->GetCurrentRenderFrameNum());
 
-		SetDescriptorHeap(brmDescriptorHeap, DescriptorHeapSource::External);
+		SetDescriptorHeap(brmDescriptorHeap);
 
 		m_commandList->SetComputeRootDescriptorTable(
 			0,
@@ -1602,10 +1602,12 @@ namespace dx12
 	}
 
 
-	void CommandList::SetDescriptorHeap(ID3D12DescriptorHeap* descriptorHeap, DescriptorHeapSource src)
+	void CommandList::SetDescriptorHeap(ID3D12DescriptorHeap* descriptorHeap)
 	{
 		m_commandList->SetDescriptorHeaps(1, &descriptorHeap);
-		m_currentDescriptorHeapSource = src;
+
+		m_currentDescriptorHeapSource = descriptorHeap == m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap() ? 
+			DescriptorHeapSource::Own : DescriptorHeapSource::External;
 	}
 
 
