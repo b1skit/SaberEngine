@@ -5,6 +5,8 @@
 #include "PlatformConversions.h"
 
 
+#define BRDF_INTEGRATION_DISPATCH_XY_DIMS 8
+
 struct BRDFIntegrationData
 {
 	uint4 g_integrationTargetResolution;

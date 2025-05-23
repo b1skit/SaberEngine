@@ -36,14 +36,21 @@ void BloomDown(ComputeIn In)
 	*/
 	
 	const uint2 texelCoord = In.DTId.xy;
+	
+	static const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
+	
+	if (texelCoord.x >= dstWidthHeight.x ||
+		texelCoord.y >= dstWidthHeight.y)
+	{
+		return;
+	}
+	
 	static const uint srcMipLevel = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x;
 	
 	static const float2 pxOffset = BloomComputeParams.g_dstTexDimensions.zw;
 	static const float2 halfPxOffset = 0.5f * pxOffset;
 	
-	static const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
-	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
-	
+	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));	
 	
 	const float2 uvA = uvs + float2(-pxOffset.x, -pxOffset.y);
 	const float3 a = Tex0.SampleLevel(ClampMinMagMipLinear, uvA, srcMipLevel).rgb;
@@ -131,6 +138,12 @@ void BloomUp(ComputeIn In)
 	
 	const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
 	
+	if (texelCoord.x >= dstWidthHeight.x ||
+		texelCoord.y >= dstWidthHeight.y)
+	{
+		return;
+	}
+	
 	const uint srcMipLevel = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x;
 	
 	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));
@@ -197,6 +210,13 @@ void BilinearDown(ComputeIn In)
 	const uint2 texelCoord = In.DTId.xy;
 	
 	const uint2 dstWidthHeight = uint2(BloomComputeParams.g_dstTexDimensions.xy);
+	
+	if (texelCoord.x >= dstWidthHeight.x ||
+		texelCoord.y >= dstWidthHeight.y)
+	{
+		return;
+	}	
+	
 	const uint srcMipLevel = BloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage.x;
 	
 	const float2 uvs = PixelCoordsToScreenUV(In.DTId.xy, dstWidthHeight, float2(0.5f, 0.5f));

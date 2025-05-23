@@ -17,7 +17,7 @@ RWTexture2D<float4> output0 : register(u0);
 #define NUM_SAMPLES 1024
 
 
-[numthreads(1, 1, 1)]
+[numthreads(BRDF_INTEGRATION_DISPATCH_XY_DIMS, BRDF_INTEGRATION_DISPATCH_XY_DIMS, 1)]
 void CShader(ComputeIn In)
 {
 	// As per Karis, Microfacet BRDFs can be approximated by decomposing them into the product of 2 terms: LD, and DFG.
@@ -29,6 +29,12 @@ void CShader(ComputeIn In)
 	const uint2 targetResolution = BRDFIntegrationParams.g_integrationTargetResolution.xy;
 	
 	const uint2 texelCoord = In.DTId.xy;
+	
+	if (texelCoord.x >= targetResolution.x ||
+		texelCoord.y >= targetResolution.y)
+	{
+		return;
+	}
 	
 	float2 screenUV = PixelCoordsToScreenUV(texelCoord, targetResolution.xy, float2(0.5f, 0.5f));
 	

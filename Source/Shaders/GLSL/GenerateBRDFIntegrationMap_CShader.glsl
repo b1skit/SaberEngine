@@ -17,12 +17,18 @@ layout(location=0) writeonly uniform image2D output0;
 // surface roughness
 // uv.x == NoV, uv.y == roughness
 // Return: vec2(BRDF Fresnel response scale, BRDF Fresnel response bias)
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = BRDF_INTEGRATION_DISPATCH_XY_DIMS, local_size_y = BRDF_INTEGRATION_DISPATCH_XY_DIMS, local_size_z = 1) in;
 void CShader()
 {
 	const uvec2 targetResolution = _BRDFIntegrationParams.g_integrationTargetResolution.xy;
 
 	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+	if (texelCoord.x >= targetResolution.x ||
+		texelCoord.y >= targetResolution.y)
+	{
+		return;
+	}
 
 	vec2 screenUV = PixelCoordsToScreenUV(
 		gl_GlobalInvocationID.xy, 

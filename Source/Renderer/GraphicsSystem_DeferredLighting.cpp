@@ -179,15 +179,19 @@ namespace gr
 				.m_usageMask = re::Buffer::Constant,
 			});
 		brdfStage->AddSingleFrameBuffer(BRDFIntegrationData::s_shaderName, brdfIntegrationBuf);
+		
+		const uint32_t dispatchXYDims = 
+			grutil::GetRoundedDispatchDimension(brdfTexWidthHeight, BRDF_INTEGRATION_DISPATCH_XY_DIMS);
 
-		// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
-		re::Batch computeBatch = re::Batch(
+		// Add our dispatch information to a compute batch
+		brdfStage->AddBatch(re::Batch(
 			re::Lifetime::SingleFrame,
 			re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) },
-			k_deferredLightingEffectID);
-
-		brdfStage->AddBatch(computeBatch);
+				.m_threadGroupCount = glm::uvec3(
+					dispatchXYDims,
+					dispatchXYDims,
+					1u) },
+				k_deferredLightingEffectID));
 
 		pipeline.AppendSingleFrameStage(std::move(brdfStage));
 	}
