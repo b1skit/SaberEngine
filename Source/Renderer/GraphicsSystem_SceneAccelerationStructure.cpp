@@ -225,17 +225,53 @@ namespace gr
 			m_meshConceptToPrimitiveIDs[owningMeshConceptID].emplace(meshPrimID);
 			m_meshPrimToMeshConceptID[meshPrimID] = owningMeshConceptID;
 
-			// Create/update the BLAS count:
+			// Create a BLAS key: This uniquely identifies a BLAS based on its owning MeshConcept and material
+			// properties that affect the BLAS behavior
 			const util::HashKey blasKey = CreateBLASKey(
 				owningMeshConceptID, 
 				static_cast<re::AccelerationStructure::InclusionMask>(
 					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
 						&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
 
-			if (m_meshPrimToBLASKey.emplace(meshPrimID, blasKey).second == true)
+			// Create/update the BLAS count:
+			bool isNewBlasKey = false;
+			auto meshPrimToBLASKeyItr = m_meshPrimToBLASKey.find(meshPrimID);
+			if (meshPrimToBLASKeyItr == m_meshPrimToBLASKey.end())
 			{
+				m_meshPrimToBLASKey.emplace(meshPrimID, blasKey);
+
 				// A brand new MeshPrimitive: Increment the BLAS reference counter
 				m_meshConceptToBLASAndCount[owningMeshConceptID][blasKey].second++;
+
+				isNewBlasKey = true;
+			}
+			else if (meshPrimToBLASKeyItr->second != blasKey)
+			{
+				// Get the old BLAS key:
+				const util::HashKey prevBlasKey = meshPrimToBLASKeyItr->second;
+
+				// Update the meshPrim RenderDataID -> BLAS key map with the new blas key
+				meshPrimToBLASKeyItr->second = blasKey; 
+
+				SEAssert(m_meshConceptToBLASAndCount.contains(owningMeshConceptID),
+					"Mesh concept ID not found");
+
+				SEAssert(m_meshConceptToBLASAndCount.at(owningMeshConceptID).contains(prevBlasKey),
+					"BLAS and count map does not contain the previous BLAS key");
+
+				// Decrement the BLAS reference counter, and erase the record if the count is 0:
+				auto meshConceptToBlasCountItr = m_meshConceptToBLASAndCount.at(owningMeshConceptID).find(prevBlasKey);
+
+				SEAssert(meshConceptToBlasCountItr->second.second > 0, "BLAS count about to go out of range");
+				if (--meshConceptToBlasCountItr->second.second == 0)
+				{
+					m_meshConceptToBLASAndCount.at(owningMeshConceptID).erase(prevBlasKey);
+				}
+
+				// Add a new BLAS reference:
+				m_meshConceptToBLASAndCount[owningMeshConceptID][blasKey].second++;
+
+				isNewBlasKey = true;
 			}
 
 			// Record a BLAS update:
@@ -248,7 +284,7 @@ namespace gr
 
 			// If the geometry or opaque-ness have changed, we must rebuild:
 			if (meshPrimItr->IsDirty<gr::MeshPrimitive::RenderData>() ||
-				meshPrimItr->IsDirty<gr::Material::MaterialInstanceRenderData>())
+				isNewBlasKey) // Did material properties affecting the BLAS change?
 			{
 				meshConceptUpdateItr->second = re::Batch::RayTracingParams::Operation::BuildAS;
 				mustRebuildTLAS = true;
