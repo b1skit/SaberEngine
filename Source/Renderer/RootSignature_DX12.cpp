@@ -1318,7 +1318,7 @@ namespace dx12
 			m_rootSignature = context->GetRootSignature(m_rootSigDescHash);
 
 			// Root signature is shared: Update the name
-			std::wstring const& newName = L"Shared: " + dx12::GetWDebugName(m_rootSignature.Get()) + rootSigName.c_str();
+			std::wstring const& newName = L"[Shared] " + rootSigName;
 			m_rootSignature->SetName(newName.c_str());
 		}
 		else
