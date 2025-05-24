@@ -84,8 +84,8 @@ namespace gr
 
 	void Material::InitializeMaterialInstanceData(MaterialInstanceRenderData& instanceData) const
 	{
-		// Zero out the instance data struct:
-		memset(&instanceData, 0, sizeof(gr::Material::MaterialInstanceRenderData));
+		// Reinitialize the instance data struct
+		instanceData = {};
 
 		PackMaterialInstanceTextureSlotDescs(
 			instanceData.m_textures.data(), instanceData.m_samplers.data(), instanceData.m_shaderSamplerNames);
