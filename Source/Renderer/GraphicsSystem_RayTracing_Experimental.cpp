@@ -1,4 +1,5 @@
 // © 2025 Adam Badke. All rights reserved.
+#include "Batch.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"
 #include "GraphicsSystemManager.h"
 #include "ShaderBindingTable.h"
@@ -136,7 +137,7 @@ namespace gr
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
-			re::Batch::RayTracingParams rtParams;
+			re::Batch::RayTracingParams rtParams{};
 			rtParams.m_operation = re::Batch::RayTracingParams::Operation::DispatchRays;
 			rtParams.m_ASInput = re::ASInput("SceneBVH", *m_sceneTLAS);
 			rtParams.m_shaderBindingTable = m_sceneSBT;
