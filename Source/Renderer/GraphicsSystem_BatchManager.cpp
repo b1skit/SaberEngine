@@ -1,5 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "BufferView.h"
+#include "EffectDB.h"
 #include "GraphicsSystem_BatchManager.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"

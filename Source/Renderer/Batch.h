@@ -97,11 +97,11 @@ namespace re
 
 			enum class Operation : uint8_t
 			{
-				BuildAS,	// Acceleration structure operations do not require/use Batches
+				BuildAS,
 				UpdateAS,
 				CompactAS,
 
-				DispatchRays,	// Uses/requires Batches w/valid EffectID
+				DispatchRays,
 
 				Invalid
 			} m_operation = Operation::Invalid;

@@ -6,6 +6,9 @@
 #include "RootSignature_DX12.h"
 #include "SysInfo_DX12.h"
 
+#include "Shaders/Common/BindlessResourceParams.h"
+#include "Shaders/Common/CameraParams.h"
+
 #include <d3d12.h>
 #include <wrl/client.h>
 #include <dxgiformat.h>
@@ -55,10 +58,10 @@ namespace
 		constexpr uint32_t k_firstBindlessSpaceIdx = 20;
 		uint32_t bindlessResourceSpace = k_firstBindlessSpaceIdx;
 
-		// Bindless LUT:
-		//--------------
+		// Buffers:
+		//---------
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
-			.m_shaderName = "BindlessLUT",
+			.m_shaderName = BindlessVertexStreamLUTData::s_shaderName,
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
 				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
@@ -73,11 +76,8 @@ namespace
 			}
 		});
 
-
-		// Buffers:
-		//---------
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
-			.m_shaderName = "CameraParams",
+			.m_shaderName = CameraData::s_shaderName,
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
 				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
