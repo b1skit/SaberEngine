@@ -26,15 +26,4 @@ struct InstanceIndexData
 };
 
 
-struct TransformData
-{
-	float4x4 g_model;
-	float4x4 g_transposeInvModel;
-
-#if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "TransformParams";
-#endif
-};
-
-
 #endif // SE_INSTANCING_PARAMS

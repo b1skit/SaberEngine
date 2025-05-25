@@ -11,6 +11,8 @@
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Shaders/Common/DebugParams.h"
+#include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/TransformParams.h"
 
 
 namespace

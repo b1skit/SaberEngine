@@ -4,8 +4,8 @@
 #include "BufferView.h"
 #include "RenderObjectIDs.h"
 
-#include "Shaders/Common/InstancingParams.h"
 
+struct TransformData;
 
 namespace gr
 {

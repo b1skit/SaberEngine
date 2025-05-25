@@ -6,6 +6,7 @@
 #include "../Common/CameraParams.h"
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
+#include "../Common/TransformParams.h"
 
 #include "../Generated/GLSL/VertexStreams_PosUvCol.glsli"
 

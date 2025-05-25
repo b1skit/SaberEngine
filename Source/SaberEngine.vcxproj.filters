@@ -136,6 +136,9 @@
     <ClInclude Include="Shaders\Common\BindlessResourceParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Common\TransformParams.h">
+      <Filter>Shaders\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">

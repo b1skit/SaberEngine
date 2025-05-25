@@ -3,6 +3,7 @@
 #include "VertexStreams_PositionUV.glsli"
 
 #include "../Common/InstancingParams.h"
+#include "../Common/TransformParams.h"
 
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
 layout(std430, binding = 1) readonly buffer TransformParams { TransformData _TransformParams[]; };

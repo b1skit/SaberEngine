@@ -13,6 +13,7 @@
 
 #include "Shaders/Common/InstancingParams.h"
 #include "Shaders/Common/MaterialParams.h"
+#include "Shaders/Common/TransformParams.h"
 
 
 namespace gr

@@ -4,6 +4,7 @@
 
 #include "../Common/CameraParams.h"
 #include "../Common/InstancingParams.h"
+#include "../Common/TransformParams.h"
 
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };

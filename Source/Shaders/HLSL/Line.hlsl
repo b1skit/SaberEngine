@@ -4,6 +4,7 @@
 
 #include "../Common/DebugParams.h"
 #include "../Common/InstancingParams.h"
+#include "../Common/TransformParams.h"
 
 #if defined(DEBUG_NORMAL)
 #include "../Generated/HLSL/VertexStreams_PositionNormal.hlsli"

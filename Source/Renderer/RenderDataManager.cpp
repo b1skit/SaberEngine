@@ -17,6 +17,7 @@
 #include "Shaders/Common/LightParams.h"
 #include "Shaders/Common/MaterialParams.h"
 #include "Shaders/Common/ShadowParams.h"
+#include "Shaders/Common/TransformParams.h"
 
 
 namespace

@@ -2,7 +2,7 @@
 #include "Buffer.h"
 #include "TransformRenderData.h"
 
-#include "Shaders/Common/InstancingParams.h"
+#include "Shaders/Common/TransformParams.h"
 
 
 namespace

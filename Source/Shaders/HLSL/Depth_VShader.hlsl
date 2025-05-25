@@ -2,6 +2,7 @@
 #include "SaberCommon.hlsli"
 
 #include "../Common/InstancingParams.h"
+#include "../Common/TransformParams.h"
 
 #include "../Generated/HLSL/VertexStreams_PositionUV.hlsli"
 

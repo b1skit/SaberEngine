@@ -225,6 +225,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\TargetParams.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="EngineApp.h" />
+    <ClInclude Include="Shaders\Common\TransformParams.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Effects\Bloom.json" />

@@ -61,7 +61,7 @@ namespace
 		// Buffers:
 		//---------
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
-			.m_shaderName = BindlessVertexStreamLUTData::s_shaderName,
+			.m_shaderName = BindlessLUTData::s_shaderName,
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
 				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded

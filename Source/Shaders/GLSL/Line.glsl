@@ -7,6 +7,7 @@
 #include "../Common/CameraParams.h"
 #include "../Common/DebugParams.h"
 #include "../Common/InstancingParams.h"
+#include "../Common/TransformParams.h"
 
 #if defined(SE_VERTEX_SHADER)
 
