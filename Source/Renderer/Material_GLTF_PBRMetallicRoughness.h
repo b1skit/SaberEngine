@@ -35,6 +35,8 @@ namespace gr
 		static constexpr re::Texture::Format GetDefaultTextureFormat(gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx);
 		static constexpr re::Texture::ColorSpace GetDefaultTextureColorSpace(gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx);
 
+		static bool FilterRenderData(MaterialInstanceRenderData const*);
+
 		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 
@@ -127,6 +129,13 @@ namespace gr
 		case gr::Material_GLTF_PBRMetallicRoughness::Emissive: return re::Texture::ColorSpace::sRGB; break; // GLTF spec: Must be converted to linear before use
 		}
 		return re::Texture::ColorSpace::Linear; // This should never happen
+	}
+
+
+	inline bool Material_GLTF_PBRMetallicRoughness::FilterRenderData(MaterialInstanceRenderData const* renderData)
+	{
+		SEAssert(renderData, "Render data pointer is null");
+		return gr::Material::EffectIDToMaterialID(renderData->m_effectID) == gr::Material::GLTF_PBRMetallicRoughness;
 	}
 
 

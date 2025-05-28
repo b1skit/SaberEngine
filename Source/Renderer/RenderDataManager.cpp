@@ -6,6 +6,7 @@
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "Material_GLTF_PBRMetallicRoughness.h"
+#include "Material_GLTF_Unlit.h"
 #include "MeshPrimitive.h"
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
@@ -87,29 +88,30 @@ namespace gr
 			gr::Transform::CreateTransformData,
 			re::Buffer::DefaultHeap);
 
-		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
-		indexedTransforms->AddLUTDataWriterCallback<InstancedBufferLUTData>(
-			InstancedBufferLUTData::SetTransformIndex);
+		indexedTransforms->AddLUTWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
+		indexedTransforms->AddLUTWriterCallback<InstancedBufferLUTData>(InstancedBufferLUTData::SetTransformIndex);
 
 		// Materials:
 		IndexedBufferManager::IIndexedBuffer* indexedUnlitMaterials = m_indexedBufferManager->AddIndexedBuffer(
 			UnlitData::s_shaderName, // Buffer name (not the shader name)
-			gr::Material::CreateInstancedMaterialData<UnlitData>,
+			gr::Material::GetInstancedMaterialData<UnlitData>,
 			re::Buffer::DefaultHeap,
+			gr::Material_GLTF_Unlit::FilterRenderData,
 			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
-		indexedUnlitMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
-		indexedUnlitMaterials->AddLUTDataWriterCallback<InstancedBufferLUTData>(
+		indexedUnlitMaterials->AddLUTWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+		indexedUnlitMaterials->AddLUTWriterCallback<InstancedBufferLUTData>(
 			InstancedBufferLUTData::SetMaterialIndex_Unlit);
 
 		IndexedBufferManager::IIndexedBuffer* indexedPBRMetRoughMaterials = m_indexedBufferManager->AddIndexedBuffer(
 			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
-			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
+			gr::Material::GetInstancedMaterialData<PBRMetallicRoughnessData>,
 			re::Buffer::DefaultHeap,
+			gr::Material_GLTF_PBRMetallicRoughness::FilterRenderData,
 			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
-		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
-		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstancedBufferLUTData>(
+		indexedPBRMetRoughMaterials->AddLUTWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+		indexedPBRMetRoughMaterials->AddLUTWriterCallback<InstancedBufferLUTData>(
 			InstancedBufferLUTData::SetMaterialIndex_PBRMetallicRoughness);
 
 
@@ -119,21 +121,21 @@ namespace gr
 			gr::CreateDirectionalLightData,
 			re::Buffer::DefaultHeap);
 
-		indexedDirectionalLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+		indexedDirectionalLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
 
 		IndexedBufferManager::IIndexedBuffer* indexedPointLights = m_indexedBufferManager->AddIndexedBuffer(
 			LightData::s_pointLightDataShaderName, // Buffer name (not the shader name)
 			gr::CreatePointLightData,
 			re::Buffer::DefaultHeap);
 
-		indexedPointLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+		indexedPointLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
 
 		IndexedBufferManager::IIndexedBuffer* indexedSpotLights = m_indexedBufferManager->AddIndexedBuffer(
 			LightData::s_spotLightDataShaderName, // Buffer name (not the shader name)
 			gr::CreateSpotLightData,
 			re::Buffer::DefaultHeap);
 
-		indexedSpotLights->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
+		indexedSpotLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
 
 
 		// Shadows:
@@ -142,7 +144,7 @@ namespace gr
 			gr::CreateShadowData,
 			re::Buffer::DefaultHeap);
 
-		indexedShadows->AddLUTDataWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetShadowBufferIndex);
+		indexedShadows->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetShadowBufferIndex);
 	}
 
 

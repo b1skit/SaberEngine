@@ -31,15 +31,14 @@ namespace gr
 		{
 		public:
 			template<typename LUTBuffer>
-			inline void AddLUTDataWriterCallback(void(*writeLUTDataCallback)(IndexType lutIdx, void* dst))
+			inline void AddLUTWriterCallback(void(*WriteLUTDataCallback)(IndexType lutIdx, void* dst))
 			{
-				AddLUTDataWriterCallbackInternal(std::type_index(typeid(LUTBuffer)), writeLUTDataCallback);
+				AddLUTDataWriterCallbackInternal(std::type_index(typeid(LUTBuffer)), WriteLUTDataCallback);
 			}
-
 
 		private:
 			virtual void AddLUTDataWriterCallbackInternal(
-				std::type_index, void(*writeLUTDataCallback)(IndexType lutIdx, void* dst)) = 0;
+				std::type_index, void(*WriteLUTDataCallback)(IndexType lutIdx, void* dst)) = 0;
 		};
 
 
@@ -96,12 +95,12 @@ namespace gr
 		private:
 			void AddLUTDataWriterCallbackInternal(
 				std::type_index typeIdx,
-				void(*writeLUTDataCallback)(IndexType lutIdx, void* dst)) override
+				void(*WriteLUTDataCallback)(IndexType lutIdx, void* dst)) override
 			{
 				util::ScopedThreadProtector lock(m_threadProtector);
 
 				SEAssert(!m_writeLUTDataCallbacks.contains(typeIdx), "Callback already added for the given type");
-				m_writeLUTDataCallbacks.emplace(typeIdx, writeLUTDataCallback);
+				m_writeLUTDataCallbacks.emplace(typeIdx, WriteLUTDataCallback);
 
 				m_indexedBufferManager->RegisterLUTWriter(typeIdx, this);
 			}
@@ -127,6 +126,7 @@ namespace gr
 				char const* bufferName,
 				re::Buffer::MemoryPoolPreference memPoolPreference,
 				re::Buffer::AccessMask accessMask,
+				bool(*FilterCallback)(RenderDataType const*) = nullptr,
 				RenderObjectFeature featureBits = RenderObjectFeature::None);
 
 			TypedIndexedBuffer(TypedIndexedBuffer&&) noexcept = default;
@@ -168,6 +168,8 @@ namespace gr
 
 			BufferDataType(*m_createBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&);
 
+			bool(*m_filterCallback)(RenderDataType const*); // If true, the RenderDataType should be included
+
 			RenderObjectFeature m_featureBits;
 
 			// Buffer create params:
@@ -202,8 +204,9 @@ namespace gr
 		template<typename RenderDataType, typename BufferDataType>
 		IIndexedBuffer* AddIndexedBuffer(
 			char const* bufferName,
-			BufferDataType(*createBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
+			BufferDataType(*CreateBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
 			re::Buffer::MemoryPoolPreference,
+			bool(*FilterCallback)(RenderDataType const*) = nullptr, // Optional: All RenderDataType entries included if null
 			RenderObjectFeature featureBits = RenderObjectFeature::None);
 
 		// Get a LUT buffer completely auto-populated
@@ -351,10 +354,12 @@ namespace gr
 		char const* bufferName,
 		re::Buffer::MemoryPoolPreference memPoolPreference,
 		re::Buffer::AccessMask accessMask,
+		bool(*FilterCallback)(RenderDataType const*) /*= nullptr*/,
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
 		: IIndexedBufferInternal(ibm)
 		, m_createBufferData(createBufferData)
 		, m_bufferName(bufferName)
+		, m_filterCallback(FilterCallback)
 		, m_featureBits(featureBits)
 		, m_memPoolPreference(memPoolPreference)
 		, m_accessMask(accessMask)
@@ -468,6 +473,15 @@ namespace gr
 				// Transforms are treated as a special case by the RenderDataManager; We must do the same here
 				for (gr::TransformID transformID : renderData.GetRegisteredTransformIDs())
 				{
+					gr::Transform::RenderData const& transformRenderData = 
+						renderData.GetTransformDataFromTransformID(transformID);
+
+					// Execute the filter callback if one was provided:
+					if (m_filterCallback && m_filterCallback(&transformRenderData) == false)
+					{
+						continue;
+					}
+
 					SEAssert(!m_freeIndexes.empty(), "No more free indexes. This should not be possible");
 
 					const IndexType currentBufferIdx = m_freeIndexes.top();
@@ -484,13 +498,21 @@ namespace gr
 				gr::ObjectAdapter<RenderDataType> objAdapter(renderData, m_featureBits);
 				for (auto const& itr : objAdapter)
 				{
+					RenderDataType const& objectRenderData = itr->Get<RenderDataType>();
+					
+					// Execute the filter callback if one was provided:
+					if (m_filterCallback && m_filterCallback(&objectRenderData) == false)
+					{
+						continue;
+					}
+
 					SEAssert(!m_freeIndexes.empty(), "No more free indexes. This should not be possible");
 
 					const IndexType currentBufferIdx = m_freeIndexes.top();
 					m_freeIndexes.pop();
 
 					bufferData[currentBufferIdx] = m_createBufferData(
-						itr->Get<RenderDataType>(), itr->GetRenderDataID(), renderData);
+						objectRenderData, itr->GetRenderDataID(), renderData);
 
 					m_idToBufferIdx.emplace(itr->GetRenderDataID(), currentBufferIdx);
 				}
@@ -536,6 +558,22 @@ namespace gr
 				{
 					for (gr::IDType dirtyID : dirtyIDs)
 					{
+						RenderDataType const* data = nullptr;
+						if constexpr (std::is_same_v<RenderDataType, gr::Transform::RenderData>)
+						{
+							data = &renderData.GetTransformDataFromTransformID(dirtyID);
+						}
+						else
+						{
+							data = &renderData.GetObjectData<RenderDataType>(dirtyID);
+						}
+
+						// Execute the filter callback if one was provided:
+						if (m_filterCallback && m_filterCallback(data) == false)
+						{
+							continue;
+						}
+
 						IndexType bufferIdx = std::numeric_limits<IndexType>::max();
 
 						auto itr = m_idToBufferIdx.find(dirtyID);
@@ -551,16 +589,6 @@ namespace gr
 						else
 						{
 							bufferIdx = itr->second;
-						}
-
-						RenderDataType const* data = nullptr;
-						if constexpr (std::is_same_v<RenderDataType, gr::Transform::RenderData>)
-						{
-							data = &renderData.GetTransformDataFromTransformID(dirtyID);
-						}
-						else
-						{
-							data = &renderData.GetObjectData<RenderDataType>(dirtyID);
 						}
 
 						BufferDataType const& bufferData = m_createBufferData(*data, dirtyID, renderData);
@@ -659,8 +687,9 @@ namespace gr
 	template<typename RenderDataType, typename BufferDataType>
 	IndexedBufferManager::IIndexedBuffer* IndexedBufferManager::AddIndexedBuffer(
 		char const* bufferName,
-		BufferDataType(*createBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
+		BufferDataType(*CreateBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
 		re::Buffer::MemoryPoolPreference memPool, 
+		bool(*FilterCallback)(RenderDataType const*) /*= nullptr*/,
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
 	{
 		util::ScopedThreadProtector lock(m_threadProtector);
@@ -674,10 +703,11 @@ namespace gr
 		auto const& itr = m_indexedBuffers.emplace_back(
 			std::make_unique<TypedIndexedBuffer<RenderDataType, BufferDataType>>(
 				this,
-				createBufferData,
+				CreateBufferData,
 				bufferName,
 				memPool,
 				access,
+				FilterCallback,
 				featureBits));
 
 		m_bufferNameHashToIndexedBuffer.emplace(util::HashKey(bufferName), itr.get());

@@ -106,7 +106,7 @@ namespace gr
 		};
 
 		template<typename T>
-		static T CreateInstancedMaterialData(
+		static T GetInstancedMaterialData(
 			gr::Material::MaterialInstanceRenderData const&, IDType, gr::RenderDataManager const&);
 
 
@@ -180,7 +180,7 @@ namespace gr
 
 
 	template<typename T>
-	static T Material::CreateInstancedMaterialData(
+	static T Material::GetInstancedMaterialData(
 		gr::Material::MaterialInstanceRenderData const& materialInstanceData, IDType, gr::RenderDataManager const&)
 	{
 		SEAssert(sizeof(T) <= gr::Material::k_paramDataBlockByteSize, "Requested type is too large");

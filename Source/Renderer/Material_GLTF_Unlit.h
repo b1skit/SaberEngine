@@ -17,6 +17,8 @@ namespace gr
 			TextureSlotIdx_Count
 		};
 
+		static bool FilterRenderData(MaterialInstanceRenderData const*);
+
 	public:
 		Material_GLTF_Unlit(std::string const& name);
 
@@ -45,6 +47,13 @@ namespace gr
 		// GLTF Unlit properties:
 		glm::vec4 m_baseColorFactor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 	};
+
+
+	inline bool Material_GLTF_Unlit::FilterRenderData(MaterialInstanceRenderData const* renderData)
+	{
+		SEAssert(renderData, "Render data pointer is null");
+		return gr::Material::EffectIDToMaterialID(renderData->m_effectID) == gr::Material::GLTF_Unlit;
+	}
 
 
 	inline void Material_GLTF_Unlit::SetBaseColorFactor(glm::vec4 const& baseColorFactor)
