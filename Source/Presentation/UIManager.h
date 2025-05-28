@@ -63,6 +63,7 @@ namespace fr
 			EntityComponentDbg,
 			RenderMgrDbg,
 			RenderDataDbg,
+			IndexedBufferMgrDbg,
 			LightMgrDbg,
 			GPUCaptures,
 

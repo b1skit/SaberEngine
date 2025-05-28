@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
+#include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
@@ -1196,13 +1197,39 @@ namespace re
 	}
 
 
+	void RenderManager::ShowIndexedBufferManagerImGuiWindow(bool* showIBMDebug) const
+	{
+		if (!*showIBMDebug)
+		{
+			return;
+		}
+
+		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		constexpr float k_windowYOffset = 64.f;
+		constexpr float k_windowWidthPercentage = 0.25f;
+
+		ImGui::SetNextWindowSize(ImVec2(
+			windowWidth * k_windowWidthPercentage,
+			static_cast<float>(windowHeight) - k_windowYOffset),
+			ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
+
+		constexpr char const* k_panelTitle = "Indexed Buffer Manager Debug";
+		ImGui::Begin(k_panelTitle, showIBMDebug);
+
+		m_renderData.GetInstancingIndexedBufferManager().ShowImGuiWindow();
+
+		ImGui::End();		
+	}
+
+
 	void RenderManager::ShowLightManagerImGuiWindow(bool* showLightMgrDebug) const
 	{
 		if (!*showLightMgrDebug)
 		{
 			return;
 		}
-
 
 		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);

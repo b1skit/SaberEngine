@@ -89,7 +89,8 @@ namespace gr
 			re::Buffer::DefaultHeap);
 
 		indexedTransforms->AddLUTWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
-		indexedTransforms->AddLUTWriterCallback<InstancedBufferLUTData>(InstancedBufferLUTData::SetTransformIndex);
+		indexedTransforms->AddLUTWriterCallback<InstancedBufferLUTData>(
+			InstancedBufferLUTData::SetTransformIndex);
 
 		// Materials:
 		IndexedBufferManager::IIndexedBuffer* indexedUnlitMaterials = m_indexedBufferManager->AddIndexedBuffer(

@@ -66,6 +66,10 @@ namespace gr
 			virtual re::BufferInput GetBufferInput(gr::RenderDataManager const&, IDType, char const* shaderName) const = 0;
 
 			
+		public:
+			virtual void ShowImGuiWindow() const = 0;
+
+
 		private:
 			virtual IndexType GetIndex(gr::RenderDataManager const&, IDType) const = 0;
 
@@ -147,6 +151,10 @@ namespace gr
 
 			// Get a BufferInput for a single element within the managed array buffer:
 			re::BufferInput GetBufferInput(gr::RenderDataManager const&, IDType, char const* shaderName) const override;
+
+
+		public:
+			void ShowImGuiWindow() const override;
 
 
 		private:
@@ -231,6 +239,10 @@ namespace gr
 
 		template<typename RenderDataType>
 		std::shared_ptr<re::Buffer const> GetIndexedBuffer(char const* bufferName) const;
+
+
+	public:
+		void ShowImGuiWindow() const;
 
 
 	private:
@@ -678,6 +690,74 @@ namespace gr
 			return INVALID_RESOURCE_IDX;
 		}
 		return itr->second;
+	}
+
+
+	template<typename RenderDataType, typename BufferDataType>
+	void IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::ShowImGuiWindow() const
+	{
+		re::Buffer const* buffer = m_buffer.get();
+		if (buffer == nullptr)
+		{
+			buffer = m_dummyBuffer.get();
+		}
+		if (buffer == nullptr)
+		{
+			ImGui::Text("<Null buffer>");
+			return;
+		}
+
+		if (ImGui::CollapsingHeader(std::format("{}##{}", buffer->GetName(), buffer->GetUniqueID()).c_str()))
+		{
+			ImGui::Indent();
+
+			if (ImGui::CollapsingHeader(
+				std::format("{} registered RenderDataIDs##", m_idToBufferIdx.size(), buffer->GetUniqueID()).c_str()))
+			{
+				ImGui::Indent();
+
+				constexpr ImGuiTableFlags k_flags = 
+					ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+
+				constexpr int k_numCols = 2;
+				if (ImGui::BeginTable(
+					std::format("Registered RenderDataIDs##{}", buffer->GetUniqueID()).c_str(), k_numCols, k_flags))
+				{
+					// Headers:				
+					ImGui::TableSetupColumn("RenderObjectID");
+					ImGui::TableSetupColumn("Buffer index");
+
+					ImGui::TableHeadersRow();
+
+					for (auto const& entry : m_idToBufferIdx)
+					{
+						const IDType id = entry.first;
+						const IndexType index = entry.second;
+
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+
+						// RenderDataID (Ref. count)
+						ImGui::Text(std::format("{}", id).c_str());
+
+						ImGui::TableNextColumn();
+
+						ImGui::Text(std::format("{}", index).c_str());
+
+						ImGui::TableNextColumn();
+					}
+
+					ImGui::EndTable();
+				}
+				ImGui::Unindent();
+			}
+			ImGui::Text(std::format("{} remaining free indexes", m_freeIndexes.size()).c_str());
+			ImGui::Text(std::format("Buffer array size: {}", buffer->GetArraySize()).c_str());
+			ImGui::Text(std::format("Filter callback: {}", m_filterCallback ? "Enabled" : "Disabled").c_str());
+			ImGui::Text(std::format("Feature bits: {:#010b}", static_cast<uint32_t>(m_featureBits)).c_str());
+
+			ImGui::Unindent();
+		}
 	}
 
 

@@ -575,6 +575,7 @@ namespace fr
 						{
 							ImGui::MenuItem("Render Systems", "", &m_show[Show::RenderMgrDbg]);
 							ImGui::MenuItem("Render data debug", "", &m_show[Show::RenderDataDbg]);
+							ImGui::MenuItem("Indexed buffer debug", "", &m_show[Show::IndexedBufferMgrDbg]);
 							ImGui::MenuItem("Light manager debug", "", &m_show[Show::LightMgrDbg]);
 							ImGui::EndMenu();
 						}
@@ -671,12 +672,14 @@ namespace fr
 
 				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
 				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
+				re::RenderManager::Get()->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
 				re::RenderManager::Get()->ShowLightManagerImGuiWindow(&m_show[Show::LightMgrDbg]);
 				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
 				
 			};
 		if (m_show[Show::RenderMgrDbg] ||
 			m_show[Show::RenderDataDbg] ||
+			m_show[Show::IndexedBufferMgrDbg] ||
 			m_show[Show::LightMgrDbg] ||
 			m_show[Show::GPUCaptures])
 		{

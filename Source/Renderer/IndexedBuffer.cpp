@@ -84,4 +84,15 @@ namespace gr
 
 		SEEndCPUEvent();
 	}
+
+
+	void IndexedBufferManager::ShowImGuiWindow() const
+	{
+		ImGui::Text(std::format("Managing {} indexed buffers:", m_indexedBuffers.size()).c_str());
+
+		for (auto const& indexedBuffer : m_indexedBuffers)
+		{
+			indexedBuffer->ShowImGuiWindow();
+		}
+	}
 }

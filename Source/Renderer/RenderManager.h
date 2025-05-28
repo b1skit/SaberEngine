@@ -101,6 +101,7 @@ namespace re
 		void ShowRenderSystemsImGuiWindow(bool* showRenderMgrDebug);
 		void ShowGPUCapturesImGuiWindow(bool* show);
 		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
+		void ShowIndexedBufferManagerImGuiWindow(bool* showLightMgrDebug) const;
 		void ShowLightManagerImGuiWindow(bool* showLightMgrDebug) const;
 
 
