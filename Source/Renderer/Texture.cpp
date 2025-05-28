@@ -830,6 +830,9 @@ namespace re
 		ImGui::Text("Texture name: \"%s\"", tex->GetName().c_str());
 		ImGui::Text(std::format("Texture unique ID: {}", tex->GetUniqueID()).c_str());
 
+		ImGui::Text(std::format("SRV resource handle: {}", tex->m_srvResourceHandle).c_str());
+		ImGui::Text(std::format("UAV resource handle: {}", tex->m_uavResourceHandle).c_str());
+
 		static size_t s_selectedIdx = 2;
 		constexpr char const* k_scaleNames[] =
 		{
