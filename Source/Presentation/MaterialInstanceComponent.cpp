@@ -55,8 +55,10 @@ namespace fr
 	{
 		fr::MaterialInstanceComponent const& matCmpt = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
 
+		const uint64_t ptrToID = util::PtrToID(&matCmpt);
+
 		if (ImGui::CollapsingHeader(std::format("Material instance \"{}\"##{}", 
-			matCmpt.m_instanceData.m_materialName, util::PtrToID(&matCmpt)).c_str(), ImGuiTreeNodeFlags_None))
+			matCmpt.m_instanceData.m_materialName, ptrToID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
@@ -67,7 +69,7 @@ namespace fr
 			fr::MaterialInstanceComponent& matComponent = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
 			matComponent.m_isDirty |= gr::Material::ShowImGuiWindow(matComponent.m_instanceData);
 
-			if (ImGui::Button("Reset"))
+			if (ImGui::Button(std::format("Reset##{}", ptrToID).c_str()))
 			{
 				core::InvPtr<gr::Material> const& srcMaterial =
 					em.GetInventory()->Get<gr::Material>(matComponent.m_instanceData.m_materialName);
