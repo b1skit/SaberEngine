@@ -3,6 +3,7 @@
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
 #include "Effect.h"
+#include "RenderObjectIDs.h"
 #include "VertexStream.h"
 
 #include "Core/Assert.h"
@@ -96,6 +97,8 @@ namespace re
 	public:
 		struct Geometry
 		{
+			Geometry(gr::RenderDataID);
+
 			void SetVertexPositions(re::VertexBufferInput const& positions);
 			re::VertexBufferInput const& GetVertexPositions() const;
 
@@ -105,16 +108,16 @@ namespace re
 			void SetGeometryFlags(GeometryFlags geometryFlags);
 			GeometryFlags GetGeometryFlags() const;
 			
+			gr::RenderDataID GetRenderDataID() const;
+
 			void SetEffectID(EffectID effectID);
 			EffectID GetEffectID() const;
 			
 			void SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits);
 			effect::drawstyle::Bitmask GetDrawstyleBits() const;
 			
-
 			void RegisterResource(core::InvPtr<gr::VertexStream> const&);
 			void RegisterResource(re::VertexBufferInput const&);
-			
 
 			// Note: For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit
 			ResourceHandle GetResourceHandle(gr::VertexStream::Type, uint8_t setIdx = 0) const;
@@ -129,7 +132,7 @@ namespace re
 			// packed in the same order as the gr::VertexStream types are declared
 			struct VertexStreamMetadata
 			{
-				ResourceHandle m_resourceHandle = k_invalidResourceHandle;
+				ResourceHandle m_resourceHandle = INVALID_RESOURCE_IDX;
 				gr::VertexStream::Type m_streamType = gr::VertexStream::Type::Type_Count;
 				uint8_t m_setIndex = 0;
 			};
@@ -143,9 +146,15 @@ namespace re
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
+			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
+
 			// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
 			EffectID m_effectID;
 			effect::drawstyle::Bitmask m_drawstyleBits = 0;
+
+
+		private:
+			Geometry() = delete;
 		};
 
 
@@ -173,14 +182,14 @@ namespace re
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
 
 			ResourceHandle GetResourceHandle() const;
-			re::BufferInput const& GetBindlessResourceLUT() const;
+			re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
 
 		private: // Populated internally:
 			friend class AccelerationStructure;
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 
-			ResourceHandle m_srvTLASResourceHandle = k_invalidResourceHandle;
+			ResourceHandle m_srvTLASResourceHandle = INVALID_RESOURCE_IDX;
 		};
 
 
@@ -194,13 +203,8 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<AccelerationStructure> CreateBLAS(
-			char const* name,
-			std::unique_ptr<BLASParams>&& blasCreateParams);
-
-		static std::shared_ptr<AccelerationStructure> CreateTLAS(
-			char const* name,
-			std::unique_ptr<TLASParams>&& blasCreateParams);
+		static std::shared_ptr<AccelerationStructure> CreateBLAS(char const* name, std::unique_ptr<BLASParams>&&);
+		static std::shared_ptr<AccelerationStructure> CreateTLAS(char const* name, std::unique_ptr<TLASParams>&&);
 
 
 	public:
@@ -212,7 +216,6 @@ namespace re
 
 
 	public:
-		void Create();
 		void Destroy();
 
 		PlatObj* GetPlatformObject() const;
@@ -225,7 +228,7 @@ namespace re
 		Type GetType() const;
 
 		ResourceHandle GetResourceHandle() const;
-		re::BufferInput const& GetBindlessResourceLUT() const;
+		re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
 
 	private:
@@ -285,7 +288,7 @@ namespace re
 	}
 
 
-	inline re::BufferInput const& AccelerationStructure::GetBindlessResourceLUT() const
+	inline re::BufferInput const& AccelerationStructure::GetBindlessVertexStreamLUT() const
 	{
 		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
 
@@ -293,11 +296,17 @@ namespace re
 			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 
-		return tlasParams->GetBindlessResourceLUT();
+		return tlasParams->GetBindlessVertexStreamLUT();
 	}
 
 
 	// ---
+
+
+	inline AccelerationStructure::Geometry::Geometry(gr::RenderDataID renderDataID)
+		: m_renderDataID(renderDataID)
+	{
+	}
 
 
 	inline void AccelerationStructure::Geometry::SetVertexPositions(re::VertexBufferInput const& positions)
@@ -339,6 +348,13 @@ namespace re
 	inline AccelerationStructure::GeometryFlags AccelerationStructure::Geometry::GetGeometryFlags() const
 	{
 		return m_geometryFlags;
+	}
+
+
+	inline gr::RenderDataID AccelerationStructure::Geometry::GetRenderDataID() const
+	{
+		SEAssert(m_renderDataID != gr::k_invalidRenderDataID, "Invalid RenderDataID");
+		return m_renderDataID;
 	}
 
 

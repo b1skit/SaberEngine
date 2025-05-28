@@ -4,7 +4,6 @@
 
 #include "PlatformConversions.h"
 
-
 // gr::Material::MaterialID:
 #define MAT_ID_GLTF_Unlit 0
 #define MAT_ID_GLTF_PBRMetallicRoughness 1
@@ -24,8 +23,12 @@ struct PBRMetallicRoughnessData
 
 	float4 g_f0AlphaCutoff; // .xyz = f0 (non-metals only), .w = alpha cutoff
 
-	uint4 g_uvChannelIndexes0;	// UV channel index:  .xyzw = albedo, metallicRoughness, normal, occlusion
+	uint4 g_uvChannelIndexes0;	// UV channel index: .xyzw = baseColor, metallicRoughness, normal, occlusion
 	uint4 g_uvChannelIndexes1;	// UV channel index: .x = emissive, .y = MaterialID, .zw = unused
+
+	// DX12 only:
+	uint4 g_bindlessTextureIndexes0;	// .xyzw = BaseColor, MetallicRoughness, Normal, Occlusion
+	uint4 g_bindlessTextureIndexes1;	// .x = Emissive, .yzw = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
@@ -40,6 +43,9 @@ struct UnlitData
 	float4 g_baseColorFactor;
 	float4 g_alphaCutuff; // .x = alpha cutoff, .yzw = unused
 	uint4 g_uvChannelIndexes0;	// .x = base color (& alpha) uv index, .y = MaterialID, .zw = unused
+
+	// DX12 only:
+	uint4 g_bindlessTextureIndexes0;	// .x = BaseColor, .yzw = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "UnlitParams";

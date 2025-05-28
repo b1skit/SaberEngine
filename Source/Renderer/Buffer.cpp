@@ -71,8 +71,8 @@ namespace re
 		, m_dataByteSize(dataByteSize)
 		, m_bufferParams(bufferParams)
 		, m_platObj(nullptr)
-		, m_cbvResourceHandle(k_invalidResourceHandle)
-		, m_srvResourceHandle(k_invalidResourceHandle)
+		, m_cbvResourceHandle(INVALID_RESOURCE_IDX)
+		, m_srvResourceHandle(INVALID_RESOURCE_IDX)
 		, m_isCurrentlyMapped(false)
 	{
 		SEAssert(m_dataByteSize % bufferParams.m_arraySize == 0,
@@ -200,7 +200,7 @@ namespace re
 #endif
 
 		// Free bindless resource handles:
-		if (m_srvResourceHandle != k_invalidResourceHandle)
+		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm,
@@ -209,7 +209,7 @@ namespace re
 			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
-		if (m_cbvResourceHandle != k_invalidResourceHandle)
+		if (m_cbvResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm,

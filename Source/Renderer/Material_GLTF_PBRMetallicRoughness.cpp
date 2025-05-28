@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BufferView.h"
+#include "EnumTypes.h"
 #include "Material_GLTF_PBRMetallicRoughness.h"
 #include "Sampler.h"
 
@@ -31,14 +31,37 @@ namespace gr
 				m_alphaMode == Material::AlphaMode::Opaque ? 0.f : m_alphaCutoff),
 
 			.g_uvChannelIndexes0 = glm::uvec4(
-				m_texSlots[TextureSlotIdx::BaseColor].m_uvChannelIdx,
-				m_texSlots[TextureSlotIdx::MetallicRoughness].m_uvChannelIdx,
-				m_texSlots[TextureSlotIdx::Normal].m_uvChannelIdx,
-				m_texSlots[TextureSlotIdx::Occlusion].m_uvChannelIdx),
+				m_texSlots[BaseColor].m_uvChannelIdx,
+				m_texSlots[MetallicRoughness].m_uvChannelIdx,
+				m_texSlots[Normal].m_uvChannelIdx,
+				m_texSlots[Occlusion].m_uvChannelIdx),
 
 			.g_uvChannelIndexes1 = glm::uvec4(
 				m_texSlots[TextureSlotIdx::Emissive].m_uvChannelIdx,
 				m_materialID,
+				0,
+				0),
+
+			// DX12 only:
+			.g_bindlessTextureIndexes0 = glm::uvec4(
+				m_texSlots[BaseColor].m_texture ?
+					m_texSlots[BaseColor].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					: INVALID_RESOURCE_IDX,
+				m_texSlots[MetallicRoughness].m_texture?
+					m_texSlots[MetallicRoughness].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					: INVALID_RESOURCE_IDX,
+				m_texSlots[Normal].m_texture?
+					m_texSlots[Normal].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					: INVALID_RESOURCE_IDX,
+				m_texSlots[Occlusion].m_texture ?
+					m_texSlots[Occlusion].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					: INVALID_RESOURCE_IDX),
+
+			.g_bindlessTextureIndexes1 = glm::uvec4(
+				m_texSlots[Emissive].m_texture ? 
+					m_texSlots[Emissive].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					: INVALID_RESOURCE_IDX,
+				0,
 				0,
 				0),
 		};
@@ -124,7 +147,7 @@ namespace gr
 			isDirty |= ImGui::ColorEdit3(std::format("F0##{}", util::PtrToID(&instanceData)).c_str(), 
 				&matData->g_f0AlphaCutoff.r, ImGuiColorEditFlags_Float);
 
-			// gr::Material: This is a Material instance, so we're modifying the data that will be sent to our buffers
+			// gr::Material: This is a Material instance, so we're modifying the data that will be sent to our GPU buffers
 			{
 				// Alpha-blended materials render their shadows using alpha clipping, if enabled
 				const bool showAlphaCutoff = 

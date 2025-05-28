@@ -137,7 +137,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex); 
 			}
 
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
 			{
 				const uint8_t numFaces = re::Texture::GetNumFaces(m_texParams.m_dimension);
 				const uint32_t totalBytesPerFace = ComputeTotalBytesPerFace(m_texParams);
@@ -145,38 +145,18 @@ namespace re
 				SEAssert(m_initialDataBytes.size() == m_texParams.m_arraySize * numFaces * totalBytesPerFace,
 					"Invalid data size");
 
-				std::unique_ptr<re::Texture> newTexture(new re::Texture(m_texName.c_str(), m_texParams));
+				std::unique_ptr<re::Texture> tex(new re::Texture(m_texName.c_str(), m_texParams));
 
-				newTexture->m_initialData = std::make_unique<re::Texture::InitialDataVec>(
+				tex->m_initialData = std::make_unique<re::Texture::InitialDataVec>(
 					m_texParams.m_arraySize,
 					numFaces,
 					totalBytesPerFace,
 					std::move(m_initialDataBytes));
 
-				return newTexture;
-			}
+				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
 
-			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
-			{
-				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
-				{
-					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
-					if (brm) // May be null (e.g. API does not support bindless resources)
-					{
-						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
-						{
-							tex->m_srvResourceHandle = brm->RegisterResource(
-								std::make_unique<re::TextureResource>(tex, re::ViewType::SRV));
-						}
-						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
-						{
-							tex->m_uavResourceHandle = brm->RegisterResource(
-								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
-						}
-					}
-				}				
+				return tex;
 			}
-
 
 			std::string m_texName;
 			TextureParams m_texParams;
@@ -214,7 +194,7 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 			
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
 			{
 				std::unique_ptr<re::Texture::InitialDataVec> initialData = std::make_unique<re::Texture::InitialDataVec>(
 					m_texParams.m_arraySize,
@@ -224,27 +204,11 @@ namespace re
 
 				re::Texture::Fill(static_cast<re::Texture::IInitialData*>(initialData.get()), m_texParams, m_fillColor);
 
-				return std::unique_ptr<re::Texture>(new re::Texture(m_texName, m_texParams, std::move(initialData)));
-			}
+				std::unique_ptr<re::Texture> tex(new re::Texture(m_texName, m_texParams, std::move(initialData)));
 
-			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
-			{
-				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
-				{
-					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
-					if (brm)
-					{
-						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
-						{
-							tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(tex));
-						}
-						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
-						{
-							tex->m_uavResourceHandle = brm->RegisterResource(
-								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
-						}
-					}
-				}
+				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
+
+				return tex;
 			}
 
 			std::string m_texName;
@@ -279,29 +243,13 @@ namespace re
 				re::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 
-			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>&) override
+			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
 			{
-				return std::unique_ptr<re::Texture>(new re::Texture(m_idName, m_texParams));
-			}
+				std::unique_ptr<re::Texture> tex(new re::Texture(m_idName, m_texParams));
 
-			void OnLoadComplete(core::InvPtr<re::Texture>& tex) override
-			{
-				if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
-				{
-					re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
-					if (brm)
-					{
-						if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
-						{
-							tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(tex));
-						}
-						if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
-						{
-							tex->m_uavResourceHandle = brm->RegisterResource(
-								std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
-						}
-					}
-				}
+				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
+
+				return tex;
 			}
 
 			std::string m_idName;
@@ -329,6 +277,27 @@ namespace re
 	}
 
 
+	void Texture::RegisterBindlessResourceHandles(re::Texture* tex, core::InvPtr<re::Texture> const& loadingTexPtr)
+	{
+		if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
+		{
+			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			if (brm)
+			{
+				if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
+				{
+					tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(loadingTexPtr));
+				}
+				if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
+				{
+					tex->m_uavResourceHandle = brm->RegisterResource(
+						std::make_unique<re::TextureResource>(loadingTexPtr, re::ViewType::UAV));
+				}
+			}
+		}
+	}
+
+
 	Texture::Texture(std::string const& name, TextureParams const& params)
 		: Texture(name, params, std::vector<ImageDataUniquePtr>())
 	{
@@ -342,8 +311,8 @@ namespace re
 		, m_initialData(nullptr)
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
-		, m_srvResourceHandle(k_invalidResourceHandle)
-		, m_uavResourceHandle(k_invalidResourceHandle)
+		, m_srvResourceHandle(INVALID_RESOURCE_IDX)
+		, m_uavResourceHandle(INVALID_RESOURCE_IDX)
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -383,8 +352,8 @@ namespace re
 		, m_initialData(std::move(initialData))
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(ComputeNumSubresources(params))
-		, m_srvResourceHandle(k_invalidResourceHandle)
-		, m_uavResourceHandle(k_invalidResourceHandle)
+		, m_srvResourceHandle(INVALID_RESOURCE_IDX)
+		, m_uavResourceHandle(INVALID_RESOURCE_IDX)
 	{
 		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
 		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
@@ -421,7 +390,7 @@ namespace re
 
 		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 
-		if (m_srvResourceHandle != k_invalidResourceHandle)
+		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
@@ -429,7 +398,7 @@ namespace re
 			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
-		if (m_uavResourceHandle != k_invalidResourceHandle)
+		if (m_uavResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");

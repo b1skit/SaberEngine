@@ -12,6 +12,7 @@
 #include "RenderManager_DX12.h"
 #include "RootConstants.h"
 #include "RootSignature_DX12.h"
+#include "ShaderBindingTable.h"
 #include "ShaderBindingTable_DX12.h"
 #include "SysInfo_DX12.h"
 #include "Texture.h"

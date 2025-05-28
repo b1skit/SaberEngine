@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
+#include "AccelerationStructure_Platform.h"
 #include "Batch.h"
 #include "Context_DX12.h"
 #include "RenderManager_DX12.h"
@@ -223,7 +224,7 @@ namespace dx12
 					}
 					for (auto& accelStructure : renderManager.m_newAccelerationStructures.GetReadData())
 					{
-						accelStructure->Create();
+						platform::AccelerationStructure::Create(*accelStructure);
 					}
 					if (!singleThreaded)
 					{

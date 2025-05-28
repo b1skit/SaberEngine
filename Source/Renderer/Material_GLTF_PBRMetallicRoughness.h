@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Buffer.h"
 #include "Material.h"
 #include "Texture.h"
 
@@ -14,11 +13,6 @@ namespace
 
 	template<typename T>
 	struct DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness;
-}
-
-namespace re
-{
-	class BufferInput;
 }
 
 namespace gr

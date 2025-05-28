@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "Material_GLTF_Unlit.h"
+#include "EnumTypes.h"
 
 #include "Core/Util/ImGuiUtils.h"
 
@@ -17,70 +18,17 @@ namespace gr
 		m_isDoubleSided = false;
 		m_isShadowCaster = false; // Assume no shadows
 
-		m_texSlots.resize(1);
+		m_texSlots.resize(TextureSlotIdx_Count);
 
 		core::InvPtr<re::Sampler> const& clampPointSampler = re::Sampler::GetSampler("ClampMinMagMipPoint");
 
-		m_texSlots[0] = { nullptr, clampPointSampler, "BaseColorTex", 0 };
+		m_texSlots[BaseColor] = { nullptr, clampPointSampler, "BaseColorTex", 0 };
 	}
 
 
 	void Material_GLTF_Unlit::Destroy()
 	{
 		m_baseColorFactor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	}
-
-
-	re::BufferInput Material_GLTF_Unlit::CreateInstancedBuffer(
-		re::Buffer::StagingPool stagingPool,
-		std::vector<MaterialInstanceRenderData const*> const& instanceData)
-	{
-		const uint32_t numInstances = util::CheckedCast<uint32_t>(instanceData.size());
-
-		std::vector<UnlitData> instancedMaterialData;
-		instancedMaterialData.reserve(numInstances);
-
-		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
-		{
-			SEAssert(instanceData[matIdx]->m_effectID == EffectID("GLTF_PBRMetallicRoughness"),
-				"Incorrect material EffectID found. All instanceData entries must have the same type");
-
-			UnlitData& instancedEntry = instancedMaterialData.emplace_back();
-
-			memcpy(&instancedEntry,
-				&instanceData[matIdx]->m_materialParamData,
-				sizeof(UnlitData));
-		}
-
-		// Note: Material Buffer names are used to associate Effects with Buffers when building batches
-		char const* bufferName = gr::Material::k_materialNames[gr::Material::MaterialID::GLTF_Unlit];
-
-		return re::BufferInput(
-			UnlitData::s_shaderName,
-			re::Buffer::CreateArray(
-				bufferName,
-				instancedMaterialData.data(),
-				re::Buffer::BufferParams{
-					.m_stagingPool = stagingPool,
-					.m_memPoolPreference = re::Buffer::UploadHeap,
-					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
-					.m_usageMask = re::Buffer::Structured,
-					.m_arraySize = numInstances,
-				}));
-	}
-
-
-	void Material_GLTF_Unlit::CommitMaterialInstanceData(
-		re::Buffer* buffer, MaterialInstanceRenderData const* instanceData, uint32_t baseOffset)
-	{
-		SEAssert(instanceData->m_effectID == EffectID("GLTF_Unlit"),
-			"Incorrect material EffectID found. All instanceData entries must have the same type");
-
-		// We commit single elements for now as we need to access each element's material param data. This isn't ideal,
-		// but it avoids copying the data into a temporary location and materials are typically updated infrequently
-		UnlitData const* matData = reinterpret_cast<UnlitData const*>(instanceData->m_materialParamData.data());
-
-		buffer->Commit(matData, baseOffset, 1);
 	}
 
 
@@ -103,8 +51,13 @@ namespace gr
 				0,
 				0),
 			.g_uvChannelIndexes0 = glm::uvec4(
-				m_texSlots[0].m_uvChannelIdx,
+				m_texSlots[BaseColor].m_uvChannelIdx,
 				m_materialID,
+				0,
+				0),
+			.g_bindlessTextureIndexes0 = glm::uvec4(
+				m_texSlots[BaseColor].m_texture->GetBindlessResourceHandle(re::ViewType::SRV),
+				0,
 				0,
 				0),
 		};

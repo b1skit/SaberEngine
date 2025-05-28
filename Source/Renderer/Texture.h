@@ -8,6 +8,8 @@
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "Shaders/Common/ResourceCommon.h"
+
 
 namespace load
 {
@@ -278,6 +280,9 @@ namespace re
 		friend struct load::TextureFromFilePath<re::Texture>;
 		friend struct TextureFromCGLTF<re::Texture>;
 
+		// Load context helper:
+		static void RegisterBindlessResourceHandles(re::Texture* tex, core::InvPtr<re::Texture> const& loadingTexPtr);
+
 		explicit Texture(std::string const& name, TextureParams const& params);
 		explicit Texture(std::string const& name, TextureParams const& params, std::vector<ImageDataUniquePtr>&&);
 		explicit Texture(std::string const& name, TextureParams const& params, std::unique_ptr<InitialDataVec>&&);
@@ -383,7 +388,7 @@ namespace re
 		case re::ViewType::CBV:
 		default: SEAssertF("Invalid view type");
 		}
-		return k_invalidResourceHandle; // This should never happen
+		return INVALID_RESOURCE_IDX; // This should never happen
 	}
 
 

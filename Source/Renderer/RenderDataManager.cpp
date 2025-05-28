@@ -16,6 +16,7 @@
 #include "Shaders/Common/InstancingParams.h"
 #include "Shaders/Common/LightParams.h"
 #include "Shaders/Common/MaterialParams.h"
+#include "Shaders/Common/RayTracingParams.h"
 #include "Shaders/Common/ShadowParams.h"
 #include "Shaders/Common/TransformParams.h"
 
@@ -87,16 +88,10 @@ namespace gr
 			re::Buffer::DefaultHeap);
 
 		indexedTransforms->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetTransformIndex);
+		indexedTransforms->AddLUTDataWriterCallback<InstancedBufferLUTData>(
+			InstancedBufferLUTData::SetTransformIndex);
 
 		// Materials:
-		IndexedBufferManager::IIndexedBuffer* indexedPBRMetRoughMaterials = m_indexedBufferManager->AddIndexedBuffer(
-			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
-			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
-			re::Buffer::DefaultHeap,
-			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
-
-		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
-
 		IndexedBufferManager::IIndexedBuffer* indexedUnlitMaterials = m_indexedBufferManager->AddIndexedBuffer(
 			UnlitData::s_shaderName, // Buffer name (not the shader name)
 			gr::Material::CreateInstancedMaterialData<UnlitData>,
@@ -104,6 +99,18 @@ namespace gr
 			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
 
 		indexedUnlitMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+		indexedUnlitMaterials->AddLUTDataWriterCallback<InstancedBufferLUTData>(
+			InstancedBufferLUTData::SetMaterialIndex_Unlit);
+
+		IndexedBufferManager::IIndexedBuffer* indexedPBRMetRoughMaterials = m_indexedBufferManager->AddIndexedBuffer(
+			PBRMetallicRoughnessData::s_shaderName, // Buffer name (not the shader name)
+			gr::Material::CreateInstancedMaterialData<PBRMetallicRoughnessData>,
+			re::Buffer::DefaultHeap,
+			gr::RenderObjectFeature::IsMeshPrimitiveConcept);
+
+		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstanceIndexData>(InstanceIndexData::SetMaterialIndex);
+		indexedPBRMetRoughMaterials->AddLUTDataWriterCallback<InstancedBufferLUTData>(
+			InstancedBufferLUTData::SetMaterialIndex_PBRMetallicRoughness);
 
 
 		// Lights:

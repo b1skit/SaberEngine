@@ -1,20 +1,28 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "EffectDB.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"
 #include "GraphicsSystemManager.h"
+#include "IndexedBuffer.h"
+#include "RenderManager.h"
+#include "RenderObjectIDs.h"
 #include "ShaderBindingTable.h"
+
+#include "TransformRenderData.h"
 
 #include "Core/Config.h"
 
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Shaders/Common/RayTracingParams.h"
+#include "Shaders/Common/ResourceCommon.h"
+#include "Shaders/Common/TransformParams.h"
 
 
 namespace
 {
 	std::shared_ptr<re::Buffer> CreateTraceRayParams(
-		uint8_t instanceInclusionMask, RayFlag rayFlags, uint32_t missShaderIdx, ResourceHandle cameraParamsHandle)
+		uint8_t instanceInclusionMask, RayFlag rayFlags, uint32_t missShaderIdx)
 	{
 		SEAssert(instanceInclusionMask <= 0xFF, "Instance inclusion mask has maximum 8 bits");
 
@@ -24,9 +32,9 @@ namespace
 				0,												// RayContributionToHitGroupIndex
 				0,												// MultiplierForGeometryContributionToHitGroupIndex
 				missShaderIdx),									// MissShaderIndex
-			.g_rayFlagsCameraIdx = glm::uvec4(
+			.g_rayFlags = glm::uvec4(
 				rayFlags,
-				cameraParamsHandle,
+				0,
 				0,
 				0),
 		};
@@ -40,6 +48,98 @@ namespace
 		};
 
 		return re::Buffer::Create("Trace Ray Params", traceRayData, traceRayBufferParams);
+	}
+
+
+	std::shared_ptr<re::Buffer> CreateDescriptorIndexesBuffer(
+		ResourceHandle vertexStreamLUTsDescriptorIdx, 
+		ResourceHandle instancedBufferLUTsDescriptorIdx,
+		ResourceHandle cameraParamsDescriptorIdx,
+		ResourceHandle targetUAVDescriptorIdx)
+	{
+		SEAssert(vertexStreamLUTsDescriptorIdx != INVALID_RESOURCE_IDX &&
+			instancedBufferLUTsDescriptorIdx != INVALID_RESOURCE_IDX &&
+			cameraParamsDescriptorIdx != INVALID_RESOURCE_IDX &&
+			targetUAVDescriptorIdx != INVALID_RESOURCE_IDX,
+			"Descriptor index is invalid. This is unexpected");
+
+		// .x = VertexStreamLUTs, .y = InstancedBufferLUTs, .z = CameraParams, .w = output Texture2DRWFloat4 idx
+		const DescriptorIndexData descriptorIndexData{
+			.g_descriptorIndexes = glm::uvec4(
+				vertexStreamLUTsDescriptorIdx,		// VertexStreamLUTs[]
+				instancedBufferLUTsDescriptorIdx,	// InstancedBufferLUTs[]
+				cameraParamsDescriptorIdx,			// CameraParams[]
+				targetUAVDescriptorIdx),			// Texture2DRWFloat4[]
+		};
+
+		const re::Buffer::BufferParams descriptorIndexParams{
+			.m_lifetime = re::Lifetime::SingleFrame,
+			.m_stagingPool = re::Buffer::StagingPool::Temporary,
+			.m_memPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap,
+			.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
+			.m_usageMask = re::Buffer::Usage::Constant,
+		};
+
+		return re::Buffer::Create("Descriptor Indexes", descriptorIndexData, descriptorIndexParams);
+	}
+
+
+	re::BufferInput GetIndexedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
+	{
+		SEAssert(tlas, "Pointer is null");
+
+		re::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
+
+		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+
+		std::shared_ptr<re::Buffer const> transformBuffer = 
+			ibm.GetIndexedBuffer<gr::Transform::RenderData>(TransformData::s_shaderName);
+		
+		std::shared_ptr<re::Buffer const> unlitMaterialBuffer =
+			ibm.GetIndexedBuffer<gr::Material::MaterialInstanceRenderData>(UnlitData::s_shaderName);
+
+		std::shared_ptr<re::Buffer const> pbrMetRoughMaterialBuffer =
+			ibm.GetIndexedBuffer<gr::Material::MaterialInstanceRenderData>(PBRMetallicRoughnessData::s_shaderName);
+
+		const ResourceHandle transformBufferHandle = transformBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
+		const ResourceHandle unlitMaterialBufferHandle = unlitMaterialBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
+		const ResourceHandle pbrMetRoughMaterialBufferHandle = pbrMetRoughMaterialBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
+
+		std::vector<gr::RenderDataID> blasIDs;
+		std::vector<InstancedBufferLUTData> initialLUTData;
+		for (auto const& blas : tlasParams->m_blasInstances)
+		{
+			re::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+
+			for (auto const& geometry : blasParams->m_geometry)
+			{
+				blasIDs.emplace_back(geometry.GetRenderDataID());
+		
+				effect::Effect const* geoEffect = effectDB.GetEffect(geometry.GetEffectID());
+				ResourceHandle materialResourceHandle = INVALID_RESOURCE_IDX;
+				if (geoEffect->UsesBuffer(PBRMetallicRoughnessData::s_shaderName))
+				{
+					materialResourceHandle = pbrMetRoughMaterialBufferHandle;
+				}
+				else if (geoEffect->UsesBuffer(UnlitData::s_shaderName))
+				{
+					materialResourceHandle = unlitMaterialBufferHandle;
+				}
+				SEAssert(materialResourceHandle != INVALID_RESOURCE_IDX, "Failed to find a material resource handle");
+				
+				SEAssert(effectDB.GetEffect(geometry.GetEffectID())->UsesBuffer(TransformData::s_shaderName),
+					"Effect does not use TransformData. This is unexpected");
+
+				initialLUTData.emplace_back(InstancedBufferLUTData{
+					.g_materialIndexes = glm::uvec4(materialResourceHandle, 0, 0, 0),
+					.g_transformIndexes = glm::uvec4(transformBufferHandle, 0, 0, 0),
+				});
+			}
+		}
+		return ibm.GetLUTBufferInput<InstancedBufferLUTData>(
+			InstancedBufferLUTData::s_shaderName, std::move(initialLUTData), blasIDs);
 	}
 }
 
@@ -147,33 +247,47 @@ namespace gr
 				1u);
 			rtParams.m_rayGenShaderIdx = m_rayGenIdx;
 
-			m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
+			re::Batch* rtBatch = m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
+
+			// Attach indexed buffer LUT to the batch:
+			re::BufferInput const& indexedBufferLUT = GetIndexedBufferLUTBufferInput(
+				(*m_sceneTLAS).get(),
+				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());
+
+			rtBatch->SetBuffer(indexedBufferLUT);
+
+			// Descriptor indexes buffer:
+			std::shared_ptr<re::Buffer> descriptorIndexes = CreateDescriptorIndexesBuffer(
+				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
+				indexedBufferLUT.GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
+				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetBindlessResourceHandle(re::ViewType::CBV),
+				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV));
+
+			rtBatch->SetBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);
 
 			// Ray tracing params:
-			std::shared_ptr<re::Buffer> traceRayParams = CreateTraceRayParams(
+			std::shared_ptr<re::Buffer> const& traceRayParams = CreateTraceRayParams(
 				m_geometryInstanceMask,
 				RayFlag::None,
-				m_missShaderIdx,
-				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetBindlessResourceHandle(re::ViewType::CBV));
+				m_missShaderIdx);
 
 			// Note: We currently only set our TraceRayParams buffer on the m_rtStage to maintain its lifetime; RT uses
 			// bindless resources so the buffer is not directly bound
 			m_rtStage->AddSingleFrameBuffer(re::BufferInput("TraceRayParams", traceRayParams));
 
-			SEAssert((*m_sceneTLAS)->GetBindlessResourceLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV) != k_invalidResourceHandle &&
-				(*m_sceneTLAS)->GetResourceHandle() != k_invalidResourceHandle &&
-				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV) != k_invalidResourceHandle &&
-				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV) != k_invalidResourceHandle,
+			SEAssert((*m_sceneTLAS)->GetResourceHandle() != INVALID_RESOURCE_IDX &&
+				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
+				descriptorIndexes->GetBindlessResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
 				"Invalid resource handle detected");
 
 			// Set root constants for the frame:
 			glm::uvec4 rootConstants(
-				(*m_sceneTLAS)->GetBindlessResourceLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
-				(*m_sceneTLAS)->GetResourceHandle(),
-				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV),
-				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV));
+				(*m_sceneTLAS)->GetResourceHandle(),								// SceneBVH[]
+				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
+				descriptorIndexes->GetBindlessResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
+				0);																	// unused
 			
-			m_rtStage->SetRootConstant("GlobalConstants", &rootConstants, re::DataType::UInt4);		
+			m_rtStage->SetRootConstant("GlobalConstants", &rootConstants, re::DataType::UInt4);
 		}
 		else
 		{

@@ -355,7 +355,7 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back();
+					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back(meshPrimID);
 
 					gr::MeshPrimitive::RenderData::RegisterGeometryResources(meshPrimRenderData, instance);
 
@@ -441,7 +441,7 @@ namespace gr
 		}
 
 
-		// Rebuild the scene TLAS if necessary
+		// Rebuild the scene TLAS if necessary (i.e. if anything was modified or animated)
 		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			// Schedule a single-frame stage to create/update the TLAS on the GPU:

@@ -207,7 +207,7 @@ namespace gr
 		util::HashKey dataHash,
 		re::Buffer::UsageMask extraUsageBits)
 		: m_streamDesc(streamDesc)
-		, m_srvResourceHandle(k_invalidResourceHandle)
+		, m_srvResourceHandle(INVALID_RESOURCE_IDX)
 	{
 		SEAssert(m_streamDesc.m_type != Type::Type_Count && m_streamDesc.m_dataType != re::DataType::DataType_Count,
 			"Invalid create params");
@@ -274,7 +274,7 @@ namespace gr
 		m_streamBuffer = nullptr;
 		m_deferredBufferCreateParams = nullptr;
 
-		if (m_srvResourceHandle != k_invalidResourceHandle)
+		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");

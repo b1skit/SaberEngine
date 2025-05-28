@@ -22,6 +22,7 @@
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/FileIOUtils.h"
 
+#include "Renderer/BindlessResource.h"
 #include "Renderer/Material_GLTF_PBRMetallicRoughness.h"
 #include "Renderer/Material_GLTF_Unlit.h"
 #include "Renderer/RenderManager.h"
@@ -584,11 +585,14 @@ namespace
 			LOG(std::format("Creating texture \"{}\" from GLTF", m_texName).c_str());
 		}
 
-		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& newTex) override
+		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
 		{
+			re::RenderManager::Get()->RegisterForCreate(loadingTexPtr);
+
 			re::Texture::TextureParams texParams{};
 			std::vector<re::Texture::ImageDataUniquePtr> imageData;
 
+			std::unique_ptr<re::Texture> tex;
 			bool loadSuccess = false;
 			if (m_srcTexture && m_srcTexture->image)
 			{
@@ -671,17 +675,21 @@ namespace
 				// Initialize with the error color:
 				re::Texture::Fill(static_cast<re::Texture::IInitialData*>(errorData.get()), texParams, m_colorFallback);
 
-				re::RenderManager::Get()->RegisterForCreate(newTex);
-				return std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(errorData)));
+				tex = std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(errorData)));
+				loadSuccess = true; // We create the error texture as instructed
 			}
 
 			SEAssert(loadSuccess, "Failed to load texture: Does the asset exist?");
 
-			// Finally, register for creation before waiting threads are unblocked
-			re::RenderManager::Get()->RegisterForCreate(newTex);
-			return std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(imageData)));
-		}
+			if (!tex)
+			{
+				tex = std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(imageData)));
+			}
 
+			re::Texture::RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
+
+			return std::move(tex);
+		}
 
 		std::string m_texName;
 

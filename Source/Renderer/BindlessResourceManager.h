@@ -6,7 +6,6 @@
 
 
 using ResourceHandle = uint32_t;	// Array index into overlapped unbounded descriptor arrays
-static constexpr ResourceHandle k_invalidResourceHandle = std::numeric_limits<ResourceHandle>::max();
 
 namespace re
 {

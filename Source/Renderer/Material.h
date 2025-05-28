@@ -71,7 +71,7 @@ namespace gr
 	public:
 		static constexpr uint8_t k_numTexInputs = 8;
 		static constexpr size_t k_shaderSamplerNameLength = 64; // Arbitrary: Includes null terminator
-		static constexpr size_t k_paramDataBlockByteSize = 96; // Arbitrary: Max current material size
+		static constexpr size_t k_paramDataBlockByteSize = 128; // Arbitrary: Max current material size
 
 		// Material render data:
 		struct MaterialInstanceRenderData

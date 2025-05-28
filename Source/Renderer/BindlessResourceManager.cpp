@@ -99,7 +99,7 @@ namespace re
 				.m_resourceHandle = resourceIdx,
 			});
 
-			resourceIdx = k_invalidResourceHandle;
+			resourceIdx = INVALID_RESOURCE_IDX;
 		}
 	}
 

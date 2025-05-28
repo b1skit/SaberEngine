@@ -133,10 +133,10 @@
     <ClInclude Include="Shaders\Common\RayTracingParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Shaders\Common\BindlessResourceParams.h">
+    <ClInclude Include="Shaders\Common\TransformParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Shaders\Common\TransformParams.h">
+    <ClInclude Include="Shaders\Common\ResourceCommon.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
   </ItemGroup>

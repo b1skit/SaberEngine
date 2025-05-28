@@ -7,6 +7,8 @@
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "Shaders/Common/ResourceCommon.h"
+
 
 namespace re
 {
@@ -447,6 +449,6 @@ namespace re
 		case re::ViewType::UAV:
 		default: SEAssertF("Invalid view type");
 		}
-		return k_invalidResourceHandle; // This should never happen
+		return INVALID_RESOURCE_IDX; // This should never happen
 	}
 }

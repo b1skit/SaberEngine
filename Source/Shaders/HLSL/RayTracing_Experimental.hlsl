@@ -2,41 +2,107 @@
 #include "BindlessResources.hlsli"
 #include "RayTracingCommon.hlsli"
 
+#include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
+#include "../Common/ResourceCommon.h"
 
 
-RaytracingAccelerationStructure SceneBVH[] : register(t0, space0); // TLAS
 
-ConstantBuffer<TraceRayData> TraceRayParams[] : register(b0, space1);
 
 struct GlobalConstantsData
 {
-	uint4 g_indexes; // .x = BindlessLUT idx, .y = SceneBVH idx, .z = Texture_RW2D idx, .w = TraceRayParams idx
+	// .x = SceneBVH idx, .y = TraceRayParams idx, .z = DescriptorIndexes, .w = unused
+	uint4 g_indexes; 
 };
-ConstantBuffer<GlobalConstantsData> GlobalConstants : register(b0, space2);
+ConstantBuffer<GlobalConstantsData> GlobalConstants : register(b0, space0);
 
 
 [shader("closesthit")]
 void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
 {
+#define TEST_VERTEX_STREAMS
+//#define TEST_MATERIALS
+	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
-
+	
 	uint vertId = 3 * PrimitiveIndex();
 	
-	// Get our BindlessLUT buffer:
-	const uint lutDescriptorIdx = GlobalConstants.g_indexes.x;
-	const StructuredBuffer<BindlessLUTData> bindlessLUT = BindlessLUT[lutDescriptorIdx];
+	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
+	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	// Get our Vertex stream LUTs buffer:
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
+	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];	
 	
 	// Fetch our bindless resources:
-	const uint lutIdx = InstanceID() + GeometryIndex();
+	const uint geoIdx = InstanceID() + GeometryIndex();
 		
-	const uint colorStreamIdx = bindlessLUT[lutIdx].g_UV1ColorIndex.y;
-	
-	const StructuredBuffer<float4> colorStream = VertexStreams_Float4[colorStreamIdx];
-
-	const uint3 vertexIndexes = GetVertexIndexes(lutDescriptorIdx, lutIdx, vertId);
+	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx, vertId);
 	
 	float3 colorOut = float3(0, 0, 0);
+	
+#if defined(TEST_MATERIALS)
+	
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
+	const StructuredBuffer<InstancedBufferLUTData> instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx];
+	
+	const uint materialResourceIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.x;
+	const uint materialBufferIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.y;
+	const uint materialType = instancedBuffersLUT[geoIdx].g_materialIndexes.z;
+	
+	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
+	uint baseColorUVStreamResourceIdx = INVALID_RESOURCE_IDX;
+	
+	uint baseColorUVChannel = 0;
+	switch (materialType)
+	{
+	case MAT_ID_GLTF_Unlit:
+	{
+		const StructuredBuffer<UnlitData> materialData = UnlitParams[materialResourceIdx];
+		baseColorResourceIdx = materialData[0].g_bindlessTextureIndexes0.x;
+			
+		baseColorUVChannel = materialData[0].g_uvChannelIndexes0.x;
+	}
+	break;
+	case MAT_ID_GLTF_PBRMetallicRoughness:
+	{
+		const StructuredBuffer<PBRMetallicRoughnessData> materialData = PBRMetallicRoughnessParams[materialResourceIdx];
+		baseColorResourceIdx = materialData[0].g_bindlessTextureIndexes0.x;
+			
+		baseColorUVChannel = materialData[0].g_uvChannelIndexes0.x;
+	}
+	break;
+	}
+	
+	// UVs:
+	baseColorUVStreamResourceIdx = baseColorUVChannel == 0 ? 
+		vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w : vertexStreamLUT[geoIdx].g_UV1ColorIndex.x;
+	
+	const StructuredBuffer<float2> uvStream = VertexStreams_Float2[baseColorUVStreamResourceIdx];
+	
+	const float2 uv =
+		uvStream[vertexIndexes.x].xy * barycentrics.x +
+		uvStream[vertexIndexes.y].xy * barycentrics.y +
+		uvStream[vertexIndexes.z].xy * barycentrics.z;
+	
+	if (baseColorResourceIdx != INVALID_RESOURCE_IDX)
+	{
+		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
+	
+		uint3 baseColorDimensions;
+		baseColorTex.GetDimensions(0, baseColorDimensions.x, baseColorDimensions.y, baseColorDimensions.z);
+	
+		// Convert the UVs to pixel coordinates:
+		const uint3 baseColorCoords = uint3(baseColorDimensions.xy * uv, 0);
+	
+		colorOut = baseColorTex.Load(baseColorCoords).rgb;
+	}
+	
+	
+#elif defined(TEST_VERTEX_STREAMS)
+	const uint colorStreamIdx = vertexStreamLUT[geoIdx].g_UV1ColorIndex.y;
+	const StructuredBuffer<float4> colorStream = VertexStreams_Float4[colorStreamIdx];
+
 	
 #if defined(OPAQUE_SINGLE_SIDED)
 	// Interpolate the vertex color:
@@ -54,7 +120,9 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	colorOut = float3(1,1,0);
 #elif defined(BLEND_DOUBLE_SIDED)
 	colorOut = float3(1,1,1);
-#endif
+#endif // OPAQUE_SINGLE_SIDED
+
+#endif // TEST_VERTEX_STREAMS
 	
 	payload.colorAndDistance = float4(colorOut, RayTCurrent());
 }
@@ -106,10 +174,15 @@ void RayGeneration_Experimental()
 	// Perspective
 	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
-	const uint traceRayParamsIdx = GlobalConstants.g_indexes.w;
+	const uint sceneBVHDescriptorIdx = GlobalConstants.g_indexes.x;
+	const uint traceRayParamsIdx = GlobalConstants.g_indexes.y;
+	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
+	
 	const TraceRayData traceRayParams = TraceRayParams[traceRayParamsIdx];
 	
-	const uint cameraParamsIdx = traceRayParams.g_rayFlagsCameraIdx.y;
+	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
 	
 	ray.Origin = mul(cameraParams.g_invView, float4(0, 0, 0, 1)).xyz;
@@ -119,9 +192,6 @@ void RayGeneration_Experimental()
 	ray.TMin = 0;
 	ray.TMax = 100000;
 	
-	const uint sceneBVHDescriptorIdx = GlobalConstants.g_indexes.y;
-	
-
 	// Trace the ray
 	TraceRay(
 		// Parameter name: AccelerationStructure
@@ -131,7 +201,7 @@ void RayGeneration_Experimental()
 		// Parameter name: RayFlags
 		// Flags can be used to specify the behavior upon hitting a surface
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/ray_flag
-		traceRayParams.g_rayFlagsCameraIdx.x,
+		traceRayParams.g_rayFlags.x,
 
 		// Parameter name: InstanceInclusionMask
 		// Instance inclusion mask, which can be used to mask out some geometry to
@@ -176,9 +246,8 @@ void RayGeneration_Experimental()
 		// between the hit/miss shaders and the raygen
 		payload);
 	
-	
-	const uint gOutputDescriptorIdx = GlobalConstants.g_indexes.z;
-	RWTexture2D<float4> outputTex = Texture_RW2D[gOutputDescriptorIdx];
+	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
+	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
 #if defined(RAY_GEN_A)
 	outputTex[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);

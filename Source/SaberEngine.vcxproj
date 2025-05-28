@@ -209,7 +209,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shaders\Common\AnimationParams.h" />
-    <ClInclude Include="Shaders\Common\BindlessResourceParams.h" />
     <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
     <ClInclude Include="Shaders\Common\CameraParams.h" />
     <ClInclude Include="Shaders\Common\DebugParams.h" />
@@ -220,6 +219,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
     <ClInclude Include="Shaders\Common\PlatformConversions.h" />
     <ClInclude Include="Shaders\Common\RayTracingParams.h" />
+    <ClInclude Include="Shaders\Common\ResourceCommon.h" />
     <ClInclude Include="Shaders\Common\ShadowParams.h" />
     <ClInclude Include="Shaders\Common\SkyboxParams.h" />
     <ClInclude Include="Shaders\Common\TargetParams.h" />

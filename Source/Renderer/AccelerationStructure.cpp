@@ -12,7 +12,7 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include "Shaders/Common/BindlessResourceParams.h"
+#include "Shaders/Common/RayTracingParams.h"
 
 
 
@@ -35,7 +35,7 @@ namespace
 
 	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
 	{
-		std::vector<BindlessLUTData> bindlessLUTData;
+		std::vector<VertexStreamLUTData> bindlessLUTData;
 		bindlessLUTData.reserve(GetTotalGeometryCount(blasInstances));
 
 		for (auto const& instance : blasInstances)
@@ -46,8 +46,8 @@ namespace
 
 			for (auto const& geometry : blasParams->m_geometry)
 			{
-				bindlessLUTData.emplace_back(BindlessLUTData{
-					.g_posNmlTanUV0 = glm::uvec4(
+				bindlessLUTData.emplace_back(VertexStreamLUTData{
+					.g_posNmlTanUV0Index = glm::uvec4(
 						geometry.GetResourceHandle(gr::VertexStream::Position),
 						geometry.GetResourceHandle(gr::VertexStream::Normal),
 						geometry.GetResourceHandle(gr::VertexStream::Tangent),
@@ -59,13 +59,13 @@ namespace
 						geometry.GetResourceHandle(gr::VertexStream::Index, 0), // 16 bit
 						geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
 					),
-					});
+				});
 			}
 		}
-		SEStaticAssert(sizeof(BindlessLUTData) == 32, "BindlessLUTData size has changed: This must be updated");
+		SEStaticAssert(sizeof(VertexStreamLUTData) == 32, "VertexStreamLUTData size has changed: This must be updated");
 
 		return re::BufferInput(
-			BindlessLUTData::s_shaderName,
+			VertexStreamLUTData::s_shaderName,
 			re::Buffer::CreateArray(
 				"TLAS Bindless LUT",
 				bindlessLUTData.data(),
@@ -77,7 +77,6 @@ namespace
 					.m_usageMask = re::Buffer::Usage::Structured,
 					.m_arraySize = util::CheckedCast<uint32_t>(bindlessLUTData.size()),
 				}));
-
 	}
 }
 
@@ -200,7 +199,7 @@ namespace re
 				// Searched all contiguously-packed elements and couldn't find a stream with the given type:
 				if (m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count)
 				{
-					return k_invalidResourceHandle;
+					return INVALID_RESOURCE_IDX;
 				}
 
 				if (m_vertexStreamMetadata[i].m_streamType == streamType)
@@ -219,7 +218,7 @@ namespace re
 		}		
 
 		// Searched all elements in a full array and couldn't find a stream with the given type:
-		return k_invalidResourceHandle;
+		return INVALID_RESOURCE_IDX;
 	}
 
 
@@ -252,11 +251,8 @@ namespace re
 		SEAssert(tlasParams, "Invalid TLASParams");
 
 		std::shared_ptr<AccelerationStructure> newAccelerationStructure;
-		newAccelerationStructure.reset(
-			new AccelerationStructure(
-				name,
-				AccelerationStructure::Type::TLAS,
-				std::move(tlasParams)));
+		newAccelerationStructure.reset(new AccelerationStructure(
+			name, AccelerationStructure::Type::TLAS, std::move(tlasParams)));
 
 		// Get a bindless resource handle:
 		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
@@ -284,7 +280,7 @@ namespace re
 	}
 
 
-	re::BufferInput const& AccelerationStructure::TLASParams::GetBindlessResourceLUT() const
+	re::BufferInput const& AccelerationStructure::TLASParams::GetBindlessVertexStreamLUT() const
 	{
 		return m_bindlessResourceLUT;
 	}
@@ -296,12 +292,6 @@ namespace re
 	}
 
 
-	void AccelerationStructure::Create()
-	{
-		platform::AccelerationStructure::Create(*this);
-	}
-
-
 	void AccelerationStructure::Destroy()
 	{
 		if (m_platObj)
@@ -310,7 +300,7 @@ namespace re
 		}
 
 		if (m_type == re::AccelerationStructure::Type::TLAS &&
-			GetResourceHandle() != k_invalidResourceHandle)
+			GetResourceHandle() != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");

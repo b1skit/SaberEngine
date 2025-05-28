@@ -15,6 +15,8 @@
 #include "Core/Util/HashKey.h"
 #include "Core/Util/ThreadProtector.h"
 
+#include "Shaders/Common/ResourceCommon.h"
+
 
 namespace gr
 {
@@ -42,9 +44,6 @@ namespace gr
 
 
 	private:
-		static constexpr IndexType k_invalidIdx = std::numeric_limits<IndexType>::max();
-
-
 		class IIndexedBufferInternal : public virtual IIndexedBuffer
 		{
 		public:
@@ -78,7 +77,7 @@ namespace gr
 			{
 				// Note: May be invalid if ID is not associated with RenderData of the managed type
 				const IndexType lutIdx = GetIndex(renderData, id);
-				if (lutIdx == k_invalidIdx)
+				if (lutIdx == INVALID_RESOURCE_IDX)
 				{
 					return; // Do nothing
 				}
@@ -224,6 +223,12 @@ namespace gr
 		re::BufferInput GetSingleElementBufferInput(IDType, util::HashKey bufferNameHash, char const* shaderName) const;
 		re::BufferInput GetSingleElementBufferInput(IDType, char const* bufferName, char const* shaderName) const;
 
+		template<typename RenderDataType>
+		std::shared_ptr<re::Buffer const> GetIndexedBuffer(util::HashKey bufferNameHash) const;
+
+		template<typename RenderDataType>
+		std::shared_ptr<re::Buffer const> GetIndexedBuffer(char const* bufferName) const;
+
 
 	private:
 		void RegisterLUTWriter(std::type_index typeIdx, IIndexedBufferInternal* indexedBuffer);
@@ -236,6 +241,9 @@ namespace gr
 			std::vector<LUTBuffer>&& initialLUTData,
 			std::ranges::range auto&& renderDataIDs,
 			IndexType& baseIdxOut);
+
+		template<typename LUTBuffer>
+		void PopulateLUTData(std::ranges::range auto&& renderDataIDs, std::span<LUTBuffer> lutBufferData);
 
 
 	private:
@@ -609,7 +617,7 @@ namespace gr
 		gr::RenderDataManager const& renderData, IDType id, char const* shaderName) const
 	{
 		const uint32_t idx = GetIndex(renderData, id);
-		SEAssert(idx != k_invalidIdx, "Failed to find a valid index for the given ID. Was it registered for this type?");
+		SEAssert(idx != INVALID_RESOURCE_IDX, "Failed to find a valid index for the given ID. Was it registered for this type?");
 
 		return re::BufferInput(
 			shaderName,
@@ -639,7 +647,7 @@ namespace gr
 		auto itr = m_idToBufferIdx.find(id);
 		if (itr == m_idToBufferIdx.end())
 		{
-			return k_invalidIdx;
+			return INVALID_RESOURCE_IDX;
 		}
 		return itr->second;
 	}
@@ -706,22 +714,6 @@ namespace gr
 		SEAssert(m_lutWritingBuffers.contains(lutTypeIdx),
 			"No indexed buffers have a registered LUT data writer of this type");
 
-		auto PopulateLUTData = [this, &renderDataIDs, lutTypeIdx](std::span<LUTBuffer> lutBufferData)
-			{
-				// Multiple writers may write to the same LUTBuffer type:
-				auto entries = m_lutWritingBuffers.equal_range(lutTypeIdx);
-				for (auto& itr = entries.first; itr != entries.second; ++itr)
-				{
-					for (size_t writeIdx = 0; writeIdx < renderDataIDs.size(); ++writeIdx)
-					{
-						itr->second->WriteLUTData<LUTBuffer>(
-							m_renderData,
-							renderDataIDs[writeIdx],
-							&lutBufferData[writeIdx]);
-					}
-				}
-			};
-
 		SEAssert(m_LUTTypeToLUTMetadata.contains(lutTypeIdx),
 			"No LUT buffer entry exists. It should have already been added");
 
@@ -770,7 +762,7 @@ namespace gr
 				initialLUTData.size()));
 
 			// Populate the intial entries with LUT data for our RenderDataIDs:
-			PopulateLUTData(std::span<LUTBuffer>(initialLUTData.begin(), renderDataIDs.size()));
+			PopulateLUTData<LUTBuffer>(renderDataIDs, std::span<LUTBuffer>(initialLUTData.begin(), renderDataIDs.size()));
 
 			// Create the buffer:
 			lutMetadataItr->second.m_LUTBuffer = re::Buffer::CreateArray(
@@ -809,7 +801,7 @@ namespace gr
 				baseIdxOut = lutMetadataItr->second.Allocate(requiredSize);
 
 				// Record our current entries:
-				PopulateLUTData(std::span<LUTBuffer>(initialLUTData));
+				PopulateLUTData<LUTBuffer>(renderDataIDs, std::span<LUTBuffer>(initialLUTData));
 
 				// Commit the updated data:
 				lutMetadataItr->second.m_LUTBuffer->Commit(
@@ -819,9 +811,32 @@ namespace gr
 			}
 		}
 
+		initialLUTData.clear(); // This is an R-value and we're done with it. Free it for the caller
+
 		SEEndCPUEvent();
 
 		return lutMetadataItr->second.m_LUTBuffer;
+	}
+
+
+	template<typename LUTBuffer>
+	void IndexedBufferManager::PopulateLUTData(
+		std::ranges::range auto&& renderDataIDs, std::span<LUTBuffer> lutBufferData)
+	{
+		const std::type_index lutTypeIdx = std::type_index(typeid(LUTBuffer));
+
+		// Multiple writers may write to the same LUTBuffer type:
+		auto entries = m_lutWritingBuffers.equal_range(lutTypeIdx);
+		for (auto& itr = entries.first; itr != entries.second; ++itr)
+		{
+			for (size_t writeIdx = 0; writeIdx < renderDataIDs.size(); ++writeIdx)
+			{
+				itr->second->WriteLUTData<LUTBuffer>(
+					m_renderData,
+					renderDataIDs[writeIdx],
+					&lutBufferData[writeIdx]);
+			}
+		}
 	}
 
 
@@ -901,6 +916,21 @@ namespace gr
 		IDType id, char const* bufferName, char const* shaderName) const
 	{		
 		return GetSingleElementBufferInput(id, util::HashKey(bufferName), shaderName);
+	}
+
+
+	template<typename RenderDataType>
+	std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(util::HashKey bufferNameHash) const
+	{
+		SEAssert(m_bufferNameHashToIndexedBuffer.contains(bufferNameHash), "Buffer name not found");
+		return m_bufferNameHashToIndexedBuffer.at(bufferNameHash)->GetBuffer();
+	}
+
+
+	template<typename RenderDataType>
+	std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(char const* bufferName) const
+	{
+		return GetIndexedBuffer<RenderDataType>(util::HashKey(bufferName));
 	}
 
 

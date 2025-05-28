@@ -10,6 +10,14 @@ namespace gr
 	class Material_GLTF_Unlit final : public virtual Material
 	{
 	public:
+		enum TextureSlotIdx : uint8_t
+		{
+			BaseColor = 0,
+
+			TextureSlotIdx_Count
+		};
+
+	public:
 		Material_GLTF_Unlit(std::string const& name);
 
 		~Material_GLTF_Unlit() = default;
@@ -22,11 +30,6 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static re::BufferInput CreateInstancedBuffer(
-			re::Buffer::StagingPool, std::vector<MaterialInstanceRenderData const*> const&);
-
-		static void CommitMaterialInstanceData(re::Buffer*, MaterialInstanceRenderData const*, uint32_t baseOffset);
-
 		static bool ShowImGuiWindow(MaterialInstanceRenderData&); // Returns true if data was modified
 
 
