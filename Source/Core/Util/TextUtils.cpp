@@ -70,19 +70,13 @@ namespace util
 	}
 
 
-	std::string ToLower(char const* str)
+	std::string ToLower(std::string_view str)
 	{
-		std::string result(str);
+		std::string result(str.begin(), str.end());
 
 		std::transform(result.begin(), result.end(), result.begin(),
 			[](unsigned char c) { return std::tolower(c); });
 
 		return result;
-	}
-
-
-	std::string ToLower(std::string const& str)
-	{
-		return ToLower(str.c_str());
 	}
 }

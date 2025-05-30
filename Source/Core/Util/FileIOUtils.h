@@ -8,8 +8,7 @@ namespace util
 	std::vector<std::string> GetDirectoryFilenameContents(
 		char const* directoryPath, char const* fileExtension = nullptr);
 
-	bool FileExists(char const* path);
-	bool FileExists(std::string const& path);
+	bool FileExists(std::string_view path);
 
 	std::string ExtractDirectoryPathFromFilePath(std::string const& filepath); // "X:\dir\f.ext" -> "X:\dir\"
 	std::string ExtractFileNameAndExtensionFromFilePath(std::string const& filepath); // "X:\dir\f.ext" -> "f.ext"

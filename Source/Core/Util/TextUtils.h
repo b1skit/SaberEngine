@@ -15,6 +15,5 @@ namespace util
 
 	std::string GetTimeAndDateAsString();
 
-	std::string ToLower(char const* str);
-	std::string ToLower(std::string const& str);
+	std::string ToLower(std::string_view str);
 }
