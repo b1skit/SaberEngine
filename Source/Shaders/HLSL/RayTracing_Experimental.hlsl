@@ -18,12 +18,12 @@ ConstantBuffer<GlobalConstantsData> GlobalConstants : register(b0, space0);
 [shader("closesthit")]
 void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-#define TEST_VERTEX_STREAMS
-//#define TEST_MATERIALS
+//#define TEST_VERTEX_STREAMS
+#define TEST_MATERIALS
 	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
-	uint vertId = 3 * PrimitiveIndex();
+	uint vertId = 3 * PrimitiveIndex(); // Triangle index -> Vertex index
 	
 	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
 	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
@@ -33,7 +33,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];	
 	
 	// Fetch our bindless resources:
-	const uint geoIdx = InstanceID() + GeometryIndex();
+	const uint geoIdx = InstanceIndex() + GeometryIndex();
 		
 	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx, vertId);
 	
@@ -57,17 +57,17 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	case MAT_ID_GLTF_Unlit:
 	{
 		const StructuredBuffer<UnlitData> materialData = UnlitParams[materialResourceIdx];
-		baseColorResourceIdx = materialData[0].g_bindlessTextureIndexes0.x;
+		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
 			
-		baseColorUVChannel = materialData[0].g_uvChannelIndexes0.x;
+		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
 	}
 	break;
 	case MAT_ID_GLTF_PBRMetallicRoughness:
 	{
 		const StructuredBuffer<PBRMetallicRoughnessData> materialData = PBRMetallicRoughnessParams[materialResourceIdx];
-		baseColorResourceIdx = materialData[0].g_bindlessTextureIndexes0.x;
+		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
 			
-		baseColorUVChannel = materialData[0].g_uvChannelIndexes0.x;
+		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
 	}
 	break;
 	}

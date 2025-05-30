@@ -76,32 +76,39 @@ namespace
 					.m_accessMask = re::Buffer::Access::GPURead,
 					.m_usageMask = re::Buffer::Usage::Structured,
 					.m_arraySize = util::CheckedCast<uint32_t>(vertexStreamLUTData.size()),
-				}));
+			}));
 	}
 }
 
 namespace re
 {
-	void AccelerationStructure::Geometry::RegisterResource(core::InvPtr<gr::VertexStream> const& vertexStream)
+	void AccelerationStructure::Geometry::RegisterResource(
+		core::InvPtr<gr::VertexStream> const& vertexStream, bool forceReplace /*= false*/)
 	{
 		RegisterResourceInternal(
 			vertexStream->GetBindlessResourceHandle(),
 			vertexStream->GetType(),
-			vertexStream->GetDataType());
+			vertexStream->GetDataType(),
+			forceReplace);
 	}
 
 
-	void AccelerationStructure::Geometry::RegisterResource(re::VertexBufferInput const& vertexBufferInput)
+	void AccelerationStructure::Geometry::RegisterResource(
+		re::VertexBufferInput const& vertexBufferInput, bool forceReplace /*= false*/)
 	{
 		RegisterResourceInternal(
 			vertexBufferInput.GetStream()->GetBindlessResourceHandle(),
 			vertexBufferInput.GetStream()->GetType(),
-			vertexBufferInput.GetStream()->GetDataType());
+			vertexBufferInput.GetStream()->GetDataType(),
+			forceReplace);
 	}
 
 
 	void AccelerationStructure::Geometry::RegisterResourceInternal(
-		ResourceHandle resolvedResourceHandle, gr::VertexStream::Type streamType, re::DataType dataType)
+		ResourceHandle resolvedResourceHandle,
+		gr::VertexStream::Type streamType,
+		re::DataType dataType,
+		bool forceReplace /*= false*/)
 	{
 		if (streamType == gr::VertexStream::Index)
 		{
@@ -143,20 +150,22 @@ namespace re
 					"Invalid insertion order. We currently assume streams will be added in the same order they're packed "
 					"into MeshPrimitive::RenderData");
 
-				if (static_cast<uint8_t>(m_vertexStreamMetadata[i].m_streamType) ==
-					static_cast<uint8_t>(gr::VertexStream::Type::Type_Count) ||
+				if (m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count ||
 					m_vertexStreamMetadata[i].m_streamType == streamType)
 				{
 					// If the current index has the same type as the new one, find first open spot:
-					while (i + 1 < m_vertexStreamMetadata.size() &&
-						m_vertexStreamMetadata[i].m_streamType == streamType)
+					if (forceReplace == false)
 					{
-						++i;
-						newStreamMetadata.m_setIndex++;
+						while (i + 1 < m_vertexStreamMetadata.size() &&
+							m_vertexStreamMetadata[i].m_streamType == streamType)
+						{
+							++i;
+							newStreamMetadata.m_setIndex++;
+						}
+						SEAssert(i < m_vertexStreamMetadata.size() &&
+							m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count,
+							"Trying to add a new vertex stream with a set index > 0, but could not find a suitable location");
 					}
-					SEAssert(i < m_vertexStreamMetadata.size() &&
-						m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count,
-						"Trying to add a new vertex stream with a set index > 0, but could not find a suitable location");
 
 					// Insert into the empty element we found:
 					m_vertexStreamMetadata[i] = newStreamMetadata;

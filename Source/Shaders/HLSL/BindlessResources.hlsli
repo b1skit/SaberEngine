@@ -59,11 +59,11 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx, uint vertexID)
 {
 	uint3 vertexIndexes = uint3(0, 0, 0);
 	
-	const StructuredBuffer<VertexStreamLUTData> bindlessVertexStreamIdxs = VertexStreamLUTs[vertexStreamsLUTIdx];
+	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
 	
-	if (bindlessVertexStreamIdxs[lutIdx].g_UV1ColorIndex.z != INVALID_RESOURCE_IDX)
+	if (vertexStreamLUT[lutIdx].g_UV1ColorIndex.z != INVALID_RESOURCE_IDX)
 	{
-		const uint indexStreamIdx = bindlessVertexStreamIdxs[lutIdx].g_UV1ColorIndex.z; // 16 bit indices
+		const uint indexStreamIdx = vertexStreamLUT[lutIdx].g_UV1ColorIndex.z; // 16 bit indices
 		
 		const StructuredBuffer<uint16_t> indexStream = VertexStreams_UShort[indexStreamIdx];
 		
@@ -75,7 +75,7 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx, uint vertexID)
 	}
 	else
 	{
-		const uint indexStreamIdx = bindlessVertexStreamIdxs[lutIdx].g_UV1ColorIndex.w; // 32 bit indices
+		const uint indexStreamIdx = vertexStreamLUT[lutIdx].g_UV1ColorIndex.w; // 32 bit indices
 		
 		const StructuredBuffer<uint> indexStream = VertexStreams_UInt[indexStreamIdx];
 		
