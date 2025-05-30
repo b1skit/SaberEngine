@@ -48,12 +48,12 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_platObj->m_platformParamsMutex);
 
-			const uint32_t currentNumResources = m_platObj->m_currentMaxIndex;
+			const uint32_t prevNumResources = m_platObj->m_currentMaxIndex;
 
 			m_platObj->m_currentMaxIndex =
 				static_cast<uint32_t>(glm::ceil(m_platObj->m_currentMaxIndex * k_growthFactor));
 
-			for (uint32_t curIdx = currentNumResources; curIdx < m_platObj->m_currentMaxIndex; ++curIdx)
+			for (uint32_t curIdx = prevNumResources; curIdx < m_platObj->m_currentMaxIndex; ++curIdx)
 			{
 				m_freeIndexes.emplace(curIdx);
 			}
@@ -61,7 +61,7 @@ namespace re
 			m_mustReinitialize = true;
 
 			LOG("BindlessResourceManager resource count increased from %d to %d",
-				currentNumResources, m_platObj->m_currentMaxIndex);
+				prevNumResources, m_platObj->m_currentMaxIndex);
 		}
 	}
 

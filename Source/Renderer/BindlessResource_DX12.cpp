@@ -156,10 +156,16 @@ namespace dx12
 			{
 			case re::Texture::TextureCube:
 			case re::Texture::TextureCubeArray:
-						{
+			{
 				descriptorHandle = dx12::Texture::GetUAV(
 					resource.m_resource,
-					re::TextureView::Texture2DArrayView());
+					re::TextureView::Texture2DArrayView(
+						0,
+						static_cast<uint32_t>(-1),
+						0,
+						6 * resource.m_resource->GetTextureParams().m_arraySize,
+						0,
+						0.f));
 			}
 			break;
 			default:

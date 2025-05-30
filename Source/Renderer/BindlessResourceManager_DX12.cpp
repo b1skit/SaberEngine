@@ -406,23 +406,21 @@ namespace
 			}
 		});
 
+		// Add our overlapping ranges as a single descriptor table:
+		globalRootSig->AddDescriptorTable(tableRanges, D3D12_SHADER_VISIBILITY_ALL);
 
 
 		// For now, we only use bindless resources in DXR, so we hard-code the root signature to match.
 		// TODO: Generalize the root signature creation (or define it directly in HLSL) so we can use bindless resources
 		// in any/all shaders
 		constexpr uint32_t k_firstReservedSpaceIdx = 0;
-		uint32_t reservedRegisterSpace = k_firstReservedSpaceIdx;
-
-		// Add our overlapping ranges as a single descriptor table:
-		globalRootSig->AddDescriptorTable(tableRanges, D3D12_SHADER_VISIBILITY_ALL);
 
 		// Root constant:
 		globalRootSig->AddRootParameter(dx12::RootSignature::RootParameterCreateDesc{
 			.m_shaderName = "GlobalConstants",
 			.m_type = dx12::RootSignature::RootParameter::Type::Constant,
 			.m_registerBindPoint = 0,
-			.m_registerSpace = reservedRegisterSpace++,
+			.m_registerSpace = k_firstReservedSpaceIdx,
 			.m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
 			.m_visibility = D3D12_SHADER_VISIBILITY_ALL,
 			.m_numRootConstants = 4,
@@ -506,10 +504,13 @@ namespace dx12
 
 			if (brmPlatObj->m_isCreated == false) // First initialization: 
 			{
+				const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+
+				brmPlatObj->m_cpuDescriptorCache.resize(numFramesInFlight);
+
 				brmPlatObj->m_deviceCache = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
-				brmPlatObj->m_elementSize = 
-					brmPlatObj->m_deviceCache->GetDescriptorHandleIncrementSize(k_brmHeapType);
+				brmPlatObj->m_elementSize = brmPlatObj->m_deviceCache->GetDescriptorHandleIncrementSize(k_brmHeapType);
 				SEAssert(brmPlatObj->m_elementSize > 0, "Invalid element size");
 
 				// Create a null descriptor:
@@ -522,7 +523,7 @@ namespace dx12
 
 				brmPlatObj->m_numActiveResources = 0;
 
-				brmPlatObj->m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+				brmPlatObj->m_numFramesInFlight = numFramesInFlight;				
 
 				brmPlatObj->m_globalRootSig = CreateGlobalBRMRootSignature();
 
@@ -535,6 +536,7 @@ namespace dx12
 
 			paramsToDelete->m_gpuDescriptorHeaps = std::move(brmPlatObj->m_gpuDescriptorHeaps);
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(paramsToDelete));
+			brmPlatObj->m_gpuDescriptorHeaps.resize(brmPlatObj->m_numFramesInFlight);
 
 			// Initialize/grow our non-frame-indexed cache vectors (No-op if old size == new size)
 			brmPlatObj->m_resourceCache.resize(totalResourceIndexes, nullptr);
@@ -555,12 +557,12 @@ namespace dx12
 					frameIdx);
 
 				// Copy descriptors into the new heap:
-				const D3D12_CPU_DESCRIPTOR_HANDLE destHandle =
+				const D3D12_CPU_DESCRIPTOR_HANDLE destCPUHandle =
 					brmPlatObj->m_gpuDescriptorHeaps[frameIdx]->GetCPUDescriptorHandleForHeapStart();
 
 				brmPlatObj->m_deviceCache->CopyDescriptors(
 					1,													// UINT NumDestDescriptorRanges
-					&destHandle,										// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
+					&destCPUHandle,										// const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts
 					&totalResourceIndexes,								// const UINT* pDestDescriptorRangeSizes
 					totalResourceIndexes,								// UINT NumSrcDescriptorRanges
 					brmPlatObj->m_cpuDescriptorCache[frameIdx].data(),	// const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts
@@ -642,12 +644,12 @@ namespace dx12
 			const uint32_t destOffset = (index * brmPlatObj->m_elementSize);
 			for (uint8_t frameOffsetIdx = 0; frameOffsetIdx < brmPlatObj->m_numFramesInFlight; ++frameOffsetIdx)
 			{
-				const D3D12_CPU_DESCRIPTOR_HANDLE destHandle(
+				const D3D12_CPU_DESCRIPTOR_HANDLE destCPUHandle(
 					brmPlatObj->m_gpuDescriptorHeaps[frameOffsetIdx]->GetCPUDescriptorHandleForHeapStart().ptr + destOffset);
 
 				brmPlatObj->m_deviceCache->CopyDescriptorsSimple(
 					1,
-					destHandle,
+					destCPUHandle,
 					brmPlatObj->m_cpuDescriptorCache[frameOffsetIdx][index],
 					k_brmHeapType);
 			}

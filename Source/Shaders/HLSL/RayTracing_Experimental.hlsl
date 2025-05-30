@@ -7,8 +7,6 @@
 #include "../Common/ResourceCommon.h"
 
 
-
-
 struct GlobalConstantsData
 {
 	// .x = SceneBVH idx, .y = TraceRayParams idx, .z = DescriptorIndexes, .w = unused

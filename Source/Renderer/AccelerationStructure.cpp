@@ -35,8 +35,8 @@ namespace
 
 	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
 	{
-		std::vector<VertexStreamLUTData> bindlessLUTData;
-		bindlessLUTData.reserve(GetTotalGeometryCount(blasInstances));
+		std::vector<VertexStreamLUTData> vertexStreamLUTData;
+		vertexStreamLUTData.reserve(GetTotalGeometryCount(blasInstances));
 
 		for (auto const& instance : blasInstances)
 		{
@@ -46,7 +46,7 @@ namespace
 
 			for (auto const& geometry : blasParams->m_geometry)
 			{
-				bindlessLUTData.emplace_back(VertexStreamLUTData{
+				vertexStreamLUTData.emplace_back(VertexStreamLUTData{
 					.g_posNmlTanUV0Index = glm::uvec4(
 						geometry.GetResourceHandle(gr::VertexStream::Position),
 						geometry.GetResourceHandle(gr::VertexStream::Normal),
@@ -68,14 +68,14 @@ namespace
 			VertexStreamLUTData::s_shaderName,
 			re::Buffer::CreateArray(
 				"TLAS Bindless LUT",
-				bindlessLUTData.data(),
+				vertexStreamLUTData.data(),
 				re::Buffer::BufferParams{
 					.m_lifetime = re::Lifetime::Permanent,
 					.m_stagingPool = re::Buffer::StagingPool::Temporary,
 					.m_memPoolPreference = re::Buffer::MemoryPoolPreference::DefaultHeap,
 					.m_accessMask = re::Buffer::Access::GPURead,
 					.m_usageMask = re::Buffer::Usage::Structured,
-					.m_arraySize = util::CheckedCast<uint32_t>(bindlessLUTData.size()),
+					.m_arraySize = util::CheckedCast<uint32_t>(vertexStreamLUTData.size()),
 				}));
 	}
 }

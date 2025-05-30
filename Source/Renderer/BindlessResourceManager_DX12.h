@@ -28,7 +28,7 @@ namespace dx12
 		{
 			void Destroy() override;
 
-			std::array<std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>, 3> m_cpuDescriptorCache; // 1st m_numFramesInFlight elements used only
+			std::vector<std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>> m_cpuDescriptorCache; // 1 vector per frame in flight
 			std::vector<ID3D12Resource*> m_resourceCache;
 			std::vector<D3D12_RESOURCE_STATES> m_usageStateCache;
 
@@ -46,7 +46,7 @@ namespace dx12
 		private: // Use the static getters below:
 			friend class dx12::BindlessResourceManager;
 			std::unique_ptr<dx12::RootSignature> m_globalRootSig;
-			std::array<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>, 3> m_gpuDescriptorHeaps;
+			std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> m_gpuDescriptorHeaps;
 		};
 
 	public:

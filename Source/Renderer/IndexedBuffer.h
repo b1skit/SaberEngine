@@ -539,12 +539,14 @@ namespace gr
 				{
 					for (gr::IDType deletedID : deletedIDs)
 					{
-						SEAssert(m_idToBufferIdx.contains(deletedID),
-							"Deleted ID was not found. This should not be possible");
-
-						const IndexType deletedIdx = m_idToBufferIdx.at(deletedID);
-						m_idToBufferIdx.erase(deletedID);
-						m_freeIndexes.emplace(deletedIdx);
+						// An ID might not be found if it was filtered out via the m_filterCallback
+						auto idToBufferIdxItr = m_idToBufferIdx.find(deletedID);
+						if (idToBufferIdxItr != m_idToBufferIdx.end())
+						{
+							const IndexType deletedIdx = m_idToBufferIdx.at(deletedID);
+							m_idToBufferIdx.erase(deletedID);
+							m_freeIndexes.emplace(deletedIdx);
+						}
 					}
 				};
 
@@ -753,6 +755,16 @@ namespace gr
 			}
 			ImGui::Text(std::format("{} remaining free indexes", m_freeIndexes.size()).c_str());
 			ImGui::Text(std::format("Buffer array size: {}", buffer->GetArraySize()).c_str());
+
+			ImGui::NewLine();
+
+			ImGui::Text(std::format("Buffer CBV resource handle: {}", 
+				buffer->GetBindlessResourceHandle(re::ViewType::CBV)).c_str());
+			ImGui::Text(std::format("Buffer SRV resource handle: {}", 
+				buffer->GetBindlessResourceHandle(re::ViewType::SRV)).c_str());
+
+			ImGui::NewLine();
+
 			ImGui::Text(std::format("Filter callback: {}", m_filterCallback ? "Enabled" : "Disabled").c_str());
 			ImGui::Text(std::format("Feature bits: {:#010b}", static_cast<uint32_t>(m_featureBits)).c_str());
 
