@@ -370,7 +370,7 @@ namespace dx12
 		// Release the map:
 		const D3D12_RANGE writtenRange{
 			.Begin = alignedItermediateBaseOffset,
-			.End = numBytes };
+			.End = alignedItermediateBaseOffset + numBytes };
 
 		intermediateResource->Unmap(
 			k_intermediateSubresourceIdx,
