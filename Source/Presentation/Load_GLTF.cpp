@@ -580,15 +580,14 @@ namespace
 	template<typename T>
 	struct TextureFromCGLTF final : public virtual core::ILoadContext<re::Texture>
 	{
-		void OnLoadBegin(core::InvPtr<re::Texture>&) override
+		void OnLoadBegin(core::InvPtr<re::Texture>& loadingTexPtr) override
 		{
 			LOG(std::format("Creating texture \"{}\" from GLTF", m_texName).c_str());
+			re::RenderManager::Get()->RegisterForCreate(loadingTexPtr);
 		}
 
 		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
 		{
-			re::RenderManager::Get()->RegisterForCreate(loadingTexPtr);
-
 			re::Texture::TextureParams texParams{};
 			std::vector<re::Texture::ImageDataUniquePtr> imageData;
 
