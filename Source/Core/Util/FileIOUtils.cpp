@@ -38,15 +38,9 @@ namespace util
 	}
 
 
-	bool FileExists(char const* path)
+	bool FileExists(std::string_view path)
 	{
-		return std::filesystem::exists(path);
-	}
-
-
-	bool FileExists(std::string const& path)
-	{
-		return FileExists(path.c_str());
+		return std::filesystem::exists(std::string(path));
 	}
 
 
