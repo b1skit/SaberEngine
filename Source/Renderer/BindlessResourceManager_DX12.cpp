@@ -424,7 +424,7 @@ namespace
 			.m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
 			.m_visibility = D3D12_SHADER_VISIBILITY_ALL,
 			.m_numRootConstants = 4,
-			});
+		});
 
 		// Create the root sig:
 		globalRootSig->Finalize("BRM Global Root", D3D12_ROOT_SIGNATURE_FLAG_NONE);

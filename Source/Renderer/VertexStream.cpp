@@ -185,7 +185,7 @@ namespace gr
 				.m_memPoolPreference = bufMemPoolPref,
 				.m_accessMask = bufAccessMask,
 				.m_usageMask = bufferUsage,
-				.m_arraySize = 1,
+				.m_arraySize = util::CheckedCast<uint32_t>(m_deferredBufferCreateParams->m_data.size()),
 			});
 
 		// Release the data:

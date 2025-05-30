@@ -84,7 +84,7 @@ namespace
 	}
 
 
-	re::BufferInput GetIndexedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
+	re::BufferInput GetInstancedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
 	{
 		SEAssert(tlas, "Pointer is null");
 
@@ -250,7 +250,7 @@ namespace gr
 			re::Batch* rtBatch = m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
 
 			// Attach indexed buffer LUT to the batch:
-			re::BufferInput const& indexedBufferLUT = GetIndexedBufferLUTBufferInput(
+			re::BufferInput const& indexedBufferLUT = GetInstancedBufferLUTBufferInput(
 				(*m_sceneTLAS).get(),
 				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());
 

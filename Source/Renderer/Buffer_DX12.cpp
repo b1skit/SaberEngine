@@ -91,6 +91,53 @@ namespace
 	}
 
 
+	// Clamp the frame offset index for Buffers that only have a single backing resource
+	inline void ClampFrameOffsetIdx(re::Buffer const* buffer, uint8_t& frameOffsetIdx)
+	{
+		SEStaticAssert(static_cast<uint8_t>(re::Buffer::StagingPool::StagingPool_Invalid) == 3u,
+			"Number of staging pools has changed. This must be updated");
+
+		SEAssert(frameOffsetIdx >= 0 && frameOffsetIdx < 3, "Unexpected frame offset index");
+
+		if (buffer->GetLifetime() == re::Lifetime::SingleFrame ||
+			buffer->GetStagingPool() != re::Buffer::StagingPool::Permanent) // i.e. Temporary, or none
+		{
+			frameOffsetIdx = 0;
+		}
+	}
+
+
+	uint32_t FrameOffsetIndexToBaseByteOffset(re::Buffer const* buffer, uint8_t frameOffsetIdx)
+	{
+		SEAssert(buffer, "Buffer cannot be null");
+		SEAssert(frameOffsetIdx >= 0 && frameOffsetIdx < 3, "Unexpected frame offset index");
+
+		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
+		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
+
+		uint64_t baseByteOffset = 0;
+		if (dx12::Buffer::IsInSharedHeap(buffer))
+		{
+			// If a single-frame buffer is in a shared heap, the BindlessResourceManager will request N frames in flight
+			// of descriptors, so we'll just return duplicates (even though they'd be invalid) and rely on the deferred
+			// bindless resource index release to protect us
+			SEAssert(buffer->GetLifetime() == re::Lifetime::SingleFrame, "Unexpected lifetime");
+			baseByteOffset = platObj->GetBaseByteOffset();
+		}
+		else
+		{
+			ClampFrameOffsetIdx(buffer, frameOffsetIdx);
+
+			const uint64_t alignedSize =
+				dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
+
+			baseByteOffset = alignedSize * frameOffsetIdx;
+		}
+
+		return util::CheckedCast<uint32_t>(baseByteOffset);
+	}
+
+
 	// Translate a BufferView to map to the backing GPU resource
 	re::BufferView TranslateBufferView(re::Buffer const* buffer, re::BufferView const& view, uint64_t baseByteOffset)
 	{
@@ -99,11 +146,24 @@ namespace
 
 		// We translate our views for buffers in shared heaps or buffers with N-buffered allocations by assuming the
 		// entire resource is filled with the same type of data, and computing our first element offset to match
+		uint32_t firstElement = 0;
+		if (re::Buffer::HasUsageBit(re::Buffer::Usage::Structured, *buffer) ||
+			re::Buffer::HasUsageBit(re::Buffer::Usage::Raw, *buffer))
+		{
+			const uint32_t elementSize = buffer->GetTotalBytes() / buffer->GetArraySize();
+			const uint32_t elementsPerBlock = util::CheckedCast<uint32_t>(alignedSize) / elementSize;
+
+			const uint32_t baseOffsetIdx = util::CheckedCast<uint32_t>(baseByteOffset / alignedSize);
+
+			firstElement = (elementsPerBlock * baseOffsetIdx) + view.m_bufferView.m_firstElement;
+		}
+		else
+		{
+			firstElement = util::CheckedCast<uint32_t>(baseByteOffset / alignedSize) + view.m_bufferView.m_firstElement;
+		}
+
 		if (view.IsVertexStreamView())
 		{
-			const uint32_t firstElement =
-				util::CheckedCast<uint32_t>(baseByteOffset / alignedSize) + view.m_streamView.m_firstElement;
-
 			return re::BufferView(re::BufferView::VertexStreamType{
 				.m_firstElement = firstElement,
 				.m_numElements = view.m_streamView.m_numElements,
@@ -114,31 +174,12 @@ namespace
 		}
 		else
 		{
-			const uint32_t firstElement =
-				util::CheckedCast<uint32_t>(baseByteOffset / alignedSize) + view.m_bufferView.m_firstElement;
-
 			return re::BufferView(re::BufferView::BufferType{
 				.m_firstElement = firstElement,
 				.m_numElements = view.m_bufferView.m_numElements,
 				.m_structuredByteStride = view.m_bufferView.m_structuredByteStride,
 				.m_firstDestIdx = view.m_bufferView.m_firstDestIdx,
 			});
-		}
-	}
-
-
-	// Clamp the frame offset index for Buffers that only have a single backing resource
-	void ClampFrameOffsetIdx(re::Buffer const* buffer, uint8_t& frameOffsetIdx)
-	{
-		SEStaticAssert(static_cast<uint8_t>(re::Buffer::StagingPool::StagingPool_Invalid) == 3u,
-			"Number of staging pools has changed. This must be updated");
-
-		SEAssert(frameOffsetIdx >= 0 && frameOffsetIdx < 3, "Unexpected frame offset index");
-
-		if (buffer->GetLifetime() == re::Lifetime::SingleFrame || 
-			buffer->GetStagingPool() != re::Buffer::StagingPool::Permanent) // i.e. Temporary, or none
-		{
-			frameOffsetIdx = 0;
 		}
 	}
 }
@@ -459,26 +500,7 @@ namespace dx12
 		re::Buffer const* buffer, re::BufferView const& view, uint8_t frameOffsetIdx)
 	{
 		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
-
-		uint64_t baseByteOffset = 0;
-		if (IsInSharedHeap(buffer))
-		{
-			baseByteOffset = platObj->GetBaseByteOffset();
-		}
-		else
-		{
-			ClampFrameOffsetIdx(buffer, frameOffsetIdx);
-
-			const uint64_t alignedSize =
-				dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
-
-			baseByteOffset = alignedSize * frameOffsetIdx;
-		}
-
-		return GetCBVInternal(buffer, view, baseByteOffset);
+		return GetCBVInternal(buffer, view, FrameOffsetIndexToBaseByteOffset(buffer, frameOffsetIdx));
 	}
 
 
@@ -486,26 +508,7 @@ namespace dx12
 		re::Buffer const* buffer, re::BufferView const& view, uint8_t frameOffsetIdx)
 	{
 		SEAssert(buffer, "Buffer cannot be null");
-
-		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
-
-		uint64_t baseByteOffset = 0;
-		if (IsInSharedHeap(buffer))
-		{
-			baseByteOffset = platObj->GetBaseByteOffset();
-		}
-		else
-		{
-			ClampFrameOffsetIdx(buffer, frameOffsetIdx);
-
-			const uint64_t alignedSize =
-				dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
-
-			baseByteOffset = alignedSize * frameOffsetIdx;
-		}
-
-		return GetSRVInternal(buffer, view, baseByteOffset);
+		return GetSRVInternal(buffer, view, FrameOffsetIndexToBaseByteOffset(buffer, frameOffsetIdx));
 	}
 
 
@@ -514,18 +517,7 @@ namespace dx12
 	{
 		SEAssert(buffer, "Buffer cannot be null");
 		SEAssert(IsInSharedHeap(buffer) == false, "Buffer is in a shared heap. This is unexpected for a UAV");
-
-		dx12::Buffer::PlatObj const* platObj = buffer->GetPlatformObject()->As<dx12::Buffer::PlatObj const*>();
-		SEAssert(platObj->m_isCreated == true, "Platform object has not been created");
-		
-		ClampFrameOffsetIdx(buffer, frameOffsetIdx);
-
-		const uint64_t alignedSize =
-			dx12::Buffer::GetAlignedSize(buffer->GetBufferParams().m_usageMask, buffer->GetTotalBytes());
-
-		const uint64_t baseByteOffset = alignedSize * frameOffsetIdx;
-
-		return GetUAVInternal(buffer, view, baseByteOffset);
+		return GetUAVInternal(buffer, view, FrameOffsetIndexToBaseByteOffset(buffer, frameOffsetIdx));
 	}
 
 
