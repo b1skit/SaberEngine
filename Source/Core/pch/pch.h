@@ -30,6 +30,7 @@
 #include <limits>
 #include <queue>
 #include <regex>
+#include <string_view>
 #include <unordered_set>
 #include <shared_mutex>
 #include <typeindex>

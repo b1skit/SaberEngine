@@ -42,7 +42,9 @@ namespace dx12
 		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
 
 		constexpr size_t k_invalidCreateTaskIdx = std::numeric_limits<size_t>::max();
+		constexpr size_t k_createTasksReserveAmt = 7;
 		std::vector<std::shared_future<void>> createTasks;
+		createTasks.reserve(k_createTasksReserveAmt);
 
 		static const bool singleThreadResourceCreate = 
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
@@ -278,6 +280,9 @@ namespace dx12
 				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaderBindingTables));
 			}
 		}
+
+		SEAssert(createTasks.size() <= k_createTasksReserveAmt,
+			"Too many create tasks, vector may have been reallocated: k_createTasksReserveAmt must be updated");
 
 		// Finally, wait for everything to complete:
 		if (!singleThreadResourceCreate)
