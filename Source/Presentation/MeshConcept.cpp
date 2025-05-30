@@ -74,17 +74,21 @@ namespace fr
 			fr::BoundsComponent::ShowImGuiWindow(em, meshConcept);
 
 			// Mesh primitives:
+			const uint32_t numMeshPrims = meshRelationship.GetNumInImmediateChildren<fr::MeshPrimitiveComponent>();
 			if (ImGui::CollapsingHeader(
-				std::format("Mesh Primitives##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+				std::format("Mesh Primitives ({})##{}", numMeshPrims, meshName.GetUniqueID()).c_str(),
+				ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
 				entt::entity curChild = meshRelationship.GetFirstChild();
 				do
 				{
-					fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(curChild);
-
-					meshPrimCmpt.ShowImGuiWindow(em, curChild);
+					fr::MeshPrimitiveComponent* meshPrimCmpt = em.TryGetComponent<fr::MeshPrimitiveComponent>(curChild);
+					if (meshPrimCmpt)
+					{
+						meshPrimCmpt->ShowImGuiWindow(em, curChild);
+					}
 
 					fr::Relationship const& childRelationship = em.GetComponent<fr::Relationship>(curChild);
 					curChild = childRelationship.GetNext();

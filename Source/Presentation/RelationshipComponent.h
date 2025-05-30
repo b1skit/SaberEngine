@@ -84,6 +84,9 @@ namespace fr
 		template<typename T, typename... Args>
 		std::vector<entt::entity> GetAllEntitiesInImmediateChildren() const;
 
+		template<typename T>
+		uint32_t GetNumInImmediateChildren() const;
+
 
 	private:
 		entt::entity m_thisEntity;
@@ -352,5 +355,35 @@ namespace fr
 		}
 
 		return result;
+	}
+
+
+	template<typename T>
+	uint32_t Relationship::GetNumInImmediateChildren() const
+	{
+		fr::EntityManager* em = fr::EntityManager::Get();
+		uint32_t count = 0;
+
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+
+			entt::entity curChild = m_firstChild;
+			while (curChild != entt::null)
+			{
+				if (em->HasComponent<T>(curChild))
+				{
+					++count;
+				}
+
+				fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curChild);
+				curChild = curRelationship.GetNext();
+				if (curChild == m_firstChild)
+				{
+					break;
+				}
+			}
+		}
+
+		return count;
 	}
 }
