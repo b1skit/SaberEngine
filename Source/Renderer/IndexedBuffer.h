@@ -234,10 +234,7 @@ namespace gr
 		re::BufferInput GetSingleElementBufferInput(IDType, util::HashKey bufferNameHash, char const* shaderName) const;
 		re::BufferInput GetSingleElementBufferInput(IDType, char const* bufferName, char const* shaderName) const;
 
-		template<typename RenderDataType>
 		std::shared_ptr<re::Buffer const> GetIndexedBuffer(util::HashKey bufferNameHash) const;
-
-		template<typename RenderDataType>
 		std::shared_ptr<re::Buffer const> GetIndexedBuffer(char const* bufferName) const;
 
 
@@ -1046,18 +1043,16 @@ namespace gr
 	}
 
 
-	template<typename RenderDataType>
-	std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(util::HashKey bufferNameHash) const
+	inline std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(util::HashKey bufferNameHash) const
 	{
 		SEAssert(m_bufferNameHashToIndexedBuffer.contains(bufferNameHash), "Buffer name not found");
 		return m_bufferNameHashToIndexedBuffer.at(bufferNameHash)->GetBuffer();
 	}
 
 
-	template<typename RenderDataType>
-	std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(char const* bufferName) const
+	inline std::shared_ptr<re::Buffer const> IndexedBufferManager::GetIndexedBuffer(char const* bufferName) const
 	{
-		return GetIndexedBuffer<RenderDataType>(util::HashKey(bufferName));
+		return GetIndexedBuffer(util::HashKey(bufferName));
 	}
 
 
