@@ -30,7 +30,7 @@ namespace re
 
 
 	public:
-		struct SBTParams
+		struct SBTParams final
 		{
 			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> m_rayGenStyles;
 			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> m_missStyles;

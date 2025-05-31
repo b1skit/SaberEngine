@@ -59,7 +59,7 @@ namespace gr
 
 
 	public:
-		struct TextureSlotDesc
+		struct TextureSlotDesc final
 		{
 			core::InvPtr<re::Texture> m_texture;
 			core::InvPtr<re::Sampler> m_samplerObject;
@@ -74,7 +74,7 @@ namespace gr
 		static constexpr size_t k_paramDataBlockByteSize = 128; // Arbitrary: Max current material size
 
 		// Material render data:
-		struct MaterialInstanceRenderData
+		struct MaterialInstanceRenderData final
 		{
 			std::array<core::InvPtr<re::Texture>, gr::Material::k_numTexInputs> m_textures;
 			std::array<core::InvPtr<re::Sampler>, gr::Material::k_numTexInputs> m_samplers;

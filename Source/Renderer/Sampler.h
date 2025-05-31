@@ -99,7 +99,7 @@ namespace re
 			OpaqueWhite_UInt
 		};
 
-		struct SamplerDesc
+		struct SamplerDesc final
 		{
 			FilterMode m_filterMode;
 			EdgeMode m_edgeModeU;

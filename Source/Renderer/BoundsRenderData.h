@@ -10,7 +10,7 @@ namespace gr
 	class Bounds
 	{
 	public:
-		struct RenderData
+		struct RenderData final
 		{
 			gr::RenderDataID m_encapsulatingBounds = gr::k_invalidRenderDataID;
 

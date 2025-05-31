@@ -9,7 +9,7 @@ namespace dx12
 	class AllocationPage;
 	class DescriptorAllocation;
 
-	class CPUDescriptorHeapManager
+	class CPUDescriptorHeapManager final
 	{
 	public:
 		enum HeapType : uint8_t
@@ -67,7 +67,7 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
-	class DescriptorAllocation
+	class DescriptorAllocation final
 	{
 	public:
 		DescriptorAllocation(); // Returns an Invalid allocation
@@ -110,7 +110,7 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
-	class AllocationPage
+	class AllocationPage final
 	{
 	public:
 		AllocationPage(
@@ -154,7 +154,7 @@ namespace dx12
 		typedef std::multimap<uint32_t, FreeOffsetToSize::iterator> SizeToFreeOffset;
 		SizeToFreeOffset m_sizesToFreeOffsets;
 
-		struct AllocationBlock
+		struct AllocationBlock final
 		{
 			uint32_t m_numElements;
 			SizeToFreeOffset::iterator m_sizeToFreeOffsetsLocation;
@@ -162,7 +162,7 @@ namespace dx12
 
 		
 	private:
-		struct FreedAllocation
+		struct FreedAllocation final
 		{
 			size_t m_offset;
 			uint32_t m_numElements;
