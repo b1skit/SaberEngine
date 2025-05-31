@@ -2,8 +2,6 @@
 #pragma once
 #include "Window.h"
 
-#include "../Assert.h"
-
 
 namespace win32
 {
