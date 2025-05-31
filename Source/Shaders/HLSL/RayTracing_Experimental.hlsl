@@ -243,17 +243,18 @@ void RayGeneration_Experimental()
 		// Payload associated to the ray, which will be used to communicate
 		// between the hit/miss shaders and the raygen
 		payload);
-	
+
+
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
 #if defined(RAY_GEN_A)
-	outputTex[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);
+	outputTex[launchIndex] = payload.colorAndDistance;
 #endif
 	
 #if defined(RAY_GEN_B)
 	const float scaleFactor = 0.5f;
-	outputTex[launchIndex]  = float4(payload.colorAndDistance.rgb * scaleFactor, 1.f);
+	outputTex[launchIndex]  = payload.colorAndDistance * float4(scaleFactor, scaleFactor, scaleFactor, 1.f);
 #endif
 }
 
@@ -268,10 +269,11 @@ void Miss_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
 	
 #if defined(MISS_BLUE)
 	payload.colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
-#endif
-	
-#if defined(MISS_RED)
+#elif defined(MISS_RED)
 	payload.colorAndDistance = float4(1.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
+#else
+	// Default case if neither MISS_BLUE nor MISS_RED is defined
+	payload.colorAndDistance = float4(0.0f, 0.0f, 0.0f, -1.0f); // Default to black
 #endif
 }
 

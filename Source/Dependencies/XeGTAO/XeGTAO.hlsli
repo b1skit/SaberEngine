@@ -37,7 +37,7 @@ RWTexture2D<float4>         g_outputDbgImage    : register( u2 );
 
 
 #if (XE_GTAO_USE_HALF_FLOAT_PRECISION != 0)
-#if 1 // old fp16 approach (<SM6.2)
+#if 0 // old fp16 approach (<SM6.2)
 	typedef min16float      lpfloat; 
 	typedef min16float2     lpfloat2;
 	typedef min16float3     lpfloat3;
