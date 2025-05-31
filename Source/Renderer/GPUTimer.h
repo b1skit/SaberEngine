@@ -49,8 +49,8 @@ namespace re
 			uint8_t m_currentFrameIdx = 0;
 			uint8_t m_numFramesInFlight = 0;			
 			
-			uint8_t m_currentDirectComputeTimerCount = 0; // How many direct/compute queue timers started this frame?
-			uint8_t m_currentCopyTimerCount = 0; // How many copy queue timers started this frame?
+			uint32_t m_currentDirectComputeTimerCount = 0; // How many direct/compute queue timers started this frame?
+			uint32_t m_currentCopyTimerCount = 0; // How many copy queue timers started this frame?			
 
 			bool m_isCreated = false;
 		};

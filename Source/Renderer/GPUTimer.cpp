@@ -335,7 +335,7 @@ namespace re
 			std::lock_guard<std::mutex> lock(m_platformParamsMutex);
 
 			std::multimap<util::HashKey, TimeRecord>* times = nullptr;
-			uint8_t* timerCount = nullptr;
+			uint32_t* timerCount = nullptr;
 			switch (timerType)
 			{
 			case TimerType::DirectCompute:
