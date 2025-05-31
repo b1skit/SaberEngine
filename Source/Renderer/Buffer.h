@@ -61,7 +61,7 @@ namespace re
 		static bool HasAccessBit(Access, re::Buffer const&);
 
 
-		struct BufferParams
+		struct BufferParams final
 		{
 			re::Lifetime m_lifetime = re::Lifetime::Permanent;
 			StagingPool m_stagingPool = StagingPool::StagingPool_Invalid;

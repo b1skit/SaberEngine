@@ -81,7 +81,7 @@ namespace re
 	private:
 		std::mutex m_brmMutex;
 
-		struct UnregistrationMetadata
+		struct UnregistrationMetadata final
 		{
 			uint64_t m_unregistrationFrameNum; // Frame number the Resource was unregistered on
 			ResourceHandle m_resourceHandle;
@@ -92,7 +92,7 @@ namespace re
 		// of descriptors that are copied each frame
 		std::priority_queue<ResourceHandle, std::vector<ResourceHandle>, std::greater<ResourceHandle>> m_freeIndexes;
 
-		struct RegistrationMetadata
+		struct RegistrationMetadata final
 		{
 			std::unique_ptr<IBindlessResource> m_resource;
 			ResourceHandle m_resourceHandle;

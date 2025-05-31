@@ -181,7 +181,7 @@ namespace re
 			Enabled = true
 		};
 
-		struct TextureParams
+		struct TextureParams final
 		{
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
 			uint32_t m_height = 4;

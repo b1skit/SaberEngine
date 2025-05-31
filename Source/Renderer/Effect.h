@@ -22,7 +22,7 @@ namespace effect::drawstyle
 
 namespace effect
 {
-	class Effect : public virtual core::INamedObject
+	class Effect final : public virtual core::INamedObject
 	{
 	public:
 		static EffectID ComputeEffectID(std::string const& effectName);

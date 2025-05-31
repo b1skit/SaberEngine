@@ -24,7 +24,7 @@ namespace dx12
 	class Buffer
 	{
 	public:
-		struct ReadbackResource
+		struct ReadbackResource final
 		{
 			ReadbackResource() = default;
 			~ReadbackResource() = default;

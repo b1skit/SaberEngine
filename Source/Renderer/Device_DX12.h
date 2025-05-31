@@ -10,7 +10,7 @@
 
 namespace dx12
 {
-	class Device
+	class Device final
 	{
 	public:
 		Device();

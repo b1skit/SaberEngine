@@ -5,7 +5,7 @@
 
 namespace re
 {
-	class VertexStreamMap
+	class VertexStreamMap final
 	{
 	public:
 		VertexStreamMap();
@@ -26,17 +26,17 @@ namespace re
 
 		uint8_t GetNumSlots() const;
 
-		struct SteamMetadata;
-		SteamMetadata const* GetStreamMetadata(uint8_t& arraySizeOut) const;
+		struct StreamMetadata;
+		StreamMetadata const* GetStreamMetadata(uint8_t& arraySizeOut) const;
 
 
 	public:
-		struct VertexStreamKey
+		struct VertexStreamKey final
 		{
 			gr::VertexStream::Type m_streamType; // Name portion of the semantic: E.g. NORMAL0 -> Type::Normal
 			uint8_t m_semanticIdx;	// Numeric part of the semantic. E.g. NORMAL0 -> 0
 		};
-		struct SteamMetadata
+		struct StreamMetadata final
 		{
 			VertexStreamKey m_streamKey;
 			re::DataType m_streamDataType;
@@ -48,12 +48,12 @@ namespace re
 	private:
 		uint8_t m_numAttributes;
 
-		std::array<SteamMetadata, gr::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
+		std::array<StreamMetadata, gr::VertexStream::k_maxVertexStreams> m_slotLayout; // Sorted by m_streamKey
 
 
-		struct StreamMetadataComparator
+		struct StreamMetadataComparator final
 		{
-			inline bool operator()(SteamMetadata const& a, SteamMetadata const& b)
+			inline bool operator()(StreamMetadata const& a, StreamMetadata const& b)
 			{
 				if (a.m_streamKey.m_streamType == b.m_streamKey.m_streamType)
 				{
@@ -63,7 +63,7 @@ namespace re
 			}
 
 
-			inline bool operator()(SteamMetadata const& a, VertexStreamKey const& b)
+			inline bool operator()(StreamMetadata const& a, VertexStreamKey const& b)
 			{
 				if (a.m_streamKey.m_streamType == b.m_streamType)
 				{
@@ -73,7 +73,7 @@ namespace re
 			}
 
 
-			inline bool operator()(VertexStreamKey const& a, SteamMetadata const& b)
+			inline bool operator()(VertexStreamKey const& a, StreamMetadata const& b)
 			{
 				if (a.m_streamType == b.m_streamKey.m_streamType)
 				{
@@ -91,7 +91,7 @@ namespace re
 	inline VertexStreamMap::VertexStreamMap()
 		: m_numAttributes(0)
 	{
-		memset(m_slotLayout.data(), 0, sizeof(SteamMetadata) * m_slotLayout.size());
+		memset(m_slotLayout.data(), 0, sizeof(StreamMetadata) * m_slotLayout.size());
 	}
 
 
@@ -171,7 +171,7 @@ namespace re
 			m_slotLayout[i] = m_slotLayout[i - 1];
 		}
 
-		m_slotLayout[insertIdx] = SteamMetadata{
+		m_slotLayout[insertIdx] = StreamMetadata{
 			.m_streamKey{
 				.m_streamType = streamType,
 				.m_semanticIdx = semanticIdx,
@@ -207,7 +207,7 @@ namespace re
 	}
 
 
-	inline VertexStreamMap::SteamMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& arrSizeOut) const
+	inline VertexStreamMap::StreamMetadata const* VertexStreamMap::GetStreamMetadata(uint8_t& arrSizeOut) const
 	{
 		arrSizeOut = m_numAttributes;
 		return m_slotLayout.data();

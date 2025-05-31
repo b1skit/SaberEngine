@@ -58,23 +58,23 @@ namespace gr
 			TriangleStripAdjacency
 		};
 
-		struct MeshPrimitiveParams
+		struct MeshPrimitiveParams final
 		{
 			PrimitiveTopology m_primitiveTopology = PrimitiveTopology::TriangleList;
 		};
 
-		struct MeshVertexStream
+		struct MeshVertexStream final
 		{
 			core::InvPtr<gr::VertexStream> m_vertexStream;
 			uint8_t m_setIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
 		};
 
-		struct MeshVertexStreamComparisonData
+		struct MeshVertexStreamComparisonData final
 		{
 			gr::VertexStream::Type m_streamType;
 			uint8_t m_setIdx;
 		};
-		struct MeshVertexStreamComparator
+		struct MeshVertexStreamComparator final
 		{
 			bool operator()(MeshVertexStream const&, MeshVertexStream const&);
 			bool operator()(MeshVertexStream const&, MeshVertexStreamComparisonData const&);
@@ -82,14 +82,14 @@ namespace gr
 
 
 	public:
-		struct PackingMetadata
+		struct PackingMetadata final
 		{
 			uint8_t m_firstByteOffset;	// No. bytes from the start of the packing to 1st byte of this displacement
 			uint8_t m_byteStride;		// No. bytes in 1 displacement (e.g. float3 = 12)
 			uint8_t m_numComponents;	// No. components in 1 displacement (e.g. float3 = 3)
 		};
 
-		struct MorphTargetMetadata
+		struct MorphTargetMetadata final
 		{
 			uint8_t m_maxMorphTargets;	// A vertex may either have 0 or m_maxMorphTargets, exactly
 			uint32_t m_morphByteStride;	// Total bytes for all interleaved displacements for 1 vertex (e.g. from Vn to Vn+1)
@@ -98,7 +98,7 @@ namespace gr
 		};
 
 	public:
-		struct RenderData
+		struct RenderData final
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
 
@@ -129,13 +129,13 @@ namespace gr
 		};
 
 
-		struct MeshMorphRenderData
+		struct MeshMorphRenderData final
 		{
 			std::vector<float> m_morphTargetWeights;
 		};
 
 
-		struct SkinningRenderData
+		struct SkinningRenderData final
 		{
 			std::vector<glm::mat4> m_jointTransforms;
 			std::vector<glm::mat4> m_transposeInvJointTransforms;

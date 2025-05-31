@@ -64,7 +64,7 @@ namespace gr
 
 
 	public:
-		struct StreamDesc
+		struct StreamDesc final
 		{
 			re::Lifetime m_lifetime = re::Lifetime::Permanent;
 
@@ -76,12 +76,12 @@ namespace gr
 
 
 	public:
-		struct MorphData
+		struct MorphData final
 		{
 			std::unique_ptr<util::ByteVector> m_displacementData;
 			re::DataType m_dataType;
 		};
-		struct CreateParams
+		struct CreateParams final
 		{
 			std::unique_ptr<util::ByteVector> m_streamData;
 			gr::VertexStream::StreamDesc m_streamDesc{};
@@ -145,7 +145,7 @@ namespace gr
 		// Vertex streams are often loaded asyncronously. To prevent race conditions around Buffer 
 		// registration/allocation/committing, we temporarily store everything we need to create the Buffer, and then
 		// immediately release it after creation
-		struct DeferredBufferCreateParams
+		struct DeferredBufferCreateParams final
 		{
 			util::ByteVector m_data;
 			re::Buffer::UsageMask m_extraUsageBits;

@@ -25,7 +25,7 @@ namespace re
 
 
 	public:
-		struct TimeRecord
+		struct TimeRecord final
 		{
 			// IDs are a relative per-frame query indices. We allocate 3 elements but only use what is required
 			std::array<uint32_t, 3> m_queryIndexes;
@@ -66,7 +66,7 @@ namespace re
 		};
 
 
-		class Handle
+		class Handle final
 		{
 		public:
 			Handle();

@@ -10,7 +10,7 @@
 
 namespace re
 {
-	struct RootConstant
+	struct RootConstant final
 	{
 		std::string m_shaderName;
 
@@ -36,7 +36,7 @@ namespace re
 	};
 
 
-	class RootConstants
+	class RootConstants final
 	{
 	public:
 		void SetRootConstant(char const* shaderName, void const* src, re::DataType); // Max 16B (4x 32-bit values)

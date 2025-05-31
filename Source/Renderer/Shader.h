@@ -85,7 +85,7 @@ namespace re
 
 
 	public:
-		struct Metadata
+		struct Metadata final
 		{
 			std::string m_extensionlessFilename;
 			std::string m_entryPoint;

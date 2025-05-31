@@ -150,7 +150,7 @@ namespace re
 		};
 		static StencilOp GetStencilOpByName(char const*);
 
-		struct StencilOpDesc
+		struct StencilOpDesc final
 		{
 			// Note: Defaults as per D3D12:
 			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc#remarks
@@ -235,7 +235,7 @@ namespace re
 			All		= (Red | Green | Blue | Alpha),
 		};
 
-		struct RenderTargetBlendDesc
+		struct RenderTargetBlendDesc final
 		{
 			bool m_blendEnable = false;
 			bool m_logicOpEnable = false;
