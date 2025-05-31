@@ -12,8 +12,6 @@
 
 #include "Core/Host/Window_Win32.h"
 
-#include <dxgi1_6.h>
-
 using Microsoft::WRL::ComPtr;
 
 

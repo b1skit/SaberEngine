@@ -3,8 +3,9 @@
 #include "SwapChain.h"
 #include "Texture.h"
 
-#include <wrl.h>
 #include <dxgi1_6.h>
+
+#include <wrl/client.h>
 
 
 namespace re
