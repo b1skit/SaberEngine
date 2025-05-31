@@ -2,10 +2,6 @@
 #pragma once
 #include "Window.h"
 
-#include "../Assert.h"
-
-#include "oleidl.h"
-
 
 namespace win32
 {

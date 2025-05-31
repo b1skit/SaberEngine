@@ -10,10 +10,6 @@
 
 #include "../Util/CastUtils.h"
 
-#include "shellapi.h"
-#include "shellscalingapi.h"
-#include "winuser.h"
-
 
 namespace win32
 {

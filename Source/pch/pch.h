@@ -43,8 +43,10 @@
 
 
 // Win32 API:
+#if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
-// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
+#include <oleidl.h>
+#endif // defined(_WIN32) || defined(_WIN64)
 
 
 // GLM:

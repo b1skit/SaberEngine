@@ -38,10 +38,15 @@
 
 
 // Win32 API:
+#if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
 #include <hidusage.h>
 #include <shlobj_core.h> // Windows shell
-// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
+#include <shellapi.h>
+#include <shellscalingapi.h>
+#include <oleidl.h>
+#include <shobjidl.h>
+#endif // defined(_WIN32) || defined(_WIN64)
 
 
 // Macros:

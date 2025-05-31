@@ -26,9 +26,10 @@
 #include <vector>
 
 // Win32 API:
+#if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
 #include <processthreadsapi.h>
-// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
+#endif // defined(_WIN32) || defined(_WIN64)
 
 // nlohmann-json:
 #if defined(_DEBUG)
