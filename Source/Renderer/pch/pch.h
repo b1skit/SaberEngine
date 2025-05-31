@@ -37,9 +37,10 @@
 
 
 // Win32 API:
+#if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
 #include <comdef.h> // HRESULTs to error messages
-// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
+#endif // defined(_WIN32) || defined(_WIN64)
 
 
 // GLM:

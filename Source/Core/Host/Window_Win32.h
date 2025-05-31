@@ -4,8 +4,6 @@
 
 #include "../Assert.h"
 
-#include "oleidl.h"
-
 
 namespace win32
 {
