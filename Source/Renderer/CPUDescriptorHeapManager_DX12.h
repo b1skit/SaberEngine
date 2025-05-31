@@ -146,7 +146,7 @@ namespace dx12
 
 
 	private:
-		struct AllocationBlock final;
+		struct AllocationBlock;
 
 		typedef std::map<size_t, AllocationBlock> FreeOffsetToSize;
 		FreeOffsetToSize m_freeOffsetsToSizes;
@@ -154,7 +154,7 @@ namespace dx12
 		typedef std::multimap<uint32_t, FreeOffsetToSize::iterator> SizeToFreeOffset;
 		SizeToFreeOffset m_sizesToFreeOffsets;
 
-		struct AllocationBlock
+		struct AllocationBlock final
 		{
 			uint32_t m_numElements;
 			SizeToFreeOffset::iterator m_sizeToFreeOffsetsLocation;
