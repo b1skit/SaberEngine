@@ -244,22 +244,17 @@ void RayGeneration_Experimental()
 		// between the hit/miss shaders and the raygen
 		payload);
 
-	// ---
-	// Artificially use .w to attempt to address -Wpayload-access-perf
-	// This is done with a tiny multiplier to minimize visual impact if .w contains large scene-dependent values (like distance)
-	payload.colorAndDistance.r += payload.colorAndDistance.w * 0.0000001f;
-	// ---
-	
+
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
 #if defined(RAY_GEN_A)
-	outputTex[launchIndex] = float4(payload.colorAndDistance.rgb, 1.f);
+	outputTex[launchIndex] = payload.colorAndDistance;
 #endif
 	
 #if defined(RAY_GEN_B)
 	const float scaleFactor = 0.5f;
-	outputTex[launchIndex]  = float4(payload.colorAndDistance.rgb * scaleFactor, 1.f);
+	outputTex[launchIndex]  = payload.colorAndDistance * float4(scaleFactor, scaleFactor, scaleFactor, 1.f);
 #endif
 }
 
