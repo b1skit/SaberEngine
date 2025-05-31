@@ -1067,11 +1067,11 @@ namespace fr
 
 		ImGui::Separator();
 
-		if (ImGui::CollapsingHeader("Meshes", ImGuiTreeNodeFlags_None))
+		auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker>();
+		if (ImGui::CollapsingHeader(std::format("Meshes ({})", meshView.size()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-
-			auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker>();
+			
 			for (entt::entity entity : meshView)
 			{
 				fr::Mesh::ShowImGuiWindow(*this, entity);

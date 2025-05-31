@@ -84,7 +84,7 @@ namespace
 	}
 
 
-	re::BufferInput GetIndexedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
+	re::BufferInput GetInstancedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
 	{
 		SEAssert(tlas, "Pointer is null");
 
@@ -93,18 +93,12 @@ namespace
 
 		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
 
-		std::shared_ptr<re::Buffer const> transformBuffer = 
-			ibm.GetIndexedBuffer<gr::Transform::RenderData>(TransformData::s_shaderName);
-		
-		std::shared_ptr<re::Buffer const> unlitMaterialBuffer =
-			ibm.GetIndexedBuffer<gr::Material::MaterialInstanceRenderData>(UnlitData::s_shaderName);
-
-		std::shared_ptr<re::Buffer const> pbrMetRoughMaterialBuffer =
-			ibm.GetIndexedBuffer<gr::Material::MaterialInstanceRenderData>(PBRMetallicRoughnessData::s_shaderName);
-
-		const ResourceHandle transformBufferHandle = transformBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
-		const ResourceHandle unlitMaterialBufferHandle = unlitMaterialBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
-		const ResourceHandle pbrMetRoughMaterialBufferHandle = pbrMetRoughMaterialBuffer->GetBindlessResourceHandle(re::ViewType::SRV);
+		const ResourceHandle transformBufferHandle = 
+			ibm.GetIndexedBuffer(TransformData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
+		const ResourceHandle unlitMaterialBufferHandle = 
+			ibm.GetIndexedBuffer(UnlitData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
+		const ResourceHandle pbrMetRoughMaterialBufferHandle = 
+			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
 
 		std::vector<gr::RenderDataID> blasIDs;
 		std::vector<InstancedBufferLUTData> initialLUTData;
@@ -250,7 +244,7 @@ namespace gr
 			re::Batch* rtBatch = m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
 
 			// Attach indexed buffer LUT to the batch:
-			re::BufferInput const& indexedBufferLUT = GetIndexedBufferLUTBufferInput(
+			re::BufferInput const& indexedBufferLUT = GetInstancedBufferLUTBufferInput(
 				(*m_sceneTLAS).get(),
 				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());
 

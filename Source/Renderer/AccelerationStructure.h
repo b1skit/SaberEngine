@@ -116,8 +116,9 @@ namespace re
 			void SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits);
 			effect::drawstyle::Bitmask GetDrawstyleBits() const;
 			
-			void RegisterResource(core::InvPtr<gr::VertexStream> const&);
-			void RegisterResource(re::VertexBufferInput const&);
+			// If forceReplace == true, replaces the FIRST stream with the same type, if it exists
+			void RegisterResource(core::InvPtr<gr::VertexStream> const&, bool forceReplace = false);
+			void RegisterResource(re::VertexBufferInput const&, bool forceReplace = false);
 
 			// Note: For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit
 			ResourceHandle GetResourceHandle(gr::VertexStream::Type, uint8_t setIdx = 0) const;
@@ -142,7 +143,8 @@ namespace re
 			VertexStreamMetadata m_indexStream16BitMetadata{}; // setIdx = 0
 			VertexStreamMetadata m_indexStream32BitMetadata{}; // setIdx = 1
 
-			void RegisterResourceInternal(ResourceHandle resolvedResourceHandle, gr::VertexStream::Type, re::DataType);
+			void RegisterResourceInternal(
+				ResourceHandle resolvedResourceHandle, gr::VertexStream::Type, re::DataType, bool forceReplace = false);
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
@@ -312,7 +314,7 @@ namespace re
 	inline void AccelerationStructure::Geometry::SetVertexPositions(re::VertexBufferInput const& positions)
 	{
 		m_positions = positions;
-		RegisterResource(m_positions);
+		RegisterResource(m_positions, true); // Only 1 set of positions are allowed: Always replace them
 	}
 
 

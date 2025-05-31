@@ -137,16 +137,16 @@ namespace fr
 		T const& GetComponent(entt::entity) const;
 
 		template<typename T>
-		T* TryGetComponent(entt::entity entity);
+		T* TryGetComponent(entt::entity);
 
 		template<typename T>
-		T const* TryGetComponent(entt::entity entity) const;
+		T const* TryGetComponent(entt::entity) const;
 
 		template<typename T>
-		bool HasComponent(entt::entity entity) const;
+		bool HasComponent(entt::entity) const;
 
 		template<typename T, typename... Args>
-		bool HasComponents(entt::entity entity) const;
+		bool HasComponents(entt::entity) const;
 
 		template<typename T, typename... Args>
 		std::vector<entt::entity> GetAllEntities() const;

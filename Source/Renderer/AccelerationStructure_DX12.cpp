@@ -483,7 +483,6 @@ namespace
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size());
 		SEAssert(numInstances < 0xFFFFFF, "Beyond D3D12 maximum no. instances in a TLAS");
 
-		uint32_t baseInstanceID = 0;
 		for (uint32_t blasInstanceIdx = 0; blasInstanceIdx < numInstances; ++blasInstanceIdx)
 		{
 			SEAssert(tlasParams->m_blasInstances[blasInstanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
@@ -507,7 +506,7 @@ namespace
 
 			instanceDescs[blasInstanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
 				// .Transform set below
-				.InstanceID = baseInstanceID, // HLSL: InstanceID() -> Arbitrary identifier for each unique BLAS instance
+				.InstanceID = blasInstanceIdx, // HLSL: InstanceID() -> Arbitrary identifier for each unique BLAS instance
 				.InstanceMask = blasParams->m_instanceMask,
 				.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex,
 				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
@@ -518,10 +517,7 @@ namespace
 
 			memcpy(&instanceDescs[blasInstanceIdx].Transform,
 				&blasParams->m_blasWorldMatrix[0][0],
-				sizeof(instanceDescs[blasInstanceIdx].Transform));	
-
-			// In HLSL, we use InstanceID() + GeometryIndex() as our index into the bindless LUT
-			baseInstanceID += util::CheckedCast<uint32_t>(blasParams->m_geometry.size());
+				sizeof(instanceDescs[blasInstanceIdx].Transform));
 		}
 		TLASInstanceDescs->Unmap(0, nullptr);
 
