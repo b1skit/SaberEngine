@@ -58,7 +58,7 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 
-		struct GraphicsParams
+		struct GraphicsParams final
 		{
 			GraphicsParams();
 			GraphicsParams(GraphicsParams const&) noexcept;
@@ -81,12 +81,12 @@ namespace re
 			// materials will sort together
 			uint64_t m_materialUniqueID = core::IUniqueID::k_invalidUniqueID;
 		};
-		struct ComputeParams
+		struct ComputeParams final
 		{
 			// No. groups dispatched in XYZ directions:
 			glm::uvec3 m_threadGroupCount = glm::uvec3(0); 
 		};
-		struct RayTracingParams
+		struct RayTracingParams final
 		{
 			RayTracingParams();
 			RayTracingParams(RayTracingParams const&) noexcept;

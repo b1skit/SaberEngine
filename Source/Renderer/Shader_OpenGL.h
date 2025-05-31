@@ -57,7 +57,7 @@ namespace opengl
 			std::unordered_map<util::HashKey, GLint> m_samplerUnits;
 			std::unordered_map<util::HashKey, GLint> m_vertexAttributeLocations;
 
-			struct BufferMetadata
+			struct BufferMetadata final
 			{
 				opengl::Buffer::BindTarget m_bindTarget;
 				

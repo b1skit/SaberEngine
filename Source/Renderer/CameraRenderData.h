@@ -14,17 +14,17 @@ namespace gr
 	class Camera
 	{
 	public:
-		struct FrustumPlane
+		struct FrustumPlane final
 		{
 			glm::vec3 m_point;
 			glm::vec3 m_normal;
 		};
-		struct Frustum
+		struct Frustum final
 		{
 			std::array<FrustumPlane, 6> m_planes{};
 			glm::vec3 m_camWorldPos;
 		};
-		class View
+		class View final
 		{
 		public:
 			const gr::RenderDataID m_cameraRenderDataID;
@@ -94,7 +94,7 @@ namespace gr
 
 
 	public:
-		struct Config
+		struct Config final
 		{
 			enum class ProjectionType
 			{
@@ -154,7 +154,7 @@ namespace gr
 
 
 	public:
-		struct RenderData
+		struct RenderData final
 		{
 			gr::Camera::Config m_cameraConfig;
 

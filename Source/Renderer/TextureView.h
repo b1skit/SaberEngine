@@ -79,7 +79,7 @@ namespace re
 			float m_resoureceMinLODClamp = 0.f; // SRV only
 		} TextureCubeArrayView;
 
-		typedef struct ViewFlags
+		typedef struct ViewFlags final
 		{
 			enum DepthFlags : uint8_t
 			{
@@ -177,7 +177,7 @@ namespace re
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	struct TextureAndSamplerInput
+	struct TextureAndSamplerInput final
 	{
 		TextureAndSamplerInput(char const* shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
 		TextureAndSamplerInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
@@ -198,7 +198,7 @@ namespace re
 	};
 
 
-	struct RWTextureInput
+	struct RWTextureInput final
 	{
 		RWTextureInput(char const* shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
 		RWTextureInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, TextureView const&);

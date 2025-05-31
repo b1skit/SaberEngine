@@ -51,7 +51,7 @@ namespace dx12
 	static_assert(CommandListType_Count <= 7); // We pack command list type into the upper 3 bits of fence values
 
 
-	class CommandList
+	class CommandList final
 	{
 	public:
 		static constexpr wchar_t const* const GetCommandListTypeWName(dx12::CommandListType);
@@ -63,7 +63,7 @@ namespace dx12
 
 
 	public:
-		struct TransitionMetadata
+		struct TransitionMetadata final
 		{
 			ID3D12Resource* m_resource;
 			D3D12_RESOURCE_STATES m_toState;
@@ -223,7 +223,7 @@ namespace dx12
 
 
 	public:
-		struct ReadbackResourceMetadata
+		struct ReadbackResourceMetadata final
 		{
 			ID3D12Resource* m_srcResource;
 			ID3D12Resource* m_dstResource;

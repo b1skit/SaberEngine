@@ -21,7 +21,7 @@ namespace re
 	class Buffer;
 
 
-	struct ASInput
+	struct ASInput final
 	{
 		ASInput(char const* shaderName, std::shared_ptr<re::AccelerationStructure> const& as) // TLAS shader use
 			: m_shaderName(shaderName)
@@ -95,7 +95,7 @@ namespace re
 
 
 	public:
-		struct Geometry
+		struct Geometry final
 		{
 			Geometry(gr::RenderDataID);
 
@@ -167,7 +167,7 @@ namespace re
 
 			BuildFlags m_buildFlags = BuildFlags_None;
 		};
-		struct BLASParams : public virtual IASParams
+		struct BLASParams final : public virtual IASParams
 		{
 			// 3x4 row-major world matrix: Applied to all BLAS geometry
 			glm::mat3x4 m_blasWorldMatrix = glm::mat3x4(1.f);
@@ -179,7 +179,7 @@ namespace re
 			InclusionMask m_instanceMask = InstanceInclusionMask_Always; // Visibility mask: 0 = ignored, 1 = visible
 			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
 		};
-		struct TLASParams : public virtual IASParams
+		struct TLASParams final : public virtual IASParams
 		{
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
 

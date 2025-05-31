@@ -14,10 +14,10 @@ namespace re
 	class Buffer;
 
 
-	class BufferView
+	class BufferView final
 	{
 	public:
-		struct BufferType
+		struct BufferType final
 		{
 			uint32_t m_firstElement = 0;		// Index of first array element to be accessed
 			uint32_t m_numElements = 1;			// Number of array elements visible (i.e. structured buffers)
@@ -27,7 +27,7 @@ namespace re
 			uint32_t m_firstDestIdx = 0;		// Shader-side arrays of Buffers: First element to bind against
 		};
 
-		struct VertexStreamType
+		struct VertexStreamType final
 		{
 			uint32_t m_firstElement = 0;		// Index of first vertex element to be accessed
 			uint32_t m_numElements = 0;
@@ -95,7 +95,7 @@ namespace re
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	class BufferInput : public virtual core::INamedObject
+	class BufferInput final : public virtual core::INamedObject
 	{
 	public:
 		BufferInput(); // Default/invalid view
@@ -299,7 +299,7 @@ namespace re
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	class VertexBufferInput
+	class VertexBufferInput final
 	{
 	public:
 		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
