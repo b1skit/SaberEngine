@@ -7,7 +7,7 @@ namespace core
 
 namespace win32
 {
-	class EventManager
+	class EventManager final
 	{
 	public:
 		static void ProcessMessages(core::EventManager& eventManager);

@@ -4,7 +4,7 @@
 
 namespace util
 {
-	class ThreadProtector
+	class ThreadProtector final
 	{
 	public:
 		ThreadProtector(bool accessIsValidIfNotCurrentlyOwned);
@@ -34,7 +34,7 @@ namespace util
 
 
 	// RAII wrapper for ThreadProtector
-	class ScopedThreadProtector
+	class ScopedThreadProtector final
 	{
 	public:
 		ScopedThreadProtector(ThreadProtector& threadProtector) : m_tpObj(threadProtector) { m_tpObj.TakeOwnership(); }

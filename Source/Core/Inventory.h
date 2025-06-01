@@ -6,7 +6,7 @@
 
 namespace core
 {
-	class Inventory
+	class Inventory final
 	{
 	public:
 		Inventory() = default;

@@ -9,7 +9,7 @@ namespace host
 
 namespace platform
 {
-	class PerformanceTimer
+	class PerformanceTimer final
 	{
 	public:
 		static void (*Create)(host::PerformanceTimer&);

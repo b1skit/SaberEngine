@@ -9,7 +9,7 @@
 
 namespace core
 {
-	class PerfLogger : public virtual core::IEventListener
+	class PerfLogger final : public virtual core::IEventListener
 	{
 	public:
 		static PerfLogger* Get(); // Singleton functionality

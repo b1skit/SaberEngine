@@ -4,7 +4,7 @@
 
 namespace core
 {
-	class FunctionWrapper
+	class FunctionWrapper final
 	{
 	public:
 		template<typename Function>
@@ -44,7 +44,7 @@ namespace core
 	};
 
 
-	class ThreadPool
+	class ThreadPool final
 	{
 	public:
 		static ThreadPool* Get(); // Singleton functionality

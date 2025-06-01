@@ -7,7 +7,7 @@
 
 namespace util
 {
-	class ByteVector
+	class ByteVector final
 	{
 	public:
 		template<typename T>

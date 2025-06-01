@@ -13,7 +13,7 @@ namespace en
 
 namespace win32
 {
-	class InputManager
+	class InputManager final
 	{
 	public:
 		static void Startup(en::InputManager& inputManager);

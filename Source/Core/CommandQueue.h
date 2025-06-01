@@ -8,7 +8,7 @@ namespace core
 	class CommandManager;
 
 
-	class CommandBuffer
+	class CommandBuffer final
 	{
 	public:
 		CommandBuffer(size_t allocationByteSize);
@@ -107,7 +107,7 @@ namespace core
 
 
 	// Wraps a lambda in a command function for convenience
-	class LambdaCommandWrapper
+	class LambdaCommandWrapper final
 	{
 	public:
 		inline LambdaCommandWrapper(std::function<void(void)>&& lambda) : m_lambda(std::move(lambda)) { }
@@ -135,7 +135,7 @@ namespace core
 	};
 
 
-	class CommandManager
+	class CommandManager final
 	{
 	public:
 		CommandManager(size_t bufferAllocationSize);
@@ -192,7 +192,7 @@ namespace core
 	/******************************************************************************************************************/
 
 
-	class FrameIndexedCommandManager
+	class FrameIndexedCommandManager final
 	{
 	public:
 		FrameIndexedCommandManager(size_t bufferAllocationSize, uint8_t numFramesInFlight);
