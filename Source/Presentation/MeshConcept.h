@@ -8,10 +8,10 @@ namespace fr
 	class TransformComponent;
 
 
-	class Mesh
+	class Mesh final
 	{
 	public:
-		struct MeshConceptMarker {};
+		struct MeshConceptMarker final {};
 
 	public:
 		static void AttachMeshConceptMarker(entt::entity, char const* name);

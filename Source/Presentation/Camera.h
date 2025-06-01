@@ -10,7 +10,7 @@ namespace fr
 	class Transform;
 
 
-	class Camera
+	class Camera final
 	{
 	public:
 		static CameraData BuildCameraData(fr::Camera const&);

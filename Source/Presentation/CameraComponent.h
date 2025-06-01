@@ -17,11 +17,11 @@ namespace fr
 	class TransformComponent;
 
 
-	class CameraComponent
+	class CameraComponent final
 	{
 	public:
-		struct MainCameraMarker {};
-		struct NewMainCameraMarker {};
+		struct MainCameraMarker final {};
+		struct NewMainCameraMarker final {};
 
 	public:
 		static void CreateCameraConcept(
@@ -81,7 +81,7 @@ namespace fr
 	// ---
 
 
-	class SetActiveCameraRenderCommand
+	class SetActiveCameraRenderCommand final
 	{
 	public:
 		SetActiveCameraRenderCommand(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);

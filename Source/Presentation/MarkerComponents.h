@@ -3,4 +3,4 @@
 
 
 template<typename ComponentType>
-struct DirtyMarker {};
+struct DirtyMarker final {};
