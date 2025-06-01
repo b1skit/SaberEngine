@@ -48,7 +48,7 @@ namespace gr
 		public:
 			IIndexedBufferInternal(IndexedBufferManager* ibm)
 				: m_indexedBufferManager(ibm)
-				, m_threadProtector(false)
+				, m_threadProtector(true)
 			{}
 
 			virtual ~IIndexedBufferInternal() = default;
@@ -85,8 +85,8 @@ namespace gr
 					return; // Do nothing
 				}
 
-				// Lock the thread protector now that we've got the index:
-				util::ScopedThreadProtector lock(m_threadProtector);
+				// Validate the thread protector now that we've got the index:
+				m_threadProtector.ValidateThreadAccess();
 
 				const std::type_index typeIdx = std::type_index(typeid(LUTBuffer));
 				SEAssert(m_writeLUTDataCallbacks.contains(typeIdx), "No registered LUT writer for this type");
@@ -349,7 +349,7 @@ namespace gr
 		static constexpr float k_LUTBufferGrowthFactor = 2.f;
 		static constexpr float k_LUTBufferShrinkFactor = 0.75f; // Add some slop to prevent oscillation
 
-		util::ThreadProtector m_threadProtector;
+		util::ThreadProtector m_ibmThreadProtector;
 
 
 	private:
@@ -643,7 +643,7 @@ namespace gr
 	template<typename RenderDataType, typename BufferDataType>
 	std::shared_ptr<re::Buffer> IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetBuffer() const
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
+		m_threadProtector.ValidateThreadAccess();
 
 		if (m_buffer == nullptr)
 		{
@@ -685,7 +685,7 @@ namespace gr
 	IndexedBufferManager::IndexType IndexedBufferManager::TypedIndexedBuffer<RenderDataType, BufferDataType>::GetIndex(
 		gr::RenderDataManager const& renderData, IDType id) const
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
+		m_threadProtector.ValidateThreadAccess();
 
 		if constexpr (std::is_same_v<RenderDataType, gr::Transform::RenderData>)
 		{
@@ -791,7 +791,7 @@ namespace gr
 		bool(*FilterCallback)(RenderDataType const*) /*= nullptr*/,
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
+		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		re::Buffer::AccessMask access = re::Buffer::Access::GPURead;
 		if (memPool == re::Buffer::MemoryPoolPreference::UploadHeap)
@@ -836,7 +836,7 @@ namespace gr
 	{
 		SEBeginCPUEvent("IndexedBufferManager::GetLUTBuffer");
 		
-		util::ScopedThreadProtector lock(m_threadProtector);
+		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		const std::type_index lutTypeIdx = std::type_index(typeid(LUTBuffer));
 
@@ -1078,7 +1078,7 @@ namespace gr
 
 	inline void IndexedBufferManager::RegisterLUTWriter(std::type_index typeIdx, IIndexedBufferInternal* indexedBuffer)
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
+		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		m_lutWritingBuffers.emplace(typeIdx, indexedBuffer);
 	}

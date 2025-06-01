@@ -9,7 +9,7 @@ namespace gr
 {
 	IndexedBufferManager::IndexedBufferManager(gr::RenderDataManager const& renderData)
 		: m_renderData(renderData)
-		, m_threadProtector(false)
+		, m_ibmThreadProtector(false)
 	{
 	}
 
@@ -23,7 +23,7 @@ namespace gr
 
 	void IndexedBufferManager::Destroy()
 	{
-		util::ScopedThreadProtector lock(m_threadProtector);
+		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		for (auto& indexedBuffer : m_indexedBuffers)
 		{
@@ -39,7 +39,7 @@ namespace gr
 	{
 		SEBeginCPUEvent("IndexedBufferManager::Update");
 
-		util::ScopedThreadProtector lock(m_threadProtector);
+		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		static const bool singleThreadIndexedBufferUpdates =
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadIndexedBufferUpdates) == true;
