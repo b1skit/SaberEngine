@@ -5,7 +5,7 @@
 
 namespace droid
 {
-	class FileWriter
+	class FileWriter final
 	{
 	public:
 		FileWriter(std::string const& outputFilepath, std::string const& outputFileName);

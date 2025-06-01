@@ -54,7 +54,7 @@ namespace droid
 	};
 
 
-	class ParseDB
+	class ParseDB final
 	{
 	public:
 		ParseDB(ParseParams const&);
