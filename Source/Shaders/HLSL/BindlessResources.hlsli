@@ -55,8 +55,10 @@ RWTexture2D<float4> Texture2DRWFloat4[] : register(u0, space20);
 // ---------------------------------------------------------------------------------------------------------------------
 // Helper functions:
 // ---------------------------------------------------------------------------------------------------------------------
-uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx, uint vertexID)
+uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 {
+	const uint vertexID = 3 * PrimitiveIndex(); // Triangle index -> Vertex index
+	
 	uint3 vertexIndexes = uint3(0, 0, 0);
 	
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];

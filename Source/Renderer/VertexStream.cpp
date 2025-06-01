@@ -325,6 +325,6 @@ namespace gr
 		ImGui::Text(std::format("Number of components: {}", DataTypeToNumComponents(m_streamDesc.m_dataType)).c_str());
 		ImGui::Text(std::format("Component byte size: {}", DataTypeToComponentByteSize(m_streamDesc.m_dataType)).c_str());
 
-		ImGui::Text(std::format("SRV resource handle: {}", m_streamBuffer->GetBindlessResourceHandle(re::ViewType::SRV)).c_str());
+		ImGui::Text(std::format("SRV resource handle: {}", m_srvResourceHandle).c_str());
 	}
 }

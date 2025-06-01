@@ -247,7 +247,7 @@ namespace dx12
 		{
 			descriptorHandle = dx12::Buffer::GetSRV(
 				resource.m_resource.GetBuffer(),
-				resource.m_resource.m_view,
+				resource.m_resource.m_view, // m_resource is a VertexBufferInput
 				frameOffsetIdx);
 		}
 		break;

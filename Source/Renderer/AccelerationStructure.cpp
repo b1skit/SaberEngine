@@ -36,10 +36,13 @@ namespace
 	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances,
 		std::vector<gr::RenderDataID>& blasGeoRenderDataIDsOut)
 	{
+		const uint32_t geoCount = GetTotalGeometryCount(blasInstances);
+
 		blasGeoRenderDataIDsOut.clear();
+		blasGeoRenderDataIDsOut.reserve(geoCount);
 
 		std::vector<VertexStreamLUTData> vertexStreamLUTData;
-		vertexStreamLUTData.reserve(GetTotalGeometryCount(blasInstances));
+		vertexStreamLUTData.reserve(geoCount);
 
 		for (auto const& instance : blasInstances)
 		{
@@ -68,6 +71,9 @@ namespace
 			}
 		}
 		SEStaticAssert(sizeof(VertexStreamLUTData) == 32, "VertexStreamLUTData size has changed: This must be updated");
+
+		SEAssert(blasGeoRenderDataIDsOut.size() == geoCount && vertexStreamLUTData.size() == geoCount,
+			"Unexpected size mismatch");
 
 		return re::BufferInput(
 			VertexStreamLUTData::s_shaderName,

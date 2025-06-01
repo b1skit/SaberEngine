@@ -23,8 +23,6 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
-	uint vertId = 3 * PrimitiveIndex(); // Triangle index -> Vertex index
-	
 	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
 	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
@@ -32,10 +30,10 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];	
 	
-	// Fetch our bindless resources:
-	const uint geoIdx = InstanceIndex() + GeometryIndex();
+	// Compute our geometry index for buffer arrays aligned with AS geometry:
+	const uint geoIdx = InstanceID() + GeometryIndex();
 		
-	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx, vertId);
+	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	
 	float3 colorOut = float3(0, 0, 0);
 	
@@ -84,11 +82,13 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	
 	const StructuredBuffer<float2> uvStream = VertexStreams_Float2[baseColorUVStreamResourceIdx];
 	
-	const float2 uv =
+	float2 uv =
 		uvStream[vertexIndexes.x].xy * barycentrics.x +
 		uvStream[vertexIndexes.y].xy * barycentrics.y +
 		uvStream[vertexIndexes.z].xy * barycentrics.z;
 	
+	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
+	uv = uv - floor(uv);
 	
 	// Vertex color:
 	float4 vertexColor = float4(1.f, 1.f, 1.f, 1.f);
