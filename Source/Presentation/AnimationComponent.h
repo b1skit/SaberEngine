@@ -166,7 +166,7 @@ namespace fr
 	// -----------------------------------------------------------------------------------------------------------------
 
 
-	class AnimationController
+	class AnimationController final
 	{
 	public:
 		static constexpr auto in_place_delete = true; // Required for pointer stability
@@ -346,14 +346,14 @@ namespace fr
 	// ----
 
 
-	struct AnimationData
+	struct AnimationData final
 	{
 		static constexpr size_t k_invalidIdx = std::numeric_limits<size_t>::max();
 		static constexpr size_t k_invalidFloatsPerKeyframe = std::numeric_limits<uint8_t>::max();
 
 		size_t m_animationIdx;
 
-		struct Channel
+		struct Channel final
 		{
 			InterpolationMode m_interpolationMode	= InterpolationMode::InterpolationMode_Invalid;
 			AnimationPath m_targetPath				= AnimationPath::AnimationPath_Invalid;
@@ -369,7 +369,7 @@ namespace fr
 	// ----
 
 
-	class AnimationComponent
+	class AnimationComponent final
 	{
 	public:
 		static AnimationComponent* AttachAnimationComponent(fr::EntityManager&, entt::entity, AnimationController const*);
@@ -416,7 +416,7 @@ namespace fr
 
 
 	private:
-		struct AnimationsDataComparator
+		struct AnimationsDataComparator final
 		{
 			// Return true if 1st element is ordered before the 2nd
 			inline bool operator()(AnimationData const& animData, size_t animationIdx)

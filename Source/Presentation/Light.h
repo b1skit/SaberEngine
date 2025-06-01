@@ -5,7 +5,7 @@
 
 namespace fr
 {
-	class Light
+	class Light final
 	{
 	public:
 		enum Type : uint8_t
@@ -54,7 +54,7 @@ namespace fr
 
 	
 	public:
-		struct TypeProperties
+		struct TypeProperties final
 		{
 			struct AmbientProperties
 			{

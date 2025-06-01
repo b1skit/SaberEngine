@@ -80,7 +80,7 @@ namespace load
 		bool makePermanent = false);
 
 
-	struct CameraMetadata
+	struct CameraMetadata final
 	{
 		size_t m_srcNodeIdx;
 		entt::entity m_owningEntity;

@@ -15,7 +15,7 @@ namespace fr
 	class Relationship;
 
 
-	class BoundsComponent
+	class BoundsComponent final
 	{
 	public:
 		static constexpr glm::vec3 k_invalidMinXYZ = glm::vec3(std::numeric_limits<float>::max());
@@ -23,7 +23,7 @@ namespace fr
 		// Note: -max is the furthest away from max
 
 	public:
-		struct SceneBoundsMarker {}; // Unique: Only added to 1 bounds component for the entire scene
+		struct SceneBoundsMarker final {}; // Unique: Only added to 1 bounds component for the entire scene
 
 
 	public:
