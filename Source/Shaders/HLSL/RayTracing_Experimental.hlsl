@@ -52,6 +52,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	uint baseColorUVStreamResourceIdx = INVALID_RESOURCE_IDX;
 	
 	uint baseColorUVChannel = 0;
+	float4 baseColorFactor = float4(1.f, 1.f, 1.f, 1.f);
 	switch (materialType)
 	{
 	case MAT_ID_GLTF_Unlit:
@@ -60,6 +61,9 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
 			
 		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
+			
+		baseColorFactor = materialData[materialBufferIdx].g_baseColorFactor;
+
 	}
 	break;
 	case MAT_ID_GLTF_PBRMetallicRoughness:
@@ -68,6 +72,8 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
 			
 		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
+			
+		baseColorFactor = materialData[materialBufferIdx].g_baseColorFactor;
 	}
 	break;
 	}
@@ -83,6 +89,22 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 		uvStream[vertexIndexes.y].xy * barycentrics.y +
 		uvStream[vertexIndexes.z].xy * barycentrics.z;
 	
+	
+	// Vertex color:
+	float4 vertexColor = float4(1.f, 1.f, 1.f, 1.f);
+	const uint colorVertexStreamIdx = vertexStreamLUT[geoIdx].g_UV1ColorIndex.y;
+	if (colorVertexStreamIdx != INVALID_RESOURCE_IDX)
+	{
+		const StructuredBuffer<float4> vertexColorStream = VertexStreams_Float4[colorVertexStreamIdx];
+		
+		vertexColor = 
+			vertexColorStream[vertexIndexes.x] * barycentrics.x +
+			vertexColorStream[vertexIndexes.y] * barycentrics.y +
+			vertexColorStream[vertexIndexes.z] * barycentrics.z;
+	}
+	
+	// Base color texture:
+	float4 baseColor = float4(1.f, 1.f, 1.f, 1.f);
 	if (baseColorResourceIdx != INVALID_RESOURCE_IDX)
 	{
 		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
@@ -93,8 +115,11 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 		// Convert the UVs to pixel coordinates:
 		const uint3 baseColorCoords = uint3(baseColorDimensions.xy * uv, 0);
 	
-		colorOut = baseColorTex.Load(baseColorCoords).rgb;
+		baseColor = baseColorTex.Load(baseColorCoords);
 	}
+	
+	// Combine:
+	colorOut = baseColor * vertexColor * baseColorFactor;
 	
 	
 #elif defined(TEST_VERTEX_STREAMS)
