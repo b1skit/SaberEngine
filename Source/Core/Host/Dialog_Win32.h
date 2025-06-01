@@ -5,7 +5,7 @@
 
 namespace win32
 {
-	class Dialog
+	class Dialog final
 	{
 	public:
 		static bool OpenFileDialogBox(

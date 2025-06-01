@@ -13,7 +13,7 @@ namespace en
 
 namespace platform
 {
-	class InputManager
+	class InputManager final
 	{
 	public:
 		static void (*Startup)(en::InputManager&);

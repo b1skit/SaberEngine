@@ -9,7 +9,7 @@ namespace win32
 
 namespace host
 {
-	class PerformanceTimer
+	class PerformanceTimer final
 	{
 	public:
 		PerformanceTimer();
