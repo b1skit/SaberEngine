@@ -24,7 +24,6 @@ namespace opengl
 }
 namespace re
 {
-	class Buffer;
 	struct VertexStreamView;
 }
 
