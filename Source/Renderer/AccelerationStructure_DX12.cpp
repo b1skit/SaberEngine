@@ -522,7 +522,7 @@ namespace
 
 			// Offset by the number of geometry instances insde the BLAS: We'll use this to index into arrays aligned
 			// according to BLAS geometry
-			blasBaseOffset += blasParams->m_geometry.size();
+			blasBaseOffset += util::CheckedCast<uint32_t>(blasParams->m_geometry.size());
 		}
 		TLASInstanceDescs->Unmap(0, nullptr);
 
