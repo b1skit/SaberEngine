@@ -226,6 +226,10 @@ namespace gr
 		re::BufferInput GetLUTBufferInput(
 			char const* shaderName, std::vector<LUTBuffer>&& LUTData, std::ranges::range auto const& renderDataIDs);
 
+		// Get the data that *would* be populated in a managed LUT. This is intended for debug viewing only
+		template<typename LUTBuffer>
+		void GetLUTBufferData(std::vector<LUTBuffer>& LUTData, std::ranges::range auto const& renderDataIDs);
+
 		// Get an entire managed array buffer:		
 		re::BufferInput GetIndexedBufferInput(util::HashKey bufferNameHash, char const* shaderName) const;
 		re::BufferInput GetIndexedBufferInput(char const* bufferName, char const* shaderName) const;
@@ -236,6 +240,10 @@ namespace gr
 
 		std::shared_ptr<re::Buffer const> GetIndexedBuffer(util::HashKey bufferNameHash) const;
 		std::shared_ptr<re::Buffer const> GetIndexedBuffer(char const* bufferName) const;
+
+		// Populate the LUT data. This is and internal helper, but is publically exposed for debug output
+		template<typename LUTBuffer>
+		void PopulateLUTData(std::ranges::range auto&& renderDataIDs, std::span<LUTBuffer> lutBufferData);
 
 
 	public:
@@ -253,9 +261,6 @@ namespace gr
 			std::vector<LUTBuffer>&& initialLUTData,
 			std::ranges::range auto&& renderDataIDs,
 			IndexType& baseIdxOut);
-
-		template<typename LUTBuffer>
-		void PopulateLUTData(std::ranges::range auto&& renderDataIDs, std::span<LUTBuffer> lutBufferData);
 
 
 	private:
@@ -1007,6 +1012,21 @@ namespace gr
 					.m_firstDestIdx = 0,
 				},
 				re::Lifetime::SingleFrame);
+		}
+	}
+
+
+	template<typename LUTBuffer>
+	void IndexedBufferManager::GetLUTBufferData(
+		std::vector<LUTBuffer>& LUTData, std::ranges::range auto const& renderDataIDs)
+	{
+		const std::type_index lutTypeIdx = std::type_index(typeid(LUTBuffer));
+
+		// Critical section: Get/create a LUT BufferInput
+		{
+			std::lock_guard<std::mutex> lock(m_LUTTypeToLUTMetadataMutex);
+
+			PopulateLUTData<LUTBuffer>(renderDataIDs, LUTData);
 		}
 	}
 

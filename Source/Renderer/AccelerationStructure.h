@@ -186,10 +186,14 @@ namespace re
 			ResourceHandle GetResourceHandle() const;
 			re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
+			std::vector<gr::RenderDataID> const& GetBLASGeometryRenderDataIDs() const { return m_blasGeoRenderDataIDs; };
+
 
 		private: // Populated internally:
 			friend class AccelerationStructure;
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
+
+			std::vector<gr::RenderDataID> m_blasGeoRenderDataIDs;
 
 			ResourceHandle m_srvTLASResourceHandle = INVALID_RESOURCE_IDX;
 		};

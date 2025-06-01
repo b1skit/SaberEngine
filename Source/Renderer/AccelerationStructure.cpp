@@ -33,8 +33,11 @@ namespace
 	}
 
 
-	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
+	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances,
+		std::vector<gr::RenderDataID>& blasGeoRenderDataIDsOut)
 	{
+		blasGeoRenderDataIDsOut.clear();
+
 		std::vector<VertexStreamLUTData> vertexStreamLUTData;
 		vertexStreamLUTData.reserve(GetTotalGeometryCount(blasInstances));
 
@@ -60,6 +63,8 @@ namespace
 						geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
 					),
 				});
+
+				blasGeoRenderDataIDsOut.emplace_back(geometry.GetRenderDataID());
 			}
 		}
 		SEStaticAssert(sizeof(VertexStreamLUTData) == 32, "VertexStreamLUTData size has changed: This must be updated");
@@ -274,7 +279,8 @@ namespace re
 			std::make_unique<re::AccelerationStructureResource>(newAccelerationStructure));
 
 		// Create the bindless LUT buffer:
-		movedTlasParams->m_bindlessResourceLUT = CreateBindlessLUT(movedTlasParams->m_blasInstances);
+		movedTlasParams->m_bindlessResourceLUT =
+			CreateBindlessLUT(movedTlasParams->m_blasInstances, movedTlasParams->m_blasGeoRenderDataIDs);
 
 		// Register for API creation:
 		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);

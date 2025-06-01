@@ -37,6 +37,8 @@ namespace gr
 		};
 		SEStaticAssert(_countof(k_materialNames) == MaterialID_Count, "Names and enum are out of sync");
 
+		static constexpr char const* MaterialIDToNameCStr(MaterialID);
+
 		static MaterialID EffectIDToMaterialID(EffectID);
 
 
@@ -195,6 +197,13 @@ namespace gr
 	{
 		SEAssert(dynamic_cast<T>(this) != nullptr, "dynamic_cast failed");
 		return dynamic_cast<T>(this);
+	}
+
+
+	inline constexpr char const* Material::MaterialIDToNameCStr(MaterialID matID)
+	{
+		return k_materialNames[matID];
+		SEStaticAssert(MaterialID_Count == 2, "Number of materials has changed. This must be updated");
 	}
 
 

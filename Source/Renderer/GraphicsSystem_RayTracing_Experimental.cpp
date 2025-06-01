@@ -4,11 +4,10 @@
 #include "GraphicsSystem_RayTracing_Experimental.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
+#include "Material.h"
 #include "RenderManager.h"
 #include "RenderObjectIDs.h"
 #include "ShaderBindingTable.h"
-
-#include "TransformRenderData.h"
 
 #include "Core/Config.h"
 
@@ -100,7 +99,9 @@ namespace
 		const ResourceHandle pbrMetRoughMaterialBufferHandle = 
 			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
 
-		std::vector<gr::RenderDataID> blasIDs;
+		std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
+	
+		size_t geoIdx = 0;
 		std::vector<InstancedBufferLUTData> initialLUTData;
 		for (auto const& blas : tlasParams->m_blasInstances)
 		{
@@ -109,8 +110,8 @@ namespace
 
 			for (auto const& geometry : blasParams->m_geometry)
 			{
-				blasIDs.emplace_back(geometry.GetRenderDataID());
-		
+				SEAssert(blasGeoIDs[geoIdx++] == geometry.GetRenderDataID(), "Geometry and IDs are out of sync");
+
 				effect::Effect const* geoEffect = effectDB.GetEffect(geometry.GetEffectID());
 				ResourceHandle materialResourceHandle = INVALID_RESOURCE_IDX;
 				if (geoEffect->UsesBuffer(PBRMetallicRoughnessData::s_shaderName))
@@ -133,7 +134,7 @@ namespace
 			}
 		}
 		return ibm.GetLUTBufferInput<InstancedBufferLUTData>(
-			InstancedBufferLUTData::s_shaderName, std::move(initialLUTData), blasIDs);
+			InstancedBufferLUTData::s_shaderName, std::move(initialLUTData), blasGeoIDs);
 	}
 }
 
@@ -378,6 +379,44 @@ namespace gr
 		if (ImGui::Checkbox("ShadowCaster", &s_shadowCaster))
 		{
 			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, s_shadowCaster);
+		}
+
+		// LUT buffer debugging:
+		if (ImGui::CollapsingHeader("Instanced Buffer LUT debugging"))
+		{
+			ImGui::Indent();
+
+			re::AccelerationStructure::TLASParams const* tlasParams =
+				dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
+
+			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
+
+			std::vector<InstancedBufferLUTData> instancedBufferLUTData(blasGeoIDs.size());
+			m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager().GetLUTBufferData(
+				instancedBufferLUTData,
+				blasGeoIDs);
+
+			SEAssert(blasGeoIDs.size() == instancedBufferLUTData.size(), "Size mismatch");
+
+			for (size_t i = 0; i < blasGeoIDs.size(); ++i)
+			{
+				ImGui::Text(std::format("BLAS Geometry RenderDataID: {}", blasGeoIDs[i]).c_str());
+
+				InstancedBufferLUTData const& lutEntry = instancedBufferLUTData[i];
+
+				ImGui::Text(std::format("Material resource index: {}", lutEntry.g_materialIndexes.x).c_str());
+				ImGui::Text(std::format("Material buffer index: {}", lutEntry.g_materialIndexes.y).c_str());
+				ImGui::Text(std::format("Material type: {}",
+					gr::Material::MaterialIDToNameCStr(
+						static_cast<gr::Material::MaterialID>(lutEntry.g_materialIndexes.z))).c_str());
+
+				ImGui::Text(std::format("Transform resource index: {}", lutEntry.g_transformIndexes.x).c_str());
+				ImGui::Text(std::format("Transform buffer index: {}", lutEntry.g_transformIndexes.y).c_str());
+
+				ImGui::Separator();
+			}
+			
+			ImGui::Unindent();
 		}
 	}
 }
