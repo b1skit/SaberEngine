@@ -10,7 +10,7 @@
 
 namespace core
 {
-	class Config
+	class Config final
 	{
 	public: 
 		enum class SettingType

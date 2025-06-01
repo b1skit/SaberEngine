@@ -9,7 +9,7 @@ namespace host
 
 namespace win32
 {
-	class PerformanceTimer
+	class PerformanceTimer final
 	{
 	public:
 		static void Create(host::PerformanceTimer&);

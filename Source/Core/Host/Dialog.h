@@ -4,7 +4,7 @@
 
 namespace host
 {
-	class Dialog
+	class Dialog final
 	{
 	public:
 		// Create an OS file open dialog. Returns true and populates filepathOut if the user selected a file

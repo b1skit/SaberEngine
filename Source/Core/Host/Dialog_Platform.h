@@ -3,7 +3,7 @@
 
 namespace platform
 {
-	class Dialog
+	class Dialog final
 	{
 	public:
 		static bool (*OpenFileDialogBox)(

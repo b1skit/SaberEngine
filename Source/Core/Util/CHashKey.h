@@ -3,7 +3,7 @@
 
 namespace util
 {
-	class CHashKey
+	class CHashKey final
 	{
 	public:
 		consteval CHashKey(char const* keyStr)

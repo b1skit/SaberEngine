@@ -9,7 +9,7 @@ namespace util
 {
 	// HashKey is a wrapper around a uint64_t, with some convenience helpers that allows the hash value to be used as
 	// a key in an associative array without being re-hashed
-	struct HashKey
+	struct HashKey final
 	{
 		uint64_t m_hashKey;
 

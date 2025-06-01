@@ -14,7 +14,7 @@ namespace fr
 	class NameComponent;
 
 
-	class MaterialInstanceComponent
+	class MaterialInstanceComponent final
 	{
 	public:
 		static MaterialInstanceComponent& AttachMaterialComponent(

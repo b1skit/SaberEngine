@@ -9,7 +9,7 @@ namespace core
 
 namespace platform
 {
-	class EventManager
+	class EventManager final
 	{
 	public:
 		static void (*ProcessMessages)(core::EventManager& eventManager);

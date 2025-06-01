@@ -9,10 +9,10 @@ namespace fr
 	class EntityManager;
 
 
-	class CameraControlComponent
+	class CameraControlComponent final
 	{
 	public:
-		struct PlayerObjectMarker {};
+		struct PlayerObjectMarker final {};
 
 	public:
 		static entt::entity CreateCameraControlConcept(EntityManager&, entt::entity cameraConcept);

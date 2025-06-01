@@ -20,15 +20,15 @@ namespace fr
 	class Transform;
 
 
-	class LightComponent
+	class LightComponent final
 	{
 	public:
-		struct AmbientIBLDeferredMarker {};
-		struct IsActiveAmbientDeferredMarker {};
+		struct AmbientIBLDeferredMarker final {};
+		struct IsActiveAmbientDeferredMarker final {};
 
-		struct PointDeferredMarker {};
-		struct SpotDeferredMarker {};
-		struct DirectionalDeferredMarker {};
+		struct PointDeferredMarker final {};
+		struct SpotDeferredMarker final {};
+		struct DirectionalDeferredMarker final {};
 
 
 	public:
@@ -105,7 +105,7 @@ namespace fr
 	// ---
 
 
-	class UpdateLightDataRenderCommand
+	class UpdateLightDataRenderCommand final
 	{
 	public:
 		UpdateLightDataRenderCommand(fr::NameComponent const&, LightComponent const&);
@@ -129,7 +129,7 @@ namespace fr
 	};
 
 
-	class DestroyLightDataRenderCommand
+	class DestroyLightDataRenderCommand final
 	{
 	public:
 		DestroyLightDataRenderCommand(LightComponent const&);

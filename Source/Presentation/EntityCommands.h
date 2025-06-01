@@ -4,7 +4,7 @@
 
 namespace fr
 {
-	class SetMainCameraCommand
+	class SetMainCameraCommand final
 	{
 	public:
 		SetMainCameraCommand(entt::entity);
@@ -17,7 +17,7 @@ namespace fr
 	};
 
 
-	class SetActiveAmbientLightCommand
+	class SetActiveAmbientLightCommand final
 	{
 	public:
 		SetActiveAmbientLightCommand(entt::entity);
