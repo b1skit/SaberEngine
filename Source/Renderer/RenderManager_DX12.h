@@ -8,7 +8,7 @@ namespace dx12
 	class RenderManager final : public virtual re::RenderManager
 	{
 	public:
-		RenderManager();
+		RenderManager(platform::RenderingAPI api, uint8_t numFramesInFlight);
 		~RenderManager() override = default;
 
 

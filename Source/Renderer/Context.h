@@ -25,13 +25,6 @@ namespace re
 {
 	class Context
 	{
-	public: // Singleton functionality
-		static Context* Get(); 
-		
-		template <typename T>
-		static T GetAs();
-
-
 	public:
 		virtual ~Context() = default;
 
@@ -65,11 +58,8 @@ namespace re
 		re::GPUTimer& GetGPUTimer();
 
 
-	private:
-		static std::unique_ptr<re::Context> CreateSingleton();
-
 	protected:
-		Context();
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight);
 
 
 	protected:
@@ -91,6 +81,23 @@ namespace re
 
 	private:
 		RenderDocAPI* m_renderDocApi;
+
+	public: // Safe downcasting
+		template <typename T>
+		T As()
+		{
+			T derived = dynamic_cast<T>(this);
+			SEAssert(derived, "Failed to cast Context to derived type. Ensure the type is a pointer (e.g. dx12::Context*)");
+			return derived;
+		}
+
+		template <typename T>
+		const T As() const
+		{
+			const T derived = dynamic_cast<const T>(this);
+			SEAssert(derived, "Failed to cast Context to derived type. Ensure the type is a pointer (e.g. dx12::Context*)");
+			return derived;
+		}
 	};
 
 
@@ -137,13 +144,6 @@ namespace re
 	inline re::GPUTimer& Context::GetGPUTimer()
 	{
 		return m_gpuTimer;
-	}
-
-
-	template <typename T>
-	inline T Context::GetAs()
-	{
-		return dynamic_cast<T>(re::Context::Get());
 	}
 
 

@@ -74,7 +74,7 @@ namespace opengl
 		case re::Lifetime::SingleFrame:
 		{
 			opengl::BufferAllocator* bufferAllocator =
-				dynamic_cast<opengl::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
+				dynamic_cast<opengl::BufferAllocator*>(re::RenderManager::Get()->GetContext()->GetBufferAllocator());
 
 			bufferAllocator->GetSubAllocation(
 				buffer.GetUsageMask(),

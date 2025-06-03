@@ -275,7 +275,7 @@ namespace re
 			name, AccelerationStructure::Type::TLAS, std::move(tlasParams)));
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		SEAssert(brm, "Failed to get BindlessResourceManager");
 		
 		re::AccelerationStructure::TLASParams* newTLASParams =
@@ -326,7 +326,7 @@ namespace re
 		if (m_type == re::AccelerationStructure::Type::TLAS &&
 			GetResourceHandle() != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			re::AccelerationStructure::TLASParams* tlasParams =

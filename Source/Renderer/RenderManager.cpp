@@ -3,6 +3,9 @@
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
+#include "Context.h" // Now needed in .cpp
+#include "Context_DX12.h"
+#include "Context_OpenGL.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
@@ -35,18 +38,47 @@ namespace re
 	}
 
 
+	re::Context* RenderManager::GetContext()
+	{
+		return m_context.get();
+	}
+
+	const re::Context* RenderManager::GetContext() const
+	{
+		return m_context.get();
+	}
+
+	void RenderManager::SetWindow(host::Window* window)
+	{
+		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
+		if (m_context)
+		{
+			m_context->SetWindow(window);
+		}
+		else
+		{
+			SEAssertF("m_context was null in RenderManager::SetWindow. This is unexpected.");
+		}
+	}
+
 	uint8_t RenderManager::GetNumFramesInFlight()
 	{
-		return platform::RenderManager::GetNumFramesInFlight();
+		// platform::RenderManager::GetNumFramesInFlight() reads from config.
+		// This should be consistent with how the context is initialized.
+		if (core::Config::Get()->GetValueAsString(core::configkeys::k_renderingAPIKey) == core::configvalues::k_renderingAPIOpenGLValue)
+		{
+			return 2;
+		}
+		return static_cast<uint8_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey));
 	}
 
 
 	float RenderManager::GetWindowAspectRatio()
 	{
-		core::Config const* config = core::Config::Get();
-		const int width = config->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int height = config->GetValue<int>(core::configkeys::k_windowHeightKey);
-		return static_cast<float>(width) / height;
+		// Ensure Get() isn't called during construction phases where m_context might not be ready.
+		// Assuming this is called post-initialization:
+		SEAssert(Get()->GetContext() && Get()->GetContext()->GetWindow(), "Context or Window is null in GetWindowAspectRatio");
+		return Get()->GetContext()->GetWindow()->GetAspectRatio();
 	}
 
 
@@ -89,7 +121,8 @@ namespace re
 				3,
 				core::Config::SettingType::Runtime);
 
-			newRenderManager.reset(new dx12::RenderManager());
+			const int numFrames = config->GetValue<int>(core::configkeys::k_numBackbuffersKey);
+			newRenderManager.reset(new dx12::RenderManager(renderingAPI, static_cast<uint8_t>(numFrames)));
 		}
 		break;
 		case platform::RenderingAPI::OpenGL:
@@ -103,8 +136,8 @@ namespace re
 				core::configkeys::k_numBackbuffersKey,
 				2, // Note: OpenGL only supports double-buffering
 				core::Config::SettingType::Runtime);
-
-			newRenderManager.reset(new opengl::RenderManager());
+			constexpr uint8_t numFrames = 2;
+			newRenderManager.reset(new opengl::RenderManager(renderingAPI, numFrames));
 		}
 		break;
 		default: SEAssertF("Invalid rendering API value");
@@ -128,8 +161,8 @@ namespace re
 	}
 
 
-	RenderManager::RenderManager(platform::RenderingAPI renderingAPI)
-		: m_renderingAPI(renderingAPI)
+	RenderManager::RenderManager(platform::RenderingAPI api, uint8_t numFramesInFlight)
+		: m_renderingAPI(api)
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
@@ -142,6 +175,19 @@ namespace re
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_quitEventRecieved(false)
 	{
+		// Initialize m_context based on the api parameter
+		if (api == platform::RenderingAPI::DX12)
+		{
+			m_context = std::make_unique<dx12::Context>(numFramesInFlight);
+		}
+		else if (api == platform::RenderingAPI::OpenGL)
+		{
+			m_context = std::make_unique<opengl::Context>(numFramesInFlight);
+		}
+		else
+		{
+			SEAssertF("Invalid rendering API argument received for RenderManager constructor");
+		}
 	}
 
 
@@ -200,7 +246,7 @@ namespace re
 
 		LOG("RenderManager starting...");
 		
-		re::Context::Get()->Create(m_renderFrameNum);
+		GetContext()->Create(m_renderFrameNum);
 		
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
@@ -211,7 +257,7 @@ namespace re
 		// Trigger creation of render libraries:
 		for (uint8_t i = 0; i < platform::RLibrary::Type::Type_Count; ++i)
 		{
-			re::Context::Get()->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
+			GetContext()->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
 		}
 
 		SEEndCPUEvent();
@@ -282,7 +328,7 @@ namespace re
 
 		m_renderData.Update(); // Post-render-command render data manager updates
 
-		re::Context* context = re::Context::Get();
+		re::Context* context = GetContext();
 
 		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
@@ -388,7 +434,7 @@ namespace re
 
 		LOG("Render manager shutting down...");
 
-		re::Context* context = re::Context::Get();
+		re::Context* context = GetContext();
 
 		// Flush any remaining render work:
 		platform::RenderManager::Shutdown(*this);
@@ -447,7 +493,7 @@ namespace re
 			{
 			case eventkey::ToggleVSync:
 			{
-				re::Context::Get()->GetSwapChain().ToggleVSync();
+				GetContext()->GetSwapChain().ToggleVSync();
 			}
 			break;
 			case eventkey::EngineQuit:
@@ -859,7 +905,7 @@ namespace re
 		{
 			ImGui::Indent();
 
-			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
+			re::Context::RenderDocAPI* renderDocApi = GetContext()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled =
 				core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&

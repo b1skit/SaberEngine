@@ -42,6 +42,10 @@ namespace opengl
 	class RenderManager;
 }
 
+namespace re {
+    class Context; // Forward declaration
+}
+
 namespace re
 {
 	class AccelerationStructure;
@@ -92,6 +96,7 @@ namespace re
 
 	private:
 		core::Inventory* m_inventory;
+		std::unique_ptr<re::Context> m_context;
 
 	public:
 		void SetWindow(host::Window*);
@@ -213,9 +218,13 @@ namespace re
 		bool m_quitEventRecieved; // Early-out on final frame(s)
 
 
+	public:
+		re::Context* GetContext();
+		const re::Context* GetContext() const;
+
 	private:
 		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
-		RenderManager(platform::RenderingAPI);
+		RenderManager(platform::RenderingAPI api, uint8_t numFramesInFlight);
 		[[nodiscard]] static std::unique_ptr<re::RenderManager> Create();
 
 
@@ -284,13 +293,6 @@ namespace re
 	inline void RenderManager::SetInventory(core::Inventory* inventory)
 	{
 		m_inventory = inventory;
-	}
-
-
-	inline void RenderManager::SetWindow(host::Window* window)
-	{
-		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
-		re::Context::Get()->SetWindow(window);
 	}
 
 

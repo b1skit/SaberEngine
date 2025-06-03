@@ -1309,7 +1309,7 @@ namespace dx12
 			staticSamplersPtr,									// const D3D12_STATIC_SAMPLER_DESC*
 			rootSigFlags);										// D3D12_ROOT_SIGNATURE_FLAGS
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		// Before we create a root signature, check if one with the same layout already exists:
 		m_rootSigDescHash = HashRootSigDesc(rootSignatureDescription);

@@ -54,8 +54,9 @@ namespace
 
 namespace dx12
 {
-	Context::Context()
-		: m_pixGPUCaptureModule(nullptr)
+	Context::Context(uint8_t numFramesInFlight)
+		: re::Context(platform::RenderingAPI::DX12, numFramesInFlight)
+		, m_pixGPUCaptureModule(nullptr)
 		, m_pixCPUCaptureModule(nullptr)
 	{
 	}

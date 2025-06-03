@@ -44,8 +44,8 @@ namespace
 
 namespace opengl
 {
-	RenderManager::RenderManager()
-		: re::RenderManager(platform::RenderingAPI::OpenGL)
+	RenderManager::RenderManager(platform::RenderingAPI api, uint8_t numFramesInFlight)
+		: re::RenderManager(api, numFramesInFlight)
 	{
 	}
 
@@ -119,7 +119,7 @@ namespace opengl
 
 	void RenderManager::Render()
 	{
-		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
+		opengl::Context* context = re::RenderManager::Get()->GetContext()->As<opengl::Context*>();
 
 		re::GPUTimer& gpuTimer = context->GetGPUTimer();
 

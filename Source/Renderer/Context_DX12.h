@@ -95,9 +95,8 @@ namespace dx12
 		HMODULE m_pixCPUCaptureModule;
 
 
-	protected:
-		Context();
-		friend class re::Context;
+	public:
+		Context(uint8_t numFramesInFlight);
 	};
 
 

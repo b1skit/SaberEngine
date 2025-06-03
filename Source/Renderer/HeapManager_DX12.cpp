@@ -567,7 +567,7 @@ namespace dx12
 		, m_heap(nullptr)
 		, m_threadProtector(false)
 	{
-		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		// Create our heap:
 		const D3D12_HEAP_DESC pageHeapDesc{
@@ -1016,7 +1016,7 @@ namespace dx12
 		: m_resource(existingResource)
 		, m_heapManager(nullptr)
 	{
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		m_heapManager = &context->GetHeapManager();
 
@@ -1036,7 +1036,7 @@ namespace dx12
 		, m_heapManager(heapMgr)
 	{
 		// Create a committed GPU resource:
-		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		const CD3DX12_HEAP_PROPERTIES heapProperties(committedResourceDesc.m_heapType);
 
@@ -1060,7 +1060,7 @@ namespace dx12
 		SetName(name);
 
 		// Register the resource with the state tracker:
-		re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
+		re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
 			m_resource.Get(),
 			committedResourceDesc.m_initialState,
 			GetNumberOfSubresources(committedResourceDesc.m_resourceDesc));
@@ -1087,7 +1087,7 @@ namespace dx12
 			clearVal = &resourceDesc.m_optimizedClearValue;
 		}
 
-		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		const HRESULT hr = device->CreatePlacedResource(
 			m_heapAllocation.GetHeap(),
@@ -1101,7 +1101,7 @@ namespace dx12
 		SetName(name);
 
 		// Register the resource with the state tracker:
-		re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
+		re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
 			m_resource.Get(),
 			resourceDesc.m_initialState,
 			GetNumberOfSubresources(resourceDesc.m_resourceDesc));
@@ -1151,7 +1151,7 @@ namespace dx12
 		{
 			// If we're here, the resource is being destroyed from the HeapManager's deferred delete queue. Unregister
 			// our resource from the state tracker before we're destroyed
-			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(m_resource.Get());
+			re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(m_resource.Get());
 		}
 	}
 
@@ -1208,7 +1208,7 @@ namespace dx12
 	
 	void HeapManager::Initialize()
 	{
-		m_device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		m_device = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 		m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
 
 		const D3D12_RESOURCE_HEAP_TIER heapTier = dx12::SysInfo::GetResourceHeapTier();

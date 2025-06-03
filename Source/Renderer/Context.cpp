@@ -13,43 +13,10 @@
 
 namespace re
 {
-	Context* Context::Get()
-	{
-		static std::unique_ptr<re::Context> instance = std::move(re::Context::CreateSingleton());
-		return instance.get();
-	}
-
-
-	std::unique_ptr<re::Context> Context::CreateSingleton()
-	{
-		std::unique_ptr<re::Context> newContext = nullptr;
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
-		switch (api)
-		{
-		case platform::RenderingAPI::OpenGL:
-		{
-			newContext.reset(new opengl::Context());
-		}
-		break;
-		case platform::RenderingAPI::DX12:
-		{
-			newContext.reset(new dx12::Context());
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid rendering API argument received");
-		}
-		}
-
-		return newContext;
-	}
-
-
-	Context::Context()
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight)
 		: m_window(nullptr)
 		, m_renderDocApi(nullptr)
-		, m_gpuTimer(core::PerfLogger::Get(), re::RenderManager::Get()->GetNumFramesInFlight())
+		, m_gpuTimer(core::PerfLogger::Get(), numFramesInFlight)
 	{
 		// RenderDoc cannot be enabled when DRED is enabled
 		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
@@ -107,7 +74,7 @@ namespace re
 					core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 					core::configkeys::k_renderDocCaptureFolderName,
 					core::configkeys::k_captureTitle,
-					platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI()),
+					platform::RenderingAPIToCStr(api), // Use passed api
 					util::GetTimeAndDateAsString());
 				m_renderDocApi->SetCaptureFilePathTemplate(renderDocCapturePath.c_str());
 			}

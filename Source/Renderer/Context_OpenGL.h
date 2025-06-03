@@ -47,9 +47,8 @@ namespace opengl
 			re::VertexBufferInput const& indexStream);
 		
 
-	protected:
-		Context();
-		friend class re::Context;
+	public:
+		Context(uint8_t numFramesInFlight);
 
 	private:
 		void SetRasterizerState(re::RasterizationState const*);

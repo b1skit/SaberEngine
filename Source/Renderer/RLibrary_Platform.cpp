@@ -73,7 +73,7 @@ namespace platform
 		case re::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
+				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
 		}
 		break;
 		default: SEAssertF("Invalid library type");
