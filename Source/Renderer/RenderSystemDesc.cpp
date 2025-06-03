@@ -1,5 +1,5 @@
 #pragma once
-#include "Platform.h"
+#include "EnumTypes.h"
 #include "RenderManager.h"
 #include "RenderSystemDesc.h"
 

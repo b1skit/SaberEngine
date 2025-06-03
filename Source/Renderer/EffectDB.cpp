@@ -2,7 +2,6 @@
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
-#include "Platform.h"
 #include "RenderManager.h"
 
 #include "Core/Assert.h"

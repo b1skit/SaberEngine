@@ -2,7 +2,6 @@
 #pragma once
 #include "Context.h"
 #include "EffectDB.h"
-#include "Platform.h"
 #include "RenderSystem.h"
 
 #include "Core/InvPtr.h"

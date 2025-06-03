@@ -2,6 +2,17 @@
 #pragma once
 
 
+namespace platform
+{
+	enum RenderingAPI : uint8_t
+	{
+		DX12,
+		OpenGL,
+		RenderingAPI_Count
+	};
+	extern constexpr char const* RenderingAPIToCStr(platform::RenderingAPI);
+}
+
 namespace re
 {
 	enum class Lifetime : bool

@@ -2,6 +2,7 @@
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
+#include "EnumTypes.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"

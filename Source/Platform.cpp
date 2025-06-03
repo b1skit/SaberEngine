@@ -65,17 +65,6 @@
 
 namespace platform
 {
-	constexpr char const* RenderingAPIToCStr(platform::RenderingAPI renderingAPI)
-	{
-		switch (renderingAPI)
-		{
-		case platform::RenderingAPI::OpenGL: return "OpenGL";
-		case platform::RenderingAPI::DX12: return "DX12";
-		default: return "platform::RenderingAPIToCStr: Invalid platform::RenderingAPI received";
-		}
-	}
-
-
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
