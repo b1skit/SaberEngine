@@ -36,7 +36,7 @@ namespace gr
 
 	public:
 		RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager*);
-		~RayTracing_ExperimentalGraphicsSystem();
+		~RayTracing_ExperimentalGraphicsSystem() = default;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
@@ -48,7 +48,6 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
-		std::shared_ptr<re::ShaderBindingTable> m_sceneSBT;
 
 		re::StagePipeline* m_stagePipeline;
 

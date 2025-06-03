@@ -43,7 +43,8 @@ namespace re
 
 			bool m_useLocalRootSignatures = false;
 		};
-		static std::shared_ptr<re::ShaderBindingTable> Create(char const* name, SBTParams const&);
+		static std::shared_ptr<re::ShaderBindingTable> Create(
+			char const* name, SBTParams const&, std::shared_ptr<re::AccelerationStructure> const&);
 
 		ShaderBindingTable(ShaderBindingTable&&) noexcept = default;
 		ShaderBindingTable& operator=(ShaderBindingTable&&) noexcept = default;
@@ -59,10 +60,8 @@ namespace re
 		SBTParams const& GetSBTParams() const;
 
 
-	public:
-		// This should be called every frame (in case the TLAS has been re/created/modified etc)
-		// Note: Replaces the std::shared_ptr<re::ShaderBindingTable> if the underlying object is recreated
-		static void Update(std::shared_ptr<re::ShaderBindingTable>&, std::shared_ptr<re::AccelerationStructure> const&);
+	private:
+		void Initialize(std::shared_ptr<re::AccelerationStructure> const&);
 
 
 	private:
@@ -75,9 +74,7 @@ namespace re
 		std::vector<core::InvPtr<re::Shader>> m_missShaders;
 		std::vector<std::pair<std::string, core::InvPtr<re::Shader>>> m_hitGroupNamesAndShaders; // Order matches BLAS instances
 		std::vector<core::InvPtr<re::Shader>> m_callableShaders;
-
-		std::shared_ptr<re::AccelerationStructure> m_TLAS;
-
+		
 		SBTParams m_sbtParams;
 
 

@@ -24,6 +24,8 @@
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/HashKey.h"
 
+#include "Shaders/Common/RayTracingParams.h"
+
 
 namespace
 {
@@ -462,14 +464,32 @@ namespace gr
 				{
 					for (auto const& blasInstance : entry.second)
 					{
-						tlasParams->m_blasInstances.emplace_back(blasInstance.second.first);
+						tlasParams->AddBLASInstance(blasInstance.second.first);
 					}
 				}
 
-				if (!tlasParams->m_blasInstances.empty())
+				if (tlasParams->GetBLASCount() > 0)
 				{
+					// Configure the shader binding table:
+					const EffectID rtEffectID = effect::Effect::ComputeEffectID("RayTracing");
+
+					// TODO: Support multiple SBTs per AccelerationStructure
+					const re::ShaderBindingTable::SBTParams sbtParams{
+						.m_rayGenStyles = {
+							{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_A},
+							{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_B},
+						},
+						.m_missStyles = {
+							{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Blue},
+							{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Red},
+						},
+						.m_hitgroupStyles = effect::drawstyle::RT_Experimental_RT_Experimental_Geometry,
+						.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
+						.m_maxRecursionDepth = 2,
+					};
+
 					// Create a new AccelerationStructure:
-					m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams));
+					m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams), sbtParams);
 				}
 				else
 				{

@@ -140,7 +140,7 @@ namespace
 	{
 		// Compute the size of the BLAS instance descriptors that will be stored in GPU memory:
 		return util::RoundUpToNearestMultiple<uint64_t>(
-			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * tlasParams->m_blasInstances.size(),
+			sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * tlasParams->GetBLASInstances().size(),
 			D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 	}
 
@@ -366,7 +366,7 @@ namespace
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{
 			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
 			.Flags = BuildFlagsToD3DBuildFlags(tlasParams->m_buildFlags),
-			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size()),
+			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->GetBLASInstances().size()),
 			.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
 		};
 		uint64_t resultDataMaxByteSize, scratchDataByteSize, updateScratchDataByteSize;
@@ -444,7 +444,7 @@ namespace
 
 		uint32_t currentHitGroupIdx = 0;
 		std::map<util::HashKey, uint32_t> styleHashToHitGroupIdx;
-		for (auto const& blas : tlasParams->m_blasInstances)
+		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
 			re::AccelerationStructure::BLASParams const* blasParams =
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
@@ -480,17 +480,17 @@ namespace
 		memset(instanceDescs, 0, instanceDescriptorsSize); // Zero-initialize the mapped instance descriptors
 
 		// Copy in the instance descriptors:
-		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size());
+		const uint32_t numInstances = util::CheckedCast<uint32_t>(tlasParams->GetBLASInstances().size());
 		SEAssert(numInstances < 0xFFFFFF, "Beyond D3D12 maximum no. instances in a TLAS");
 
 		uint32_t blasBaseOffset = 0;
 		for (uint32_t blasInstanceIdx = 0; blasInstanceIdx < numInstances; ++blasInstanceIdx)
 		{
-			SEAssert(tlasParams->m_blasInstances[blasInstanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
+			SEAssert(tlasParams->GetBLASInstances()[blasInstanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
 				"Invalid BLAS instance type");
 			SEAssert(blasInstanceIdx <= 0xFFFFFF, "24 bit max instance IDs");
 
-			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->m_blasInstances[blasInstanceIdx];
+			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->GetBLASInstances()[blasInstanceIdx];
 
 			re::AccelerationStructure::BLASParams const* blasParams =
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
@@ -546,7 +546,7 @@ namespace
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS tlasInputs{
 			.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL,
 			.Flags = flags,
-			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->m_blasInstances.size()),
+			.NumDescs = util::CheckedCast<uint32_t>(tlasParams->GetBLASInstances().size()),
 			.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
 			.InstanceDescs = TLASInstanceDescs->GetGPUVirtualAddress(),
 		};

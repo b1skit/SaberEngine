@@ -103,7 +103,7 @@ namespace
 	
 		size_t geoIdx = 0;
 		std::vector<InstancedBufferLUTData> initialLUTData;
-		for (auto const& blas : tlasParams->m_blasInstances)
+		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
 			re::AccelerationStructure::BLASParams const* blasParams =
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
@@ -150,15 +150,6 @@ namespace gr
 	}
 
 
-	RayTracing_ExperimentalGraphicsSystem::~RayTracing_ExperimentalGraphicsSystem()
-	{
-		if (m_sceneSBT)
-		{
-			m_sceneSBT->Destroy();
-		}
-	}
-
-
 	void RayTracing_ExperimentalGraphicsSystem::RegisterInputs()
 	{
 		RegisterDataInput(k_sceneTLASInput);
@@ -182,23 +173,6 @@ namespace gr
 		m_sceneTLAS = GetDataDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 		SEAssert(m_sceneTLAS, "Scene TLAS ptr cannot be null");
 
-		// Create a shader binding table to reflect our local use of the TLAS:
-		const EffectID rtEffectID = effect::Effect::ComputeEffectID("RayTracing");
-
-		const re::ShaderBindingTable::SBTParams sbtParams{
-			.m_rayGenStyles = { 
-				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_A},
-				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_RayGen_B},
-			},
-			.m_missStyles = { 
-				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Blue},
-				{rtEffectID, effect::drawstyle::RT_Experimental_RT_Experimental_Miss_Red},
-			},
-			.m_hitgroupStyles = effect::drawstyle::RT_Experimental_RT_Experimental_Geometry,
-			.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
-			.m_maxRecursionDepth = 2,
-		};
-		m_sceneSBT = re::ShaderBindingTable::Create("Scene SBT", sbtParams);
 
 		// Ray tracing stage:
 		m_rtStage = re::Stage::CreateRayTracingStage("RayTracing_Experimental", re::Stage::RayTracingStageParams{});
@@ -226,16 +200,12 @@ namespace gr
 
 	void RayTracing_ExperimentalGraphicsSystem::PreRender()
 	{
-		// Update the SBT every frame (in case the scene TLAS has been (re)created/modified etc)
-		re::ShaderBindingTable::Update(m_sceneSBT, *m_sceneTLAS);
-
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
 			re::Batch::RayTracingParams rtParams{};
 			rtParams.m_operation = re::Batch::RayTracingParams::Operation::DispatchRays;
 			rtParams.m_ASInput = re::ASInput("SceneBVH", *m_sceneTLAS);
-			rtParams.m_shaderBindingTable = m_sceneSBT;
 			rtParams.m_dispatchDimensions = glm::uvec3(
 				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
 				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
@@ -299,8 +269,13 @@ namespace gr
 
 	void RayTracing_ExperimentalGraphicsSystem::ShowImGuiWindow()
 	{
+		re::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
+		SEAssert(tlasParams, "Failed to cast to TLASParams");
+
 		// Ray gen shader:
-		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(m_sceneSBT->GetSBTParams().m_rayGenStyles.size());
+		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(
+			tlasParams->GetShaderBindingTable()->GetSBTParams().m_rayGenStyles.size());
 
 		std::vector<std::string> rayGenComboOptions;
 		rayGenComboOptions.reserve(numRayGenStyles);
@@ -314,7 +289,8 @@ namespace gr
 
 
 		// Miss shader:
-		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(m_sceneSBT->GetSBTParams().m_missStyles.size());
+		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(
+			tlasParams->GetShaderBindingTable()->GetSBTParams().m_missStyles.size());
 
 		std::vector<std::string> comboOptions;
 		comboOptions.reserve(numMissStyles);

@@ -15,7 +15,6 @@
 #include "Shaders/Common/RayTracingParams.h"
 
 
-
 namespace
 {
 	uint32_t GetTotalGeometryCount(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
@@ -266,7 +265,8 @@ namespace re
 
 	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateTLAS(
 		char const* name,
-		std::unique_ptr<TLASParams>&& tlasParams)
+		std::unique_ptr<TLASParams>&& tlasParams,
+		re::ShaderBindingTable::SBTParams const& sbtParams)
 	{
 		SEAssert(tlasParams, "Invalid TLASParams");
 
@@ -278,15 +278,18 @@ namespace re
 		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
 		SEAssert(brm, "Failed to get BindlessResourceManager");
 		
-		re::AccelerationStructure::TLASParams* movedTlasParams =
+		re::AccelerationStructure::TLASParams* newTLASParams =
 			dynamic_cast<re::AccelerationStructure::TLASParams*>(newAccelerationStructure->m_asParams.get());
 
-		movedTlasParams->m_srvTLASResourceHandle = brm->RegisterResource(
+		newTLASParams->m_srvTLASResourceHandle = brm->RegisterResource(
 			std::make_unique<re::AccelerationStructureResource>(newAccelerationStructure));
 
 		// Create the bindless LUT buffer:
-		movedTlasParams->m_bindlessResourceLUT =
-			CreateBindlessLUT(movedTlasParams->m_blasInstances, movedTlasParams->m_blasGeoRenderDataIDs);
+		newTLASParams->m_bindlessResourceLUT =
+			CreateBindlessLUT(newTLASParams->m_blasInstances, newTLASParams->m_blasGeoRenderDataIDs);
+
+		// Create the ShaderBindingTable:
+		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
 
 		// Register for API creation:
 		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
@@ -333,6 +336,9 @@ namespace re
 			brm->UnregisterResource(
 				tlasParams->m_srvTLASResourceHandle,
 				re::RenderManager::Get()->GetCurrentRenderFrameNum());
+
+			tlasParams->m_sbt->Destroy();
+			tlasParams->m_sbt = nullptr;
 		}
 	}
 

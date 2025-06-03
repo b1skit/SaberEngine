@@ -109,8 +109,6 @@ namespace re
 			
 			re::ASInput m_ASInput; // BLAS or TLAS, depending on the operation
 
-			std::shared_ptr<re::ShaderBindingTable> m_shaderBindingTable; // Required for DispatchRays only
-
 			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width/height/depth
 			uint32_t m_rayGenShaderIdx = 0;
 		};
