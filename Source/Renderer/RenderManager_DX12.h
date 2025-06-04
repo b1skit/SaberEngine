@@ -11,9 +11,11 @@ namespace dx12
 		RenderManager();
 		~RenderManager() override = default;
 
+		static uint8_t s_numFrames_dx12;
+
 
 	public:
-		static uint8_t GetFrameOffsetIdx(); // Get an index in [0, NumFramesInFight)
+		static uint8_t GetFrameOffsetIdx(re::RenderManager const& renderMgr); // Get an index in [0, NumFramesInFight)
 
 
 	public: // Platform PIMPL:
@@ -37,13 +39,12 @@ namespace dx12
 
 	inline uint8_t RenderManager::GetNumFramesInFlight()
 	{
-		return dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->m_numFrames;
+		return s_numFrames_dx12;
 	}
 
 
-	inline uint8_t RenderManager::GetFrameOffsetIdx()
+	inline uint8_t RenderManager::GetFrameOffsetIdx(re::RenderManager const& renderMgr)
 	{
-		re::RenderManager const* renderMgr = re::RenderManager::Get();
-		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
+		return renderMgr.GetCurrentRenderFrameNum() % GetNumFramesInFlight();
 	}
 }

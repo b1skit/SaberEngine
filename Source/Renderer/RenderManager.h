@@ -15,10 +15,9 @@
 #include "Core/Util/NBufferedVector.h"
 
 
-namespace app
-{
-	class Window;
-}
+namespace host {
+class Window;
+} // namespace host
 
 namespace core
 {
@@ -89,11 +88,16 @@ namespace re
 		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
 		core::Inventory* GetInventory() const;
 
+		re::Context* GetContext() { return m_context.get(); }
+		re::Context const* GetContext() const { return m_context.get(); }
+
 	private:
 		core::Inventory* m_inventory;
+		host::Window* m_window_ptr;
+		std::unique_ptr<re::Context> m_context;
 
 	public:
-		void SetWindow(host::Window*);
+		void SetWindow(host::Window* window);
 
 
 	public:
@@ -214,7 +218,7 @@ namespace re
 
 	private:
 		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
-		RenderManager(platform::RenderingAPI);
+		RenderManager(platform::RenderingAPI api);
 		[[nodiscard]] static std::unique_ptr<re::RenderManager> Create();
 
 
@@ -289,7 +293,9 @@ namespace re
 	inline void RenderManager::SetWindow(host::Window* window)
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
-		re::Context::Get()->SetWindow(window);
+		m_window_ptr = window;
+		// If context exists and needs window update: m_context->SetWindow(window);
+		// However, Context::SetWindow was removed, so this is primarily for initial setup.
 	}
 
 

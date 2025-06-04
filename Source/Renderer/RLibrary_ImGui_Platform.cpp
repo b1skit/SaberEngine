@@ -58,7 +58,7 @@ namespace platform
 
 	void RLibraryImGui::ConfigureScaling(RLibraryImGui& imguiLibrary)
 	{
-		host::Window* window = re::Context::Get()->GetWindow();
+		host::Window* window = re::RenderManager::Get()->GetContext()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatObj* windowPlatObj =

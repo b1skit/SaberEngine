@@ -2,6 +2,7 @@
 #include "Context_DX12.h"
 #include "Device_DX12.h"
 #include "GPUTimer_DX12.h"
+#include "Renderer/RenderManager.h"
 #include "SysInfo_DX12.h"
 
 #include "Core/PerfLogger.h"
@@ -30,7 +31,7 @@ namespace dx12
 	{
 		dx12::GPUTimer::PlatObj* platObj = timer.GetPlatformObject()->As<dx12::GPUTimer::PlatObj*>();
 
-		dx12::Context* dx12Context = re::Context::Get()->GetAs<dx12::Context*>();
+		dx12::Context* dx12Context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice = dx12Context->GetDevice().GetD3DDevice();
 
@@ -137,7 +138,7 @@ namespace dx12
 		{
 		case re::GPUTimer::TimerType::DirectCompute:
 		{
-			cmdQueue = &re::Context::Get()->GetAs<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Direct);
+			cmdQueue = &re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Direct);
 
 			queryHeap = platObj->m_directComputeQueryHeap;
 			queryBuffer = platObj->m_directComputeQueryBuffer;
@@ -146,7 +147,7 @@ namespace dx12
 		break;
 		case re::GPUTimer::TimerType::Copy:
 		{
-			cmdQueue = &re::Context::Get()->GetAs<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Copy);
+			cmdQueue = &re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Copy);
 
 			queryHeap = platObj->m_copyQueryHeap;
 			queryBuffer = platObj->m_copyQueryBuffer;

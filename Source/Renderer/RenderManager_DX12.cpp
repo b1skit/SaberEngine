@@ -20,11 +20,14 @@
 
 namespace dx12
 {
+	uint8_t RenderManager::s_numFrames_dx12 = 0;
+
 	RenderManager::RenderManager()
 		: re::RenderManager(platform::RenderingAPI::DX12)
 		, m_numFrames(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
 		SEAssert(m_numFrames >= 2 && m_numFrames <= 3, "Invalid number of frames in flight");
+		s_numFrames_dx12 = m_numFrames;
 	}
 
 
@@ -54,7 +57,7 @@ namespace dx12
 		{
 			auto CreateTextures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
-					dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+					dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 
 					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
@@ -305,9 +308,9 @@ namespace dx12
 	{
 		SEBeginCPUEvent("dx12::RenderManager::EndFrame");
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 
-		context->GetHeapManager().EndOfFrame(renderManager.m_renderFrameNum);
+		context->GetHeapManager().EndOfFrame(renderManager.GetCurrentRenderFrameNum());
 
 		SEEndCPUEvent();
 	}
@@ -315,7 +318,7 @@ namespace dx12
 
 	void RenderManager::Render()
 	{
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = GetContext()->As<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
@@ -835,7 +838,10 @@ namespace dx12
 
 				if (startGPUFrameTimer)
 				{
-					frameTimer = re::Context::Get()->GetGPUTimer().StartTimer(
+					// This lambda is called from Render(), a member function of dx12::RenderManager.
+					// 'this->GetContext()' or just 'GetContext()' should resolve correctly.
+					// frameTimer is captured by reference.
+					frameTimer = GetContext()->GetGPUTimer().StartTimer(
 						cmdList->GetD3DCommandList().Get(),
 						k_GPUFrameTimerName);
 				}
@@ -1012,7 +1018,7 @@ namespace dx12
 			}
 		}
 
-		re::Context::Get()->GetGPUTimer().EndFrame();
+		GetContext()->GetGPUTimer().EndFrame();
 	}
 
 
@@ -1021,7 +1027,7 @@ namespace dx12
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
 		// re::RenderManager::Shutdown ordering
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 		
 		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
 		{

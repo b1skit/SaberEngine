@@ -133,6 +133,8 @@ namespace re
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
+		, m_window_ptr(nullptr)
+		, m_context(nullptr)
 		, m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -200,7 +202,13 @@ namespace re
 
 		LOG("RenderManager starting...");
 		
-		re::Context::Get()->Create(m_renderFrameNum);
+		// Context Creation
+		SEAssert(m_window_ptr, "Window pointer cannot be null for context creation.");
+		uint8_t numFrames = GetNumFramesInFlight(); // This should resolve to platform specific
+		m_context = Context::CreatePlatformContext(m_renderingAPI, numFrames, m_window_ptr);
+		SEAssert(m_context, "Failed to create platform context.");
+
+		m_context->Create(m_renderFrameNum);
 		
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
@@ -211,7 +219,7 @@ namespace re
 		// Trigger creation of render libraries:
 		for (uint8_t i = 0; i < platform::RLibrary::Type::Type_Count; ++i)
 		{
-			re::Context::Get()->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
+			m_context->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
 		}
 
 		SEEndCPUEvent();
@@ -282,7 +290,7 @@ namespace re
 
 		m_renderData.Update(); // Post-render-command render data manager updates
 
-		re::Context* context = re::Context::Get();
+		re::Context* context = GetContext();
 
 		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
@@ -388,7 +396,7 @@ namespace re
 
 		LOG("Render manager shutting down...");
 
-		re::Context* context = re::Context::Get();
+		re::Context* context = GetContext();
 
 		// Flush any remaining render work:
 		platform::RenderManager::Shutdown(*this);
@@ -447,7 +455,7 @@ namespace re
 			{
 			case eventkey::ToggleVSync:
 			{
-				re::Context::Get()->GetSwapChain().ToggleVSync();
+				GetContext()->GetSwapChain().ToggleVSync();
 			}
 			break;
 			case eventkey::EngineQuit:
@@ -859,7 +867,7 @@ namespace re
 		{
 			ImGui::Indent();
 
-			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
+			re::Context::RenderDocAPI* renderDocApi = GetContext()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled =
 				core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&

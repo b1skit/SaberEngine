@@ -505,7 +505,7 @@ namespace dx12
 				// If our buffer has CPU readback enabled, add it to our tracking list so we can schedule a copy later on:
 				if (re::Buffer::HasAccessBit(re::Buffer::CPURead, bufferParams))
 				{
-					const uint8_t readbackIdx = dx12::RenderManager::GetFrameOffsetIdx();
+					const uint8_t readbackIdx = dx12::RenderManager::GetFrameOffsetIdx(*re::RenderManager::Get());
 
 					m_seenReadbackResources.emplace_back(ReadbackResourceMetadata{
 						.m_srcResource = bufferPlatObj->GetGPUResource(),

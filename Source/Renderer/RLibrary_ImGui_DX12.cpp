@@ -25,7 +25,7 @@ namespace dx12
 	{
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
@@ -79,7 +79,7 @@ namespace dx12
 		else
 		{
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -110,7 +110,7 @@ namespace dx12
 		else
 		{
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -141,7 +141,7 @@ namespace dx12
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector); // Avoid recursive call in Allocate()
 
 		// Copy the descriptor in:
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const uint32_t numDescriptors = 1;
@@ -198,15 +198,15 @@ namespace dx12
 		dx12::RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(newLibrary.get());
 		platform::RLibraryImGui::CreateInternal(*dx12ImGuiLibrary);
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		re::SwapChain& swapChain = context->GetSwapChain();
 
 		// Setup ImGui platform/Renderer backends:
-		SEAssert(re::Context::Get()->GetWindow(), "Window pointer cannot be null");
+		SEAssert(re::RenderManager::Get()->GetContext()->GetWindow(), "Window pointer cannot be null");
 		win32::Window::PlatObj* windowPlatObj =
-			re::Context::Get()->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
+			re::RenderManager::Get()->GetContext()->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		dx12::Texture::PlatObj const* backbufferColorTarget0PlatObj =
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()
@@ -253,7 +253,7 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE& cpuDstOut,
 		D3D12_GPU_DESCRIPTOR_HANDLE& gpuDstOut)
 	{
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
@@ -276,7 +276,7 @@ namespace dx12
 
 		// Clean up our ImGui descriptor heap:
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			re::Context::Get()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+			re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		dx12::RLibraryImGui::PlatObj* platObj =
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();
@@ -294,7 +294,7 @@ namespace dx12
 		std::unique_ptr<re::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = 
 			dynamic_cast<RLibraryImGui*>(context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));

@@ -57,7 +57,7 @@ namespace dx12
 			m_singleFrameBufferResources[i].resize(numBuffers);
 		}
 
-		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+		dx12::HeapManager& heapMgr = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 		// Note: We must start in the common state to ensure all command list types are able to transition the resource
 		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_COMMON;
@@ -97,7 +97,7 @@ namespace dx12
 	{
 		if (!dirtyBuffersForPlatformUpdate.empty())
 		{
-			dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+			dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
 			SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(),
@@ -126,7 +126,7 @@ namespace dx12
 			}
 			
 			// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
-			dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+			dx12::HeapManager& heapMgr = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 			std::unique_ptr<dx12::GPUResource> intermediateResource = heapMgr.CreateResource(dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalAlignedBytes),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,

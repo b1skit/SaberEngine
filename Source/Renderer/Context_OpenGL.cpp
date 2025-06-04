@@ -122,6 +122,15 @@ namespace
 
 namespace opengl
 {
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight)
+		: re::Context(api, numFramesInFlight)
+		, m_glRenderContext(nullptr)
+		, m_hDeviceContext(nullptr)
+		, wglCreateContextAttribsARBFn(nullptr)
+		, wglChoosePixelFormatARBFn(nullptr)
+	{
+	}
+
 	// The function used to get WGL extensions is an extension itself, thus it needs an OpenGL context. Thus, we create
 	// a temp window and context, retrieve and store our function pointers, and then destroy the temp objects
 	// More info: https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -255,15 +264,6 @@ namespace opengl
 		{
 			SEAssertF("High severity GL error!");
 		}		
-	}
-
-
-	Context::Context()
-		: m_glRenderContext(nullptr)
-		, m_hDeviceContext(nullptr)
-		, wglCreateContextAttribsARBFn(nullptr)
-		, wglChoosePixelFormatARBFn(nullptr)
-	{
 	}
 
 

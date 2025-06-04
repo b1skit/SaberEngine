@@ -54,8 +54,10 @@ namespace
 
 namespace dx12
 {
-	Context::Context()
-		: m_pixGPUCaptureModule(nullptr)
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight)
+		: re::Context(api, numFramesInFlight)
+		, m_numFramesInFlight(numFramesInFlight)
+		, m_pixGPUCaptureModule(nullptr)
 		, m_pixCPUCaptureModule(nullptr)
 	{
 	}
@@ -98,7 +100,7 @@ namespace dx12
 			}
 		}
 
-		const uint8_t numFramesInFlight = dx12::RenderManager::GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = m_numFramesInFlight;
 
 		m_frameFenceValues.resize(numFramesInFlight, 0);
 

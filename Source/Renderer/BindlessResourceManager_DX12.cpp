@@ -508,7 +508,7 @@ namespace dx12
 
 				brmPlatObj->m_cpuDescriptorCache.resize(numFramesInFlight);
 
-				brmPlatObj->m_deviceCache = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
+				brmPlatObj->m_deviceCache = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 				brmPlatObj->m_elementSize = brmPlatObj->m_deviceCache->GetDescriptorHandleIncrementSize(k_brmHeapType);
 				SEAssert(brmPlatObj->m_elementSize > 0, "Invalid element size");
@@ -517,7 +517,7 @@ namespace dx12
 				// We don't actually have enough information to create a valid null descriptor (as we're overlaying many
 				// resource types within the same root signature), so we just pick something reasonable as we'll never 
 				// actually access ones of these unused descriptors
-				brmPlatObj->m_nullDescriptor = re::Context::GetAs<dx12::Context*>()->GetNullSRVDescriptor(
+				brmPlatObj->m_nullDescriptor = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetNullSRVDescriptor(
 					D3D12_SRV_DIMENSION_BUFFER,
 					DXGI_FORMAT_R32G32B32A32_UINT).GetBaseDescriptor();
 

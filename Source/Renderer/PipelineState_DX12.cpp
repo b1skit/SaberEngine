@@ -3,6 +3,7 @@
 #include "Debug_DX12.h"
 #include "EnumTypes_DX12.h"
 #include "RasterizationState.h"
+#include "Renderer/RenderManager.h"
 #include "PipelineState_DX12.h"
 #include "RootSignature_DX12.h"
 #include "Shader.h"
@@ -353,7 +354,7 @@ namespace dx12
 
 	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
-		Microsoft::WRL::ComPtr<ID3D12Device> device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device> device = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 		
 		Microsoft::WRL::ComPtr<ID3D12Device2> device2;
 		HRESULT hr = device.As(&device2);

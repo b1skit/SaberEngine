@@ -43,7 +43,7 @@ namespace
 	{
 		dx12::Buffer::ReadbackResource readbackResource;
 
-		dx12::HeapManager& heapMgr = re::Context::GetAs<dx12::Context*>()->GetHeapManager();
+		dx12::HeapManager& heapMgr = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 		readbackResource.m_readbackGPUResource = heapMgr.CreateResource(
 			dx12::ResourceDesc{
@@ -248,7 +248,7 @@ namespace dx12
 			!needsUAV)
 		{
 			dx12::BufferAllocator* bufferAllocator =
-				dynamic_cast<dx12::BufferAllocator*>(re::Context::Get()->GetBufferAllocator());
+				dynamic_cast<dx12::BufferAllocator*>(re::RenderManager::Get()->GetContext()->GetBufferAllocator());
 
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
@@ -279,7 +279,7 @@ namespace dx12
 
 			std::wstring const& debugName = CreateDebugName(buffer);
 
-			platObj->m_gpuResource = re::Context::GetAs<dx12::Context*>()->GetHeapManager().CreateResource(
+			platObj->m_gpuResource = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = bufferDesc,
 					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
@@ -444,7 +444,7 @@ namespace dx12
 				platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 
 			dx12::CommandQueue& resourceCopyQueue =
-				re::Context::GetAs<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
+				re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
 
 			resourceCopyQueue.CPUWait(platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 		}

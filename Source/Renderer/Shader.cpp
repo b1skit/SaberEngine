@@ -115,7 +115,7 @@ namespace re
 		const ShaderID shaderID = ComputeShaderIdentifier(metadata, rasterizationState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
+		core::Inventory* inventory = re::RenderManager::Get()->GetContext()->GetInventory();
 		if (inventory->Has<re::Shader>(shaderID))
 		{
 			return inventory->Get<re::Shader>(shaderID);
@@ -129,7 +129,7 @@ namespace re
 				LOG(std::format("Scheduling load for Shader with ID \"{}\"", m_shaderID).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				re::RenderManager::Get()->RegisterForCreate(newShader);
+				re::RenderManager::Get()->GetContext()->RegisterForCreate(newShader);
 			}
 
 			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>&) override

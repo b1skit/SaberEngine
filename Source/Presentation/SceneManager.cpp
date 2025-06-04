@@ -50,7 +50,7 @@ namespace fr
 		Reset();
 
 		// Create a scene render system:
-		re::RenderManager::Get()->EnqueueRenderCommand([]()
+		re::RenderManager::Get()->GetContext()->EnqueueRenderCommand([]()
 			{
 				std::string pipelineFileName;
 				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
@@ -59,7 +59,7 @@ namespace fr
 				}
 
 				gr::RenderSystem const* sceneRenderSystem = 
-					re::RenderManager::Get()->CreateAddRenderSystem(pipelineFileName);
+					re::RenderManager::Get()->GetContext()->CreateAddRenderSystem(pipelineFileName);
 			});
 	}
 

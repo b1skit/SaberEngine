@@ -95,8 +95,11 @@ namespace dx12
 		HMODULE m_pixCPUCaptureModule;
 
 
+	private:
+		uint8_t m_numFramesInFlight;
+
 	protected:
-		Context();
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight);
 		friend class re::Context;
 	};
 

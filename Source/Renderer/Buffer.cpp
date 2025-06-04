@@ -97,7 +97,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			if (HasUsageBit(re::Buffer::Usage::Constant, *newBuffer))
@@ -116,7 +116,7 @@ namespace re
 			}
 		}
 
-		re::Context::Get()->GetBufferAllocator()->Register(newBuffer, numBytes);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Register(newBuffer, numBytes);
 
 		SEEndCPUEvent();
 	}
@@ -129,7 +129,7 @@ namespace re
 
 		Register(newBuffer, numBytes, typeIDHash);
 
-		re::Context::Get()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
 
 		newBuffer->m_platObj->m_isCommitted = true;
 
@@ -145,7 +145,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_stagingPool == StagingPool::Permanent, "Cannot set data of an immutable buffer");
 
-		re::Context::Get()->GetBufferAllocator()->Stage(GetUniqueID(), data);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Stage(GetUniqueID(), data);
 		
 		m_platObj->m_isCommitted = true;
 
@@ -163,7 +163,7 @@ namespace re
 			re::Buffer::HasUsageBit(re::Buffer::Raw, m_bufferParams),
 			"Invalid buffer usage for partial updates");
 
-		re::Context::Get()->GetBufferAllocator()->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platObj->m_isCommitted = true;
 	}
@@ -172,14 +172,14 @@ namespace re
 	void const* Buffer::GetData() const
 	{
 		void const* dataOut = nullptr;
-		re::Context::Get()->GetBufferAllocator()->GetData(GetUniqueID(), &dataOut);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->GetData(GetUniqueID(), &dataOut);
 		return dataOut;
 	}
 
 
 	void Buffer::GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const
 	{
-		re::Context::Get()->GetBufferAllocator()->GetData(GetUniqueID(), out_data);
+		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->GetData(GetUniqueID(), out_data);
 
 		*out_numBytes = m_dataByteSize;
 	}
@@ -202,7 +202,7 @@ namespace re
 		// Free bindless resource handles:
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
@@ -211,7 +211,7 @@ namespace re
 
 		if (m_cbvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
@@ -220,9 +220,9 @@ namespace re
 
 		if (m_platObj->m_isCreated)
 		{
-			re::Context::Get()->GetBufferAllocator()->Deallocate(GetUniqueID());
+			re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Deallocate(GetUniqueID());
 
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			re::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
 	}
 
