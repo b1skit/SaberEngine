@@ -54,8 +54,9 @@ namespace
 
 namespace dx12
 {
-	Context::Context()
-		: m_pixGPUCaptureModule(nullptr)
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+		: re::Context(api, numFramesInFlight, window)
+		, m_pixGPUCaptureModule(nullptr)
 		, m_pixCPUCaptureModule(nullptr)
 	{
 	}
@@ -98,9 +99,7 @@ namespace dx12
 			}
 		}
 
-		const uint8_t numFramesInFlight = dx12::RenderManager::GetNumFramesInFlight();
-
-		m_frameFenceValues.resize(numFramesInFlight, 0);
+		m_frameFenceValues.resize(m_numFramesInFlight, 0);
 
 		EnableDebugLayer(); // Before we create a device
 

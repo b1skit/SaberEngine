@@ -133,6 +133,8 @@ namespace re
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_inventory(nullptr)
+		, m_windowCache(nullptr)
+		, m_context(nullptr)
 		, m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -200,7 +202,11 @@ namespace re
 
 		LOG("RenderManager starting...");
 		
-		re::Context::Get()->Create(m_renderFrameNum);
+		// Create the context:
+		m_context = Context::CreatePlatformContext(m_renderingAPI, GetNumFramesInFlight(), m_windowCache);
+		SEAssert(m_context, "Failed to create platform context.");
+
+		m_context->Create(m_renderFrameNum);
 		
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
@@ -211,7 +217,7 @@ namespace re
 		// Trigger creation of render libraries:
 		for (uint8_t i = 0; i < platform::RLibrary::Type::Type_Count; ++i)
 		{
-			re::Context::Get()->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
+			m_context->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
 		}
 
 		SEEndCPUEvent();
@@ -282,9 +288,7 @@ namespace re
 
 		m_renderData.Update(); // Post-render-command render data manager updates
 
-		re::Context* context = re::Context::Get();
-
-		context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
+		m_context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
 		// We must create any API resources that were passed via render commands, as they may be required during GS
 		// updates (e.g. MeshPrimitive VertexStream Buffer members need to be created so we can set them on BufferInputs)
@@ -307,7 +311,7 @@ namespace re
 		CreateAPIResources();
 
 		// Update context objects (Buffers, BindlessResourceManager, etc)
-		context->Update(frameNum);
+		m_context->Update(frameNum);
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
@@ -316,7 +320,7 @@ namespace re
 
 		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
-		context->Present();
+		m_context->Present();
 		SEEndCPUEvent();
 
 		SEEndCPUEvent();
@@ -388,8 +392,6 @@ namespace re
 
 		LOG("Render manager shutting down...");
 
-		re::Context* context = re::Context::Get();
-
 		// Flush any remaining render work:
 		platform::RenderManager::Shutdown(*this);
 
@@ -417,19 +419,20 @@ namespace re
 
 		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
 		// remaining outstanding work
-		context->GetSwapChain().Destroy();
+		m_context->GetSwapChain().Destroy();
 
 		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
 		// be destroyed from the render thread (i.e. for OpenGL)
 		m_inventory->Destroy();
 
 		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatObj there
-		context->GetBufferAllocator()->Destroy();
+		m_context->GetBufferAllocator()->Destroy();
 
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		// Need to do this here so the EngineApp's Window can be destroyed
-		context->Destroy();
+		m_context->Destroy();
+		m_context = nullptr;
 
 		SEEndCPUEvent();
 	}
@@ -447,7 +450,7 @@ namespace re
 			{
 			case eventkey::ToggleVSync:
 			{
-				re::Context::Get()->GetSwapChain().ToggleVSync();
+				m_context->GetSwapChain().ToggleVSync();
 			}
 			break;
 			case eventkey::EngineQuit:
@@ -859,7 +862,7 @@ namespace re
 		{
 			ImGui::Indent();
 
-			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
+			re::Context::RenderDocAPI* renderDocApi = GetContext()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled =
 				core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&

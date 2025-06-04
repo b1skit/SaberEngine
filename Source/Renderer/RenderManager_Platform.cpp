@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "RenderManager_Platform.h"
-#include "Shader.h"
 
 
 namespace platform
