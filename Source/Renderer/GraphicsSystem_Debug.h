@@ -2,6 +2,7 @@
 #pragma once
 #include "CameraRenderData.h"
 #include "GraphicsSystem.h"
+#include "TransformRenderData.h"
 
 
 struct DebugData;

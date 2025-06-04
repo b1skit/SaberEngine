@@ -1,7 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
-#include "TransformRenderData.h"
+#include "BufferView.h"
+
+#include "Core/Assert.h"
 
 #include "Core/Util/HashUtils.h"
 #include "Core/Interfaces/INamedObject.h"
@@ -51,7 +53,7 @@ namespace gr
 				"ZPos",
 				"ZNeg"
 			};
-			static_assert(k_faceNames.size() == Face_Count);
+			SEStaticAssert(k_faceNames.size() == Face_Count, "Face names and count are out of sync");
 
 
 		public:

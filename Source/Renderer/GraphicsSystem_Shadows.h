@@ -4,6 +4,7 @@
 #include "CameraRenderData.h"
 #include "GraphicsSystem.h"
 #include "ShadowMapRenderData.h"
+#include "TransformRenderData.h"
 
 
 namespace core
