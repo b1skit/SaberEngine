@@ -3,9 +3,6 @@
 #include "BindlessResourceManager.h"
 #include "CommandList_DX12.h"
 
-#include <d3d12.h>
-#include <wrl/client.h>
-
 
 namespace dx12
 {

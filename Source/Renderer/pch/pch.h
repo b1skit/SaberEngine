@@ -40,6 +40,12 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
 #include <comdef.h> // HRESULTs to error messages
+
+// D3D12 headers
+#include <d3d12.h>
+#include <dxgi1_6.h>
+#include <d3d12sdklayers.h>
+#include <wrl/client.h> // Microsoft WRL ComPtr
 #endif // defined(_WIN32) || defined(_WIN64)
 
 

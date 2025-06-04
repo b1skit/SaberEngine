@@ -8,7 +8,6 @@
 #include "ResourceStateTracker_DX12.h"
 
 #include <wrl.h>
-#include <d3d12.h>
 
 
 namespace dx12

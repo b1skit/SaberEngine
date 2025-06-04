@@ -4,8 +4,6 @@
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "HeapManager_DX12.h"
 
-#include <d3d12.h>
-
 
 namespace dx12
 {
