@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
-#include "LightRenderData.h"
+#include "VertexStream.h"
 #include "RenderObjectIDs.h"
 
 #include "Core/Util/CHashKey.h"
@@ -16,6 +16,7 @@ namespace re
 {
 	class AccelerationStructure;
 	class Batch;
+	class Texture;
 	class VertexBufferInput;
 }
 
