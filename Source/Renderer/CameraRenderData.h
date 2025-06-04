@@ -1,7 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
-#include "BufferView.h"
+
+#include "Core/InvPtr.h"
+
+#include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Assert.h"
 
