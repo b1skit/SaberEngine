@@ -192,7 +192,7 @@ namespace gr
 		m_deferredBufferCreateParams = nullptr;
 
 		// Create the bindless resource handle after we're released the deferred buffer create params to avoid an assert
-		re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			vertexStream->m_srvResourceHandle = brm->RegisterResource(
@@ -276,7 +276,8 @@ namespace gr
 
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm =
+				re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());

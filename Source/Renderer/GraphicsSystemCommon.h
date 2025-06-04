@@ -1,21 +1,19 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
-#include "LightRenderData.h"
+#include "VertexStream.h"
 #include "RenderObjectIDs.h"
+
+#include "Core/InvPtr.h"
 
 #include "Core/Util/CHashKey.h"
 
 
-namespace core
-{
-	template<typename T>
-	class InvPtr;
-}
 namespace re
 {
 	class AccelerationStructure;
 	class Batch;
+	class Texture;
 	class VertexBufferInput;
 }
 

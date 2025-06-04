@@ -71,7 +71,7 @@ namespace dx12
 		swapChainDesc.Flags = swapChainParams->m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 		// Note: The context (currently) calls this function. This is dicey...
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		SEAssert(context->GetWindow(), "Window cannot be null");
 		win32::Window::PlatObj* windowPlatObj =

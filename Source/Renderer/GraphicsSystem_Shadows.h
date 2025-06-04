@@ -4,13 +4,10 @@
 #include "CameraRenderData.h"
 #include "GraphicsSystem.h"
 #include "ShadowMapRenderData.h"
+#include "TransformRenderData.h"
 
+#include "Core/InvPtr.h"
 
-namespace core
-{
-	template<typename T>
-	class InvPtr;
-}
 
 namespace gr
 {

@@ -7,6 +7,8 @@
 #include "LightRenderData.h"
 #include "TransformRenderData.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/ImGuiUtils.h"
 

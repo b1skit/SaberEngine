@@ -1,11 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
+#include "Effect.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsUtils.h"
 #include "Sampler.h"
 
+#include "Core/InvPtr.h"
+
 #include "Shaders/Common/BloomComputeParams.h"
+
 
 
 namespace

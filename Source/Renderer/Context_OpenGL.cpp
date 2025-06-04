@@ -258,8 +258,9 @@ namespace opengl
 	}
 
 
-	Context::Context()
-		: m_glRenderContext(nullptr)
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+		: re::Context(api, numFramesInFlight, window)
+		, m_glRenderContext(nullptr)
 		, m_hDeviceContext(nullptr)
 		, wglCreateContextAttribsARBFn(nullptr)
 		, wglChoosePixelFormatARBFn(nullptr)
