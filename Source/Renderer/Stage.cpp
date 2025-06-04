@@ -397,7 +397,7 @@ namespace re
 		}
 		else
 		{
-			re::SwapChain const& swapchain = re::Context::Get()->GetSwapChain();
+			re::SwapChain const& swapchain = re::RenderManager::Get()->GetContext()->GetSwapChain();
 			glm::uvec2 const& swapchainDims = platform::SwapChain::GetBackbufferDimensions(swapchain);
 
 			SEAssert(m_src->Width() == swapchainDims.x && m_src->Height() == swapchainDims.y,

@@ -281,7 +281,7 @@ namespace re
 	{
 		if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			if (brm)
 			{
 				if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
@@ -392,7 +392,7 @@ namespace re
 
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
@@ -400,7 +400,7 @@ namespace re
 
 		if (m_uavResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::Context::Get()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_uavResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());

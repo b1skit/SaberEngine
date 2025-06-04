@@ -360,7 +360,7 @@ namespace dx12
 	{
 		SEBeginCPUEvent("CommandQueue::TransitionIncompatibleResourceStatesToCommon");
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> directCmdList = nullptr;
@@ -646,7 +646,7 @@ namespace dx12
 		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
 		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		dx12::GlobalResourceStateTracker& globalResourceStates = context->GetGlobalResourceStates();
 
 		// Manually patch the barriers for each command list:

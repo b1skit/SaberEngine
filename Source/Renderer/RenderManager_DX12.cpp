@@ -54,7 +54,7 @@ namespace dx12
 		{
 			auto CreateTextures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
-					dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+					dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 
 					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
@@ -305,9 +305,8 @@ namespace dx12
 	{
 		SEBeginCPUEvent("dx12::RenderManager::EndFrame");
 
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-
-		context->GetHeapManager().EndOfFrame(renderManager.m_renderFrameNum);
+		renderManager.GetContext()->As<dx12::Context*>()->GetHeapManager().EndOfFrame(
+			renderManager.m_renderFrameNum);
 
 		SEEndCPUEvent();
 	}
@@ -315,7 +314,7 @@ namespace dx12
 
 	void RenderManager::Render()
 	{
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = m_context->As<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
@@ -806,7 +805,7 @@ namespace dx12
 			};
 
 		auto EnqueueWorkRecording = 
-			[&commandListJobs, &RecordCommandList, &StageTypeToCommandListType, &directQueue, &computeQueue, &frameTimer]
+			[this, &commandListJobs, &RecordCommandList, &StageTypeToCommandListType, &directQueue, &computeQueue, &frameTimer]
 			(std::vector<WorkRange>&& workRange, bool startGPUFrameTimer, bool stopGPUFrameTimer)
 			{
 				if (workRange.empty())
@@ -835,7 +834,7 @@ namespace dx12
 
 				if (startGPUFrameTimer)
 				{
-					frameTimer = re::Context::Get()->GetGPUTimer().StartTimer(
+					frameTimer = m_context->GetGPUTimer().StartTimer(
 						cmdList->GetD3DCommandList().Get(),
 						k_GPUFrameTimerName);
 				}
@@ -1012,7 +1011,7 @@ namespace dx12
 			}
 		}
 
-		re::Context::Get()->GetGPUTimer().EndFrame();
+		m_context->GetGPUTimer().EndFrame();
 	}
 
 
@@ -1020,15 +1019,13 @@ namespace dx12
 	{
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
 		// re::RenderManager::Shutdown ordering
-
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		
+		dx12::Context* ctx = renderManager.m_context->As<dx12::Context*>();
 		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
 		{
-			CommandQueue& commandQueue = context->GetCommandQueue(static_cast<dx12::CommandListType>(i));
+			CommandQueue& commandQueue = ctx->GetCommandQueue(static_cast<dx12::CommandListType>(i));
 			if (commandQueue.IsCreated())
 			{
-				context->GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
+				ctx->GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
 			}
 		}
 	}

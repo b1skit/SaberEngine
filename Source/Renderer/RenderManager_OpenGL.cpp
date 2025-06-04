@@ -119,7 +119,7 @@ namespace opengl
 
 	void RenderManager::Render()
 	{
-		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
+		opengl::Context* context = GetContext()->As<opengl::Context*>();
 
 		re::GPUTimer& gpuTimer = context->GetGPUTimer();
 

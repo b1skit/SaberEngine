@@ -25,11 +25,12 @@ namespace re
 {
 	class Context
 	{
-	public: // Singleton functionality
-		static Context* Get(); 
+	public:
+		static std::unique_ptr<re::Context> CreatePlatformContext(
+			platform::RenderingAPI, uint8_t numFramesInFlight, host::Window*);
 		
 		template <typename T>
-		static T GetAs();
+		T As();
 
 
 	public:
@@ -51,7 +52,6 @@ namespace re
 
 
 	public:
-		void SetWindow(host::Window*); // Set once
 		host::Window* GetWindow() const;
 
 		re::SwapChain& GetSwapChain();
@@ -65,11 +65,8 @@ namespace re
 		re::GPUTimer& GetGPUTimer();
 
 
-	private:
-		static std::unique_ptr<re::Context> CreateSingleton();
-
 	protected:
-		Context();
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*);
 
 
 	protected:
@@ -84,7 +81,9 @@ namespace re
 	protected:
 		re::GPUTimer m_gpuTimer;
 
-		
+		uint8_t m_numFramesInFlight;
+
+
 	public: // RenderDoc debugging
 		typedef RENDERDOC_API_1_1_2 RenderDocAPI;
 		RenderDocAPI* GetRenderDocAPI() const;
@@ -92,14 +91,6 @@ namespace re
 	private:
 		RenderDocAPI* m_renderDocApi;
 	};
-
-
-	inline void Context::SetWindow(host::Window* window)
-	{
-		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
-		SEAssert(m_window == nullptr, "Trying to re-set the window. This is unexpected");
-		m_window = window;
-	}
 
 
 	inline host::Window* Context::GetWindow() const
@@ -141,9 +132,9 @@ namespace re
 
 
 	template <typename T>
-	inline T Context::GetAs()
+	inline T Context::As()
 	{
-		return dynamic_cast<T>(re::Context::Get());
+		return dynamic_cast<T>(this);
 	}
 
 

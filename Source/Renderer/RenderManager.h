@@ -15,7 +15,7 @@
 #include "Core/Util/NBufferedVector.h"
 
 
-namespace app
+namespace host
 {
 	class Window;
 }
@@ -89,8 +89,14 @@ namespace re
 		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
 		core::Inventory* GetInventory() const;
 
+		re::Context* GetContext() { return m_context.get(); }
+		re::Context const* GetContext() const { return m_context.get(); }
+
 	private:
 		core::Inventory* m_inventory;
+
+		host::Window* m_windowCache; // Passed to the m_context at creation
+		std::unique_ptr<re::Context> m_context;
 
 	public:
 		void SetWindow(host::Window*);
@@ -289,7 +295,7 @@ namespace re
 	inline void RenderManager::SetWindow(host::Window* window)
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
-		re::Context::Get()->SetWindow(window);
+		m_windowCache = window; // Cache this to pass to the context
 	}
 
 

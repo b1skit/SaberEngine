@@ -110,7 +110,7 @@ namespace
 
 	void HandleDRED()
 	{
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
 		SEVerify(SUCCEEDED(context->GetDevice().GetD3DDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
