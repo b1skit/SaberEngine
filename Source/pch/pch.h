@@ -1,12 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-
 // ImGui
 // Supress error C4996 ("This function or variable may be unsafe"), e.g. 'sscanf', 'strcpy', 'strcat', 'sscanf'
 // Note: This block needs to come before the std includes
@@ -42,10 +36,25 @@
 #include <vector>
 
 
-// Win32 API:
+// Windows:
 #if defined(_WIN32) || defined(_WIN64)
+
+// Win32 API:
+#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <Windows.h>
 #include <oleidl.h>
+
+#include <wrl/client.h> // Windows Runtime Library: Microsoft WRL ComPtr
+
+// D3D12:
+#include <d3d12.h>
+#include <d3d12shader.h>
+#include <dxgi1_5.h>
+
 #endif // defined(_WIN32) || defined(_WIN64)
 
 

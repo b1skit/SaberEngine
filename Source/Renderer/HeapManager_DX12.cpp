@@ -5,8 +5,6 @@
 
 #include "Core/Util/MathUtils.h"
 
-#include <d3dx12.h>
-
 
 // Enable this to track the resources that have registered names
 //#define DEBUG_MAP_RESOURCE_NAMES

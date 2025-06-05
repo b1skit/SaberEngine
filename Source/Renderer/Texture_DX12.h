@@ -3,9 +3,6 @@
 #include "DescriptorCache_DX12.h"
 #include "Texture.h"
 
-#include <d3d12.h>
-#include <wrl.h>
-
 
 namespace dx12
 {

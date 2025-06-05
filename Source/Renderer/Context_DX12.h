@@ -7,8 +7,6 @@
 #include "HeapManager_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
-#include <wrl.h>
-
 
 namespace dx12
 {

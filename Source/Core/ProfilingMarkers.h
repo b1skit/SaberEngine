@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include <d3d12.h>
 
 //#define PIX_USE_GPU_MARKERS_V2
 #include <pix3.h>

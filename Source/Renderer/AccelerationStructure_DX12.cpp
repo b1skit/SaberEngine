@@ -9,8 +9,6 @@
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/MathUtils.h"
 
-#include <d3dx12.h>
-
 using Microsoft::WRL::ComPtr;
 
 
