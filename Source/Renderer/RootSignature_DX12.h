@@ -2,9 +2,6 @@
 #pragma once
 #include "Shader.h"
 
-#include <wrl.h>
-#include <d3d12.h>
-#include <d3d12shader.h>
 
 struct CD3DX12_ROOT_PARAMETER1;
 struct CD3DX12_DESCRIPTOR_RANGE1;

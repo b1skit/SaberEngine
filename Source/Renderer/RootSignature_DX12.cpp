@@ -14,8 +14,6 @@
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/HashUtils.h"
 
-#include <d3dx12.h>
-#include <dxcapi.h>
 
 using Microsoft::WRL::ComPtr;
 

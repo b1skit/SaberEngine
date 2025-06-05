@@ -16,12 +16,8 @@
 #include "Core/Assert.h"
 #include "Core/Util/TextUtils.h"
 
-#include <d3dx12.h>
-#include <dxcapi.h>
-#include <d3d12shader.h>
 
 using Microsoft::WRL::ComPtr;
-
 
 namespace
 {

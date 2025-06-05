@@ -2,8 +2,6 @@
 #pragma once
 #include "Core/Util/ThreadProtector.h"
 
-#include <d3d12.h>
-
 
 namespace dx12
 {

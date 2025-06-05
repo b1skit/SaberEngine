@@ -11,8 +11,6 @@
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/TextUtils.h"
 
-#include <d3dx12.h>
-
 using Microsoft::WRL::ComPtr;
 
 

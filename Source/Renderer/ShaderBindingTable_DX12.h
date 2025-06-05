@@ -3,9 +3,6 @@
 #include "HeapManager_DX12.h"
 #include "ShaderBindingTable.h"
 
-#include <wrl/client.h>
-#include <d3d12.h>
-
 
 namespace re
 {

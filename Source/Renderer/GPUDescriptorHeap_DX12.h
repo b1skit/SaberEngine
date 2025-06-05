@@ -2,11 +2,8 @@
 #pragma once
 #include "RootSignature_DX12.h"
 
-#include <d3d12.h>
-#include <wrl.h>
 
 // TODO: Handle sampler descriptors
-
 
 namespace dx12
 {
