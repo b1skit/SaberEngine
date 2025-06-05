@@ -25,11 +25,6 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include <d3dx12_core.h>
-#include <d3dx12_resource_helpers.h>
-
-#include <wrl/client.h>
-
 using Microsoft::WRL::ComPtr;
 
 

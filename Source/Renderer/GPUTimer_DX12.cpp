@@ -7,8 +7,6 @@
 
 #include "Core/PerfLogger.h"
 
-#include <d3dx12.h>
-
 
 namespace
 {

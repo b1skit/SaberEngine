@@ -1,8 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "Shader.h"
-
-#include <d3d12.h>
 
 
 namespace dx12

@@ -11,8 +11,6 @@
 #include "Core/Config.h"
 #include "Core/ProfilingMarkers.h"
 
-#include <wrl/client.h>
-
 using Microsoft::WRL::ComPtr;
 
 

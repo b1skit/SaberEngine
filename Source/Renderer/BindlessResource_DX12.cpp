@@ -9,8 +9,6 @@
 
 #include "Core/Assert.h"
 
-#include <d3d12.h>
-
 
 namespace dx12
 {

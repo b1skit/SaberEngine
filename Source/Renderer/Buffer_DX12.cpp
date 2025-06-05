@@ -13,9 +13,6 @@
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/MathUtils.h"
 
-#include <d3dx12.h>
-#include <wrl/client.h>
-
 using Microsoft::WRL::ComPtr;
 
 

@@ -4,9 +4,6 @@
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 
-#include <d3d12.h>
-#include <wrl.h>
-
 
 namespace dx12
 {

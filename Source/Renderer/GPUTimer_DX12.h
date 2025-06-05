@@ -2,9 +2,6 @@
 #pragma once
 #include "GPUTimer.h"
 
-#include <wrl.h>
-#include <d3d12.h>
-
 
 namespace platform
 {

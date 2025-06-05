@@ -1,8 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "EnumTypes_DX12.h"
 
-#include <dxgiformat.h>
-
 
 namespace dx12
 {

@@ -9,8 +9,6 @@
 #include "Core/Logger.h"
 #endif
 
-#include <d3d12.h>
-
 
 namespace gr
 {

@@ -4,8 +4,6 @@
 
 #include "Core/Util/ThreadProtector.h"
 
-#include <wrl.h>
-#include <d3d12.h>
 
 struct ImGui_ImplDX12_InitInfo;
 
