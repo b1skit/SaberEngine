@@ -5,19 +5,28 @@
     <ProjectGuid>{80C62E80-7437-4BB9-B7E0-693FA4C402A1}</ProjectGuid>
     <RootNamespace>Saber</RootNamespace>
     <ProjectName>SaberEngine</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -45,30 +54,30 @@
     <PreBuildEventUseInBuild>
     </PreBuildEventUseInBuild>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
-    <OutDir>..\..\Build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <PreBuildEventUseInBuild />
-    <OutDir>..\..\Build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <PreBuildEventUseInBuild />
-    <OutDir>..\..\Build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEventUseInBuild />
-    <OutDir>..\..\Build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)..\Dependencies\RenderDoc\;$(ProjectDir)..\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;$(WindowsSDK_LibraryPath)\x64\shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -78,9 +87,9 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+      <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy dependencies to project directory</Message>
@@ -88,13 +97,13 @@ xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)Sabe
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)..\Dependencies\RenderDoc\;$(ProjectDir)..\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;$(WindowsSDK_LibraryPath)\x64\shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -104,20 +113,20 @@ xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)Sabe
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+      <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)..\Dependencies\RenderDoc\;$(ProjectDir)..\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;$(WindowsSDK_LibraryPath)\x64\shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -128,20 +137,20 @@ xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)Sabe
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+      <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)..\Dependencies\RenderDoc\;$(ProjectDir)..\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;$(WindowsSDK_LibraryPath)\x64\dxcompiler.lib;$(WindowsSDK_LibraryPath)\x64\shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -152,8 +161,8 @@ xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)Sabe
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(ProjectDir)..\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
+      <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
 xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
@@ -189,7 +198,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ResourceCompile Include="SaberEngine.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Dependencies\Icon\SaberEngineApplicationIcon.ico" />
+    <Image Include="..\..\Dependencies\Icon\SaberEngineApplicationIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
