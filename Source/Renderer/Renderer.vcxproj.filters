@@ -117,6 +117,9 @@
     <Filter Include="Effects">
       <UniqueIdentifier>{4a6ea4e3-ce8d-455c-a8d7-6f92bae6748c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Dependencies">
+      <UniqueIdentifier>{dfbf0971-e49b-4dc9-8444-8e3422a0a242}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
@@ -1260,6 +1263,9 @@
     </None>
     <None Include="Effects\XeGTAO.json">
       <Filter>Effects</Filter>
+    </None>
+    <None Include="..\Dependencies\XeGTAO\XeGTAO.hlsli">
+      <Filter>Shaders\Dependencies</Filter>
     </None>
   </ItemGroup>
 </Project>

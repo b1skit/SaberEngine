@@ -212,7 +212,6 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <ClInclude Include="EngineApp.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Dependencies\XeGTAO\XeGTAO.hlsli" />
     <None Include="SaberEngine.licenseheader" />
   </ItemGroup>
   <ItemGroup>

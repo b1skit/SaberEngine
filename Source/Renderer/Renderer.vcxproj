@@ -383,6 +383,7 @@
     <ClCompile Include="VertexStreamBuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Dependencies\XeGTAO\XeGTAO.hlsli" />
     <None Include="Shaders\GLSL\AmbientCommon.glsli" />
     <None Include="Shaders\GLSL\Blit_PShader.glsl" />
     <None Include="Shaders\GLSL\Bloom_CShader.glsl" />

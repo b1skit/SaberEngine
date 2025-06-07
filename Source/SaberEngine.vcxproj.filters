@@ -72,12 +72,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
-      <Filter>Dependencies</Filter>
-    </None>
     <None Include="SaberEngine.licenseheader">
       <Filter>Dependencies\Resources</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">
