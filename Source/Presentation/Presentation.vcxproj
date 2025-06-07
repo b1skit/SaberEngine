@@ -27,19 +27,19 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\SaberEngineSolutionProperties.props" />
+    <Import Project="..\SaberEngineRuntime.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\SaberEngineSolutionProperties.props" />
+    <Import Project="..\SaberEngineRuntime.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\SaberEngineSolutionProperties.props" />
+    <Import Project="..\SaberEngineRuntime.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\SaberEngineSolutionProperties.props" />
+    <Import Project="..\SaberEngineRuntime.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -74,17 +74,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
-      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
-      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
