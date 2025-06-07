@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "ParseDB.h"
 #include "TextStrings.h"
@@ -44,20 +44,20 @@ int main(int argc, char* argv[])
 		.m_directXCompilerExePath = "DXC_COMPILER_EXE_PATH_NOT_SET", // Mandatory command line arg
 
 		// Shader input paths:
-		.m_hlslShaderSourceDir = "Source\\Shaders\\HLSL\\",
-		.m_glslShaderSourceDir = "Source\\Shaders\\GLSL\\",
-		.m_commonShaderSourceDir = "Source\\Shaders\\Common\\",
+		.m_hlslShaderSourceDir = "Source\\Renderer\\Shaders\\HLSL\\",
+		.m_glslShaderSourceDir = "Source\\Renderer\\Shaders\\GLSL\\",
+		.m_commonShaderSourceDir = "Source\\Renderer\\Shaders\\Common\\",
 		.m_dependenciesDir = "Source\\Dependencies\\",
 
 		// Output paths:
 		.m_cppCodeGenOutputDir = "Source\\Generated\\",
 
-		.m_hlslCodeGenOutputDir = "Source\\Shaders\\Generated\\HLSL\\",
+		.m_hlslCodeGenOutputDir = "Source\\Renderer\\Shaders\\Generated\\HLSL\\",
 		.m_hlslShaderOutputDir = 
 			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_hlslShaderDirName),
 		
 
-		.m_glslCodeGenOutputDir = "Source\\Shaders\\Generated\\GLSL\\",
+		.m_glslCodeGenOutputDir = "Source\\Renderer\\Shaders\\Generated\\GLSL\\",
 		.m_glslShaderOutputDir =
 			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_glslShaderDirName),
 

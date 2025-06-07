@@ -208,24 +208,24 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   <ItemGroup>
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Shaders\Common\AnimationParams.h" />
-    <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
-    <ClInclude Include="Shaders\Common\CameraParams.h" />
-    <ClInclude Include="Shaders\Common\DebugParams.h" />
-    <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />
-    <ClInclude Include="Shaders\Common\InstancingParams.h" />
-    <ClInclude Include="Shaders\Common\LightParams.h" />
-    <ClInclude Include="Shaders\Common\MaterialParams.h" />
-    <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
-    <ClInclude Include="Shaders\Common\PlatformConversions.h" />
-    <ClInclude Include="Shaders\Common\RayTracingParams.h" />
-    <ClInclude Include="Shaders\Common\ResourceCommon.h" />
-    <ClInclude Include="Shaders\Common\ShadowParams.h" />
-    <ClInclude Include="Shaders\Common\SkyboxParams.h" />
-    <ClInclude Include="Shaders\Common\TargetParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\AnimationParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\BloomComputeParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\CameraParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\DebugParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\IBLGenerationParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\InstancingParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\LightParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\MaterialParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\MipGenerationParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\PlatformConversions.h" />
+    <ClInclude Include="Renderer\Shaders\Common\RayTracingParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\ResourceCommon.h" />
+    <ClInclude Include="Renderer\Shaders\Common\ShadowParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\SkyboxParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\TargetParams.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="EngineApp.h" />
-    <ClInclude Include="Shaders\Common\TransformParams.h" />
+    <ClInclude Include="Renderer\Shaders\Common\TransformParams.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Effects\Bloom.json" />
@@ -242,15 +242,15 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <None Include="Effects\Tonemapping.json" />
     <None Include="Effects\VertexAnimation.json" />
     <None Include="Effects\XeGTAO.json" />
-    <None Include="Shaders\GLSL\Deferred_Fullscreen_CShader.glsl" />
-    <None Include="Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl" />
-    <None Include="Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl" />
-    <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
-    <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
-    <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
-    <None Include="Shaders\GLSL\Tonemapping_CShader.glsl" />
-    <None Include="Shaders\HLSL\BindlessResources.hlsli" />
-    <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
+    <None Include="Renderer\Shaders\GLSL\Deferred_Fullscreen_CShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\MorphAnimation_CShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\SkinningAnimation_CShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Tonemapping_CShader.glsl" />
+    <None Include="Renderer\Shaders\HLSL\BindlessResources.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
@@ -265,7 +265,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
@@ -280,7 +280,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
@@ -295,8 +295,8 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\RayTracingCommon.hlsli" />
-    <None Include="Shaders\HLSL\XeGTAO_Denoise.hlsl">
+    <None Include="Renderer\Shaders\HLSL\RayTracingCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\XeGTAO_Denoise.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CShader</EntryPointName>
@@ -315,7 +315,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(MSBuildProjectDirectory)\Dependencies\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\XeGTAO_PrefilterDepths.hlsl">
+    <None Include="Renderer\Shaders\HLSL\XeGTAO_PrefilterDepths.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.6</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CShader</EntryPointName>
@@ -336,49 +336,49 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     </None>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli" />
     <None Include="SaberEngine.licenseheader" />
-    <None Include="Shaders\GLSL\AmbientCommon.glsli" />
-    <None Include="Shaders\GLSL\Blit_PShader.glsl" />
-    <None Include="Shaders\GLSL\Bloom_CShader.glsl" />
-    <None Include="Shaders\GLSL\Color.glsli" />
-    <None Include="Shaders\GLSL\CubeDepth_GShader.glsl" />
-    <None Include="Shaders\GLSL\CubeDepth_VShader.glsl" />
-    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.glsl" />
-    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.glsl" />
-    <None Include="Shaders\GLSL\DeferredPointLight_PShader.glsl" />
-    <None Include="Shaders\GLSL\DeferredPointSpot_VShader.glsl" />
-    <None Include="Shaders\GLSL\DeferredSpotLight_PShader.glsl" />
-    <None Include="Shaders\GLSL\DepthAlphaMask_PShader.glsl" />
-    <None Include="Shaders\GLSL\Depth_VShader.glsl" />
-    <None Include="Shaders\GLSL\FullscreenQuad_VShader.glsl" />
-    <None Include="Shaders\GLSL\GaussianBlur_PShader.glsl" />
-    <None Include="Shaders\GLSL\GBufferCommon.glsli" />
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.glsl" />
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.glsl" />
-    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.glsl" />
-    <None Include="Shaders\GLSL\GenerateIEM_PShader.glsl" />
-    <None Include="Shaders\GLSL\GenerateIBL_VShader.glsl" />
-    <None Include="Shaders\GLSL\GeneratePMREM_PShader.glsl" />
-    <None Include="Shaders\GLSL\Lighting.glsli" />
-    <None Include="Shaders\GLSL\Line.glsl" />
-    <None Include="Shaders\GLSL\MathConstants.glsli" />
-    <None Include="Shaders\GLSL\NormalMapUtils.glsli" />
-    <None Include="Shaders\GLSL\SaberCommon.glsli" />
-    <None Include="Shaders\GLSL\Shadows.glsli" />
-    <None Include="Shaders\GLSL\Skybox_PShader.glsl" />
-    <None Include="Shaders\GLSL\Transformations.glsli" />
-    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl" />
-    <None Include="Shaders\GLSL\UVUtils.glsli" />
-    <None Include="Shaders\HLSL\AmbientCommon.hlsli" />
-    <None Include="Shaders\HLSL\CameraCommon.hlsli" />
-    <None Include="Shaders\HLSL\Color.hlsli" />
-    <None Include="Shaders\HLSL\FullscreenQuad_VShader.hlsl" />
-    <None Include="Shaders\HLSL\GBufferCommon.hlsli" />
-    <None Include="Shaders\HLSL\Lighting.hlsli" />
-    <None Include="Shaders\HLSL\MathConstants.hlsli" />
-    <None Include="Shaders\HLSL\NormalMapUtils.hlsli" />
-    <None Include="Shaders\HLSL\SaberCommon.hlsli" />
-    <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
-    <None Include="Shaders\HLSL\Bloom_CShader.hlsl">
+    <None Include="Renderer\Shaders\GLSL\AmbientCommon.glsli" />
+    <None Include="Renderer\Shaders\GLSL\Blit_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Bloom_CShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Color.glsli" />
+    <None Include="Renderer\Shaders\GLSL\CubeDepth_GShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\CubeDepth_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DeferredAmbientLight_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DeferredDirectionalLight_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DeferredPointLight_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DeferredPointSpot_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DeferredSpotLight_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\DepthAlphaMask_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Depth_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\FullscreenQuad_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GaussianBlur_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GBufferCommon.glsli" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GenerateIEM_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GenerateIBL_VShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\GeneratePMREM_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Lighting.glsli" />
+    <None Include="Renderer\Shaders\GLSL\Line.glsl" />
+    <None Include="Renderer\Shaders\GLSL\MathConstants.glsli" />
+    <None Include="Renderer\Shaders\GLSL\NormalMapUtils.glsli" />
+    <None Include="Renderer\Shaders\GLSL\SaberCommon.glsli" />
+    <None Include="Renderer\Shaders\GLSL\Shadows.glsli" />
+    <None Include="Renderer\Shaders\GLSL\Skybox_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\Transformations.glsli" />
+    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl" />
+    <None Include="Renderer\Shaders\GLSL\UVUtils.glsli" />
+    <None Include="Renderer\Shaders\HLSL\AmbientCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\CameraCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\Color.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\FullscreenQuad_VShader.hlsl" />
+    <None Include="Renderer\Shaders\HLSL\GBufferCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\Lighting.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\MathConstants.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\NormalMapUtils.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\SaberCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\SaberComputeCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\Bloom_CShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">CShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">CShader</EntryPointName>
@@ -393,7 +393,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\CubeDepth_GShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">GShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">GShader</EntryPointName>
@@ -408,7 +408,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\CubeDepth_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
@@ -423,7 +423,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\Depth_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\Depth_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">VShader</EntryPointName>
@@ -438,7 +438,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\Line.hlsl">
+    <None Include="Renderer\Shaders\HLSL\Line.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
@@ -453,7 +453,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\Sampling.hlsli">
+    <None Include="Renderer\Shaders\HLSL\Sampling.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
       <FileType>Document</FileType>
@@ -464,15 +464,15 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ExcludedFromBuild>
     </None>
-    <None Include="Shaders\HLSL\Samplers.hlsli" />
-    <None Include="Shaders\HLSL\Shadows.hlsli" />
-    <None Include="Shaders\HLSL\Transformations.hlsli" />
-    <None Include="Shaders\HLSL\UVUtils.hlsli" />
-    <None Include="Shaders\HLSL\XeGTAOCommon.hlsli" />
-    <None Include="Shaders\HLSL\XeGTAO_MainPass.hlsl" />
+    <None Include="Renderer\Shaders\HLSL\Samplers.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\Shadows.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\Transformations.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\UVUtils.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\XeGTAOCommon.hlsli" />
+    <None Include="Renderer\Shaders\HLSL\XeGTAO_MainPass.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\Blit_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\Blit_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
@@ -487,7 +487,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
@@ -502,7 +502,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
@@ -517,7 +517,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\DeferredPointLight_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
@@ -532,7 +532,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\DeferredPointSpot_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\DeferredPointSpot_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">VShader</EntryPointName>
@@ -547,7 +547,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GaussianBlur_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">PShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">PShader</EntryPointName>
@@ -562,7 +562,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
@@ -577,7 +577,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
@@ -592,7 +592,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
@@ -607,7 +607,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GenerateIEM_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GenerateIEM_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
@@ -622,7 +622,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GenerateIBL_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GenerateIBL_VShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
@@ -637,7 +637,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GenerateMips_CShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GenerateMips_CShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Compute</ShaderType>
@@ -652,7 +652,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GeneratePMREM_PShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
@@ -667,7 +667,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">6.6</ShaderModel>
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\Skybox_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\Skybox_PShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Pixel</ShaderType>
@@ -701,45 +701,45 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\XeGTAO.hlsl">
+    <None Include="Renderer\Shaders\HLSL\XeGTAO.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\MorphAnimation_CShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\MorphAnimation_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl">
+    <None Include="Renderer\Shaders\HLSL\SkinningAnimation_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\RayTracing_Experimental.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\GLTF_Unlit_VShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_VShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\HLSL\Tonemapping_CShader.hlsl">
+    <None Include="Renderer\Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Renderer\Shaders\HLSL\Tonemapping_CShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -749,7 +749,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   </ImportGroup>
   <Target Name="CleanSEShaders" AfterTargets="Clean">
     <ItemGroup>
-      <ShaderDir Include="$(SolutionDir)SaberEngine\Shaders\" />
+      <ShaderDir Include="$(SolutionDir)SaberEngine\Renderer\Shaders\" />
     </ItemGroup>
     <Message Text="Deleting shaders" Importance="high" />
     <RemoveDir Directories="@(ShaderDir)" />
