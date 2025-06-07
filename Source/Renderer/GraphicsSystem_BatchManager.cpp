@@ -11,9 +11,9 @@
 
 #include "Core/ProfilingMarkers.h"
 
-#include "Shaders/Common/InstancingParams.h"
-#include "Shaders/Common/MaterialParams.h"
-#include "Shaders/Common/TransformParams.h"
+#include "Renderer/Shaders/Common/InstancingParams.h"
+#include "Renderer/Shaders/Common/MaterialParams.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
 
 
 namespace gr

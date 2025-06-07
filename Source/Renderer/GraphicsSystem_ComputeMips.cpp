@@ -6,7 +6,7 @@
 
 #include "Core/Util/MathUtils.h"
 
-#include "Shaders/Common/MipGenerationParams.h"
+#include "Renderer/Shaders/Common/MipGenerationParams.h"
 
 
 namespace

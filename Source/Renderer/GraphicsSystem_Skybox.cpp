@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
-#include "Shaders/Common/SkyboxParams.h"
+#include "Renderer/Shaders/Common/SkyboxParams.h"
 
 
 namespace

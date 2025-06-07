@@ -15,7 +15,7 @@
 #include "Core/Util/HashKey.h"
 #include "Core/Util/ThreadProtector.h"
 
-#include "Shaders/Common/ResourceCommon.h"
+#include "Renderer/Shaders/Common/ResourceCommon.h"
 
 
 namespace gr

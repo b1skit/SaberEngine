@@ -8,7 +8,7 @@
 
 #include "Core/InvPtr.h"
 
-#include "Shaders/Common/BloomComputeParams.h"
+#include "Renderer/Shaders/Common/BloomComputeParams.h"
 
 
 

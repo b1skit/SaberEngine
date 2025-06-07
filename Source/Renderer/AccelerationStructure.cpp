@@ -12,7 +12,7 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include "Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
 
 
 namespace

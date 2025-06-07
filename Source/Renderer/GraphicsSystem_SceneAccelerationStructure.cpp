@@ -24,7 +24,7 @@
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/HashKey.h"
 
-#include "Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
 
 
 namespace

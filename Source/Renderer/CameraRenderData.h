@@ -11,7 +11,7 @@
 #include "Core/Util/HashUtils.h"
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Shaders/Common/CameraParams.h"
+#include "Renderer/Shaders/Common/CameraParams.h"
 
 
 namespace gr

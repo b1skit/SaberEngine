@@ -2,7 +2,7 @@
 #pragma once
 #include "Renderer/CameraRenderData.h"
 
-#include "Shaders/Common/CameraParams.h"
+#include "Renderer/Shaders/Common/CameraParams.h"
 
 
 namespace fr
