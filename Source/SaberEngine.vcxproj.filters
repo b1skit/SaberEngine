@@ -42,9 +42,6 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Effects">
-      <UniqueIdentifier>{4a6ea4e3-ce8d-455c-a8d7-6f92bae6748c}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -75,48 +72,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Effects\Bloom.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\Common.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\Debug.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\DeferredLighting.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\EffectManifest.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\FullscreenQuad.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\GLTF_PBRMetallicRoughness.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\GLTF_Unlit.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\MipGeneration.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\RayTracing.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\Skybox.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\Tonemapping.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\VertexAnimation.json">
-      <Filter>Effects</Filter>
-    </None>
-    <None Include="Effects\XeGTAO.json">
-      <Filter>Effects</Filter>
-    </None>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
       <Filter>Dependencies</Filter>
     </None>

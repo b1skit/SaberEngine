@@ -114,6 +114,9 @@
     <Filter Include="Shaders\Common">
       <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Effects">
+      <UniqueIdentifier>{4a6ea4e3-ce8d-455c-a8d7-6f92bae6748c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
@@ -1215,6 +1218,48 @@
     </None>
     <None Include="Shaders\shadertoolsconfig.json">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="Effects\Bloom.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\Common.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\Debug.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\DeferredLighting.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\EffectManifest.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\FullscreenQuad.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\GLTF_PBRMetallicRoughness.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\GLTF_Unlit.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\MipGeneration.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\RayTracing.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\Skybox.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\Tonemapping.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\VertexAnimation.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\XeGTAO.json">
+      <Filter>Effects</Filter>
     </None>
   </ItemGroup>
 </Project>
