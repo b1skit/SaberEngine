@@ -45,7 +45,7 @@
 
 # Auto-generated code:
 /Source/Generated/*
-/Source/Shaders/Generated/*
+/Source/Renderer/Shaders/Generated/*
 
 # Microsoft vcpkg
 /vcpkg_installed/

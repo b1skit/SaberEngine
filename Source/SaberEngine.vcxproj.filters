@@ -42,22 +42,16 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
       <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Shaders\HLSL">
       <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Shaders\HLSL\Libraries">
       <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Shaders\HLSL\Libraries\XeGTAO">
       <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Shaders\GLSL">
       <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Shaders\Common">
       <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Effects">
@@ -88,284 +82,105 @@
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\PlatformConversions.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\LightParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\SkyboxParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\BloomComputeParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\IBLGenerationParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\CameraParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\InstancingParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\MaterialParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\ShadowParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\MipGenerationParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\TargetParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\AnimationParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\DebugParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\RayTracingParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\TransformParams.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Shaders\Common\ResourceCommon.h">
-      <Filter>Renderer\Shaders\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Renderer\Shaders\HLSL\SaberCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\NormalMapUtils.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\SaberComputeCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\UVUtils.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GBufferCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Lighting.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Transformations.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\FullscreenQuad_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\MathConstants.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Shadows.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Color.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
     <None Include="SaberEngine.licenseheader">
       <Filter>Dependencies\Resources</Filter>
     </None>
     <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\XeGTAOCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\XeGTAO_MainPass.hlsl">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\CameraCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Samplers.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Blit_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Bloom_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Color.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\CubeDepth_GShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\CubeDepth_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DeferredAmbientLight_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DeferredDirectionalLight_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DeferredPointLight_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DeferredPointSpot_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DeferredSpotLight_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Depth_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\FullscreenQuad_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GaussianBlur_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GBufferCommon.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GenerateIEM_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GenerateIBL_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GeneratePMREM_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Lighting.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Line.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\MathConstants.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\NormalMapUtils.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\SaberCommon.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Shadows.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Skybox_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Transformations.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\UVUtils.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\DepthAlphaMask_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\AmbientCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\AmbientCommon.glsli">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="Renderer\Shaders\HLSL\Blit_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Bloom_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\CubeDepth_GShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\CubeDepth_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DeferredPointLight_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DeferredPointSpot_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DeferredSpotLight_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Depth_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\DepthAlphaMask_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GaussianBlur_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GenerateIEM_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GenerateIBL_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GenerateMips_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GeneratePMREM_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Line.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Sampling.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Skybox_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\XeGTAO_Denoise.hlsl">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\XeGTAO_PrefilterDepths.hlsl">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
     <None Include="Effects\Bloom.json">
       <Filter>Effects</Filter>
@@ -400,68 +215,32 @@
     <None Include="Effects\XeGTAO.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\XeGTAO.hlsl">
-      <Filter>Renderer\Shaders\HLSL\Libraries\XeGTAO</Filter>
     </None>
     <None Include="Effects\VertexAnimation.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\MorphAnimation_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\SkinningAnimation_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\MorphAnimation_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\SkinningAnimation_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
     <None Include="Effects\RayTracing.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\RayTracingCommon.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\BindlessResources.hlsli">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\RayTracing_Experimental.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_VShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_VShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Deferred_Fullscreen_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
     <None Include="Effects\GLTF_Unlit.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Renderer\Shaders\GLSL\Tonemapping_CShader.glsl">
-      <Filter>Renderer\Shaders\GLSL</Filter>
     </None>
-    <None Include="Renderer\Shaders\HLSL\Tonemapping_CShader.hlsl">
-      <Filter>Renderer\Shaders\HLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
