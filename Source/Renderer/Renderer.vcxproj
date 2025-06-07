@@ -477,6 +477,22 @@
     <None Include="Shaders\shadertoolsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Effects\Bloom.json" />
+    <None Include="Effects\Common.json" />
+    <None Include="Effects\Debug.json" />
+    <None Include="Effects\DeferredLighting.json" />
+    <None Include="Effects\EffectManifest.json" />
+    <None Include="Effects\FullscreenQuad.json" />
+    <None Include="Effects\GLTF_PBRMetallicRoughness.json" />
+    <None Include="Effects\GLTF_Unlit.json" />
+    <None Include="Effects\MipGeneration.json" />
+    <None Include="Effects\RayTracing.json" />
+    <None Include="Effects\Skybox.json" />
+    <None Include="Effects\Tonemapping.json" />
+    <None Include="Effects\VertexAnimation.json" />
+    <None Include="Effects\XeGTAO.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
       <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
     </ProjectReference>

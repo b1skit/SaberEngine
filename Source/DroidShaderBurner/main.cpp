@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "ParseDB.h"
 #include "TextStrings.h"
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 		// Paths:
 		.m_projectRootDir = "PROJECT_ROOT_DIRECTORY_NOT_SET", // Mandatory command line arg
 		.m_runtimeAppDir = core::configkeys::k_appDirName,
-		.m_effectSourceDir = "Source\\Effects\\",
+		.m_effectSourceDir = "Source\\Renderer\\Effects\\",
 
 		// Dependencies:
 		.m_directXCompilerExePath = "DXC_COMPILER_EXE_PATH_NOT_SET", // Mandatory command line arg
