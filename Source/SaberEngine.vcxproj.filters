@@ -42,18 +42,6 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
-      <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
-    </Filter>
-      <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
-    </Filter>
-      <UniqueIdentifier>{9b586b40-1999-428e-b7ce-444f35713bf3}</UniqueIdentifier>
-    </Filter>
-      <UniqueIdentifier>{bf3c5b42-9f10-4cc4-a2cf-63169416dfde}</UniqueIdentifier>
-    </Filter>
-      <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
-    </Filter>
-      <UniqueIdentifier>{f1800b9d-29e6-4c5e-8ecf-b3d01af6a8a1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Effects">
       <UniqueIdentifier>{4a6ea4e3-ce8d-455c-a8d7-6f92bae6748c}</UniqueIdentifier>
     </Filter>
@@ -82,106 +70,11 @@
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
     </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    <None Include="SaberEngine.licenseheader">
-      <Filter>Dependencies\Resources</Filter>
-    </None>
-    <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    <None Include="packages.config" />
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
     <None Include="Effects\Bloom.json">
       <Filter>Effects</Filter>
     </None>
@@ -203,7 +96,13 @@
     <None Include="Effects\GLTF_PBRMetallicRoughness.json">
       <Filter>Effects</Filter>
     </None>
+    <None Include="Effects\GLTF_Unlit.json">
+      <Filter>Effects</Filter>
+    </None>
     <None Include="Effects\MipGeneration.json">
+      <Filter>Effects</Filter>
+    </None>
+    <None Include="Effects\RayTracing.json">
       <Filter>Effects</Filter>
     </None>
     <None Include="Effects\Skybox.json">
@@ -212,35 +111,17 @@
     <None Include="Effects\Tonemapping.json">
       <Filter>Effects</Filter>
     </None>
-    <None Include="Effects\XeGTAO.json">
-      <Filter>Effects</Filter>
-    </None>
-    </None>
     <None Include="Effects\VertexAnimation.json">
       <Filter>Effects</Filter>
     </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    <None Include="Effects\RayTracing.json">
+    <None Include="Effects\XeGTAO.json">
       <Filter>Effects</Filter>
     </None>
+    <None Include="Dependencies\XeGTAO\XeGTAO.hlsli">
+      <Filter>Dependencies</Filter>
     </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    </None>
-    <None Include="Effects\GLTF_Unlit.json">
-      <Filter>Effects</Filter>
-    </None>
-    </None>
+    <None Include="SaberEngine.licenseheader">
+      <Filter>Dependencies\Resources</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
