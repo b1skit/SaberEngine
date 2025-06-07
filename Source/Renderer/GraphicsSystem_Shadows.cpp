@@ -12,8 +12,8 @@
 #include "Core/Config.h"
 #include "Core/InvPtr.h"
 
-#include "Shaders/Common/LightParams.h"
-#include "Shaders/Common/ShadowParams.h"
+#include "Renderer/Shaders/Common/LightParams.h"
+#include "Renderer/Shaders/Common/ShadowParams.h"
 
 
 namespace

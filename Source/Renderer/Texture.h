@@ -8,7 +8,7 @@
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
-#include "Shaders/Common/ResourceCommon.h"
+#include "Renderer/Shaders/Common/ResourceCommon.h"
 
 
 namespace load

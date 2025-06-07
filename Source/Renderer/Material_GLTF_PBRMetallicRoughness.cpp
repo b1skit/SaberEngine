@@ -7,7 +7,7 @@
 
 #include "Core/Util/ImGuiUtils.h"
 
-#include "Shaders/Common/MaterialParams.h"
+#include "Renderer/Shaders/Common/MaterialParams.h"
 
 
 namespace gr

@@ -1,7 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
-#include "Shaders/Common/LightParams.h"
+#include "Renderer/Shaders/Common/LightParams.h"
 
 
 namespace gr

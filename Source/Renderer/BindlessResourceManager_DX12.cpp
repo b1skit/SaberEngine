@@ -6,10 +6,10 @@
 #include "RootSignature_DX12.h"
 #include "SysInfo_DX12.h"
 
-#include "Shaders/Common/CameraParams.h"
-#include "Shaders/Common/MaterialParams.h"
-#include "Shaders/Common/RayTracingParams.h"
-#include "Shaders/Common/TransformParams.h"
+#include "Renderer/Shaders/Common/CameraParams.h"
+#include "Renderer/Shaders/Common/MaterialParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
 
 
 namespace

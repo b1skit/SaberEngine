@@ -14,12 +14,12 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include "Shaders/Common/InstancingParams.h"
-#include "Shaders/Common/LightParams.h"
-#include "Shaders/Common/MaterialParams.h"
-#include "Shaders/Common/RayTracingParams.h"
-#include "Shaders/Common/ShadowParams.h"
-#include "Shaders/Common/TransformParams.h"
+#include "Renderer/Shaders/Common/InstancingParams.h"
+#include "Renderer/Shaders/Common/LightParams.h"
+#include "Renderer/Shaders/Common/MaterialParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/ShadowParams.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
 
 
 namespace

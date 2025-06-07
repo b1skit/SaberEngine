@@ -7,7 +7,7 @@
 
 #include "Core/Config.h"
 
-#include "Shaders/Common/ShadowParams.h"
+#include "Renderer/Shaders/Common/ShadowParams.h"
 
 
 namespace

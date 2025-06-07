@@ -13,9 +13,9 @@
 
 #include "Core/Util/ImGuiUtils.h"
 
-#include "Shaders/Common/RayTracingParams.h"
-#include "Shaders/Common/ResourceCommon.h"
-#include "Shaders/Common/TransformParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/ResourceCommon.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
 
 
 namespace

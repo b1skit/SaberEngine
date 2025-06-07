@@ -12,9 +12,9 @@
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/ImGuiUtils.h"
 
-#include "Shaders/Common/DebugParams.h"
-#include "Shaders/Common/InstancingParams.h"
-#include "Shaders/Common/TransformParams.h"
+#include "Renderer/Shaders/Common/DebugParams.h"
+#include "Renderer/Shaders/Common/InstancingParams.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
 
 
 namespace
