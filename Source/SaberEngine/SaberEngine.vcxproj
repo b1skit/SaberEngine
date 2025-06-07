@@ -89,8 +89,7 @@
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -114,8 +113,7 @@ xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y<
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -139,8 +137,7 @@ xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y<
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y</Command>
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
