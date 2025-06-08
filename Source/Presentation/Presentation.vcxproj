@@ -128,7 +128,7 @@
     <ClCompile Include="Private\CameraComponent.cpp" />
     <ClCompile Include="Private\CameraControlComponent.cpp" />
     <ClCompile Include="Private\EntityCommands.cpp" />
-    <ClCompile Include="Public\EntityManager.cpp" />
+    <ClCompile Include="Private\EntityManager.cpp" />
     <ClCompile Include="Private\Light.cpp" />
     <ClCompile Include="Private\LightComponent.cpp" />
     <ClCompile Include="Private\Load_Common.cpp" />
@@ -146,14 +146,14 @@
     </ClCompile>
     <ClCompile Include="Private\RelationshipComponent.cpp" />
     <ClCompile Include="Private\RenderDataComponent.cpp" />
-    <ClCompile Include="Public\SceneManager.cpp" />
+    <ClCompile Include="Private\SceneManager.cpp" />
     <ClCompile Include="Private\SceneNodeConcept.cpp" />
     <ClCompile Include="Private\ShadowMap.cpp" />
     <ClCompile Include="Private\ShadowMapComponent.cpp" />
     <ClCompile Include="Private\SkinningComponent.cpp" />
     <ClCompile Include="Private\Transform.cpp" />
     <ClCompile Include="Private\TransformComponent.cpp" />
-    <ClCompile Include="Public\UIManager.cpp" />
+    <ClCompile Include="Private\UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

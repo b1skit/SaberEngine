@@ -156,12 +156,12 @@
     <ClInclude Include="Public\Util\ThreadSafeVector.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Public\Assert.cpp" />
-    <ClCompile Include="Public\CommandQueue.cpp" />
-    <ClCompile Include="Public\Config.cpp" />
-    <ClCompile Include="Public\EventManager.cpp" />
-    <ClCompile Include="Public\EventManager_Platform.cpp" />
-    <ClCompile Include="Public\EventManager_Win32.cpp" />
+    <ClCompile Include="Private\Assert.cpp" />
+    <ClCompile Include="Private\CommandQueue.cpp" />
+    <ClCompile Include="Private\Config.cpp" />
+    <ClCompile Include="Private\EventManager.cpp" />
+    <ClCompile Include="Private\EventManager_Platform.cpp" />
+    <ClCompile Include="Private\EventManager_Win32.cpp" />
     <ClCompile Include="Private\Host\Dialog.cpp" />
     <ClCompile Include="Private\Host\Dialog_Platform.cpp" />
     <ClCompile Include="Private\Host\Dialog_Win32.cpp" />
@@ -171,20 +171,20 @@
     <ClCompile Include="Private\Host\Window.cpp" />
     <ClCompile Include="Private\Host\Window_Platform.cpp" />
     <ClCompile Include="Private\Host\Window_Win32.cpp" />
-    <ClCompile Include="Public\InputManager.cpp" />
-    <ClCompile Include="Public\InputManager_Platform.cpp" />
-    <ClCompile Include="Public\InputManager_Win32.cpp" />
+    <ClCompile Include="Private\InputManager.cpp" />
+    <ClCompile Include="Private\InputManager_Platform.cpp" />
+    <ClCompile Include="Private\InputManager_Win32.cpp" />
     <ClCompile Include="Private\Interfaces\IEngineThread.cpp" />
-    <ClCompile Include="Public\Inventory.cpp" />
-    <ClCompile Include="Public\Logger.cpp" />
+    <ClCompile Include="Private\Inventory.cpp" />
+    <ClCompile Include="Private\Logger.cpp" />
     <ClCompile Include="Private\pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Public\PerfLogger.cpp" />
-    <ClCompile Include="Public\ThreadPool.cpp" />
+    <ClCompile Include="Private\PerfLogger.cpp" />
+    <ClCompile Include="Private\ThreadPool.cpp" />
     <ClCompile Include="Private\Util\FileIOUtils.cpp" />
     <ClCompile Include="Private\Util\TextUtils.cpp" />
   </ItemGroup>
