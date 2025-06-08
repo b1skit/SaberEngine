@@ -54,8 +54,12 @@
 #elif defined(__cplusplus)
 
 #define raypayload
-#define read(...)
-#define write(...)
+#define read(...) READ_HELPER(__VA_ARGS__)
+#define write(...) WRITE_HELPER(__VA_ARGS__)
+
+// Provide dummy helpers that expand to nothing so "write" is still a C++ valid identifier name
+#define READ_HELPER(...)
+#define WRITE_HELPER(...)
 
 #endif
 
