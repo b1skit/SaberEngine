@@ -219,9 +219,9 @@ Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
 - Included as a git submodule: `<project root>\Source\Dependencies\imgui\`  
 - Current version: v1.91.5 (Docking branch)  
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
-- All of the .h & .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
-- The dx12, opengl3, & win32 imgui_impl_* .h & .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
+- Compiled as a static library project: `<project root>\Source\ImGui\`  
+- The ImGui static library includes all core ImGui files and backend implementations for DX12, OpenGL3, and Win32  
+- Projects that use ImGui link against the ImGui static library and include imgui headers via `$(SolutionDir)Source\Dependencies\imgui\` in their include directories  
 
 
 Intel XeGTAO: https://github.com/GameTechDev/XeGTAO
