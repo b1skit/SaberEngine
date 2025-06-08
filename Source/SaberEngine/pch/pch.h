@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -15,7 +15,6 @@
 #include <array>
 #include <barrier>
 #include <cstdint>
-#include <cstring>
 #include <filesystem>
 #include <format>
 #include <fstream>
