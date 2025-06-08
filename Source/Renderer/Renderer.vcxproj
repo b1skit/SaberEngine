@@ -93,15 +93,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="..\Dependencies\imgui\imconfig.h" />
-    <ClInclude Include="..\Dependencies\imgui\imgui.h" />
-    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="AccelerationStructure.h" />
     <ClInclude Include="AccelerationStructure_DX12.h" />
     <ClInclude Include="AccelerationStructure_Platform.h" />
@@ -243,14 +234,6 @@
     <ClInclude Include="Shaders\Common\TransformParams.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="AccelerationStructure.cpp" />
     <ClCompile Include="AccelerationStructure_DX12.cpp" />
     <ClCompile Include="AccelerationStructure_Platform.cpp" />
@@ -488,6 +471,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
       <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ImGui\ImGui.vcxproj">
+      <Project>{2a4b9a77-8f4d-4e9f-8a3a-7b5c6d8e9f10}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

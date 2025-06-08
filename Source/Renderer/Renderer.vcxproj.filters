@@ -84,12 +84,6 @@
     <Filter Include="Dependencies">
       <UniqueIdentifier>{264a9728-ed6c-4351-95a0-7f0c0a2e3dae}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\imgui">
-      <UniqueIdentifier>{46cf0fcf-480e-4f7f-af39-b1ad7416b870}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\imgui\backends">
-      <UniqueIdentifier>{a66d41f3-adef-479f-b582-119d0143f1b4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\gr\RenderData">
       <UniqueIdentifier>{eeff8831-ca17-45c7-aad7-66c9bd9b30ed}</UniqueIdentifier>
     </Filter>
@@ -385,33 +379,6 @@
     </ClInclude>
     <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imconfig.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imgui.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h">
-      <Filter>Dependencies\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h">
-      <Filter>Dependencies\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h">
-      <Filter>Dependencies\imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h">
-      <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="VertexStreamMap.h">
       <Filter>Header Files\re</Filter>
@@ -822,30 +789,6 @@
     </ClCompile>
     <ClCompile Include="MeshPrimitive.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui.cpp">
-      <Filter>Dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp">
-      <Filter>Dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp">
-      <Filter>Dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp">
-      <Filter>Dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp">
-      <Filter>Dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp">
-      <Filter>Dependencies\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp">
-      <Filter>Dependencies\imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Dependencies\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="Technique.cpp">
       <Filter>Source Files\effect</Filter>
