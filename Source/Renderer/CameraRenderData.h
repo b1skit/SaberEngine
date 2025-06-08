@@ -2,8 +2,6 @@
 #pragma once
 #include "RenderObjectIDs.h"
 
-#include "Core/InvPtr.h"
-
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Assert.h"

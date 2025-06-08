@@ -214,7 +214,7 @@ namespace core
 
 		// If we made it this far, we probably need to construct our object:
 		{
-			std::unique_lock<std::shared_mutex> write(m_ptrAndControlBlocksMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_ptrAndControlBlocksMutex);
 
 			auto entryItr = m_ptrAndControlBlocks.find(id);
 			if (entryItr != m_ptrAndControlBlocks.end()) // It might have been created while we waited
@@ -310,7 +310,7 @@ namespace core
 	{
 		bool immediatelyReleased = false;
 		{
-			std::unique_lock<std::shared_mutex> write(m_ptrAndControlBlocksMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_ptrAndControlBlocksMutex);
 
 			SEAssert(m_ptrAndControlBlocks.contains(ID),
 				"Trying to release an ID that doesn't exist. This should not be possible");

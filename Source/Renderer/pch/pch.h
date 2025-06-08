@@ -12,7 +12,10 @@
 
 // std library:
 #include <barrier>
+#include <cstdint>
+#include <format>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <latch>

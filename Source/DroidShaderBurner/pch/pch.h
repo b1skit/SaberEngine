@@ -10,14 +10,17 @@
 // std library:
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <limits>
 #include <queue>
 #include <regex>
 #include <set>
+#include <string>
 #include <thread>
 #include <typeindex>
 #include <unordered_map>

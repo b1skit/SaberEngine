@@ -15,8 +15,11 @@
 #include <array>
 #include <barrier>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <latch>
