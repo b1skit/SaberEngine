@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
@@ -15,7 +15,7 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace re

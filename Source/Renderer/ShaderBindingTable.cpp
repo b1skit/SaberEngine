@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Effect.h"
 #include "EffectDB.h"
@@ -14,7 +14,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace re

@@ -50,14 +50,14 @@ int main(int argc, char* argv[])
 		.m_dependenciesDir = "Source\\Dependencies\\",
 
 		// Output paths:
-		.m_cppCodeGenOutputDir = "Source\\Generated\\",
+		.m_cppCodeGenOutputDir = "Source\\_generated\\",
 
-		.m_hlslCodeGenOutputDir = "Source\\Renderer\\Shaders\\Generated\\HLSL\\",
+		.m_hlslCodeGenOutputDir = "Source\\Renderer\\Shaders\\_generated\\HLSL\\",
 		.m_hlslShaderOutputDir = 
 			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_hlslShaderDirName),
 		
 
-		.m_glslCodeGenOutputDir = "Source\\Renderer\\Shaders\\Generated\\GLSL\\",
+		.m_glslCodeGenOutputDir = "Source\\Renderer\\Shaders\\_generated\\GLSL\\",
 		.m_glslShaderOutputDir =
 			std::format("{}{}", core::configkeys::k_appDirName, core::configkeys::k_glslShaderDirName),
 

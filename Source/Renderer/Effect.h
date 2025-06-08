@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Technique.h"
 
@@ -6,7 +6,7 @@
 
 #include "Core/Util/CHashKey.h" // Required for DrawStyles.h
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 using EffectID = util::HashKey;
@@ -14,7 +14,7 @@ using EffectID = util::HashKey;
 
 namespace effect::drawstyle
 {
-	// Helpers for "Generated/DrawStyles.h":
+	// Helpers for "_generated/DrawStyles.h":
 	drawstyle::Bitmask GetDrawStyleBitmaskByName(std::string const& drawstyleName, std::string const& mode);
 	std::string GetNamesFromDrawStyleBitmask(drawstyle::Bitmask bitmask); // Debug helper: Convert a bitmask back to a list of names
 }

@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
@@ -13,7 +13,7 @@
 
 #include "Core/Definitions/ConfigKeys.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace
