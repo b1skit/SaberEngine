@@ -1,11 +1,12 @@
-// <A9> 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
 
 // Enable PIX v2 GPU markers for better compatibility with external debugging tools (PIX, NSight Graphics)
-// Uncomment the line below to completely disable PIX markers if compatibility issues persist
+// Uncomment the line below to completely disable PIX markers
 //#define DISABLE_PIX_MARKERS_FOR_EXTERNAL_TOOLS
 #define PIX_USE_GPU_MARKERS_V2
 #include <pix3.h>
+#include "Assert.h"
 
 
 namespace perfmarkers
@@ -49,18 +50,17 @@ namespace perfmarkers
 // DX12 GPU markers:
 //------------------
 #define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
-	if (apiObjPtr != nullptr && eventNameCStr != nullptr) { \
-		PIXBeginEvent( \
-			apiObjPtr, \
-			PIX_COLOR_INDEX(perfMarkerType), \
-			eventNameCStr); \
-	}
+	SEAssert(apiObjPtr != nullptr, "API object pointer cannot be null"); \
+	SEAssert(eventNameCStr != nullptr, "Event name string cannot be null"); \
+	PIXBeginEvent( \
+		apiObjPtr, \
+		PIX_COLOR_INDEX(perfMarkerType), \
+		eventNameCStr);
 
 
 #define SEEndGPUEvent(apiObjPtr) \
-	if (apiObjPtr != nullptr) { \
-		PIXEndEvent(apiObjPtr); \
-	}
+	SEAssert(apiObjPtr != nullptr, "API object pointer cannot be null"); \
+	PIXEndEvent(apiObjPtr);
 
 
 // OpenGL GPU markers:

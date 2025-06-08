@@ -162,9 +162,6 @@ PIX Configuration:
 Microsoft PIX requires the `[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]` key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
 ```reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx```  
 
-
-
-
 ----------------
 DX12 Shader PDBs
 ----------------
