@@ -39,6 +39,10 @@
 #include <vector>
 
 
+// OpenGL (GLEW):
+#include <GL/glew.h>
+
+
 // Windows:
 #if defined(_WIN32) || defined(_WIN64)
 
@@ -62,10 +66,6 @@
 #include <GL/wglew.h>
 
 #endif // defined(_WIN32) || defined(_WIN64)
-
-
-// OpenGL (GLEW):
-#include <GL/glew.h>
 
 
 // GLM:
