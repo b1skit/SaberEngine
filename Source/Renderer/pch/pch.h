@@ -59,11 +59,14 @@
 #include <dxgi1_6.h>
 #include <dxgiformat.h>
 
-// OpenGL (GLEW):
-#include <GL/glew.h>
+// OpenGL (Windows-specific extensions):
 #include <GL/wglew.h>
 
 #endif // defined(_WIN32) || defined(_WIN64)
+
+
+// OpenGL (GLEW):
+#include <GL/glew.h>
 
 
 // GLM:
