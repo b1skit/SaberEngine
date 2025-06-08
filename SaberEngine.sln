@@ -30,6 +30,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Presentation", "Source\Pres
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DroidShaderBurner", "Source\DroidShaderBurner\DroidShaderBurner.vcxproj", "{76C4F899-EB8C-45B8-A0C7-FC74D466C133}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "Source\ImGui\ImGui.vcxproj", "{2A4B9A77-8F4D-4E9F-8A3A-7B5C6D8E9F10}"
 EndProject
