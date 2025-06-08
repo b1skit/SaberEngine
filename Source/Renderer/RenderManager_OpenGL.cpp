@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Buffer_OpenGL.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"
@@ -16,8 +16,6 @@
 #include "Texture_Platform.h"
 
 #include "Core/ProfilingMarkers.h"
-
-#include <GL/glew.h>
 
 
 namespace

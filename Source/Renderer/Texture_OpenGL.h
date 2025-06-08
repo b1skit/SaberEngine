@@ -1,10 +1,8 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Texture.h"
 
 #include "Core/Util/HashKey.h"
-
-#include <GL/glew.h>
 
 
 namespace re

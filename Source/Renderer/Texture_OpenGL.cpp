@@ -1,12 +1,10 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Texture_OpenGL.h"
 #include "Texture.h"
 #include "TextureView.h"
 
 #include "Core/Assert.h"
 #include "Core/Logger.h"
-
-#include <GL/glew.h>
 
 
 namespace

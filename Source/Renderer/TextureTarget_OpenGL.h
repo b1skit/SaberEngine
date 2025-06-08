@@ -1,9 +1,7 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
-
-#include <GL/glew.h>
 
 
 namespace opengl

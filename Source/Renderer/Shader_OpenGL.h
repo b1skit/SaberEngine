@@ -1,9 +1,7 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer_OpenGL.h"
-#include "Shader.h"
-
-#include <GL/glew.h> 
+#include "Shader.h" 
 
 
 namespace re

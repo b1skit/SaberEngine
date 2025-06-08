@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BufferView.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"
@@ -12,9 +12,6 @@
 #include "Core/Host/Window_Win32.h"
 
 #include "Core/Util/HashUtils.h"
-
-#include <GL/glew.h>
-#include <GL/wglew.h> // Windows-specific GL functions and macros
 
 
 namespace

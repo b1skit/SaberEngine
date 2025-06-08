@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer_OpenGL.h"
 #include "RootConstants.h"
@@ -13,9 +13,7 @@
 
 #include "Core/Host/PerformanceTimer.h"
 
-#include "Core/Util/TextUtils.h"
-
-#include <GL/glew.h> 
+#include "Core/Util/TextUtils.h" 
 
 
 // Enable this to see names/indexes; A convenience since we use StringHash as a key
