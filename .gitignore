@@ -44,8 +44,8 @@
 /SaberEngine/D3D12/*
 
 # Auto-generated code:
-/Source/Generated/*
-/Source/Renderer/Shaders/Generated/*
+/Source/_generated/*
+/Source/Renderer/Shaders/_generated/*
 
 # Microsoft vcpkg
 /vcpkg_installed/

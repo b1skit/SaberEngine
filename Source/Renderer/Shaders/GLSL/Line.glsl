@@ -12,11 +12,11 @@
 #if defined(SE_VERTEX_SHADER)
 
 #if defined(DEBUG_NORMAL)
-#include "../Generated/GLSL/VertexStreams_PositionNormal.glsli"
+#include "../_generated/GLSL/VertexStreams_PositionNormal.glsli"
 #elif defined(DEBUG_AXIS) || defined(DEBUG_WIREFRAME)
-#include "../Generated/GLSL/VertexStreams_PositionOnly.glsli"
+#include "../_generated/GLSL/VertexStreams_PositionOnly.glsli"
 #else
-#include "../Generated/GLSL/VertexStreams_PositionColor.glsli"
+#include "../_generated/GLSL/VertexStreams_PositionColor.glsli"
 #endif
 
 #endif // SE_VERTEX_SHADER

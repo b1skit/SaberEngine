@@ -8,7 +8,7 @@
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IPlatformObject.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace dx12

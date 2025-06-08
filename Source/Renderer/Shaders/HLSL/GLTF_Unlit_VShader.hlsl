@@ -8,7 +8,7 @@
 #include "../Common/MaterialParams.h"
 #include "../Common/TransformParams.h"
 
-#include "../Generated/HLSL/VertexStreams_PosUvCol.hlsli"
+#include "../_generated/HLSL/VertexStreams_PosUvCol.hlsli"
 
 
 // Note: If a resource is used in multiple shader stages, we need to explicitely specify the register and space.

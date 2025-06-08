@@ -15,7 +15,7 @@
 
 #include "Core/Util/CastUtils.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace re

@@ -17,7 +17,7 @@ namespace core::configkeys
 	constexpr char const* k_glslShaderDirName				= "Assets\\Shaders\\GLSL\\";
 	constexpr char const* k_hlslShaderDirName				= "Assets\\Shaders\\HLSL\\";
 	constexpr char const* k_commonShaderDirName				= "Assets\\Shaders\\Common\\";
-	constexpr char const* k_generatedGLSLShaderDirName		= "Assets\\Shaders\\Generated\\GLSL\\"; // Droid only
+	constexpr char const* k_generatedGLSLShaderDirName		= "Assets\\Shaders\\_generated\\GLSL\\"; // Droid only
 
 	// Graphics pipelines:
 	constexpr char const* k_pipelineDirName					= "Assets\\Pipelines\\";

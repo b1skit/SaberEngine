@@ -14,7 +14,7 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace re

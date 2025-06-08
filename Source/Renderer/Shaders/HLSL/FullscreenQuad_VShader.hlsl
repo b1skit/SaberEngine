@@ -4,7 +4,7 @@
 
 #define VOUT_UV0
 #include "SaberCommon.hlsli"
-#include "../Generated/HLSL/VertexStreams_PositionUV.hlsli"
+#include "../_generated/HLSL/VertexStreams_PositionUV.hlsli"
 
 
 VertexOut VShader(VertexIn In)

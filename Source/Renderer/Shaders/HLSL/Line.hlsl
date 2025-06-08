@@ -7,11 +7,11 @@
 #include "../Common/TransformParams.h"
 
 #if defined(DEBUG_NORMAL)
-#include "../Generated/HLSL/VertexStreams_PositionNormal.hlsli"
+#include "../_generated/HLSL/VertexStreams_PositionNormal.hlsli"
 #elif defined(DEBUG_AXIS) || defined(DEBUG_WIREFRAME)
-#include "../Generated/HLSL/VertexStreams_PositionOnly.hlsli"
+#include "../_generated/HLSL/VertexStreams_PositionOnly.hlsli"
 #else
-#include "../Generated/HLSL/VertexStreams_PositionColor.hlsli"
+#include "../_generated/HLSL/VertexStreams_PositionColor.hlsli"
 #endif
 
 

@@ -13,7 +13,7 @@
 
 #include "Core/Definitions/ConfigKeys.h"
 
-#include "Generated/DrawStyles.h"
+#include "_generated/DrawStyles.h"
 
 
 namespace
