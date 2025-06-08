@@ -33,12 +33,14 @@ Keep the .vcxproj, .filters, .props, and .gitignore files, and source file #incl
 SaberEngine has multiple dependencies on other libraries. Most are listed in the README.md file.
 - The solution uses vcpkg, NuGet, and Git subtrees to manage dependencies. These configurations must be updated if a change is made that might affect them.
 - The ./Source/Dependencies/ directory contains some (but not all) dependency sources.
+- Some dependencies (e.g. ImGui) are compiled as static libraries.
 - Code from a dependency source must never be modified. These must be maintained in the same way they are distributed.
 
 SaberEngine is a realtime rendering engine where high performance is critical:
 - The README.md gives a high level description of key features and usage.
 - The solution consists of multiple projects: Core (static library), DroidShaderBurner (.exe), Presentation (static library), Renderer (static library), and SaberEngine (.exe).
-- It uses a layered architecture, where projects are only allowed to depend on/include/use the layers below them:
+	- There are also projects for some external dependencies (E.g. ImGui)
+- SaberEngine uses a layered architecture, where projects are only allowed to depend on/include/use the layers below them:
 	- DroidShaderBurner -> Core.
 	- SaberEngine -> Presentation -> Renderer -> Core.
 - This pattern is continued within each project, where namespaces are used to further communicate/enforce layering.
