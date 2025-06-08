@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</ProjectGuid>
+    <RootNamespace>Core</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion />
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion />
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Assert.h" />
+    <ClInclude Include="CommandQueue.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Definitions\ConfigKeys.h" />
+    <ClInclude Include="Definitions\EventKeys.h" />
+    <ClInclude Include="Definitions\KeyConfiguration.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="EventManager_Platform.h" />
+    <ClInclude Include="EventManager_Win32.h" />
+    <ClInclude Include="Host\Dialog.h" />
+    <ClInclude Include="Host\Dialog_Platform.h" />
+    <ClInclude Include="Host\Dialog_Win32.h" />
+    <ClInclude Include="Host\PerformanceTimer.h" />
+    <ClInclude Include="Host\PerformanceTimer_Platform.h" />
+    <ClInclude Include="Host\PerformanceTimer_Win32.h" />
+    <ClInclude Include="Host\Window.h" />
+    <ClInclude Include="Host\Window_Platform.h" />
+    <ClInclude Include="Host\Window_Win32.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="InputManager_Platform.h" />
+    <ClInclude Include="InputManager_Win32.h" />
+    <ClInclude Include="Interfaces\IEngineComponent.h" />
+    <ClInclude Include="Interfaces\IEngineThread.h" />
+    <ClInclude Include="Interfaces\IEventListener.h" />
+    <ClInclude Include="Interfaces\IHashedDataObject.h" />
+    <ClInclude Include="Interfaces\ILoadContext.h" />
+    <ClInclude Include="Interfaces\INamedObject.h" />
+    <ClInclude Include="Interfaces\IPlatformObject.h" />
+    <ClInclude Include="Interfaces\IUniqueID.h" />
+    <ClInclude Include="Inventory.h" />
+    <ClInclude Include="InvPtr.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="PerfLogger.h" />
+    <ClInclude Include="ProfilingMarkers.h" />
+    <ClInclude Include="ResourceSystem.h" />
+    <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="Util\ByteVector.h" />
+    <ClInclude Include="Util\CastUtils.h" />
+    <ClInclude Include="Util\HashKey.h" />
+    <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
+    <ClInclude Include="Util\FileIOUtils.h" />
+    <ClInclude Include="Util\CHashKey.h" />
+    <ClInclude Include="Util\HashUtils.h" />
+    <ClInclude Include="Util\ImGuiUtils.h" />
+    <ClInclude Include="Util\MathUtils.h" />
+    <ClInclude Include="Util\NBufferedVector.h" />
+    <ClInclude Include="Util\TextUtils.h" />
+    <ClInclude Include="Util\ThreadProtector.h" />
+    <ClInclude Include="Util\ThreadSafeVector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Assert.cpp" />
+    <ClCompile Include="CommandQueue.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="EventManager.cpp" />
+    <ClCompile Include="EventManager_Platform.cpp" />
+    <ClCompile Include="EventManager_Win32.cpp" />
+    <ClCompile Include="Host\Dialog.cpp" />
+    <ClCompile Include="Host\Dialog_Platform.cpp" />
+    <ClCompile Include="Host\Dialog_Win32.cpp" />
+    <ClCompile Include="Host\PerformanceTimer.cpp" />
+    <ClCompile Include="Host\PerformanceTimer_Platform.cpp" />
+    <ClCompile Include="Host\PerformanceTimer_Win32.cpp" />
+    <ClCompile Include="Host\Window.cpp" />
+    <ClCompile Include="Host\Window_Platform.cpp" />
+    <ClCompile Include="Host\Window_Win32.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="InputManager_Platform.cpp" />
+    <ClCompile Include="InputManager_Win32.cpp" />
+    <ClCompile Include="Interfaces\IEngineThread.cpp" />
+    <ClCompile Include="Inventory.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="pch\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PerfLogger.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Util\FileIOUtils.cpp" />
+    <ClCompile Include="Util\TextUtils.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
+  </Target>
+</Project>

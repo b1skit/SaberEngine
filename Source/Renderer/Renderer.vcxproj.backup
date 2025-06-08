@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" />
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f49fca5a-2f00-4a69-b17c-3491b1a39400}</ProjectGuid>
+    <RootNamespace>Renderer</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\SaberEngineRuntime.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+    <IntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\Intermediate\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion />
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion />
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\Dependencies\imgui\imconfig.h" />
+    <ClInclude Include="..\Dependencies\imgui\imgui.h" />
+    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
+    <ClInclude Include="AccelerationStructure.h" />
+    <ClInclude Include="AccelerationStructure_DX12.h" />
+    <ClInclude Include="AccelerationStructure_Platform.h" />
+    <ClInclude Include="Batch.h" />
+    <ClInclude Include="BindlessResourceManager.h" />
+    <ClInclude Include="BindlessResourceManager_DX12.h" />
+    <ClInclude Include="BindlessResourceManager_Platform.h" />
+    <ClInclude Include="BindlessResource.h" />
+    <ClInclude Include="BindlessResource_DX12.h" />
+    <ClInclude Include="BindlessResource_Platform.h" />
+    <ClInclude Include="BoundsRenderData.h" />
+    <ClInclude Include="Buffer.h" />
+    <ClInclude Include="BufferAllocator.h" />
+    <ClInclude Include="BufferAllocator_DX12.h" />
+    <ClInclude Include="BufferAllocator_OpenGL.h" />
+    <ClInclude Include="BufferView.h" />
+    <ClInclude Include="Buffer_DX12.h" />
+    <ClInclude Include="Buffer_OpenGL.h" />
+    <ClInclude Include="Buffer_Platform.h" />
+    <ClInclude Include="CameraRenderData.h" />
+    <ClInclude Include="CommandList_DX12.h" />
+    <ClInclude Include="CommandQueue_DX12.h" />
+    <ClInclude Include="Context.h" />
+    <ClInclude Include="Context_DX12.h" />
+    <ClInclude Include="Context_OpenGL.h" />
+    <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
+    <ClInclude Include="Debug_DX12.h" />
+    <ClInclude Include="DescriptorCache_DX12.h" />
+    <ClInclude Include="Device_DX12.h" />
+    <ClInclude Include="Effect.h" />
+    <ClInclude Include="EffectDB.h" />
+    <ClInclude Include="EffectKeys.h" />
+    <ClInclude Include="EnumTypes.h" />
+    <ClInclude Include="EnumTypes_DX12.h" />
+    <ClInclude Include="EnumTypes_OpenGL.h" />
+    <ClInclude Include="Fence_DX12.h" />
+    <ClInclude Include="GPUDescriptorHeap_DX12.h" />
+    <ClInclude Include="GPUTimer.h" />
+    <ClInclude Include="GPUTimer_DX12.h" />
+    <ClInclude Include="GPUTimer_OpenGL.h" />
+    <ClInclude Include="GPUTimer_Platform.h" />
+    <ClInclude Include="GraphicsSystem.h" />
+    <ClInclude Include="GraphicsSystemManager.h" />
+    <ClInclude Include="GraphicsSystemCommon.h" />
+    <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h" />
+    <ClInclude Include="GraphicsSystem_BatchManager.h" />
+    <ClInclude Include="GraphicsSystem_Bloom.h" />
+    <ClInclude Include="GraphicsSystem_ComputeMips.h" />
+    <ClInclude Include="GraphicsSystem_Culling.h" />
+    <ClInclude Include="GraphicsSystem_Debug.h" />
+    <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
+    <ClInclude Include="GraphicsSystem_GBuffer.h" />
+    <ClInclude Include="GraphicsSystem_ImGui.h" />
+    <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h" />
+    <ClInclude Include="GraphicsSystem_Shadows.h" />
+    <ClInclude Include="GraphicsSystem_Skybox.h" />
+    <ClInclude Include="GraphicsSystem_Tonemapping.h" />
+    <ClInclude Include="GraphicsSystem_Transparency.h" />
+    <ClInclude Include="GraphicsSystem_VertexAnimation.h" />
+    <ClInclude Include="GraphicsSystem_XeGTAO.h" />
+    <ClInclude Include="GraphicsUtils.h" />
+    <ClInclude Include="IndexedBuffer.h" />
+    <ClInclude Include="LightParamsHelpers.h" />
+    <ClInclude Include="LightRenderData.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Material_GLTF_PBRMetallicRoughness.h" />
+    <ClInclude Include="Material_GLTF_Unlit.h" />
+    <ClInclude Include="MeshFactory.h" />
+    <ClInclude Include="MeshPrimitive.h" />
+    <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="PipelineState_DX12.h" />
+    <ClInclude Include="RasterizationState.h" />
+    <ClInclude Include="RenderDataManager.h" />
+    <ClInclude Include="RenderManager.h" />
+    <ClInclude Include="RenderManager_DX12.h" />
+    <ClInclude Include="RenderManager_OpenGL.h" />
+    <ClInclude Include="RenderManager_Platform.h" />
+    <ClInclude Include="RenderObjectIDs.h" />
+    <ClInclude Include="RenderPipeline.h" />
+    <ClInclude Include="RootConstants.h" />
+    <ClInclude Include="ShaderBindingTable.h" />
+    <ClInclude Include="ShaderBindingTable_DX12.h" />
+    <ClInclude Include="ShaderBindingTable_Platform.h" />
+    <ClInclude Include="Stage.h" />
+    <ClInclude Include="RenderSystem.h" />
+    <ClInclude Include="RenderSystemDesc.h" />
+    <ClInclude Include="HeapManager_DX12.h" />
+    <ClInclude Include="ResourceStateTracker_DX12.h" />
+    <ClInclude Include="RLibrary_ImGui_DX12.h" />
+    <ClInclude Include="RLibrary_ImGui_OpenGL.h" />
+    <ClInclude Include="RLibrary_ImGui_Platform.h" />
+    <ClInclude Include="RLibrary_Platform.h" />
+    <ClInclude Include="RootSignature_DX12.h" />
+    <ClInclude Include="Sampler.h" />
+    <ClInclude Include="Sampler_DX12.h" />
+    <ClInclude Include="Sampler_OpenGL.h" />
+    <ClInclude Include="Sampler_Platform.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Shader_DX12.h" />
+    <ClInclude Include="Shader_OpenGL.h" />
+    <ClInclude Include="Shader_Platform.h" />
+    <ClInclude Include="ShadowMapRenderData.h" />
+    <ClInclude Include="SwapChain.h" />
+    <ClInclude Include="SwapChain_DX12.h" />
+    <ClInclude Include="SwapChain_OpenGL.h" />
+    <ClInclude Include="SwapChain_Platform.h" />
+    <ClInclude Include="SysInfo_DX12.h" />
+    <ClInclude Include="SysInfo_OpenGL.h" />
+    <ClInclude Include="SysInfo_Platform.h" />
+    <ClInclude Include="Technique.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureTarget.h" />
+    <ClInclude Include="TextureTarget_DX12.h" />
+    <ClInclude Include="TextureTarget_OpenGL.h" />
+    <ClInclude Include="TextureTarget_Platform.h" />
+    <ClInclude Include="TextureView.h" />
+    <ClInclude Include="Texture_DX12.h" />
+    <ClInclude Include="Texture_OpenGL.h" />
+    <ClInclude Include="Texture_Platform.h" />
+    <ClInclude Include="TransformRenderData.h" />
+    <ClInclude Include="VertexStream.h" />
+    <ClInclude Include="VertexStreamBuilder.h" />
+    <ClInclude Include="VertexStreamMap.h" />
+    <ClInclude Include="Shaders\Common\AnimationParams.h" />
+    <ClInclude Include="Shaders\Common\BloomComputeParams.h" />
+    <ClInclude Include="Shaders\Common\CameraParams.h" />
+    <ClInclude Include="Shaders\Common\DebugParams.h" />
+    <ClInclude Include="Shaders\Common\IBLGenerationParams.h" />
+    <ClInclude Include="Shaders\Common\InstancingParams.h" />
+    <ClInclude Include="Shaders\Common\LightParams.h" />
+    <ClInclude Include="Shaders\Common\MaterialParams.h" />
+    <ClInclude Include="Shaders\Common\MipGenerationParams.h" />
+    <ClInclude Include="Shaders\Common\PlatformConversions.h" />
+    <ClInclude Include="Shaders\Common\RayTracingParams.h" />
+    <ClInclude Include="Shaders\Common\ResourceCommon.h" />
+    <ClInclude Include="Shaders\Common\ShadowParams.h" />
+    <ClInclude Include="Shaders\Common\SkyboxParams.h" />
+    <ClInclude Include="Shaders\Common\TargetParams.h" />
+    <ClInclude Include="Shaders\Common\TransformParams.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AccelerationStructure.cpp" />
+    <ClCompile Include="AccelerationStructure_DX12.cpp" />
+    <ClCompile Include="AccelerationStructure_Platform.cpp" />
+    <ClCompile Include="Batch.cpp" />
+    <ClCompile Include="BindlessResourceManager.cpp" />
+    <ClCompile Include="BindlessResourceManager_DX12.cpp" />
+    <ClCompile Include="BindlessResourceManager_Platform.cpp" />
+    <ClCompile Include="BindlessResource.cpp" />
+    <ClCompile Include="BindlessResource_DX12.cpp" />
+    <ClCompile Include="BindlessResource_Platform.cpp" />
+    <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="BufferAllocator.cpp" />
+    <ClCompile Include="BufferAllocator_DX12.cpp" />
+    <ClCompile Include="BufferAllocator_OpenGL.cpp" />
+    <ClCompile Include="BufferView.cpp" />
+    <ClCompile Include="Buffer_DX12.cpp" />
+    <ClCompile Include="Buffer_OpenGL.cpp" />
+    <ClCompile Include="Buffer_Platform.cpp" />
+    <ClCompile Include="CameraRenderData.cpp" />
+    <ClCompile Include="CommandList_DX12.cpp" />
+    <ClCompile Include="CommandQueue_DX12.cpp" />
+    <ClCompile Include="Context.cpp" />
+    <ClCompile Include="Context_DX12.cpp" />
+    <ClCompile Include="Context_OpenGL.cpp" />
+    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
+    <ClCompile Include="Debug_DX12.cpp" />
+    <ClCompile Include="DescriptorCache_DX12.cpp" />
+    <ClCompile Include="Device_DX12.cpp" />
+    <ClCompile Include="Effect.cpp" />
+    <ClCompile Include="EffectDB.cpp" />
+    <ClCompile Include="EnumTypes.cpp" />
+    <ClCompile Include="EnumTypes_DX12.cpp" />
+    <ClCompile Include="EnumTypes_OpenGL.cpp" />
+    <ClCompile Include="Fence_DX12.cpp" />
+    <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
+    <ClCompile Include="GPUTimer.cpp" />
+    <ClCompile Include="GPUTimer_DX12.cpp" />
+    <ClCompile Include="GPUTimer_OpenGL.cpp" />
+    <ClCompile Include="GPUTimer_Platform.cpp" />
+    <ClCompile Include="GraphicsSystem.cpp" />
+    <ClCompile Include="GraphicsSystemCommon.cpp" />
+    <ClCompile Include="GraphicsSystemManager.cpp" />
+    <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp" />
+    <ClCompile Include="GraphicsSystem_BatchManager.cpp" />
+    <ClCompile Include="GraphicsSystem_Bloom.cpp" />
+    <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
+    <ClCompile Include="GraphicsSystem_Culling.cpp" />
+    <ClCompile Include="GraphicsSystem_Debug.cpp" />
+    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
+    <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
+    <ClCompile Include="GraphicsSystem_ImGui.cpp" />
+    <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp" />
+    <ClCompile Include="GraphicsSystem_Shadows.cpp" />
+    <ClCompile Include="GraphicsSystem_Skybox.cpp" />
+    <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
+    <ClCompile Include="GraphicsSystem_Transparency.cpp" />
+    <ClCompile Include="GraphicsSystem_VertexAnimation.cpp" />
+    <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
+    <ClCompile Include="IndexedBuffer.cpp" />
+    <ClCompile Include="LightParamsHelpers.cpp" />
+    <ClCompile Include="LightRenderData.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Material_GLTF_PBRMetallicRoughness.cpp" />
+    <ClCompile Include="Material_GLTF_Unlit.cpp" />
+    <ClCompile Include="MeshFactory.cpp" />
+    <ClCompile Include="MeshPrimitive.cpp" />
+    <ClCompile Include="pch\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PipelineState_DX12.cpp" />
+    <ClCompile Include="RasterizationState.cpp" />
+    <ClCompile Include="RenderDataManager.cpp" />
+    <ClCompile Include="RenderManager.cpp" />
+    <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="RenderManager_OpenGL.cpp" />
+    <ClCompile Include="RenderManager_Platform.cpp" />
+    <ClCompile Include="RenderPipeline.cpp" />
+    <ClCompile Include="RootConstants.cpp" />
+    <ClCompile Include="ShaderBindingTable.cpp" />
+    <ClCompile Include="ShaderBindingTable_DX12.cpp" />
+    <ClCompile Include="ShaderBindingTable_Platform.cpp" />
+    <ClCompile Include="Stage.cpp" />
+    <ClCompile Include="RenderSystem.cpp" />
+    <ClCompile Include="RenderSystemDesc.cpp" />
+    <ClCompile Include="HeapManager_DX12.cpp" />
+    <ClCompile Include="ResourceStateTracker_DX12.cpp" />
+    <ClCompile Include="RLibrary_ImGui_DX12.cpp" />
+    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp" />
+    <ClCompile Include="RLibrary_ImGui_Platform.cpp" />
+    <ClCompile Include="RLibrary_Platform.cpp" />
+    <ClCompile Include="RootSignature_DX12.cpp" />
+    <ClCompile Include="Sampler.cpp" />
+    <ClCompile Include="Sampler_DX12.cpp" />
+    <ClCompile Include="Sampler_OpenGL.cpp" />
+    <ClCompile Include="Sampler_Platform.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Shader_DX12.cpp" />
+    <ClCompile Include="Shader_OpenGL.cpp" />
+    <ClCompile Include="Shader_Platform.cpp" />
+    <ClCompile Include="SwapChain.cpp" />
+    <ClCompile Include="SwapChain_DX12.cpp" />
+    <ClCompile Include="SwapChain_OpenGL.cpp" />
+    <ClCompile Include="SwapChain_Platform.cpp" />
+    <ClCompile Include="SysInfo_DX12.cpp" />
+    <ClCompile Include="SysInfo_OpenGL.cpp" />
+    <ClCompile Include="SysInfo_Platform.cpp" />
+    <ClCompile Include="Technique.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureTarget.cpp" />
+    <ClCompile Include="TextureTarget_DX12.cpp" />
+    <ClCompile Include="TextureTarget_OpenGL.cpp" />
+    <ClCompile Include="TextureTarget_Platform.cpp" />
+    <ClCompile Include="TextureView.cpp" />
+    <ClCompile Include="Texture_DX12.cpp" />
+    <ClCompile Include="Texture_OpenGL.cpp" />
+    <ClCompile Include="Texture_Platform.cpp" />
+    <ClCompile Include="TransformRenderData.cpp" />
+    <ClCompile Include="VertexStream.cpp" />
+    <ClCompile Include="VertexStreamBuilder.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Dependencies\XeGTAO\XeGTAO.hlsli" />
+    <None Include="Shaders\GLSL\AmbientCommon.glsli" />
+    <None Include="Shaders\GLSL\Blit_PShader.glsl" />
+    <None Include="Shaders\GLSL\Bloom_CShader.glsl" />
+    <None Include="Shaders\GLSL\Color.glsli" />
+    <None Include="Shaders\GLSL\CubeDepth_GShader.glsl" />
+    <None Include="Shaders\GLSL\CubeDepth_VShader.glsl" />
+    <None Include="Shaders\GLSL\DeferredAmbientLight_PShader.glsl" />
+    <None Include="Shaders\GLSL\DeferredDirectionalLight_PShader.glsl" />
+    <None Include="Shaders\GLSL\DeferredPointLight_PShader.glsl" />
+    <None Include="Shaders\GLSL\DeferredPointSpot_VShader.glsl" />
+    <None Include="Shaders\GLSL\DeferredSpotLight_PShader.glsl" />
+    <None Include="Shaders\GLSL\Deferred_Fullscreen_CShader.glsl" />
+    <None Include="Shaders\GLSL\DepthAlphaMask_PShader.glsl" />
+    <None Include="Shaders\GLSL\Depth_VShader.glsl" />
+    <None Include="Shaders\GLSL\FullscreenQuad_VShader.glsl" />
+    <None Include="Shaders\GLSL\GaussianBlur_PShader.glsl" />
+    <None Include="Shaders\GLSL\GBufferCommon.glsli" />
+    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap_CShader.glsl" />
+    <None Include="Shaders\GLSL\GenerateIBL_VShader.glsl" />
+    <None Include="Shaders\GLSL\GenerateIEM_PShader.glsl" />
+    <None Include="Shaders\GLSL\GeneratePMREM_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_PBRMetallicRoughness_VShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_GBufferFill_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_Transparency_PShader.glsl" />
+    <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
+    <None Include="Shaders\GLSL\Lighting.glsli" />
+    <None Include="Shaders\GLSL\Line.glsl" />
+    <None Include="Shaders\GLSL\MathConstants.glsli" />
+    <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
+    <None Include="Shaders\GLSL\NormalMapUtils.glsli" />
+    <None Include="Shaders\GLSL\SaberCommon.glsli" />
+    <None Include="Shaders\GLSL\Shadows.glsli" />
+    <None Include="Shaders\GLSL\SkinningAnimation_CShader.glsl" />
+    <None Include="Shaders\GLSL\Skybox_PShader.glsl" />
+    <None Include="Shaders\GLSL\Tonemapping_CShader.glsl" />
+    <None Include="Shaders\GLSL\Transformations.glsli" />
+    <None Include="Shaders\GLSL\UVUtils.glsli" />
+    <None Include="Shaders\HLSL\AmbientCommon.hlsli" />
+    <None Include="Shaders\HLSL\BindlessResources.hlsli" />
+    <None Include="Shaders\HLSL\Blit_PShader.hlsl" />
+    <None Include="Shaders\HLSL\Bloom_CShader.hlsl" />
+    <None Include="Shaders\HLSL\CameraCommon.hlsli" />
+    <None Include="Shaders\HLSL\Color.hlsli" />
+    <None Include="Shaders\HLSL\CubeDepth_GShader.hlsl" />
+    <None Include="Shaders\HLSL\CubeDepth_VShader.hlsl" />
+    <None Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl" />
+    <None Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl" />
+    <None Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl" />
+    <None Include="Shaders\HLSL\DeferredPointSpot_VShader.hlsl" />
+    <None Include="Shaders\HLSL\DeferredSpotLight_PShader.hlsl" />
+    <None Include="Shaders\HLSL\Deferred_Fullscreen_CShader.hlsl" />
+    <None Include="Shaders\HLSL\DepthAlphaMask_PShader.hlsl" />
+    <None Include="Shaders\HLSL\Depth_VShader.hlsl" />
+    <None Include="Shaders\HLSL\FullscreenQuad_VShader.hlsl" />
+    <None Include="Shaders\HLSL\GaussianBlur_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GBufferCommon.hlsli" />
+    <None Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl" />
+    <None Include="Shaders\HLSL\GenerateIBL_VShader.hlsl" />
+    <None Include="Shaders\HLSL\GenerateIEM_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GenerateMips_CShader.hlsl" />
+    <None Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_GBufferFill_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_Transparency_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_PBRMetallicRoughness_VShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_Unlit_GBufferFill_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_Unlit_Transparency_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GLTF_Unlit_VShader.hlsl" />
+    <None Include="Shaders\HLSL\Lighting.hlsli" />
+    <None Include="Shaders\HLSL\Line.hlsl" />
+    <None Include="Shaders\HLSL\MathConstants.hlsli" />
+    <None Include="Shaders\HLSL\MorphAnimation_CShader.hlsl" />
+    <None Include="Shaders\HLSL\NormalMapUtils.hlsli" />
+    <None Include="Shaders\HLSL\RayTracing_Experimental.hlsl" />
+    <None Include="Shaders\HLSL\RayTracingCommon.hlsli" />
+    <None Include="Shaders\HLSL\SaberCommon.hlsli" />
+    <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
+    <None Include="Shaders\HLSL\Samplers.hlsli" />
+    <None Include="Shaders\HLSL\Sampling.hlsli" />
+    <None Include="Shaders\HLSL\Shadows.hlsli" />
+    <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl" />
+    <None Include="Shaders\HLSL\Skybox_PShader.hlsl" />
+    <None Include="Shaders\HLSL\Tonemapping_CShader.hlsl" />
+    <None Include="Shaders\HLSL\Transformations.hlsli" />
+    <None Include="Shaders\HLSL\UVUtils.hlsli" />
+    <None Include="Shaders\HLSL\XeGTAO.hlsl" />
+    <None Include="Shaders\HLSL\XeGTAOCommon.hlsli" />
+    <None Include="Shaders\HLSL\XeGTAO_Denoise.hlsl" />
+    <None Include="Shaders\HLSL\XeGTAO_MainPass.hlsl" />
+    <None Include="Shaders\HLSL\XeGTAO_PrefilterDepths.hlsl" />
+    <None Include="Shaders\shadertoolsconfig.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Effects\Bloom.json" />
+    <None Include="Effects\Common.json" />
+    <None Include="Effects\Debug.json" />
+    <None Include="Effects\DeferredLighting.json" />
+    <None Include="Effects\EffectManifest.json" />
+    <None Include="Effects\FullscreenQuad.json" />
+    <None Include="Effects\GLTF_PBRMetallicRoughness.json" />
+    <None Include="Effects\GLTF_Unlit.json" />
+    <None Include="Effects\MipGeneration.json" />
+    <None Include="Effects\RayTracing.json" />
+    <None Include="Effects\Skybox.json" />
+    <None Include="Effects\Tonemapping.json" />
+    <None Include="Effects\VertexAnimation.json" />
+    <None Include="Effects\XeGTAO.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.vcxproj">
+      <Project>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
+  </ImportGroup>
+  <Target Name="CleanRendererShaders" AfterTargets="Clean">
+    <ItemGroup>
+      <ShaderDir Include="$(MSBuildProjectDirectory)\Shaders\Generated\" />
+    </ItemGroup>
+    <Message Text="Deleting renderer shaders" Importance="high" />
+    <RemoveDir Directories="@(ShaderDir)" />
+  </Target>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
+  </Target>
+</Project>

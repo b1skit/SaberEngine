@@ -1,0 +1,54 @@
+// © 2023 Adam Badke. All rights reserved.
+#pragma once
+#include "Private/Buffer.h"
+#include "Private/BufferView.h"
+#include "Private/RenderObjectIDs.h"
+
+
+struct TransformData;
+
+namespace gr
+{
+	class RenderDataManager;
+
+
+	class Transform
+	{
+	public:
+		// Static world-space CS axis (SaberEngine currently uses a RHCS)
+		static constexpr glm::vec3 WorldAxisX = glm::vec3(1.0f, 0.0f, 0.0f);	// +X
+		static constexpr glm::vec3 WorldAxisY = glm::vec3(0.0f, 1.0f, 0.0f);	// +Y
+		static constexpr glm::vec3 WorldAxisZ = glm::vec3(0.0f, 0.0f, 1.0f);	// +Z
+
+
+	public:
+		struct RenderData
+		{
+			glm::mat4 g_model = glm::mat4(1.f); // Global TRS
+			glm::mat4 g_transposeInvModel = glm::mat4(1.f);
+
+			glm::mat4 g_local = glm::mat4(1.f); // Local TRS
+
+			glm::vec3 m_globalPosition = glm::vec3(0.f); // World-space position
+			glm::vec3 m_globalScale = glm::vec3(1.f);
+
+			glm::vec3 m_globalRight = WorldAxisX; // World-space right (X+) vector
+			glm::vec3 m_globalUp = WorldAxisY; // World-space up (Y+) vector
+			glm::vec3 m_globalForward = WorldAxisZ; // World-space forward (Z+) vector
+
+			gr::TransformID m_transformID = gr::k_invalidTransformID;
+			gr::TransformID m_parentTransformID = gr::k_invalidTransformID;
+		};
+
+
+	public:
+		static TransformData CreateTransformData(gr::Transform::RenderData const&, IDType, gr::RenderDataManager const&);
+		static TransformData CreateTransformData(glm::mat4 const* model, glm::mat4 const* transposeInvModel);
+
+		static std::shared_ptr<re::Buffer> CreateTransformBuffer(
+			re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
+
+		static re::BufferInput CreateTransformBufferInput(
+			char const* shaderName, re::Lifetime, re::Buffer::StagingPool, glm::mat4 const* model, glm::mat4 const* transposeInvModel);
+	};
+}

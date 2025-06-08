@@ -78,7 +78,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -99,7 +99,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -123,7 +123,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
@@ -147,7 +147,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
@@ -183,15 +183,15 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="EngineApp.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="Private/EngineApp.cpp" />
+    <ClCompile Include="Private/main.cpp" />
+    <ClCompile Include="Private/Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Platform.h" />
-    <ClInclude Include="EngineApp.h" />
+    <ClInclude Include="Private/resource.h" />
+    <ClInclude Include="Private/Platform.h" />
+    <ClInclude Include="Private/EngineApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SaberEngine.licenseheader" />

@@ -1,291 +1,254 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Public">
+      <UniqueIdentifier>{11111111-1111-1111-1111-111111111111}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Private">
+      <UniqueIdentifier>{22222222-2222-2222-2222-222222222222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Private\Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Private\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Source Files\pch">
-      <UniqueIdentifier>{443456e6-daf4-4ba1-8670-e9393e4e393d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\pch">
+    <Filter Include="pch">
       <UniqueIdentifier>{c65f7c9e-f1dd-4e5e-b6f0-37b3c07e55e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Definitions">
-      <UniqueIdentifier>{38aa4320-fd25-4505-8b4f-25024228f120}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Interfaces">
-      <UniqueIdentifier>{48a8ab74-bfe7-42f2-b582-347caa70718c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Interfaces">
-      <UniqueIdentifier>{fa4108d0-eefd-4a18-8836-45399ac99bbf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\util">
-      <UniqueIdentifier>{726d22d3-ece7-401d-9362-3db4463111ce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\util">
-      <UniqueIdentifier>{a4d62f5a-2f9b-4900-b2df-3dbc30e66fd1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\host">
-      <UniqueIdentifier>{fc0e1af9-2479-4ddb-9d0d-b6e742f2a283}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\host\platform">
-      <UniqueIdentifier>{b7f7ab84-716f-4dc7-9ed7-8d81e5ea1b31}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\host\win32">
-      <UniqueIdentifier>{30d17986-0a73-41c7-a105-7c539cb4ccd9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\host">
-      <UniqueIdentifier>{d40f70fe-9725-4cf6-813a-ff4d81176788}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\host\platform">
-      <UniqueIdentifier>{d57654dc-3f2a-4da6-baa8-77a1101943a2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\host\win32">
-      <UniqueIdentifier>{c682cb02-16e3-4c14-9b22-35cbcd674c21}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
-      <Filter>Header Files\pch</Filter>
+      <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="Util\CastUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Assert.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\DoubleBufferUnorderedMap.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/CommandQueue.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\FileIOUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Config.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\HashUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Definitions\ConfigKeys.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\ImGuiUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Definitions\EventKeys.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\MathUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Definitions\KeyConfiguration.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\NBufferedVector.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/EventManager.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\TextUtils.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/EventManager_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\ThreadProtector.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/EventManager_Win32.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\ThreadSafeVector.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Host\Dialog.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Assert.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Host\Dialog_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Host\Dialog_Win32.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadPool.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Host\PerformanceTimer.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Definitions\KeyConfiguration.h">
-      <Filter>Header Files\Definitions</Filter>
+    <ClInclude Include="Private/Host\PerformanceTimer_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Host\PerformanceTimer_Win32.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IEngineComponent.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/Host\Window.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IEngineThread.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/Host\Window_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Host\Window_Win32.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\INamedObject.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/InputManager.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IHashedDataObject.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/InputManager_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/InputManager_Win32.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager_Platform.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Interfaces\IEngineComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager_Win32.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Interfaces\IEngineThread.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IEventListener.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/Interfaces\IEventListener.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Interfaces\IHashedDataObject.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager_Platform.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Interfaces\ILoadContext.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager_Win32.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Interfaces\INamedObject.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IPlatformObject.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/Interfaces\IPlatformObject.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Definitions\ConfigKeys.h">
-      <Filter>Header Files\Definitions</Filter>
+    <ClInclude Include="Private/Interfaces\IUniqueID.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\CHashKey.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Inventory.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProfilingMarkers.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/InvPtr.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\ByteVector.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Logger.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\IUniqueID.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/PerfLogger.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InvPtr.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/ProfilingMarkers.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Inventory.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/ResourceSystem.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceSystem.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/ThreadPool.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Interfaces\ILoadContext.h">
-      <Filter>Header Files\Interfaces</Filter>
+    <ClInclude Include="Private/Util\ByteVector.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Window.h">
-      <Filter>Header Files\host</Filter>
+    <ClInclude Include="Private/Util\CastUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Window_Platform.h">
-      <Filter>Header Files\host\platform</Filter>
+    <ClInclude Include="Private/Util\HashKey.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Window_Win32.h">
-      <Filter>Header Files\host\win32</Filter>
+    <ClInclude Include="Private/Util\DoubleBufferUnorderedMap.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Dialog.h">
-      <Filter>Header Files\host</Filter>
+    <ClInclude Include="Private/Util\FileIOUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Dialog_Platform.h">
-      <Filter>Header Files\host\platform</Filter>
+    <ClInclude Include="Private/Util\CHashKey.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\Dialog_Win32.h">
-      <Filter>Header Files\host\win32</Filter>
+    <ClInclude Include="Private/Util\HashUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util\HashKey.h">
-      <Filter>Header Files\util</Filter>
+    <ClInclude Include="Private/Util\ImGuiUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\PerformanceTimer.h">
-      <Filter>Header Files\host</Filter>
+    <ClInclude Include="Private/Util\MathUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\PerformanceTimer_Platform.h">
-      <Filter>Header Files\host\platform</Filter>
+    <ClInclude Include="Private/Util\NBufferedVector.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Host\PerformanceTimer_Win32.h">
-      <Filter>Header Files\host\win32</Filter>
+    <ClInclude Include="Private/Util\TextUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PerfLogger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private/Util\ThreadProtector.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Definitions\EventKeys.h">
-      <Filter>Header Files\Definitions</Filter>
+    <ClInclude Include="Private/Util\ThreadSafeVector.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
-      <Filter>Source Files\pch</Filter>
+      <Filter>pch</Filter>
     </ClCompile>
-    <ClCompile Include="Assert.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Assert.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/CommandQueue.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadPool.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Config.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/EventManager.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Interfaces\IEngineThread.cpp">
-      <Filter>Source Files\Interfaces</Filter>
+    <ClCompile Include="Private/EventManager_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/EventManager_Win32.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\Dialog.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager_Platform.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\Dialog_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager_Win32.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\Dialog_Win32.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\PerformanceTimer.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager_Platform.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\PerformanceTimer_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager_Win32.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\PerformanceTimer_Win32.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Util\FileIOUtils.cpp">
-      <Filter>Source Files\util</Filter>
+    <ClCompile Include="Private/Host\Window.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Inventory.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Host\Window_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Window.cpp">
-      <Filter>Source Files\host</Filter>
+    <ClCompile Include="Private/Host\Window_Win32.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Window_Platform.cpp">
-      <Filter>Source Files\host\platform</Filter>
+    <ClCompile Include="Private/InputManager.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Window_Win32.cpp">
-      <Filter>Source Files\host\win32</Filter>
+    <ClCompile Include="Private/InputManager_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Dialog.cpp">
-      <Filter>Source Files\host</Filter>
+    <ClCompile Include="Private/InputManager_Win32.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Dialog_Platform.cpp">
-      <Filter>Source Files\host\platform</Filter>
+    <ClCompile Include="Private/Interfaces\IEngineThread.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\Dialog_Win32.cpp">
-      <Filter>Source Files\host\win32</Filter>
+    <ClCompile Include="Private/Inventory.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Util\TextUtils.cpp">
-      <Filter>Source Files\util</Filter>
+    <ClCompile Include="Private/Logger.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\PerformanceTimer.cpp">
-      <Filter>Source Files\host</Filter>
+    <ClCompile Include="Private/PerfLogger.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\PerformanceTimer_Platform.cpp">
-      <Filter>Source Files\host\platform</Filter>
+    <ClCompile Include="Private/ThreadPool.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Host\PerformanceTimer_Win32.cpp">
-      <Filter>Source Files\host\win32</Filter>
+    <ClCompile Include="Private/Util\FileIOUtils.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PerfLogger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private/Util\TextUtils.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

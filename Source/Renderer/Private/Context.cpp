@@ -1,0 +1,171 @@
+// © 2022 Adam Badke. All rights reserved.
+#include "Private/Context.h"
+#include "Private/Context_DX12.h"
+#include "Private/Context_OpenGL.h"
+#include "Private/EnumTypes.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
+#include "Core/PerfLogger.h"
+#include "Core/ProfilingMarkers.h"
+
+#include "Core/Util/TextUtils.h"
+
+
+namespace re
+{
+	std::unique_ptr<re::Context> Context::CreatePlatformContext(
+		platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+	{
+		SEAssert(window, "Received a null window");
+
+		std::unique_ptr<re::Context> newContext = nullptr;
+		switch (api)
+		{
+		case platform::RenderingAPI::OpenGL:
+		{
+			newContext.reset(new opengl::Context(api, numFramesInFlight, window));
+		}
+		break;
+		case platform::RenderingAPI::DX12:
+		{
+			newContext.reset(new dx12::Context(api, numFramesInFlight, window));
+		}
+		break;
+		default: SEAssertF("Invalid rendering API argument received");
+		}
+
+		return newContext;
+	}
+
+
+	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+		: m_window(window)
+		, m_gpuTimer(core::PerfLogger::Get(), numFramesInFlight)
+		, m_numFramesInFlight(numFramesInFlight)
+		, m_renderDocApi(nullptr)
+	{
+		SEAssert(m_window, "Received a null window");
+
+		// RenderDoc cannot be enabled when DRED is enabled
+		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
+
+		const bool enableRenderDocProgrammaticCaptures =
+			core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg);
+
+		if (enableRenderDocProgrammaticCaptures && dredEnabled)
+		{
+			LOG_ERROR("RenderDoc and DRED cannot be enabled at the same time. RenderDoc will not be enabled");
+		}
+		else if(enableRenderDocProgrammaticCaptures && !dredEnabled)
+		{
+			LOG("Loading renderdoc.dll...");
+
+			HMODULE renderDocModule = LoadLibraryA("renderdoc.dll");
+			if (renderDocModule)
+			{
+				LOG("Successfully loaded renderdoc.dll");
+
+				pRENDERDOC_GetAPI RENDERDOC_GetAPI = 
+					(pRENDERDOC_GetAPI)GetProcAddress(renderDocModule, "RENDERDOC_GetAPI");
+				int result = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&m_renderDocApi);
+				SEAssert(result == 1, "Failed to get the RenderDoc API");
+
+				// Set the capture options before the graphics API is initialized:
+				int captureOptionResult = 
+					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_AllowVSync, 1);
+
+				captureOptionResult =
+					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_AllowFullscreen, 1);
+
+				// Don't capture callstacks (for now)
+				captureOptionResult =
+					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_CaptureCallstacks, 0);
+
+				captureOptionResult =
+					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_CaptureCallstacksOnlyActions, 0);
+
+				if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 1)
+				{
+					captureOptionResult =
+						m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_APIValidation, 1);
+
+					captureOptionResult =
+						m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_VerifyBufferAccess, 1);
+				}
+
+				// Only include resources necessary for the final capture (for now)
+				captureOptionResult =
+					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_RefAllResources, 0);
+
+				// Set the default output folder/file path. RenderDoc appends "_frameXYZ.rdc" to the end
+				std::string const& renderDocCapturePath = std::format("{}\\{}\\{}_{}_{}",
+					core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+					core::configkeys::k_renderDocCaptureFolderName,
+					core::configkeys::k_captureTitle,
+					platform::RenderingAPIToCStr(api),
+					util::GetTimeAndDateAsString());
+				m_renderDocApi->SetCaptureFilePathTemplate(renderDocCapturePath.c_str());
+			}
+			else
+			{
+				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				const _com_error comError(hr);
+				LOG_ERROR(std::format("HRESULT error loading RenderDoc module: \"{}\"",
+					util::FromWideCString(comError.ErrorMessage())).c_str());
+			}
+		}
+	}
+
+
+	void Context::Create(uint64_t currentFrame)
+	{
+		CreateInternal(currentFrame);
+	}
+
+
+	void Context::Update(uint64_t currentFrame)
+	{
+		SEBeginCPUEvent("re::Context::Update");
+
+		// Ensure any new buffer objects have their platform-level resources created:
+		m_bufferAllocator->CreateBufferPlatformObjects();
+
+		// Platform-level updates:
+		SEBeginCPUEvent("re::Context::UpdateInternal");
+		UpdateInternal(currentFrame);
+		SEEndCPUEvent();
+
+		// Commit buffer data immediately before rendering
+		m_bufferAllocator->BufferData(currentFrame);
+
+		SEEndCPUEvent();
+	}
+
+
+	void Context::Destroy()
+	{
+		// Destroy any render libraries
+		for (size_t i = 0; i < m_renderLibraries.size(); i++)
+		{
+			if (m_renderLibraries[i] != nullptr)
+			{
+				m_renderLibraries[i]->Destroy();
+				m_renderLibraries[i] = nullptr;
+			}
+		}
+		m_gpuTimer.Destroy();
+		
+		DestroyInternal();
+	}
+
+
+	platform::RLibrary* Context::GetOrCreateRenderLibrary(platform::RLibrary::Type type)
+	{
+		if (m_renderLibraries[type] == nullptr)
+		{
+			m_renderLibraries[type] = platform::RLibrary::Create(type);
+		}
+		return m_renderLibraries[type].get();
+	}
+}

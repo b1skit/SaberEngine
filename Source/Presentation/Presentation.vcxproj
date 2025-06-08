@@ -68,12 +68,12 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -81,79 +81,79 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\RenderDoc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AnimationComponent.h" />
-    <ClInclude Include="BoundsComponent.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CameraComponent.h" />
-    <ClInclude Include="CameraControlComponent.h" />
-    <ClInclude Include="EntityCommands.h" />
-    <ClInclude Include="EntityManager.h" />
-    <ClInclude Include="Light.h" />
-    <ClInclude Include="LightComponent.h" />
-    <ClInclude Include="Load_Common.h" />
-    <ClInclude Include="Load_GLTF.h" />
-    <ClInclude Include="MarkerComponents.h" />
-    <ClInclude Include="MaterialInstanceComponent.h" />
-    <ClInclude Include="MeshConcept.h" />
-    <ClInclude Include="MeshMorphComponent.h" />
-    <ClInclude Include="MeshPrimitiveComponent.h" />
-    <ClInclude Include="NameComponent.h" />
+    <ClInclude Include="Private/AnimationComponent.h" />
+    <ClInclude Include="Private/BoundsComponent.h" />
+    <ClInclude Include="Private/Camera.h" />
+    <ClInclude Include="Private/CameraComponent.h" />
+    <ClInclude Include="Private/CameraControlComponent.h" />
+    <ClInclude Include="Private/EntityCommands.h" />
+    <ClInclude Include="Private/EntityManager.h" />
+    <ClInclude Include="Private/Light.h" />
+    <ClInclude Include="Private/LightComponent.h" />
+    <ClInclude Include="Private/Load_Common.h" />
+    <ClInclude Include="Private/Load_GLTF.h" />
+    <ClInclude Include="Private/MarkerComponents.h" />
+    <ClInclude Include="Private/MaterialInstanceComponent.h" />
+    <ClInclude Include="Private/MeshConcept.h" />
+    <ClInclude Include="Private/MeshMorphComponent.h" />
+    <ClInclude Include="Private/MeshPrimitiveComponent.h" />
+    <ClInclude Include="Private/NameComponent.h" />
     <ClInclude Include="pch\pch.h" />
-    <ClInclude Include="RelationshipComponent.h" />
-    <ClInclude Include="RenderDataComponent.h" />
-    <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="SceneNodeConcept.h" />
-    <ClInclude Include="ShadowMap.h" />
-    <ClInclude Include="ShadowMapComponent.h" />
-    <ClInclude Include="SkinningComponent.h" />
-    <ClInclude Include="Transform.h" />
-    <ClInclude Include="TransformComponent.h" />
-    <ClInclude Include="UIManager.h" />
+    <ClInclude Include="Private/RelationshipComponent.h" />
+    <ClInclude Include="Private/RenderDataComponent.h" />
+    <ClInclude Include="Private/SceneManager.h" />
+    <ClInclude Include="Private/SceneNodeConcept.h" />
+    <ClInclude Include="Private/ShadowMap.h" />
+    <ClInclude Include="Private/ShadowMapComponent.h" />
+    <ClInclude Include="Private/SkinningComponent.h" />
+    <ClInclude Include="Private/Transform.h" />
+    <ClInclude Include="Private/TransformComponent.h" />
+    <ClInclude Include="Private/UIManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AnimationComponent.cpp" />
-    <ClCompile Include="BoundsComponent.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="CameraControlComponent.cpp" />
-    <ClCompile Include="EntityCommands.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="Light.cpp" />
-    <ClCompile Include="LightComponent.cpp" />
-    <ClCompile Include="Load_Common.cpp" />
-    <ClCompile Include="Load_GLTF.cpp" />
-    <ClCompile Include="MaterialInstanceComponent.cpp" />
-    <ClCompile Include="MeshConcept.cpp" />
-    <ClCompile Include="MeshMorphComponent.cpp" />
-    <ClCompile Include="MeshPrimitiveComponent.cpp" />
-    <ClCompile Include="NameComponent.cpp" />
+    <ClCompile Include="Private/AnimationComponent.cpp" />
+    <ClCompile Include="Private/BoundsComponent.cpp" />
+    <ClCompile Include="Private/Camera.cpp" />
+    <ClCompile Include="Private/CameraComponent.cpp" />
+    <ClCompile Include="Private/CameraControlComponent.cpp" />
+    <ClCompile Include="Private/EntityCommands.cpp" />
+    <ClCompile Include="Private/EntityManager.cpp" />
+    <ClCompile Include="Private/Light.cpp" />
+    <ClCompile Include="Private/LightComponent.cpp" />
+    <ClCompile Include="Private/Load_Common.cpp" />
+    <ClCompile Include="Private/Load_GLTF.cpp" />
+    <ClCompile Include="Private/MaterialInstanceComponent.cpp" />
+    <ClCompile Include="Private/MeshConcept.cpp" />
+    <ClCompile Include="Private/MeshMorphComponent.cpp" />
+    <ClCompile Include="Private/MeshPrimitiveComponent.cpp" />
+    <ClCompile Include="Private/NameComponent.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="RelationshipComponent.cpp" />
-    <ClCompile Include="RenderDataComponent.cpp" />
-    <ClCompile Include="SceneManager.cpp" />
-    <ClCompile Include="SceneNodeConcept.cpp" />
-    <ClCompile Include="ShadowMap.cpp" />
-    <ClCompile Include="ShadowMapComponent.cpp" />
-    <ClCompile Include="SkinningComponent.cpp" />
-    <ClCompile Include="Transform.cpp" />
-    <ClCompile Include="TransformComponent.cpp" />
-    <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="Private/RelationshipComponent.cpp" />
+    <ClCompile Include="Private/RenderDataComponent.cpp" />
+    <ClCompile Include="Private/SceneManager.cpp" />
+    <ClCompile Include="Private/SceneNodeConcept.cpp" />
+    <ClCompile Include="Private/ShadowMap.cpp" />
+    <ClCompile Include="Private/ShadowMapComponent.cpp" />
+    <ClCompile Include="Private/SkinningComponent.cpp" />
+    <ClCompile Include="Private/Transform.cpp" />
+    <ClCompile Include="Private/TransformComponent.cpp" />
+    <ClCompile Include="Private/UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

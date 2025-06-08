@@ -1,0 +1,412 @@
+// © 2022 Adam Badke. All rights reserved.
+#pragma once
+#include "Private/Definitions/ConfigKeys.h"
+
+#include "Private/Util/TextUtils.h"
+
+
+namespace
+{
+	struct ImGuiLogWindow;
+}
+
+namespace core
+{
+	class Logger final
+	{
+	public:
+		static Logger* Get(); // Singleton functionality
+
+
+	public:
+		/* Public logging interface:
+		----------------------------*/
+		template<typename...Args>
+		static void Log(char const* msg, Args&&... args);
+		
+		template<typename...Args>
+		static void Log(wchar_t const* msg, Args&&... args);
+
+		static void Log(std::string const&);
+		static void Log(std::wstring const&);
+
+		template<typename... Args>
+		static void LogWarning(char const* msg, Args&&... args);
+
+		template<typename... Args>
+		static void LogWarning(wchar_t const* msg, Args&&... args);
+
+		static void LogWarning(std::string const&);
+		static void LogWarning(std::wstring const&);
+
+		template<typename... Args>
+		static void LogError(char const* msg, Args&&... args);
+
+		template<typename... Args>
+		static void LogError(wchar_t const* msg, Args&&... args);
+
+		static void LogError(std::string const&);
+		static void LogError(std::wstring const&);
+
+
+	public:
+		Logger();
+
+		Logger(Logger&&) noexcept = default;
+		Logger& operator=(Logger&&) noexcept = default;
+		~Logger() = default;
+
+		void Startup(bool isSystemConsoleWindowEnabled);
+		void Shutdown();
+
+		void ShowImGuiWindow(bool* show);
+
+	private:
+		void Run(); // Logger thread
+
+	private:
+		constexpr static uint32_t k_internalStagingBufferSize = 4096;
+
+
+		void AddMessage(char const*);
+		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
+
+		bool m_isRunning;
+		bool m_showHostConsole;
+
+		std::queue<std::array<char, k_internalStagingBufferSize>> m_messages;
+		std::mutex m_messagesMutex;
+		std::condition_variable m_messagesCV;
+
+		std::ofstream m_logOutputStream;
+
+
+	private:
+		enum class LogType : uint8_t
+		{
+			Log,
+			Warning,
+			Error
+		};
+
+		
+	private:
+		template<typename T, typename... Args>
+		static void LogInternal(LogType, T const* msg, Args&&... args);
+
+		template<typename T>
+		static void InsertMessageAndVariadicArgs(T* buf, uint32_t bufferSize, T const* msg, ...);
+
+		template<typename T>
+		static void InsertLogPrefix(
+			T const* alignPrefix,
+			size_t aliLoggnPrefixLen,
+			T const* tag, 
+			size_t tagLen, 
+			T* destBuffer);
+	
+
+	private: // No copying allowed
+		Logger(Logger const&) = delete;
+		void operator=(Logger const&) = delete;
+	};
+
+
+	template<typename...Args>
+	inline void Logger::Log(char const* msg, Args&&... args)
+	{
+		LogInternal<char, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename...Args>
+	inline void Logger::Log(wchar_t const* msg, Args&&... args)
+	{
+		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
+	}
+
+
+	inline void Logger::Log(std::string const& str)
+	{
+		Log(str.c_str());
+	}
+
+
+	inline void Logger::Log(std::wstring const& wStr)
+	{
+		Log(wStr.c_str());
+	}
+
+
+	template<typename... Args>
+	inline void Logger::LogWarning(char const* msg, Args&&... args)
+	{
+		LogInternal<char, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline void Logger::LogWarning(wchar_t const* msg, Args&&... args)
+	{
+
+		LogInternal<wchar_t, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
+	}
+
+
+	inline void Logger::LogWarning(std::string const& str)
+	{
+		LogWarning(str.c_str());
+	}
+	
+	
+	inline void Logger::LogWarning(std::wstring const& wStr)
+	{
+		LogWarning(wStr.c_str());
+	}
+
+
+	template<typename... Args>
+	inline void Logger::LogError(char const* msg, Args&&... args)
+	{
+		LogInternal<char, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline void Logger::LogError(wchar_t const* msg, Args&&... args)
+	{
+		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
+	}
+
+
+	inline void Logger::LogError(std::string const& str)
+	{
+		LogError(str.c_str());
+	}
+
+
+	inline void Logger::LogError(std::wstring const& wStr)
+	{
+		LogError(wStr.c_str());
+	}
+
+
+	template<typename T, typename... Args>
+	inline void Logger::LogInternal(LogType logType, T const* msg, Args&&... args)
+	{
+		// Select the appropriate tag prefix:
+		T const* tagPrefix = nullptr;
+		size_t tagPrefixLen = 0;
+		switch (logType)
+		{
+		case LogType::Log:
+		{
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				tagPrefix = logging::k_logWPrefix;
+			}
+			else
+			{
+				tagPrefix = logging::k_logPrefix;
+			}
+			tagPrefixLen = logging::k_logPrefixLen;
+		}
+		break;
+		case LogType::Warning:
+		{
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				tagPrefix = logging::k_warnWPrefix;
+			}
+			else
+			{
+				tagPrefix = logging::k_warnPrefix;
+			}			
+			tagPrefixLen = logging::k_warnPrefixLen;
+		}
+		break;
+		case LogType::Error:
+		{
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				tagPrefix = logging::k_errorWPrefix;
+			}
+			else
+			{
+				tagPrefix = logging::k_errorPrefix;
+			}
+			tagPrefixLen = logging::k_errorPrefixLen;
+		}
+		break;
+		default: break;
+		}
+
+		std::array<T, k_internalStagingBufferSize> stagingBuffer;
+
+		// Prepend log prefix formatting:
+		size_t prependLength = 0;
+		T const* messageStart = nullptr;
+		if (msg[0] == '\n')
+		{
+			T const* formatPrefix = nullptr;
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				formatPrefix = logging::k_newlineWPrefix;
+			}
+			else
+			{
+				formatPrefix = logging::k_newlinePrefix;
+			}
+
+			prependLength = logging::k_newlinePrefixLen + tagPrefixLen;
+			messageStart = msg + 1;
+
+			InsertLogPrefix<T>(
+				formatPrefix,
+				logging::k_newlinePrefixLen, 
+				tagPrefix, 
+				tagPrefixLen,
+				stagingBuffer.data());
+		}
+		else if (msg[0] == '\t')
+		{
+			T const* formatPrefix = nullptr;
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				formatPrefix = logging::k_tabWPrefix;
+			}
+			else
+			{
+				formatPrefix = logging::k_tabPrefix;
+			}
+
+			prependLength = logging::k_tabPrefixLen;
+			messageStart = msg + 1;
+
+			InsertLogPrefix<T>(
+				formatPrefix,
+				logging::k_tabPrefixLen,
+				nullptr,
+				0,
+				stagingBuffer.data());
+		}
+		else
+		{
+			prependLength = tagPrefixLen;
+			messageStart = msg;
+
+			InsertLogPrefix<T>(
+				nullptr,
+				0,
+				tagPrefix,
+				tagPrefixLen,
+				stagingBuffer.data());
+		}
+
+		// Append the expanded message after our prefix formatting:
+		InsertMessageAndVariadicArgs<T>(
+			stagingBuffer.data() + prependLength, 
+			k_internalStagingBufferSize - static_cast<uint32_t>(prependLength + 2), // +2 for null terminator and new line
+			messageStart,
+			std::forward<Args>(args)...);
+
+		// Finally, pass the message to our Logger singleton:
+		static Logger* const s_logMgr = Logger::Get();
+		if constexpr (std::is_same<T, wchar_t>::value)
+		{
+			s_logMgr->AddMessage(util::FromWideCString(stagingBuffer.data()).c_str());
+		}
+		else
+		{
+			s_logMgr->AddMessage(stagingBuffer.data());
+		}
+	}
+
+
+	template<typename T>
+	void Logger::InsertLogPrefix(
+		T const* alignPrefix,
+		size_t alignPrefixLen,
+		T const* tag,
+		size_t tagLen,
+		T* destBuffer)
+	{
+#if defined(_DEBUG)
+		assert((alignPrefix || alignPrefixLen == 0) && (tag || tagLen == 0));
+#endif
+
+		if (alignPrefix)
+		{
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				wcsncpy(destBuffer, alignPrefix, alignPrefixLen + 1); // +1 to also copy the null terminator
+			}
+			else
+			{
+				strncpy(destBuffer, alignPrefix, alignPrefixLen + 1); // +1 to also copy the null terminator
+			}			
+		}
+		if (tag)
+		{
+			if constexpr (std::is_same<T, wchar_t>::value)
+			{
+				wcsncpy(destBuffer + alignPrefixLen, tag, tagLen + 1); // +1 to also copy the null terminator
+			}
+			else
+			{
+				strncpy(destBuffer + alignPrefixLen, tag, tagLen + 1); // +1 to also copy the null terminator
+			}
+		}
+
+		const size_t prependLenth = alignPrefixLen + tagLen;
+
+		if constexpr (std::is_same<T, wchar_t>::value)
+		{
+			wcsncpy(destBuffer + prependLenth, L"\n\0", 2); // newline and null terminator, incase the message is empty
+		}
+		else
+		{
+			strncpy(destBuffer + prependLenth, "\n\0", 2); // newline and null terminator, incase the message is empty
+		}
+	}
+
+
+	template<typename T>
+	void Logger::InsertMessageAndVariadicArgs(T* buf, uint32_t bufferSize, T const* msg, ...)
+	{
+		va_list args;
+		va_start(args, msg);
+
+		int numChars = 0;
+		if constexpr (std::is_same<T, wchar_t>::value)
+		{
+			numChars = vswprintf_s(buf, bufferSize, msg, args);
+		}
+		else
+		{
+			numChars = vsprintf_s(buf, bufferSize, msg, args);
+		}
+#if defined(_DEBUG)
+		assert(static_cast<uint32_t>(numChars) < bufferSize && 
+			"Message is larger than the buffer size; it will be truncated");
+#endif
+
+		va_end(args);
+
+		if constexpr (std::is_same<T, wchar_t>::value)
+		{
+			wcsncpy(buf + numChars, L"\n\0", 2); // Terminate with newline and a null char
+		}
+		else
+		{
+			strncpy(buf + numChars, "\n\0", 2); // Terminate with newline and a null char
+		}		
+	}
+}
+
+
+// Log macros:
+// ------------------------------------------------
+#define LOG(msg, ...)			core::Logger::Log(msg, __VA_ARGS__);
+#define LOG_WARNING(msg, ...)	core::Logger::LogWarning(msg, __VA_ARGS__);
+#define LOG_ERROR(msg, ...)		core::Logger::LogError(msg, __VA_ARGS__);
