@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #define VOUT_TBN
 #define VOUT_COLOR
 #define SABER_INSTANCING
@@ -10,7 +10,7 @@
 #include "../Common/MaterialParams.h"
 #include "../Common/TransformParams.h"
 
-#include "../Generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
+#include "../_generated/GLSL/VertexStreams_PosNmlTanUvCol.glsli"
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };

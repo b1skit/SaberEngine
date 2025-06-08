@@ -4,7 +4,7 @@
 #include "../Common/InstancingParams.h"
 #include "../Common/TransformParams.h"
 
-#include "../Generated/HLSL/VertexStreams_PositionOnly.hlsli"
+#include "../_generated/HLSL/VertexStreams_PositionOnly.hlsli"
 
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<TransformData> TransformParams : register(t1, space1);

@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #define VOUT_COLOR
 #define SABER_INSTANCING
 #include "SaberCommon.glsli"
@@ -8,7 +8,7 @@
 #include "../Common/MaterialParams.h"
 #include "../Common/TransformParams.h"
 
-#include "../Generated/GLSL/VertexStreams_PosUvCol.glsli"
+#include "../_generated/GLSL/VertexStreams_PosUvCol.glsli"
 
 layout(binding = 7) uniform CameraParams { CameraData _CameraParams; };
 layout(std430, binding = 0) readonly buffer InstanceIndexParams { InstanceIndexData _InstanceIndexParams[]; };
