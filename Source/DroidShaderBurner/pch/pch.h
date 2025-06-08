@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
@@ -10,6 +10,10 @@
 // std library:
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <cstring>
+#include <format>
+#include <functional>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -18,6 +22,7 @@
 #include <queue>
 #include <regex>
 #include <set>
+#include <string>
 #include <thread>
 #include <typeindex>
 #include <unordered_map>

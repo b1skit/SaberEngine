@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -16,14 +16,19 @@
 #include <barrier>
 #include <cassert>
 #include <chrono>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <latch>
 #include <limits>
 #include <queue>
 #include <regex>
+#include <string>
 #include <string_view>
 #include <unordered_set>
 #include <shared_mutex>

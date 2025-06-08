@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -14,8 +14,12 @@
 #include <any>
 #include <array>
 #include <barrier>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <latch>
@@ -28,6 +32,11 @@
 #include <set>
 #include <shared_mutex>
 #include <stack>
+#include <string>
+#include <typeindex>
+#include <unordered_set>
+#include <variant>
+#include <vector>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
