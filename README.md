@@ -162,7 +162,7 @@ PIX Configuration:
 Microsoft PIX requires the `[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]` key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
 ```reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx```  
 
-**External Debugging Tool Compatibility**: If experiencing crashes when using PIX, NSight Graphics, or other external debugging tools to replay frame captures, see `DEBUG_MARKERS_EXTERNAL_TOOLS.md` for troubleshooting steps and configuration options.  
+
 
 
 ----------------

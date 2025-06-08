@@ -1,8 +1,7 @@
-// � 2023 Adam Badke. All rights reserved.
+// <A9> 2023 Adam Badke. All rights reserved.
 #pragma once
 
 // Enable PIX v2 GPU markers for better compatibility with external debugging tools (PIX, NSight Graphics)
-// PIX v2 markers provide more stable frame capture replay and better integration with debugging tools
 // Uncomment the line below to completely disable PIX markers if compatibility issues persist
 //#define DISABLE_PIX_MARKERS_FOR_EXTERNAL_TOOLS
 #define PIX_USE_GPU_MARKERS_V2
@@ -34,47 +33,8 @@ namespace perfmarkers
 ***********************************************************************************************************************/
 
 
-#if defined(_DEBUG) || defined(PROFILE)
+#if (defined(_DEBUG) || defined(PROFILE)) && !defined(DISABLE_PIX_MARKERS_FOR_EXTERNAL_TOOLS)
 // Debug/Profile mode: Markers enabled
-
-#if defined(DISABLE_PIX_MARKERS_FOR_EXTERNAL_TOOLS)
-// Emergency fallback: Disable all markers if external tools have compatibility issues
-
-// CPU markers:
-//-------------
-#define SEBeginCPUEvent(eventNameCStr) \
-	do { static_cast<void>(eventNameCStr); } while(0)
-
-#define SEEndCPUEvent() \
-	do {} while(0)
-
-// DX12 GPU markers:
-//------------------
-#define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
-	do { \
-		static_cast<void>(apiObjPtr); \
-		static_cast<void>(perfMarkerType); \
-		static_cast<void>(eventNameCStr); \
-	} while(0)
-
-#define SEEndGPUEvent(apiObjPtr) \
-	do { \
-		static_cast<void>(apiObjPtr); \
-	} while(0)
-
-// OpenGL GPU markers:
-//--------------------
-#define SEBeginOpenGLGPUEvent(perfMarkerType, eventNameCStr) \
-	do { \
-		static_cast<void>(perfMarkerType); \
-		static_cast<void>(eventNameCStr); \
-	} while(0)
-
-#define SEEndOpenGLGPUEvent() \
-	do {} while(0)
-
-#else
-// Normal debug mode: PIX markers enabled
 
 // CPU markers:
 //-------------
@@ -89,22 +49,18 @@ namespace perfmarkers
 // DX12 GPU markers:
 //------------------
 #define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
-	do { \
-		if (apiObjPtr != nullptr && eventNameCStr != nullptr) { \
-			PIXBeginEvent( \
-				apiObjPtr, \
-				PIX_COLOR_INDEX(perfMarkerType), \
-				eventNameCStr); \
-		} \
-	} while(0)
+	if (apiObjPtr != nullptr && eventNameCStr != nullptr) { \
+		PIXBeginEvent( \
+			apiObjPtr, \
+			PIX_COLOR_INDEX(perfMarkerType), \
+			eventNameCStr); \
+	}
 
 
 #define SEEndGPUEvent(apiObjPtr) \
-	do { \
-		if (apiObjPtr != nullptr) { \
-			PIXEndEvent(apiObjPtr); \
-		} \
-	} while(0)
+	if (apiObjPtr != nullptr) { \
+		PIXEndEvent(apiObjPtr); \
+	}
 
 
 // OpenGL GPU markers:
@@ -119,10 +75,8 @@ namespace perfmarkers
 #define SEEndOpenGLGPUEvent() \
 	glPopDebugGroup();
 
-#endif // DISABLE_PIX_MARKERS_FOR_EXTERNAL_TOOLS
-
 #else
-// Release mode: Remove markers
+// Release mode or markers disabled: Remove markers
 
 // CPU markers:
 //-------------
@@ -137,17 +91,11 @@ namespace perfmarkers
 // GPU markers:
 //-------------
 #define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
-	do { \
-		static_cast<void>(apiObjPtr); \
-		static_cast<void>(perfMarkerType); \
-		static_cast<void>(eventNameCStr); \
-	} while(0)
+	do { static_cast<void>(apiObjPtr); static_cast<void>(perfMarkerType); static_cast<void>(eventNameCStr); } while(0);
 
 
 #define SEEndGPUEvent(apiObjPtr) \
-	do { \
-		static_cast<void>(apiObjPtr); \
-	} while(0)
+	do {} while(0);
 
 
 #define SEBeginOpenGLGPUEvent(perfMarkerType, eventNameCStr) \
