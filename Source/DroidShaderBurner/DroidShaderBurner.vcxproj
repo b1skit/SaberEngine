@@ -118,8 +118,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
-      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;$(ProjectDir)..\;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -150,8 +150,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
-      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;$(ProjectDir)..\;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
@@ -188,8 +188,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
-      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;$(ProjectDir)..\;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
@@ -227,8 +227,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
-      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;$(ProjectDir)..\;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
@@ -259,12 +259,6 @@
     <ClCompile Include="ParseDB.cpp" />
     <ClCompile Include="EffectParsing.cpp" />
     <ClCompile Include="ParseHelpers.cpp" />
-    <ClCompile Include="pch\pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="ShaderCompile_DX12.cpp" />
     <ClCompile Include="ShaderPreprocessor_OpenGL.cpp" />
   </ItemGroup>
@@ -273,7 +267,6 @@
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ParseDB.h" />
     <ClInclude Include="EffectParsing.h" />
-    <ClInclude Include="pch\pch.h" />
     <ClInclude Include="ShaderCompile_DX12.h" />
     <ClInclude Include="ShaderPreprocessor_OpenGL.h" />
     <ClInclude Include="TextStrings.h" />
