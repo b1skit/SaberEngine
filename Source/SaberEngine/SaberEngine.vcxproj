@@ -78,7 +78,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)Private\pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)Source\Dependencies\glew\lib\Release\x64\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -99,7 +99,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)Private\pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -123,7 +123,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)Private\pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
@@ -147,7 +147,7 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(SolutionDir)Source\Renderer\Public\;$(SolutionDir)Source\Presentation\Public\;$(SolutionDir)Source\;$(ProjectDir)Private\pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>
       </InlineFunctionExpansion>
     </ClCompile>
