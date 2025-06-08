@@ -1,4 +1,4 @@
-// ï¿½ 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #define HAS_OWN_VERTEX_OUTPUT_DECLARATION
 #define HAS_OWN_FRAGMENT_OUTPUT_DECLARATION
 

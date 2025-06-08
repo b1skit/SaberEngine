@@ -1,4 +1,4 @@
-// ï¿½ 2025 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #define VOUT_COLOR
 #define SABER_INSTANCING
 #include "SaberCommon.glsli"

@@ -1,4 +1,4 @@
-// ï¿½ 2025 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Effect.h"
 #include "EffectDB.h"
