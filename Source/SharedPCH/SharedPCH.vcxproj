@@ -3,8 +3,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{b2f1db2f-9dd3-446e-918a-41254ac4e342}</ProjectGuid>
-    <RootNamespace>Core</RootNamespace>
+    <ProjectGuid>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</ProjectGuid>
+    <RootNamespace>SharedPCH</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -104,82 +104,15 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Assert.h" />
-    <ClInclude Include="CommandQueue.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="Definitions\ConfigKeys.h" />
-    <ClInclude Include="Definitions\EventKeys.h" />
-    <ClInclude Include="Definitions\KeyConfiguration.h" />
-    <ClInclude Include="EventManager.h" />
-    <ClInclude Include="EventManager_Platform.h" />
-    <ClInclude Include="EventManager_Win32.h" />
-    <ClInclude Include="Host\Dialog.h" />
-    <ClInclude Include="Host\Dialog_Platform.h" />
-    <ClInclude Include="Host\Dialog_Win32.h" />
-    <ClInclude Include="Host\PerformanceTimer.h" />
-    <ClInclude Include="Host\PerformanceTimer_Platform.h" />
-    <ClInclude Include="Host\PerformanceTimer_Win32.h" />
-    <ClInclude Include="Host\Window.h" />
-    <ClInclude Include="Host\Window_Platform.h" />
-    <ClInclude Include="Host\Window_Win32.h" />
-    <ClInclude Include="InputManager.h" />
-    <ClInclude Include="InputManager_Platform.h" />
-    <ClInclude Include="InputManager_Win32.h" />
-    <ClInclude Include="Interfaces\IEngineComponent.h" />
-    <ClInclude Include="Interfaces\IEngineThread.h" />
-    <ClInclude Include="Interfaces\IEventListener.h" />
-    <ClInclude Include="Interfaces\IHashedDataObject.h" />
-    <ClInclude Include="Interfaces\ILoadContext.h" />
-    <ClInclude Include="Interfaces\INamedObject.h" />
-    <ClInclude Include="Interfaces\IPlatformObject.h" />
-    <ClInclude Include="Interfaces\IUniqueID.h" />
-    <ClInclude Include="Inventory.h" />
-    <ClInclude Include="InvPtr.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="PerfLogger.h" />
-    <ClInclude Include="ProfilingMarkers.h" />
-    <ClInclude Include="ResourceSystem.h" />
-    <ClInclude Include="ThreadPool.h" />
-    <ClInclude Include="Util\ByteVector.h" />
-    <ClInclude Include="Util\CastUtils.h" />
-    <ClInclude Include="Util\HashKey.h" />
-    <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
-    <ClInclude Include="Util\FileIOUtils.h" />
-    <ClInclude Include="Util\CHashKey.h" />
-    <ClInclude Include="Util\HashUtils.h" />
-    <ClInclude Include="Util\ImGuiUtils.h" />
-    <ClInclude Include="Util\MathUtils.h" />
-    <ClInclude Include="Util\NBufferedVector.h" />
-    <ClInclude Include="Util\TextUtils.h" />
-    <ClInclude Include="Util\ThreadProtector.h" />
-    <ClInclude Include="Util\ThreadSafeVector.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Assert.cpp" />
-    <ClCompile Include="CommandQueue.cpp" />
-    <ClCompile Include="Config.cpp" />
-    <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="EventManager_Platform.cpp" />
-    <ClCompile Include="EventManager_Win32.cpp" />
-    <ClCompile Include="Host\Dialog.cpp" />
-    <ClCompile Include="Host\Dialog_Platform.cpp" />
-    <ClCompile Include="Host\Dialog_Win32.cpp" />
-    <ClCompile Include="Host\PerformanceTimer.cpp" />
-    <ClCompile Include="Host\PerformanceTimer_Platform.cpp" />
-    <ClCompile Include="Host\PerformanceTimer_Win32.cpp" />
-    <ClCompile Include="Host\Window.cpp" />
-    <ClCompile Include="Host\Window_Platform.cpp" />
-    <ClCompile Include="Host\Window_Win32.cpp" />
-    <ClCompile Include="InputManager.cpp" />
-    <ClCompile Include="InputManager_Platform.cpp" />
-    <ClCompile Include="InputManager_Win32.cpp" />
-    <ClCompile Include="Interfaces\IEngineThread.cpp" />
-    <ClCompile Include="Inventory.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="PerfLogger.cpp" />
-    <ClCompile Include="ThreadPool.cpp" />
-    <ClCompile Include="Util\FileIOUtils.cpp" />
-    <ClCompile Include="Util\TextUtils.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
