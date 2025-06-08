@@ -68,7 +68,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)Private\pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>
       <OutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\$(ProjectName)\$(TargetName)$(TargetExt)</OutputFile>
@@ -76,7 +76,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)Private\pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -87,7 +87,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)Private\pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
     <Lib>
@@ -96,7 +96,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(ProjectDir)Private\pch;$(SolutionDir)Source\Dependencies\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
     <Lib>
@@ -107,53 +107,53 @@
     <ClInclude Include="Public\Assert.h" />
     <ClInclude Include="Public\CommandQueue.h" />
     <ClInclude Include="Public\Config.h" />
-    <ClInclude Include="Definitions\ConfigKeys.h" />
-    <ClInclude Include="Definitions\EventKeys.h" />
-    <ClInclude Include="Definitions\KeyConfiguration.h" />
+    <ClInclude Include="Public\Definitions\ConfigKeys.h" />
+    <ClInclude Include="Public\Definitions\EventKeys.h" />
+    <ClInclude Include="Public\Definitions\KeyConfiguration.h" />
     <ClInclude Include="Public\EventManager.h" />
     <ClInclude Include="Public\EventManager_Platform.h" />
     <ClInclude Include="Public\EventManager_Win32.h" />
-    <ClInclude Include="Host\Dialog.h" />
-    <ClInclude Include="Host\Dialog_Platform.h" />
-    <ClInclude Include="Host\Dialog_Win32.h" />
-    <ClInclude Include="Host\PerformanceTimer.h" />
-    <ClInclude Include="Host\PerformanceTimer_Platform.h" />
-    <ClInclude Include="Host\PerformanceTimer_Win32.h" />
-    <ClInclude Include="Host\Window.h" />
-    <ClInclude Include="Host\Window_Platform.h" />
-    <ClInclude Include="Host\Window_Win32.h" />
+    <ClInclude Include="Public\Host\Dialog.h" />
+    <ClInclude Include="Public\Host\Dialog_Platform.h" />
+    <ClInclude Include="Public\Host\Dialog_Win32.h" />
+    <ClInclude Include="Public\Host\PerformanceTimer.h" />
+    <ClInclude Include="Public\Host\PerformanceTimer_Platform.h" />
+    <ClInclude Include="Public\Host\PerformanceTimer_Win32.h" />
+    <ClInclude Include="Public\Host\Window.h" />
+    <ClInclude Include="Public\Host\Window_Platform.h" />
+    <ClInclude Include="Public\Host\Window_Win32.h" />
     <ClInclude Include="Public\InputManager.h" />
     <ClInclude Include="Public\InputManager_Platform.h" />
     <ClInclude Include="Public\InputManager_Win32.h" />
-    <ClInclude Include="Interfaces\IEngineComponent.h" />
-    <ClInclude Include="Interfaces\IEngineThread.h" />
-    <ClInclude Include="Interfaces\IEventListener.h" />
-    <ClInclude Include="Interfaces\IHashedDataObject.h" />
-    <ClInclude Include="Interfaces\ILoadContext.h" />
-    <ClInclude Include="Interfaces\INamedObject.h" />
-    <ClInclude Include="Interfaces\IPlatformObject.h" />
-    <ClInclude Include="Interfaces\IUniqueID.h" />
+    <ClInclude Include="Public\Interfaces\IEngineComponent.h" />
+    <ClInclude Include="Public\Interfaces\IEngineThread.h" />
+    <ClInclude Include="Public\Interfaces\IEventListener.h" />
+    <ClInclude Include="Public\Interfaces\IHashedDataObject.h" />
+    <ClInclude Include="Public\Interfaces\ILoadContext.h" />
+    <ClInclude Include="Public\Interfaces\INamedObject.h" />
+    <ClInclude Include="Public\Interfaces\IPlatformObject.h" />
+    <ClInclude Include="Public\Interfaces\IUniqueID.h" />
     <ClInclude Include="Public\Inventory.h" />
     <ClInclude Include="Public\InvPtr.h" />
     <ClInclude Include="Public\Logger.h" />
-    <ClInclude Include="pch\pch.h" />
+    <ClInclude Include="Private\pch\pch.h" />
     <ClInclude Include="Public\PerfLogger.h" />
     <ClInclude Include="Public\ProfilingMarkers.h" />
     <ClInclude Include="Private\ResourceSystem.h" />
     <ClInclude Include="Public\ThreadPool.h" />
-    <ClInclude Include="Util\ByteVector.h" />
-    <ClInclude Include="Util\CastUtils.h" />
-    <ClInclude Include="Util\HashKey.h" />
-    <ClInclude Include="Util\DoubleBufferUnorderedMap.h" />
-    <ClInclude Include="Util\FileIOUtils.h" />
-    <ClInclude Include="Util\CHashKey.h" />
-    <ClInclude Include="Util\HashUtils.h" />
-    <ClInclude Include="Util\ImGuiUtils.h" />
-    <ClInclude Include="Util\MathUtils.h" />
-    <ClInclude Include="Util\NBufferedVector.h" />
-    <ClInclude Include="Util\TextUtils.h" />
-    <ClInclude Include="Util\ThreadProtector.h" />
-    <ClInclude Include="Util\ThreadSafeVector.h" />
+    <ClInclude Include="Public\Util\ByteVector.h" />
+    <ClInclude Include="Public\Util\CastUtils.h" />
+    <ClInclude Include="Public\Util\HashKey.h" />
+    <ClInclude Include="Public\Util\DoubleBufferUnorderedMap.h" />
+    <ClInclude Include="Public\Util\FileIOUtils.h" />
+    <ClInclude Include="Public\Util\CHashKey.h" />
+    <ClInclude Include="Public\Util\HashUtils.h" />
+    <ClInclude Include="Public\Util\ImGuiUtils.h" />
+    <ClInclude Include="Public\Util\MathUtils.h" />
+    <ClInclude Include="Public\Util\NBufferedVector.h" />
+    <ClInclude Include="Public\Util\TextUtils.h" />
+    <ClInclude Include="Public\Util\ThreadProtector.h" />
+    <ClInclude Include="Public\Util\ThreadSafeVector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Public\Assert.cpp" />
@@ -162,22 +162,22 @@
     <ClCompile Include="Public\EventManager.cpp" />
     <ClCompile Include="Public\EventManager_Platform.cpp" />
     <ClCompile Include="Public\EventManager_Win32.cpp" />
-    <ClCompile Include="Host\Dialog.cpp" />
-    <ClCompile Include="Host\Dialog_Platform.cpp" />
-    <ClCompile Include="Host\Dialog_Win32.cpp" />
-    <ClCompile Include="Host\PerformanceTimer.cpp" />
-    <ClCompile Include="Host\PerformanceTimer_Platform.cpp" />
-    <ClCompile Include="Host\PerformanceTimer_Win32.cpp" />
-    <ClCompile Include="Host\Window.cpp" />
-    <ClCompile Include="Host\Window_Platform.cpp" />
-    <ClCompile Include="Host\Window_Win32.cpp" />
+    <ClCompile Include="Private\Host\Dialog.cpp" />
+    <ClCompile Include="Private\Host\Dialog_Platform.cpp" />
+    <ClCompile Include="Private\Host\Dialog_Win32.cpp" />
+    <ClCompile Include="Private\Host\PerformanceTimer.cpp" />
+    <ClCompile Include="Private\Host\PerformanceTimer_Platform.cpp" />
+    <ClCompile Include="Private\Host\PerformanceTimer_Win32.cpp" />
+    <ClCompile Include="Private\Host\Window.cpp" />
+    <ClCompile Include="Private\Host\Window_Platform.cpp" />
+    <ClCompile Include="Private\Host\Window_Win32.cpp" />
     <ClCompile Include="Public\InputManager.cpp" />
     <ClCompile Include="Public\InputManager_Platform.cpp" />
     <ClCompile Include="Public\InputManager_Win32.cpp" />
-    <ClCompile Include="Interfaces\IEngineThread.cpp" />
+    <ClCompile Include="Private\Interfaces\IEngineThread.cpp" />
     <ClCompile Include="Public\Inventory.cpp" />
     <ClCompile Include="Public\Logger.cpp" />
-    <ClCompile Include="pch\pch.cpp">
+    <ClCompile Include="Private\pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
@@ -185,8 +185,8 @@
     </ClCompile>
     <ClCompile Include="Public\PerfLogger.cpp" />
     <ClCompile Include="Public\ThreadPool.cpp" />
-    <ClCompile Include="Util\FileIOUtils.cpp" />
-    <ClCompile Include="Util\TextUtils.cpp" />
+    <ClCompile Include="Private\Util\FileIOUtils.cpp" />
+    <ClCompile Include="Private\Util\TextUtils.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

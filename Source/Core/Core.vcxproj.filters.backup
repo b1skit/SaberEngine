@@ -59,37 +59,37 @@
 </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Private\pch\pch.h">
-      <Filter>Private\pch</Filter>
+      <Filter>Header Files\pch</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\CastUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\DoubleBufferUnorderedMap.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\FileIOUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\HashUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\ImGuiUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\MathUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\NBufferedVector.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\TextUtils.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\ThreadProtector.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\ThreadSafeVector.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Assert.h">
       <Filter>Public</Filter>
@@ -101,25 +101,25 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Definitions\KeyConfiguration.h">
-      <Filter>Public\Definitions</Filter>
+      <Filter>Header Files\Definitions</Filter>
     </ClInclude>
     <ClInclude Include="Public\Config.h">
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IEngineComponent.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IEngineThread.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\CommandQueue.h">
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\INamedObject.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IHashedDataObject.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\EventManager.h">
       <Filter>Public</Filter>
@@ -131,7 +131,7 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IEventListener.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\InputManager.h">
       <Filter>Public</Filter>
@@ -143,22 +143,22 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IPlatformObject.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\Definitions\ConfigKeys.h">
-      <Filter>Public\Definitions</Filter>
+      <Filter>Header Files\Definitions</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\CHashKey.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\ProfilingMarkers.h">
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\ByteVector.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\IUniqueID.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\InvPtr.h">
       <Filter>Public</Filter>
@@ -170,10 +170,10 @@
       <Filter>Private\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\Interfaces\ILoadContext.h">
-      <Filter>Public\Interfaces</Filter>
+      <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\Window.h">
-      <Filter>Public\Host</Filter>
+      <Filter>Header Files\host</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\Window_Platform.h">
       <Filter>Header Files\host\platform</Filter>
@@ -182,7 +182,7 @@
       <Filter>Header Files\host\win32</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\Dialog.h">
-      <Filter>Public\Host</Filter>
+      <Filter>Header Files\host</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\Dialog_Platform.h">
       <Filter>Header Files\host\platform</Filter>
@@ -191,10 +191,10 @@
       <Filter>Header Files\host\win32</Filter>
     </ClInclude>
     <ClInclude Include="Public\Util\HashKey.h">
-      <Filter>Public\Util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\PerformanceTimer.h">
-      <Filter>Public\Host</Filter>
+      <Filter>Header Files\host</Filter>
     </ClInclude>
     <ClInclude Include="Public\Host\PerformanceTimer_Platform.h">
       <Filter>Header Files\host\platform</Filter>
@@ -206,12 +206,12 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\Definitions\EventKeys.h">
-      <Filter>Public\Definitions</Filter>
+      <Filter>Header Files\Definitions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Private\pch\pch.cpp">
-      <Filter>Private\pch</Filter>
+      <Filter>Source Files\pch</Filter>
     </ClCompile>
     <ClCompile Include="Public\Assert.cpp">
       <Filter>Public</Filter>
@@ -225,8 +225,8 @@
     <ClCompile Include="Public\Config.cpp">
       <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Interfaces\Include="Private\Interfaces\IEngineThread.cpp">
-      <Filter>Private\Interfaces</Filter>
+    <ClCompile Include="Private\Interfaces\Include="Public\Interfaces\IEngineThread.cpp">
+      <Filter>Source Files\Interfaces</Filter>
     </ClCompile>
     <ClCompile Include="Public\CommandQueue.cpp">
       <Filter>Public</Filter>
@@ -249,14 +249,14 @@
     <ClCompile Include="Public\InputManager_Win32.cpp">
       <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Util\FileIOUtils.cpp">
-      <Filter>Private\Util</Filter>
+    <ClCompile Include="Public\Util\FileIOUtils.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="Public\Inventory.cpp">
       <Filter>Public</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\Window.cpp">
-      <Filter>Private\Host</Filter>
+      <Filter>Source Files\host</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\Window_Platform.cpp">
       <Filter>Source Files\host\platform</Filter>
@@ -265,7 +265,7 @@
       <Filter>Source Files\host\win32</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\Dialog.cpp">
-      <Filter>Private\Host</Filter>
+      <Filter>Source Files\host</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\Dialog_Platform.cpp">
       <Filter>Source Files\host\platform</Filter>
@@ -273,11 +273,11 @@
     <ClCompile Include="Private\Host\Dialog_Win32.cpp">
       <Filter>Source Files\host\win32</Filter>
     </ClCompile>
-    <ClCompile Include="Private\Util\TextUtils.cpp">
-      <Filter>Private\Util</Filter>
+    <ClCompile Include="Public\Util\TextUtils.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\PerformanceTimer.cpp">
-      <Filter>Private\Host</Filter>
+      <Filter>Source Files\host</Filter>
     </ClCompile>
     <ClCompile Include="Private\Host\PerformanceTimer_Platform.cpp">
       <Filter>Source Files\host\platform</Filter>
