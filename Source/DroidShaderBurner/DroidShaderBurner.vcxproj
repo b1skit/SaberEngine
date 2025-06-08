@@ -119,7 +119,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -151,7 +151,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
@@ -189,7 +189,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
@@ -228,7 +228,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private;$(SolutionDir)Source\Core\Public\;$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion />
@@ -254,29 +254,29 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FileWriter.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="ParseDB.cpp" />
-    <ClCompile Include="EffectParsing.cpp" />
-    <ClCompile Include="ParseHelpers.cpp" />
+    <ClCompile Include="Private\FileWriter.cpp" />
+    <ClCompile Include="Private\main.cpp" />
+    <ClCompile Include="Private\ParseDB.cpp" />
+    <ClCompile Include="Private\EffectParsing.cpp" />
+    <ClCompile Include="Private\ParseHelpers.cpp" />
     <ClCompile Include="pch\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ShaderCompile_DX12.cpp" />
-    <ClCompile Include="ShaderPreprocessor_OpenGL.cpp" />
+    <ClCompile Include="Private\ShaderCompile_DX12.cpp" />
+    <ClCompile Include="Private\ShaderPreprocessor_OpenGL.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ParseHelpers.h" />
-    <ClInclude Include="FileWriter.h" />
-    <ClInclude Include="ParseDB.h" />
-    <ClInclude Include="EffectParsing.h" />
+    <ClInclude Include="Private\ParseHelpers.h" />
+    <ClInclude Include="Private\FileWriter.h" />
+    <ClInclude Include="Private\ParseDB.h" />
+    <ClInclude Include="Private\EffectParsing.h" />
     <ClInclude Include="pch\pch.h" />
-    <ClInclude Include="ShaderCompile_DX12.h" />
-    <ClInclude Include="ShaderPreprocessor_OpenGL.h" />
-    <ClInclude Include="TextStrings.h" />
+    <ClInclude Include="Private\ShaderCompile_DX12.h" />
+    <ClInclude Include="Private\ShaderPreprocessor_OpenGL.h" />
+    <ClInclude Include="Private\TextStrings.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">

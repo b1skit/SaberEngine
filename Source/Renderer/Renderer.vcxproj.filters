@@ -1,14 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Header Files\pch">
       <UniqueIdentifier>{284ffd36-f327-4488-96e3-59c85cef4ee9}</UniqueIdentifier>
     </Filter>
@@ -120,271 +112,271 @@
     <Filter Include="Shaders\Dependencies">
       <UniqueIdentifier>{dfbf0971-e49b-4dc9-8444-8e3422a0a242}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+  <Filter Include="Public"><UniqueIdentifier>{pub1ic-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private"><UniqueIdentifier>{pr1vate-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Header Files"><UniqueIdentifier>{pr1vh-00-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Source Files"><UniqueIdentifier>{pr1vs-00-0000-0000-000000000000}</UniqueIdentifier></Filter></ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="Batch.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\Batch.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundsRenderData.h">
-      <Filter>Header Files\gr\RenderData</Filter>
+    <ClInclude Include="Public\BoundsRenderData.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\Buffer.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\Buffer_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\Buffer_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\Buffer_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BufferAllocator.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\BufferAllocator.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BufferAllocator_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\BufferAllocator_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BufferAllocator_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Private\BufferAllocator_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CameraRenderData.h">
-      <Filter>Header Files\gr\RenderData</Filter>
+    <ClInclude Include="Public\CameraRenderData.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="CommandList_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\CommandList_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CommandQueue_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\CommandQueue_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Context.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\Context.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Context_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\Context_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Context_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Private\Context_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CPUDescriptorHeapManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\CPUDescriptorHeapManager_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debug_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\Debug_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorCache_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\DescriptorCache_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Device_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\Device_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Effect.h">
-      <Filter>Header Files\effect</Filter>
+    <ClInclude Include="Private\Effect.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EffectDB.h">
-      <Filter>Header Files\effect</Filter>
+    <ClInclude Include="Private\EffectDB.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Fence_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\Fence_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GPUDescriptorHeap_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\GPUDescriptorHeap_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystemManager.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystemManager.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Bloom.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Bloom.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_ComputeMips.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_ComputeMips.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Culling.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Culling.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Debug.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Debug.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_DeferredLighting.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_DeferredLighting.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_GBuffer.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_GBuffer.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_ImGui.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\GraphicsSystem_ImGui.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Shadows.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Shadows.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Skybox.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Skybox.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Tonemapping.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Tonemapping.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_Transparency.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_Transparency.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_XeGTAO.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_XeGTAO.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LightParamsHelpers.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\LightParamsHelpers.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Material_GLTF_PBRMetallicRoughness.h">
-      <Filter>Header Files\gr\Materials</Filter>
+    <ClInclude Include="Public\Material_GLTF_PBRMetallicRoughness.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files\gr\Materials</Filter>
+    <ClInclude Include="Public\Material.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="LightRenderData.h">
-      <Filter>Header Files\gr\RenderData</Filter>
+    <ClInclude Include="Public\LightRenderData.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="MeshFactory.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\MeshFactory.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineState_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\PipelineState_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderDataManager.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\RenderDataManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RLibrary_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
+    <ClInclude Include="Public\RLibrary_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RLibrary_ImGui_Platform.h">
-      <Filter>Header Files\re\platform\Libraries</Filter>
+    <ClInclude Include="Private\RLibrary_ImGui_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RLibrary_ImGui_OpenGL.h">
-      <Filter>Header Files\re\OpenGL\Libraries</Filter>
+    <ClInclude Include="Private\RLibrary_ImGui_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RLibrary_ImGui_DX12.h">
-      <Filter>Header Files\re\DX12\Libraries</Filter>
+    <ClInclude Include="Private\RLibrary_ImGui_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\RenderManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\RenderManager_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Shader_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\Shader_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\Sampler_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\Sampler.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RootSignature_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\RootSignature_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SysInfo_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\SysInfo_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceStateTracker_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\ResourceStateTracker_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChain_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\SwapChain_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Texture_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\Texture_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="TextureTarget_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\TextureTarget_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\RenderManager_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\Sampler_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Shader_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\Shader_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChain_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\SwapChain_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="SysInfo_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\SysInfo_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Texture_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\Texture_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="TextureTarget_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Private\TextureTarget_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\RenderManager_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\Sampler_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Shader_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\Shader_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChain_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\SwapChain_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="SysInfo_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\SysInfo_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Texture_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\Texture_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="TextureTarget_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Private\TextureTarget_Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VertexStreamBuilder.h">
-      <Filter>Header Files\gr\grutil</Filter>
+    <ClInclude Include="Public\VertexStreamBuilder.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="TransformRenderData.h">
-      <Filter>Header Files\gr\RenderData</Filter>
+    <ClInclude Include="Public\TransformRenderData.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowMapRenderData.h">
-      <Filter>Header Files\gr\RenderData</Filter>
+    <ClInclude Include="Public\ShadowMapRenderData.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RenderObjectIDs.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\RenderObjectIDs.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPipeline.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\RenderPipeline.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Stage.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\Stage.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderSystem.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\RenderSystem.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RenderSystemDesc.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\RenderSystemDesc.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\Shader.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="SwapChain.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\SwapChain.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\Texture.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="TextureTarget.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\TextureTarget.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TextureView.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\TextureView.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshPrimitive.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\MeshPrimitive.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="..\Dependencies\imgui\imconfig.h">
       <Filter>Dependencies\imgui</Filter>
@@ -413,110 +405,110 @@
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h">
       <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
-    <ClInclude Include="VertexStreamMap.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\VertexStreamMap.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EffectKeys.h">
-      <Filter>Header Files\effect</Filter>
+    <ClInclude Include="Public\EffectKeys.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Technique.h">
-      <Filter>Header Files\effect</Filter>
+    <ClInclude Include="Private\Technique.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnumTypes.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\EnumTypes.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystemCommon.h">
-      <Filter>Header Files\gr\grutil</Filter>
+    <ClInclude Include="Private\GraphicsSystemCommon.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_BatchManager.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_BatchManager.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnumTypes_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Private\EnumTypes_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnumTypes_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\EnumTypes_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_VertexAnimation.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_VertexAnimation.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VertexStream.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Public\VertexStream.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BufferView.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\BufferView.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HeapManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Private\HeapManager_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GPUTimer.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\GPUTimer.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GPUTimer_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\GPUTimer_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="GPUTimer_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\GPUTimer_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="GPUTimer_OpenGL.h">
-      <Filter>Header Files\re\OpenGL</Filter>
+    <ClInclude Include="Public\GPUTimer_OpenGL.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_SceneAccelerationStructure.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructure.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\AccelerationStructure.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructure_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\AccelerationStructure_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="AccelerationStructure_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\AccelerationStructure_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RasterizationState.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\RasterizationState.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\GraphicsSystem_RayTracing_Experimental.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderBindingTable.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\ShaderBindingTable.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderBindingTable_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\ShaderBindingTable_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderBindingTable_Platform.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\ShaderBindingTable_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResourceManager.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\BindlessResourceManager.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResourceManager_Platform.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\BindlessResourceManager_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResourceManager_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\BindlessResourceManager_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="RootConstants.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Private\RootConstants.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResource.h">
-      <Filter>Header Files\re</Filter>
+    <ClInclude Include="Public\BindlessResource.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResource_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
+    <ClInclude Include="Public\BindlessResource_DX12.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="BindlessResource_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Public\BindlessResource_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Material_GLTF_Unlit.h">
-      <Filter>Header Files\gr\Materials</Filter>
+    <ClInclude Include="Public\Material_GLTF_Unlit.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="IndexedBuffer.h">
-      <Filter>Header Files\gr</Filter>
+    <ClInclude Include="Private\IndexedBuffer.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsUtils.h">
-      <Filter>Header Files\gr\grutil</Filter>
+    <ClInclude Include="Private\GraphicsUtils.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shaders\Common\AnimationParams.h">
       <Filter>Shaders\Common</Filter>
@@ -571,257 +563,257 @@
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\Buffer_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BufferAllocator_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\BufferAllocator_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CommandList_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\CommandList_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CommandQueue_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\CommandQueue_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Context_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\Context_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\CPUDescriptorHeapManager_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Debug_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\Debug_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DescriptorCache_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\DescriptorCache_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Device_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\Device_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fence_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\Fence_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GPUDescriptorHeap_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\GPUDescriptorHeap_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineState_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\PipelineState_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\RenderManager_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceStateTracker_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\ResourceStateTracker_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RootSignature_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\RootSignature_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\Sampler_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Shader_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\Shader_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SwapChain_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\SwapChain_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SysInfo_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\SysInfo_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Texture_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\Texture_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="TextureTarget_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\TextureTarget_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\Buffer_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BufferAllocator_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Private\BufferAllocator_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Context_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Private\Context_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\RenderManager_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\Sampler_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Shader_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\Shader_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SwapChain_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\SwapChain_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SysInfo_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\SysInfo_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Texture_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\Texture_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="TextureTarget_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Private\TextureTarget_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\Buffer_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\RenderManager_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\Sampler_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Shader_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\Shader_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SwapChain_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\SwapChain_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SysInfo_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\SysInfo_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Texture_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\Texture_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="TextureTarget_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Private\TextureTarget_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStreamBuilder.cpp">
-      <Filter>Source Files\gr\grutil</Filter>
+    <ClCompile Include="Public\VertexStreamBuilder.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Bloom.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Bloom.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_ComputeMips.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_ComputeMips.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Culling.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Culling.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Debug.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Debug.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_DeferredLighting.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_GBuffer.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_GBuffer.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_ImGui.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Public\GraphicsSystem_ImGui.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Shadows.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Shadows.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Skybox.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Skybox.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Tonemapping.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Tonemapping.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_Transparency.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_Transparency.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_XeGTAO.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_XeGTAO.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystemManager.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystemManager.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EffectDB.cpp">
-      <Filter>Source Files\effect</Filter>
+    <ClCompile Include="Private\EffectDB.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Effect.cpp">
-      <Filter>Source Files\effect</Filter>
+    <ClCompile Include="Private\Effect.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CameraRenderData.cpp">
-      <Filter>Source Files\gr\RenderData</Filter>
+    <ClCompile Include="Public\CameraRenderData.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="LightRenderData.cpp">
-      <Filter>Source Files\gr\RenderData</Filter>
+    <ClCompile Include="Public\LightRenderData.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="TransformRenderData.cpp">
-      <Filter>Source Files\gr\RenderData</Filter>
+    <ClCompile Include="Public\TransformRenderData.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="LightParamsHelpers.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\LightParamsHelpers.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Context.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\Context.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Batch.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\Batch.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Buffer.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\Buffer.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BufferAllocator.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\BufferAllocator.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshFactory.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Public\MeshFactory.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Material_GLTF_PBRMetallicRoughness.cpp">
-      <Filter>Source Files\gr\Materials</Filter>
+    <ClCompile Include="Public\Material_GLTF_PBRMetallicRoughness.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Source Files\gr\Materials</Filter>
+    <ClCompile Include="Public\Material.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_Platform.cpp">
-      <Filter>Source Files\re\platform\Libraries</Filter>
+    <ClCompile Include="Private\RLibrary_ImGui_Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RLibrary_Platform.cpp">
-      <Filter>Source Files\re\platform\Libraries</Filter>
+    <ClCompile Include="Public\RLibrary_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL\Libraries</Filter>
+    <ClCompile Include="Private\RLibrary_ImGui_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RLibrary_ImGui_DX12.cpp">
-      <Filter>Source Files\re\DX12\Libraries</Filter>
+    <ClCompile Include="Private\RLibrary_ImGui_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderDataManager.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Public\RenderDataManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\RenderManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPipeline.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\RenderPipeline.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Stage.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\Stage.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderSystem.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\RenderSystem.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RenderSystemDesc.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\RenderSystemDesc.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\Sampler.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\Shader.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="SwapChain.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\SwapChain.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\Texture.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="TextureTarget.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\TextureTarget.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TextureView.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\TextureView.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshPrimitive.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Public\MeshPrimitive.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
     <ClCompile Include="..\Dependencies\imgui\imgui.cpp">
       <Filter>Dependencies\imgui</Filter>
@@ -847,101 +839,101 @@
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
       <Filter>Dependencies\imgui\backends</Filter>
     </ClCompile>
-    <ClCompile Include="Technique.cpp">
-      <Filter>Source Files\effect</Filter>
+    <ClCompile Include="Private\Technique.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EnumTypes.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\EnumTypes.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystemCommon.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystemCommon.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_BatchManager.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_BatchManager.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EnumTypes_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\EnumTypes_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EnumTypes_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Private\EnumTypes_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_VertexAnimation.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_VertexAnimation.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VertexStream.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Public\VertexStream.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BufferView.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\BufferView.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HeapManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Private\HeapManager_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GPUTimer.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\GPUTimer.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GPUTimer_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\GPUTimer_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="GPUTimer_OpenGL.cpp">
-      <Filter>Source Files\re\OpenGL</Filter>
+    <ClCompile Include="Public\GPUTimer_OpenGL.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="GPUTimer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\GPUTimer_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_SceneAccelerationStructure.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AccelerationStructure.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\AccelerationStructure.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AccelerationStructure_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\AccelerationStructure_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="AccelerationStructure_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\AccelerationStructure_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RasterizationState.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\RasterizationState.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\GraphicsSystem_RayTracing_Experimental.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderBindingTable.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\ShaderBindingTable.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderBindingTable_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\ShaderBindingTable_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderBindingTable_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\ShaderBindingTable_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResourceManager_Platform.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\BindlessResourceManager_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResourceManager_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\BindlessResourceManager_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="RootConstants.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\RootConstants.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResource.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Public\BindlessResource.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResource_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Public\BindlessResource_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResource_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
+    <ClCompile Include="Public\BindlessResource_DX12.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="BindlessResourceManager.cpp">
-      <Filter>Source Files\re</Filter>
+    <ClCompile Include="Private\BindlessResourceManager.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IndexedBuffer.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Private\IndexedBuffer.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Material_GLTF_Unlit.cpp">
-      <Filter>Source Files\gr\Materials</Filter>
+    <ClCompile Include="Public\Material_GLTF_Unlit.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

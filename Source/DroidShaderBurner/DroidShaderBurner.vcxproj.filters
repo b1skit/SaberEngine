@@ -1,71 +1,63 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Source Files\pch">
       <UniqueIdentifier>{1816e0b4-72c3-4d88-af44-1421ee9c5941}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\pch">
       <UniqueIdentifier>{d9feb910-e9a8-439c-adc2-971cebe92c4d}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+  <Filter Include="Private"><UniqueIdentifier>{pr1vate-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Header Files"><UniqueIdentifier>{pr1vh-00-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Source Files"><UniqueIdentifier>{pr1vs-00-0000-0000-000000000000}</UniqueIdentifier></Filter></ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\main.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="EffectParsing.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\EffectParsing.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParseDB.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\ParseDB.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileWriter.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\FileWriter.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderPreprocessor_OpenGL.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\ShaderPreprocessor_OpenGL.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderCompile_DX12.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\ShaderCompile_DX12.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParseHelpers.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\ParseHelpers.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="EffectParsing.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\EffectParsing.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParseDB.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\ParseDB.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TextStrings.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\TextStrings.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileWriter.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\FileWriter.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderPreprocessor_OpenGL.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\ShaderPreprocessor_OpenGL.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderCompile_DX12.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\ShaderCompile_DX12.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParseHelpers.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\ParseHelpers.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,14 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Header Files\fr">
       <UniqueIdentifier>{74d845cc-af85-450c-b361-a51da2319784}</UniqueIdentifier>
     </Filter>
@@ -33,174 +25,174 @@
     <Filter Include="Source Files\load">
       <UniqueIdentifier>{9a7edd0c-7efc-43b6-9fbf-d242c4f7868d}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+  <Filter Include="Public"><UniqueIdentifier>{pub1ic-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private"><UniqueIdentifier>{pr1vate-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Header Files"><UniqueIdentifier>{pr1vh-00-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Source Files"><UniqueIdentifier>{pr1vs-00-0000-0000-000000000000}</UniqueIdentifier></Filter></ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BoundsComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\BoundsComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CameraComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\CameraComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CameraControlComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\CameraControlComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LightComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\LightComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Public\SceneManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMap.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Private\ShadowMap.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UIManager.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Public\UIManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Private\Camera.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EntityCommands.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Private\EntityCommands.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EntityManager.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Public\EntityManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Private\Light.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="MaterialInstanceComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\MaterialInstanceComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshPrimitiveComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\MeshPrimitiveComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NameComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\NameComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RelationshipComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\RelationshipComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderDataComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\RenderDataComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMapComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\ShadowMapComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TransformComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\TransformComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SceneNodeConcept.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\SceneNodeConcept.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshConcept.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\MeshConcept.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Source Files\fr</Filter>
+    <ClCompile Include="Private\Transform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\AnimationComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SkinningComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\SkinningComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshMorphComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+    <ClCompile Include="Private\MeshMorphComponent.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Load_GLTF.cpp">
-      <Filter>Source Files\load</Filter>
+    <ClCompile Include="Private\Load_GLTF.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Load_Common.cpp">
-      <Filter>Source Files\load</Filter>
+    <ClCompile Include="Private\Load_Common.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BoundsComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\BoundsComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CameraComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\CameraComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CameraControlComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\CameraControlComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Private\Camera.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EntityManager.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Public\EntityManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="EntityCommands.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Private\EntityCommands.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Private\Light.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Public\SceneManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowMap.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Private\ShadowMap.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UIManager.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Public\UIManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="MarkerComponents.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\MarkerComponents.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MaterialInstanceComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\MaterialInstanceComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshPrimitiveComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\MeshPrimitiveComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NameComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\NameComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RelationshipComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\RelationshipComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderDataComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\RenderDataComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowMapComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\ShadowMapComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TransformComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\TransformComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SceneNodeConcept.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\SceneNodeConcept.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshConcept.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\MeshConcept.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Header Files\fr</Filter>
+    <ClInclude Include="Private\Transform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\AnimationComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LightComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\LightComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SkinningComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\SkinningComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshMorphComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+    <ClInclude Include="Private\MeshMorphComponent.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Load_GLTF.h">
-      <Filter>Header Files\load</Filter>
+    <ClInclude Include="Private\Load_GLTF.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Load_Common.h">
-      <Filter>Header Files\load</Filter>
+    <ClInclude Include="Private\Load_Common.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

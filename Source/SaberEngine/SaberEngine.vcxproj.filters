@@ -1,14 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{3cea7139-d8f4-49c9-b1aa-0090f4e6ea8c}</UniqueIdentifier>
     </Filter>
@@ -42,30 +34,30 @@
     <Filter Include="Header Files\effect">
       <UniqueIdentifier>{4ebe6f30-9fb9-47aa-9604-f096c3142206}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+  <Filter Include="Private"><UniqueIdentifier>{pr1vate-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Header Files"><UniqueIdentifier>{pr1vh-00-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Source Files"><UniqueIdentifier>{pr1vs-00-0000-0000-000000000000}</UniqueIdentifier></Filter></ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Private\main.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EngineApp.cpp">
-      <Filter>Source Files\app</Filter>
+    <ClCompile Include="Private\EngineApp.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Platform.cpp">
-      <Filter>Source Files\app\platform</Filter>
+    <ClCompile Include="Private\Platform.cpp">
+      <Filter>Private\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EngineApp.h">
-      <Filter>Header Files\app</Filter>
+    <ClInclude Include="Private\EngineApp.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>Header Files\app\Platform</Filter>
+    <ClInclude Include="Private\Platform.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Dependencies\Resources</Filter>
+    <ClInclude Include="Private\resource.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>

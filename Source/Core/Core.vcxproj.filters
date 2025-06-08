@@ -1,14 +1,6 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -52,7 +44,7 @@
     <Filter Include="Source Files\host\win32">
       <UniqueIdentifier>{c682cb02-16e3-4c14-9b22-35cbcd674c21}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+  <Filter Include="Public"><UniqueIdentifier>{pub1ic-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private"><UniqueIdentifier>{pr1vate-0000-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Header Files"><UniqueIdentifier>{pr1vh-00-0000-0000-000000000000}</UniqueIdentifier></Filter><Filter Include="Private\Source Files"><UniqueIdentifier>{pr1vs-00-0000-0000-000000000000}</UniqueIdentifier></Filter></ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
@@ -87,20 +79,20 @@
     <ClInclude Include="Util\ThreadSafeVector.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="Assert.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\Assert.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\Logger.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadPool.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\ThreadPool.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Definitions\KeyConfiguration.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\Config.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces\IEngineComponent.h">
       <Filter>Header Files\Interfaces</Filter>
@@ -108,8 +100,8 @@
     <ClInclude Include="Interfaces\IEngineThread.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\CommandQueue.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces\INamedObject.h">
       <Filter>Header Files\Interfaces</Filter>
@@ -117,26 +109,26 @@
     <ClInclude Include="Interfaces\IHashedDataObject.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\EventManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager_Platform.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\EventManager_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="EventManager_Win32.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\EventManager_Win32.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces\IEventListener.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\InputManager.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager_Platform.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\InputManager_Platform.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="InputManager_Win32.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\InputManager_Win32.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces\IPlatformObject.h">
       <Filter>Header Files\Interfaces</Filter>
@@ -147,8 +139,8 @@
     <ClInclude Include="Util\CHashKey.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="ProfilingMarkers.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\ProfilingMarkers.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Util\ByteVector.h">
       <Filter>Header Files\util</Filter>
@@ -156,14 +148,14 @@
     <ClInclude Include="Interfaces\IUniqueID.h">
       <Filter>Header Files\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="InvPtr.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\InvPtr.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="Inventory.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\Inventory.h">
+      <Filter>Public</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceSystem.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Private\ResourceSystem.h">
+      <Filter>Private\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces\ILoadContext.h">
       <Filter>Header Files\Interfaces</Filter>
@@ -198,8 +190,8 @@
     <ClInclude Include="Host\PerformanceTimer_Win32.h">
       <Filter>Header Files\host\win32</Filter>
     </ClInclude>
-    <ClInclude Include="PerfLogger.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Public\PerfLogger.h">
+      <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Definitions\EventKeys.h">
       <Filter>Header Files\Definitions</Filter>
@@ -209,47 +201,47 @@
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
-    <ClCompile Include="Assert.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\Assert.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\Logger.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadPool.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\ThreadPool.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="Config.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\Config.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
     <ClCompile Include="Interfaces\IEngineThread.cpp">
       <Filter>Source Files\Interfaces</Filter>
     </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\CommandQueue.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\EventManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager_Platform.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\EventManager_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="EventManager_Win32.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\EventManager_Win32.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\InputManager.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager_Platform.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\InputManager_Platform.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
-    <ClCompile Include="InputManager_Win32.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\InputManager_Win32.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
     <ClCompile Include="Util\FileIOUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="Inventory.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\Inventory.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
     <ClCompile Include="Host\Window.cpp">
       <Filter>Source Files\host</Filter>
@@ -281,8 +273,8 @@
     <ClCompile Include="Host\PerformanceTimer_Win32.cpp">
       <Filter>Source Files\host\win32</Filter>
     </ClCompile>
-    <ClCompile Include="PerfLogger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Public\PerfLogger.cpp">
+      <Filter>Public</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
