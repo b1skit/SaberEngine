@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -39,6 +39,10 @@
 #include <vector>
 
 
+// OpenGL (GLEW):
+#include <GL/glew.h>
+
+
 // Windows:
 #if defined(_WIN32) || defined(_WIN64)
 
@@ -57,6 +61,9 @@
 #include <d3d12.h>
 #include <d3d12shader.h>
 #include <dxgi1_5.h>
+
+// OpenGL (Windows-specific extensions):
+#include <GL/wglew.h>
 
 #endif // defined(_WIN32) || defined(_WIN64)
 

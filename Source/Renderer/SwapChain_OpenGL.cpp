@@ -1,12 +1,9 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "TextureTarget.h"
 #include "SwapChain_OpenGL.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
-
-#include <GL/glew.h>
-#include <GL/wglew.h>
 
 
 namespace opengl

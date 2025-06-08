@@ -1,8 +1,6 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Shader.h"
-
-#include <GL/glew.h>
 
 
 namespace opengl

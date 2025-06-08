@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
@@ -9,8 +9,6 @@
 
 #include "Core/Logger.h"
 #include "Core/ProfilingMarkers.h"
-
-#include <GL/glew.h> // Required by ProfilingMarkers.h
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"

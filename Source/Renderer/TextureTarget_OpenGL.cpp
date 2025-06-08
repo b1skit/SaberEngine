@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
 #include "RenderManager.h"
 #include "SwapChain_OpenGL.h"
@@ -11,8 +11,6 @@
 #include "Core/Logger.h"
 
 #include "Core/Util/CastUtils.h"
-
-#include <GL/glew.h>
 
 
 namespace
