@@ -114,8 +114,6 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
@@ -146,8 +144,6 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
@@ -184,8 +180,6 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
@@ -223,8 +217,6 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
