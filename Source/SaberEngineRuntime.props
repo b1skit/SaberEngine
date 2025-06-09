@@ -78,8 +78,8 @@
       <PreprocessorDefinitions>SE_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -112,8 +112,8 @@
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <PreprocessorDefinitions>SE_DEBUGRELEASE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -149,7 +149,8 @@
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -183,7 +184,8 @@
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)Source\SharedPCH\pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
