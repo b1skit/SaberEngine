@@ -20,7 +20,7 @@ Make the minimal changes necessary.
 
 Be very careful.
 
-The SaberEngine solution has 4 build configurations:
+The SaberEngine solution has 4 build configurations (x64 platform only):
 - Debug: Provides the maximum amount of validation and debug information.
 - DebugRelease: Provides a balance between a useable level of performance, while still providing debug information and validation. Most development is done in this configuration.
 - Profile: Intended for performance benchmarking and profiling. All debug and validation is disabled, except for CPU and GPU markers used by external CPU and GPU performance profling tools.
