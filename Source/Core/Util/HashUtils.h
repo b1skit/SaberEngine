@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -55,6 +55,12 @@ namespace util
 		util::AddDataToHash(dataHash, remainingBytes);
 
 		return dataHash;
+	}
+
+
+	inline uint64_t HashDataBytes(std::span<const std::byte> data)
+	{
+		return HashDataBytes(data.data(), data.size());
 	}
 
 

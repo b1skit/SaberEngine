@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
@@ -121,7 +121,7 @@ namespace gr
 
 		constexpr char const* k_comboTitle = "Tonemapping mode";
 
-		if (util::ShowBasicComboBox(k_comboTitle, k_tonemappingModes, TonemappingMode::Count, m_currentMode))
+		if (util::ShowBasicComboBox(k_comboTitle, std::span<const char* const>(k_tonemappingModes), m_currentMode))
 		{
 			m_tonemappingStage->ClearDrawStyleBits();
 

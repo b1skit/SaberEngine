@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BindlessResource.h"
 #include "RenderManager.h"
 #include "Texture.h"
@@ -844,8 +844,7 @@ namespace re
 		};
 		util::ShowBasicComboBox(
 			std::format("Texture display scale##{}", tex->GetUniqueID()).c_str(),
-			k_scaleNames,
-			_countof(k_scaleNames),
+			std::span<const char* const>(k_scaleNames),
 			s_selectedIdx);
 
 		float scale = 1.f;

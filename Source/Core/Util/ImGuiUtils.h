@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -91,6 +91,13 @@ namespace util
 
 
 	template<typename T>
+	bool ShowBasicComboBox(char const* title, std::span<const char* const> options, T& curSelection)
+	{
+		return ShowBasicComboBox(title, options.data(), options.size(), curSelection);
+	}
+
+
+	template<typename T>
 	bool ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
 	{
 		constexpr ImGuiComboFlags k_comboFlags = 0;
@@ -119,5 +126,12 @@ namespace util
 
 		curSelection = static_cast<T>(curSelectionIdx);
 		return didSelect;
+	}
+
+
+	template<typename T>
+	bool ShowBasicComboBox(char const* title, std::span<const std::string> options, T& curSelection)
+	{
+		return ShowBasicComboBox(title, options.data(), options.size(), curSelection);
 	}
 }

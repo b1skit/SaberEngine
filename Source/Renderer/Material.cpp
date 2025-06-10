@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "Material.h"
@@ -235,8 +235,7 @@ namespace gr
 		// Material configuration:
 		isDirty |= util::ShowBasicComboBox(
 			std::format("Alpha mode##{}", util::PtrToID(&instanceData)).c_str(),
-			k_alphaModeNames,
-			_countof(k_alphaModeNames),
+			std::span<const char* const>(k_alphaModeNames),
 			instanceData.m_alphaMode);
 
 		isDirty |= ImGui::Checkbox(

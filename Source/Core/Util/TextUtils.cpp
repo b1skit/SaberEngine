@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "TextUtils.h"
 
 
@@ -78,5 +78,11 @@ namespace util
 			[](unsigned char c) { return std::tolower(c); });
 
 		return result;
+	}
+
+
+	inline std::string FromWideCString(std::span<const wchar_t> wstr)
+	{
+		return FromWideCString(wstr.data(), wstr.size());
 	}
 }

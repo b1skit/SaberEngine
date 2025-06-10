@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -27,6 +27,7 @@
 #include <limits>
 #include <queue>
 #include <regex>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_set>

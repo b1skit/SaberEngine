@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "EffectDB.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"
@@ -285,7 +285,7 @@ namespace gr
 		}
 
 		static uint32_t curRayGenIdx = m_rayGenIdx;
-		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, m_rayGenIdx);
+		util::ShowBasicComboBox("Ray gen shader index", std::span<const std::string>(rayGenComboOptions), m_rayGenIdx);
 
 
 		// Miss shader:
