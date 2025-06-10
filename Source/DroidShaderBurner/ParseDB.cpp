@@ -5,9 +5,6 @@
 #include "ParseHelpers.h"
 #include "ShaderCompile_DX12.h"
 #include "ShaderPreprocessor_OpenGL.h"
-#include "TextStrings.h"
-
-#include "Core/Definitions/ConfigKeys.h"
 
 #include "Core/Util/FileIOUtils.h"
 #include "Core/Util/CHashKey.h"
