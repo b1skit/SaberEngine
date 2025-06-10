@@ -1,4 +1,4 @@
-// � 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #include "Buffer.h"
 #include "CameraRenderData.h"
 #include "GraphicsSystemManager.h"

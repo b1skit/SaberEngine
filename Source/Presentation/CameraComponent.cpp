@@ -1,4 +1,4 @@
-// � 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"

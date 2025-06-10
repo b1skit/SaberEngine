@@ -1,4 +1,4 @@
-// � 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #include "TextureView.h"
 
 

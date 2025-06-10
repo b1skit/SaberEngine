@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
 #include "BoundsComponent.h"
 #include "CameraComponent.h"

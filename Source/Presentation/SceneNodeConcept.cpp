@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "RelationshipComponent.h"
 #include "SceneNodeConcept.h"
