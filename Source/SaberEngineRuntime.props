@@ -80,7 +80,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -114,7 +114,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -151,7 +151,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -186,7 +186,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <ForcedIncludeFiles>$(SolutionDir)Source\SharedPCH\pch.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\SharedPCH\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
