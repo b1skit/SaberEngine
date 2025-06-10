@@ -8,7 +8,6 @@
 #include "MeshPrimitive.h"
 #include "RootConstants.h"
 #include "Sampler.h"
-#include "ShaderBindingTable.h"
 #include "TextureView.h"
 #include "VertexStream.h"
 
