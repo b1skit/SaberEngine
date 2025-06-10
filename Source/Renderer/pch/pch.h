@@ -10,27 +10,10 @@
 #undef _CRT_SECURE_NO_WARNINGS
 
 
-// std library:
-#include <barrier>
-#include <cstdint>
-#include <format>
-#include <fstream>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <latch>
-#include <limits>
+// std library (renderer-specific):
 #include <numbers>
-#include <queue>
 #include <ranges>
 #include <set>
-#include <shared_mutex>
-#include <string>
-#include <typeindex>
-#include <unordered_map>
-#include <unordered_set>
-#include <variant>
-#include <vector>
 
 
 // OpenGL (GLEW):

@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -11,6 +11,7 @@
 
 
 // std library:
+#include <algorithm>
 #include <any>
 #include <array>
 #include <barrier>
@@ -25,14 +26,19 @@
 #include <iostream>
 #include <latch>
 #include <limits>
+#include <map>
+#include <mutex>
 #include <queue>
 #include <regex>
+#include <shared_mutex>
 #include <string>
 #include <string_view>
-#include <unordered_set>
-#include <shared_mutex>
+#include <thread>
 #include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
+#include <vector>
 
 
 // Windows:

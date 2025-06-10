@@ -1,12 +1,17 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
-#include "Texture.h"
 
 #include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/INamedObject.h"
+
+
+namespace re
+{
+	class Texture;
+}
 
 
 

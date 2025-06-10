@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// � 2025 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -10,33 +10,11 @@
 #undef _CRT_SECURE_NO_WARNINGS
 
 
-// std library:
-#include <any>
-#include <array>
-#include <barrier>
-#include <cstdint>
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <latch>
-#include <limits>
-#include <map>
-#include <mutex>
+// std library (main engine-specific):
 #include <numbers>
-#include <queue>
 #include <ranges>
 #include <set>
-#include <shared_mutex>
 #include <stack>
-#include <string>
-#include <typeindex>
-#include <unordered_map>
-#include <unordered_set>
-#include <variant>
-#include <vector>
 
 
 // OpenGL (GLEW):

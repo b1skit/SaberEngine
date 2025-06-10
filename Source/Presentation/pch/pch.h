@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -10,31 +10,11 @@
 #undef _CRT_SECURE_NO_WARNINGS
 
 
-// std library:
-#include <any>
-#include <array>
-#include <barrier>
-#include <chrono>
-#include <cstdint>
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <latch>
-#include <limits>
-#include <map>
+// std library (presentation-specific):
 #include <numbers>
 #include <ranges>
 #include <set>
-#include <queue>
-#include <shared_mutex>
 #include <stack>
-#include <string>
-#include <typeindex>
-#include <unordered_set>
-#include <variant>
 
 
 // Windows:
