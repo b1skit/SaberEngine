@@ -1,4 +1,4 @@
-// � 2025 Adam Badke. All rights reserved.
+// � 2022 Adam Badke. All rights reserved.
 #pragma once
 
 // ImGui
@@ -11,9 +11,6 @@
 
 
 // std library (main engine-specific):
-#include <numbers>
-#include <ranges>
-#include <set>
 #include <stack>
 
 

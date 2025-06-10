@@ -9,8 +9,6 @@
 
 // std library (shader burner-specific):
 #include <set>
-#include <unordered_map>
-#include <vector>
 
 // Win32 API:
 #if defined(_WIN32) || defined(_WIN64)
