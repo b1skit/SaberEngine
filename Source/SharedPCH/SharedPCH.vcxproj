@@ -95,7 +95,9 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>SE_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>
@@ -115,7 +117,9 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <PreprocessorDefinitions>SE_DEBUGRELEASE;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
@@ -138,7 +142,9 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
@@ -160,7 +166,9 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalOptions>/Ob3 %(AdditionalOptions)</AdditionalOptions>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion />
     </ClCompile>
@@ -172,16 +180,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='DebugRelease|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\SharedPCH\Intermediate\pch.pch</PrecompiledHeaderOutputFile>
-    </ClCompile>
+    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
