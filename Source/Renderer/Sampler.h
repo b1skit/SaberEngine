@@ -120,9 +120,8 @@ namespace re
 		};
 
 
-	public: // Convenience helpers that retrieve pre-created Samplers (only) from the Inventory
-		static core::InvPtr<re::Sampler> GetSampler(util::HashKey const&);
-		static core::InvPtr<re::Sampler> GetSampler(std::string_view samplerName);
+	public: // Convenience helper that retrieves pre-created Samplers (only) from the Inventory
+		static core::InvPtr<re::Sampler> GetSampler(util::HashKey const& samplerName);
 
 
 	public:	

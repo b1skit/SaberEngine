@@ -16,13 +16,6 @@ namespace re
 	}
 
 
-	core::InvPtr<re::Sampler> Sampler::GetSampler(std::string_view samplerName)
-	{
-		SEAssert(samplerName.data()[samplerName.size()] == '\0', "std::string_view must be null-terminated for Sampler usage");
-		return GetSampler(util::HashKey(samplerName.data()));
-	}
-
-
 	core::InvPtr<re::Sampler> Sampler::Create(char const* name, SamplerDesc const& samplerDesc)
 	{
 		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>
