@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
@@ -10,7 +10,7 @@
 namespace fr
 {
 	void CameraComponent::CreateCameraConcept(
-		fr::EntityManager& em, entt::entity sceneNode, char const* name, gr::Camera::Config const& cameraConfig)
+		fr::EntityManager& em, entt::entity sceneNode, std::string_view name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert(sceneNode != entt::null, "Cannot attach a CameraComponent to a null sceneNode");
 
@@ -30,7 +30,7 @@ namespace fr
 
 
 	void CameraComponent::AttachCameraComponent(
-		fr::EntityManager& em, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
+		fr::EntityManager& em, entt::entity owningEntity, std::string_view name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert(owningEntity != entt::null, "Cannot attach a CameraComponent to a null entity");
 
@@ -47,13 +47,6 @@ namespace fr
 			em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
 
 		cameraComponent->MarkDirty(em, owningEntity);
-	}
-
-
-	void CameraComponent::AttachCameraComponent(
-		fr::EntityManager& em, entt::entity owningEntity, std::string const& name, gr::Camera::Config const& camConfig)
-	{
-		AttachCameraComponent(em, owningEntity, name.c_str(), camConfig);
 	}
 
 

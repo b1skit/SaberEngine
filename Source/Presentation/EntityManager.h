@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "EntityCommands.h" // Required for EnqueueEntityCommand
 
@@ -106,8 +106,7 @@ namespace fr
 
 
 	public: // EnTT wrappers:
-		entt::entity CreateEntity(std::string const& name);
-		entt::entity CreateEntity(char const* name);
+		entt::entity CreateEntity(std::string_view name);
 
 		template<typename T>
 		void EmplaceComponent(entt::entity);

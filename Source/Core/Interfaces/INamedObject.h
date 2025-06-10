@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
 
@@ -20,8 +20,7 @@ namespace core
 
 
 	public:
-		explicit INamedObject(char const* name);
-		explicit INamedObject(std::string const& name);
+		explicit INamedObject(std::string_view name);
 
 		INamedObject(INamedObject const&) = default;
 		INamedObject(INamedObject&&) noexcept = default;
@@ -51,18 +50,13 @@ namespace core
 	};
 
 
-	inline INamedObject::INamedObject(char const* name)
+	inline INamedObject::INamedObject(std::string_view name)
 	{
-		SEAssert(strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength,
-			"Empty, null, or non-terminated name strings are not allowed");
+		SEAssert(name.size() > 0 && name.size() < k_maxNameLength,
+			"Empty or excessively long name strings are not allowed");
+		SEAssert(name.data()[name.size()] == '\0', "std::string_view must be null-terminated for INamedObject usage");
 
-		SetName(name);
-	}
-
-
-	inline INamedObject::INamedObject(std::string const& name)
-		: INamedObject(name.c_str())
-	{
+		SetName(std::string(name));
 	}
 
 

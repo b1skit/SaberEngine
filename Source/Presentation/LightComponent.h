@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Light.h"
 #include "NameComponent.h"
@@ -32,22 +32,16 @@ namespace fr
 
 
 	public:
-		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, char const* name, core::InvPtr<re::Texture> const& iblTex);
+		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, std::string_view name, core::InvPtr<re::Texture> const& iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
-			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
-		static LightComponent& AttachDeferredPointLightConcept(
-			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredSpotLightConcept(
-			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
-		static LightComponent& AttachDeferredSpotLightConcept(
-			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
-		static LightComponent& AttachDeferredDirectionalLightConcept(
-			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 	public:
 		static gr::Light::RenderDataAmbientIBL CreateRenderDataAmbientIBL_Deferred(

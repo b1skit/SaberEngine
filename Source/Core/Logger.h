@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Definitions/ConfigKeys.h"
 
@@ -22,31 +22,22 @@ namespace core
 		/* Public logging interface:
 		----------------------------*/
 		template<typename...Args>
-		static void Log(char const* msg, Args&&... args);
+		static void Log(std::string_view msg, Args&&... args);
 		
 		template<typename...Args>
-		static void Log(wchar_t const* msg, Args&&... args);
-
-		static void Log(std::string const&);
-		static void Log(std::wstring const&);
+		static void Log(std::wstring_view msg, Args&&... args);
 
 		template<typename... Args>
-		static void LogWarning(char const* msg, Args&&... args);
+		static void LogWarning(std::string_view msg, Args&&... args);
 
 		template<typename... Args>
-		static void LogWarning(wchar_t const* msg, Args&&... args);
-
-		static void LogWarning(std::string const&);
-		static void LogWarning(std::wstring const&);
+		static void LogWarning(std::wstring_view msg, Args&&... args);
 
 		template<typename... Args>
-		static void LogError(char const* msg, Args&&... args);
+		static void LogError(std::string_view msg, Args&&... args);
 
 		template<typename... Args>
-		static void LogError(wchar_t const* msg, Args&&... args);
-
-		static void LogError(std::string const&);
-		static void LogError(std::wstring const&);
+		static void LogError(std::wstring_view msg, Args&&... args);
 
 
 	public:
@@ -113,81 +104,50 @@ namespace core
 
 
 	template<typename...Args>
-	inline void Logger::Log(char const* msg, Args&&... args)
+	inline void Logger::Log(std::string_view msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
+		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		LogInternal<char, Args...>(Logger::LogType::Log, msg.data(), std::forward<Args>(args)...);
 	}
 
 
 	template<typename...Args>
-	inline void Logger::Log(wchar_t const* msg, Args&&... args)
+	inline void Logger::Log(std::wstring_view msg, Args&&... args)
 	{
-		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg, std::forward<Args>(args)...);
-	}
-
-
-	inline void Logger::Log(std::string const& str)
-	{
-		Log(str.c_str());
-	}
-
-
-	inline void Logger::Log(std::wstring const& wStr)
-	{
-		Log(wStr.c_str());
+		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg.data(), std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void Logger::LogWarning(char const* msg, Args&&... args)
+	inline void Logger::LogWarning(std::string_view msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
+		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		LogInternal<char, Args...>(Logger::LogType::Warning, msg.data(), std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void Logger::LogWarning(wchar_t const* msg, Args&&... args)
+	inline void Logger::LogWarning(std::wstring_view msg, Args&&... args)
 	{
-
-		LogInternal<wchar_t, Args...>(Logger::LogType::Warning, msg, std::forward<Args>(args)...);
-	}
-
-
-	inline void Logger::LogWarning(std::string const& str)
-	{
-		LogWarning(str.c_str());
-	}
-	
-	
-	inline void Logger::LogWarning(std::wstring const& wStr)
-	{
-		LogWarning(wStr.c_str());
+		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		LogInternal<wchar_t, Args...>(Logger::LogType::Warning, msg.data(), std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void Logger::LogError(char const* msg, Args&&... args)
+	inline void Logger::LogError(std::string_view msg, Args&&... args)
 	{
-		LogInternal<char, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
+		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		LogInternal<char, Args...>(Logger::LogType::Error, msg.data(), std::forward<Args>(args)...);
 	}
 
 
 	template<typename... Args>
-	inline void Logger::LogError(wchar_t const* msg, Args&&... args)
+	inline void Logger::LogError(std::wstring_view msg, Args&&... args)
 	{
-		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg, std::forward<Args>(args)...);
-	}
-
-
-	inline void Logger::LogError(std::string const& str)
-	{
-		LogError(str.c_str());
-	}
-
-
-	inline void Logger::LogError(std::wstring const& wStr)
-	{
-		LogError(wStr.c_str());
+		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg.data(), std::forward<Args>(args)...);
 	}
 
 
