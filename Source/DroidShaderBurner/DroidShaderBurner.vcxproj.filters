@@ -9,20 +9,13 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Source Files\pch">
-      <UniqueIdentifier>{1816e0b4-72c3-4d88-af44-1421ee9c5941}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\pch">
-      <UniqueIdentifier>{d9feb910-e9a8-439c-adc2-971cebe92c4d}</UniqueIdentifier>
-    </Filter>
+
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch\pch.cpp">
-      <Filter>Source Files\pch</Filter>
-    </ClCompile>
+
     <ClCompile Include="EffectParsing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,9 +36,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch\pch.h">
-      <Filter>Header Files\pch</Filter>
-    </ClInclude>
+
     <ClInclude Include="EffectParsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -68,7 +59,5 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
+
 </Project>
