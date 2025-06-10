@@ -337,7 +337,7 @@ namespace opengl
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
 		// Create the (implied) swap chain
-		GetSwapChain().Create(k_swapchainFormat);
+		GetSwapChain().Create(k_swapchainFormat, m_numFramesInFlight, this);
 		
 
 		// Initialize glew:

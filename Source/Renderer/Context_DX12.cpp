@@ -128,7 +128,7 @@ namespace dx12
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
 		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform object
 		re::SwapChain& swapChain = GetSwapChain();
-		swapChain.Create(re::Texture::Format::RGBA8_UNORM);
+		swapChain.Create(re::Texture::Format::RGBA8_UNORM, m_numFramesInFlight, this);
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();

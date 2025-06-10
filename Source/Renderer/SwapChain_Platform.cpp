@@ -32,7 +32,7 @@ namespace platform
 	}
 
 
-	void (*SwapChain::Create)(re::SwapChain&, re::Texture::Format) = nullptr;
+	void (*SwapChain::Create)(re::SwapChain&, re::Texture::Format, uint8_t, re::Context*) = nullptr;
 	void (*SwapChain::Destroy)(re::SwapChain&) = nullptr;
 	bool (*SwapChain::ToggleVSync)(re::SwapChain const& swapChain) = nullptr;
 	std::shared_ptr<re::TextureTargetSet>(*SwapChain::GetBackBufferTargetSet)(re::SwapChain const&) = nullptr;

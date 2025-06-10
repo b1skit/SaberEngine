@@ -6,6 +6,7 @@
 
 namespace re
 {
+	class Context;
 	class TextureTargetSet;
 }
 
@@ -26,7 +27,7 @@ namespace dx12
 
 
 	public:
-		static void Create(re::SwapChain&, re::Texture::Format);
+		static void Create(re::SwapChain&, re::Texture::Format, uint8_t numFramesInFlight, re::Context*);
 		static void Destroy(re::SwapChain&);
 		static bool ToggleVSync(re::SwapChain const&);
 

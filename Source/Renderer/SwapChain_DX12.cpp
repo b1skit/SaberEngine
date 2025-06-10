@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "RenderManager.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
 #include "Texture.h"
@@ -17,12 +16,15 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
-	void SwapChain::Create(re::SwapChain& swapChain, re::Texture::Format format)
+	void SwapChain::Create(
+		re::SwapChain& swapChain, re::Texture::Format format, uint8_t numFramesInFlight, re::Context* ctx)
 	{
+		SEAssert(numFramesInFlight > 0 && numFramesInFlight <= 3, "Unexpected numFramesInFlight received");
+
 		dx12::SwapChain::PlatObj* swapChainParams =
 			swapChain.GetPlatformObject()->As<dx12::SwapChain::PlatObj*>();
 		
-		swapChainParams->m_backbufferTargetSets.resize(dx12::RenderManager::GetNumFramesInFlight(), nullptr);
+		swapChainParams->m_backbufferTargetSets.resize(numFramesInFlight, nullptr);
 
 		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
 		// the config
@@ -64,23 +66,20 @@ namespace dx12
 		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
 		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access
-		swapChainDesc.BufferCount = dx12::RenderManager::GetNumFramesInFlight(); // # buffers (>= 2), including the front buffer
+		swapChainDesc.BufferCount = numFramesInFlight; // # buffers (>= 2), including the front buffer
 		swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // Resize behavior when back-buffer size != output target size
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // How to handle buffer contents after presenting a surface
 		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior
 		swapChainDesc.Flags = swapChainParams->m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-		// Note: The context (currently) calls this function. This is dicey...
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
-		SEAssert(context->GetWindow(), "Window cannot be null");
+		SEAssert(ctx->GetWindow(), "Window cannot be null");
 		win32::Window::PlatObj* windowPlatObj =
-			context->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
+			ctx->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		const HRESULT hr = dxgiFactory4->CreateSwapChainForHwnd(
-			context->GetCommandQueue(dx12::CommandListType::Direct).GetD3DCommandQueue().Get(),
+			ctx->As<dx12::Context*>()->GetCommandQueue(dx12::CommandListType::Direct).GetD3DCommandQueue().Get(),
 			windowPlatObj->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null
@@ -99,7 +98,7 @@ namespace dx12
 
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
 		// platform object:
-		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::GetNumFramesInFlight(); backbufferIdx++)
+		for (uint8_t backbufferIdx = 0; backbufferIdx < numFramesInFlight; backbufferIdx++)
 		{
 			// Create a target set to hold our backbuffer targets:
 			swapChainParams->m_backbufferTargetSets[backbufferIdx] = 
@@ -145,7 +144,7 @@ namespace dx12
 		// Must exit fullscreen before releasing the swapchain
 		HRESULT hr = swapChainParams->m_swapChain->SetFullscreenState(false, NULL);
 
-		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::GetNumFramesInFlight(); backbuffer++)
+		for (uint8_t backbuffer = 0; backbuffer < swapChainParams->m_backbufferTargetSets.size(); backbuffer++)
 		{
 			swapChainParams->m_backbufferTargetSets[backbuffer] = nullptr;
 		}

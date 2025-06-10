@@ -8,7 +8,8 @@
 
 namespace opengl
 {
-	void SwapChain::Create(re::SwapChain& swapChain, re::Texture::Format format)
+	void SwapChain::Create(
+		re::SwapChain& swapChain, re::Texture::Format format, uint8_t numFramesInFlight, re::Context*)
 	{
 		opengl::SwapChain::PlatObj* swapChainParams = 
 			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();

@@ -7,6 +7,9 @@
 
 namespace re
 {
+	class Context;
+
+
 	class SwapChain
 	{
 	public:
@@ -22,7 +25,7 @@ namespace re
 		SwapChain();
 		~SwapChain();
 
-		void Create(re::Texture::Format);
+		void Create(re::Texture::Format, uint8_t numFramesInFlight, re::Context*);
 		void Destroy();
 
 		bool GetVSyncState() const;
