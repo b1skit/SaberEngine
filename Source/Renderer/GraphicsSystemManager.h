@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// Â© 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "BufferView.h"
 #include "RenderDataManager.h"
@@ -22,8 +22,7 @@ namespace gr
 		void Create();
 		void PreRender();
 
-		void CreateAddGraphicsSystemByScriptName(char const* scriptName);
-		void CreateAddGraphicsSystemByScriptName(std::string const& scriptName);
+		void CreateAddGraphicsSystemByScriptName(std::string_view scriptName);
 
 		// NOTE: Accessing GraphicsSystems is generally NOT thread safe. These "GetGraphicsSystem" functions are
 		// provided as a convenience for initial setup only

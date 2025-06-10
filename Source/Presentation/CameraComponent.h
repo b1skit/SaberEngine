@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// Â© 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Camera.h"
 
@@ -25,12 +25,10 @@ namespace fr
 
 	public:
 		static void CreateCameraConcept(
-			fr::EntityManager&, entt::entity sceneNode, char const* name, gr::Camera::Config const&);
+			fr::EntityManager&, entt::entity sceneNode, std::string_view name, gr::Camera::Config const&);
 
 		static void AttachCameraComponent(
-			fr::EntityManager&, entt::entity owningEntity, char const* name, gr::Camera::Config const&);
-		static void AttachCameraComponent(
-			fr::EntityManager&, entt::entity owningEntity, std::string const& name, gr::Camera::Config const&);
+			fr::EntityManager&, entt::entity owningEntity, std::string_view name, gr::Camera::Config const&);
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);
 

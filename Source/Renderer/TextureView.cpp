@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #include "TextureView.h"
 
 
@@ -645,7 +645,7 @@ namespace re
 
 
 	TextureAndSamplerInput::TextureAndSamplerInput(
-		char const* shaderName,
+		std::string_view shaderName,
 		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
 		TextureView const& texView)
@@ -653,16 +653,6 @@ namespace re
 		, m_texture(texture)
 		, m_sampler(sampler)
 		, m_textureView(texView)
-	{
-	}
-
-
-	TextureAndSamplerInput::TextureAndSamplerInput(
-		std::string const& shaderName,
-		core::InvPtr<re::Texture> const& texture,
-		core::InvPtr<re::Sampler> const& sampler,
-		TextureView const& texView)
-		: TextureAndSamplerInput(shaderName.c_str(), texture, sampler, texView)
 	{
 	}
 
@@ -709,23 +699,14 @@ namespace re
 
 
 	RWTextureInput::RWTextureInput(
-		char const* shaderName,
+		std::string_view shaderName,
 		core::InvPtr<re::Texture> const& texture,
 		TextureView const& texView)
 		: m_shaderName(shaderName)
 		, m_texture(texture)
 		, m_textureView(texView)
 	{
-		SEAssert(shaderName && texture, "Cannot initialize an RW Texture Input with nullptrs");
-	}
-
-
-	RWTextureInput::RWTextureInput(
-		std::string const& shaderName,
-		core::InvPtr<re::Texture> const& texture,
-		TextureView const& texView)
-		: RWTextureInput(shaderName.c_str(), texture, texView)
-	{
+		SEAssert(!shaderName.empty() && texture, "Cannot initialize an RW Texture Input with nullptrs");
 	}
 
 

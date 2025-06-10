@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Sampler.h"
 #include "Texture.h"
@@ -179,8 +179,7 @@ namespace re
 
 	struct TextureAndSamplerInput final
 	{
-		TextureAndSamplerInput(char const* shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
-		TextureAndSamplerInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
+		TextureAndSamplerInput(std::string_view shaderName, core::InvPtr<re::Texture> const&, core::InvPtr<re::Sampler> const&, TextureView const&);
 
 		TextureAndSamplerInput(TextureAndSamplerInput const& rhs) noexcept;
 		TextureAndSamplerInput(TextureAndSamplerInput&& rhs) noexcept;
@@ -200,8 +199,7 @@ namespace re
 
 	struct RWTextureInput final
 	{
-		RWTextureInput(char const* shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
-		RWTextureInput(std::string const& shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
+		RWTextureInput(std::string_view shaderName, core::InvPtr<re::Texture> const&, TextureView const&);
 
 		RWTextureInput(RWTextureInput const& rhs) noexcept;
 		RWTextureInput(RWTextureInput&& rhs) noexcept;

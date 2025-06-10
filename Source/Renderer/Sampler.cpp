@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 #include "Sampler.h"
@@ -13,18 +13,6 @@ namespace re
 	core::InvPtr<re::Sampler> Sampler::GetSampler(util::HashKey const& samplerNameHash)
 	{
 		return re::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
-	}
-
-
-	core::InvPtr<re::Sampler> Sampler::GetSampler(char const* samplerName)
-	{
-		return GetSampler(util::HashKey(samplerName));
-	}
-
-
-	core::InvPtr<re::Sampler> Sampler::GetSampler(std::string const& samplerName)
-	{
-		return GetSampler(samplerName.c_str());
 	}
 
 

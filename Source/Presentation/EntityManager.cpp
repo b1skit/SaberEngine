@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
@@ -457,21 +457,17 @@ namespace fr
 	}
 
 
-	entt::entity EntityManager::CreateEntity(std::string const& name)
+	entt::entity EntityManager::CreateEntity(std::string_view name)
 	{
-		return CreateEntity(name.c_str());
-	}
-
-
-	entt::entity EntityManager::CreateEntity(char const* name)
-	{
+		SEAssert(name.data()[name.size()] == '\0', "std::string_view must be null-terminated for EntityManager usage");
+		
 		entt::entity newEntity = entt::null;
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			newEntity = m_registry.create();
 		}
 
-		fr::NameComponent::AttachNameComponent(*this, newEntity, name);
+		fr::NameComponent::AttachNameComponent(*this, newEntity, name.data());
 		fr::Relationship::AttachRelationshipComponent(*this, newEntity);
 
 		return newEntity;

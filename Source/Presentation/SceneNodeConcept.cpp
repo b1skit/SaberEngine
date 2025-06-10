@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "RelationshipComponent.h"
 #include "SceneNodeConcept.h"
@@ -6,7 +6,7 @@
 
 namespace fr
 {
-	entt::entity SceneNode::Create(EntityManager& em, char const* name, entt::entity parent)
+	entt::entity SceneNode::Create(EntityManager& em, std::string_view name, entt::entity parent)
 	{
 		entt::entity sceneNodeEntity = em.CreateEntity(name);
 
@@ -14,12 +14,6 @@ namespace fr
 		sceneNodeRelationship.SetParent(em, parent);
 		
 		return sceneNodeEntity;
-	}
-
-
-	entt::entity SceneNode::Create(EntityManager& em, std::string const& name, entt::entity parent)
-	{
-		return Create(em, name.c_str(), parent);
 	}
 }
 

@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -11,7 +11,6 @@ namespace fr
 	class SceneNode
 	{
 	public:
-		static entt::entity Create(EntityManager&, char const* name, entt::entity parent);
-		static entt::entity Create(EntityManager&, std::string const& name, entt::entity parent);
+		static entt::entity Create(EntityManager&, std::string_view name, entt::entity parent);
 	};
 }
