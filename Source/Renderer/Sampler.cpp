@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 #include "Sampler.h"
@@ -16,15 +16,10 @@ namespace re
 	}
 
 
-	core::InvPtr<re::Sampler> Sampler::GetSampler(char const* samplerName)
+	core::InvPtr<re::Sampler> Sampler::GetSampler(std::string_view samplerName)
 	{
-		return GetSampler(util::HashKey(samplerName));
-	}
-
-
-	core::InvPtr<re::Sampler> Sampler::GetSampler(std::string const& samplerName)
-	{
-		return GetSampler(samplerName.c_str());
+		SEAssert(samplerName.data()[samplerName.size()] == '\0', "std::string_view must be null-terminated for Sampler usage");
+		return GetSampler(util::HashKey(samplerName.data()));
 	}
 
 

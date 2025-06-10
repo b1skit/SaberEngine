@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Sampler_Platform.h"
 
@@ -122,8 +122,7 @@ namespace re
 
 	public: // Convenience helpers that retrieve pre-created Samplers (only) from the Inventory
 		static core::InvPtr<re::Sampler> GetSampler(util::HashKey const&);
-		static core::InvPtr<re::Sampler> GetSampler(char const* samplerName);
-		static core::InvPtr<re::Sampler> GetSampler(std::string const& samplerName);
+		static core::InvPtr<re::Sampler> GetSampler(std::string_view samplerName);
 
 
 	public:	

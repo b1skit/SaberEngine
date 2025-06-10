@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "Buffer.h"
 #include "CameraRenderData.h"
 #include "GraphicsSystemManager.h"
@@ -81,11 +81,12 @@ namespace gr
 	}
 
 
-	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(char const* scriptName)
+	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(std::string_view scriptName)
 	{
 		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+		SEAssert(scriptName.data()[scriptName.size()] == '\0', "std::string_view must be null-terminated for GraphicsSystemManager usage");
 
-		std::string lowercaseScriptName(util::ToLower(scriptName));
+		std::string lowercaseScriptName(util::ToLower(scriptName.data()));
 
 		SEAssert(!m_scriptNameToIndex.contains(lowercaseScriptName), "Graphics system has already been added");
 
@@ -95,12 +96,6 @@ namespace gr
 		const size_t insertIdx = m_graphicsSystems.size();
 		m_graphicsSystems.emplace_back(std::move(newGS));
 		m_scriptNameToIndex.emplace(std::move(lowercaseScriptName), insertIdx);
-	}
-
-
-	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(std::string const& scriptName)
-	{
-		return CreateAddGraphicsSystemByScriptName(scriptName.c_str());
 	}
 
 
