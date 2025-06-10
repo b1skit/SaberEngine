@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
 #include "RenderManager.h"
 #include "SwapChain_OpenGL.h"

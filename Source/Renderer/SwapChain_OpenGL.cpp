@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "TextureTarget.h"
 #include "SwapChain_OpenGL.h"
 

@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "BufferView.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"

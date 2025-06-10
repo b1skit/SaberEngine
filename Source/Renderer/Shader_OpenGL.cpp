@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer_OpenGL.h"
 #include "RootConstants.h"

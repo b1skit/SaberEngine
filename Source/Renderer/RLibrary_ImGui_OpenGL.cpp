@@ -1,4 +1,4 @@
-// � 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
