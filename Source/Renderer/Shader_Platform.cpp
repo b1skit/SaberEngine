@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
 #include "RenderManager.h"
-#include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 #include "Shader_OpenGL.h"
 #include "Shader_Platform.h"
+
+#include "Core/Assert.h"
 
 
 namespace platform

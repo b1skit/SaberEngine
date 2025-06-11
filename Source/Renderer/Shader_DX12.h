@@ -1,13 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "RootSignature_DX12.h"
 #include "Shader.h"
 
 
 namespace dx12
 {
-	class RootSignature;
-	
-
 	class Shader
 	{
 	public:
