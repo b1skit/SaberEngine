@@ -32,7 +32,7 @@ namespace re
 		newGFXStage.reset(new Stage(
 			name, 
 			std::make_unique<GraphicsStageParams>(stageParams), 
-			Stage::Type::Graphics,
+			Stage::Type::Raster,
 			re::Lifetime::Permanent));
 		return newGFXStage;
 	}
@@ -45,7 +45,7 @@ namespace re
 		newGFXStage.reset(new Stage(
 			name,
 			std::make_unique<GraphicsStageParams>(stageParams),
-			Stage::Type::Graphics,
+			Stage::Type::Raster,
 			re::Lifetime::SingleFrame));
 		return newGFXStage;
 	}
@@ -956,8 +956,8 @@ namespace re
 			batch.GetType() == re::Batch::BatchType::RayTracing,
 			"Batch has not been assigned an Effect");
 
-		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics &&
-				(m_type == Type::Graphics || m_type == Type::FullscreenQuad)) ||
+		SEAssert((batch.GetType() == re::Batch::BatchType::Raster &&
+				(m_type == Type::Raster || m_type == Type::FullscreenQuad)) ||
 			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute) ||
 			(batch.GetType() == re::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
 			"Incompatible batch type");

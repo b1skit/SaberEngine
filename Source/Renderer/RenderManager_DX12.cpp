@@ -332,8 +332,8 @@ namespace dx12
 
 				switch (stageType)
 				{
-				case re::Stage::Type::Graphics:
-				case re::Stage::Type::LibraryGraphics:
+				case re::Stage::Type::Raster:
+				case re::Stage::Type::LibraryRaster:
 				case re::Stage::Type::FullscreenQuad:
 				case re::Stage::Type::ClearTargetSet: // All clears are currently done on the graphics queue
 				case re::Stage::Type::Copy: // All copies are currently done on the graphics queue
@@ -402,7 +402,7 @@ namespace dx12
 
 						switch (stageType)
 						{
-						case re::Stage::Type::Graphics:
+						case re::Stage::Type::Raster:
 						case re::Stage::Type::FullscreenQuad:
 						{
 							commandList->SetGraphicsRootSignature(dx12::Shader::GetRootSignature(*shader));
@@ -439,7 +439,7 @@ namespace dx12
 								//
 							}
 							break;
-							case re::Stage::Type::Graphics:
+							case re::Stage::Type::Raster:
 							case re::Stage::Type::FullscreenQuad:
 							case re::Stage::Type::ClearTargetSet:
 							{
@@ -549,7 +549,7 @@ namespace dx12
 						const re::Stage::Type curStageType = (*stageItr)->GetStageType();
 						switch (curStageType)
 						{
-						case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
+						case re::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
 						case re::Stage::Type::LibraryCompute:
 						{
 							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
@@ -694,7 +694,7 @@ namespace dx12
 							}
 						}
 						break;
-						case re::Stage::Type::Graphics:
+						case re::Stage::Type::Raster:
 						case re::Stage::Type::FullscreenQuad:
 						case re::Stage::Type::Compute:
 						{
@@ -755,7 +755,7 @@ namespace dx12
 
 								switch (curStageType)
 								{
-								case re::Stage::Type::Graphics:
+								case re::Stage::Type::Raster:
 								case re::Stage::Type::FullscreenQuad:
 								{
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,

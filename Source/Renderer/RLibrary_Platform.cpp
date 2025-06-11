@@ -61,7 +61,7 @@ namespace platform
 
 	void RLibrary::Execute(re::Stage* stage, void* platformObject)
 	{
-		SEAssert(stage->GetStageType() == re::Stage::Type::LibraryGraphics ||
+		SEAssert(stage->GetStageType() == re::Stage::Type::LibraryRaster ||
 			stage->GetStageType() == re::Stage::Type::LibraryCompute,
 			"Invalid stage type");
 

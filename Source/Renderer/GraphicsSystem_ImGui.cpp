@@ -19,7 +19,7 @@ namespace gr
 	{
 		// Create a library stage:
 		re::Stage::LibraryStageParams imGuiLibraryParams(
-			re::Stage::Type::LibraryGraphics,
+			re::Stage::Type::LibraryRaster,
 			re::Stage::LibraryStageParams::LibraryType::ImGui);
 		m_imguiLibraryStage = re::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 

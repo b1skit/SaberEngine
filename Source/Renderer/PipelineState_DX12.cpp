@@ -368,7 +368,7 @@ namespace dx12
 
 		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
-			SEAssert(targetSet, "Graphics pipelines require a valid target set");
+			SEAssert(targetSet, "Raster pipelines require a valid target set");
 
 			re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
 

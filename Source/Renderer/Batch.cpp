@@ -161,7 +161,7 @@ namespace
 
 namespace re
 {
-	Batch::GraphicsParams::GraphicsParams()
+	Batch::RasterParams::RasterParams()
 		: m_batchGeometryMode(GeometryMode::Invalid)
 		, m_numInstances(0)
 		, m_primitiveTopology(gr::MeshPrimitive::PrimitiveTopology::TriangleList)
@@ -169,17 +169,17 @@ namespace re
 		, m_indexBuffer{}
 		, m_materialUniqueID(core::IUniqueID::k_invalidUniqueID)
 	{
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
 	}
 
 
-	Batch::GraphicsParams::GraphicsParams(GraphicsParams const& rhs) noexcept
+	Batch::RasterParams::RasterParams(RasterParams const& rhs) noexcept
 	{
 		*this = rhs;
 	}
 
 
-	Batch::GraphicsParams::GraphicsParams(GraphicsParams&& rhs) noexcept
+	Batch::RasterParams::RasterParams(RasterParams&& rhs) noexcept
 		: m_vertexBuffers{}
 		, m_indexBuffer{}
 	{
@@ -187,7 +187,7 @@ namespace re
 	}
 
 
-	Batch::GraphicsParams& Batch::GraphicsParams::operator=(Batch::GraphicsParams const& rhs) noexcept
+	Batch::RasterParams& Batch::RasterParams::operator=(Batch::RasterParams const& rhs) noexcept
 	{
 		if (this != &rhs)
 		{
@@ -203,11 +203,11 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
 	}
 
 
-	Batch::GraphicsParams& Batch::GraphicsParams::operator=(Batch::GraphicsParams&& rhs) noexcept
+	Batch::RasterParams& Batch::RasterParams::operator=(Batch::RasterParams&& rhs) noexcept
 	{
 		if (this != &rhs)
 		{
@@ -229,11 +229,11 @@ namespace re
 		}
 		return *this;
 
-		SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
+		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
 	}
 
 
-	Batch::GraphicsParams::~GraphicsParams()
+	Batch::RasterParams::~RasterParams()
 	{
 		m_vertexBuffers = {};
 		m_indexBuffer = {};
@@ -315,8 +315,8 @@ namespace re
 		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		EffectID effectID)
 		: m_lifetime(lifetime)
-		, m_type(BatchType::Graphics)
-		, m_graphicsParams{}
+		, m_type(BatchType::Raster)
+		, m_rasterParams{}
 		, m_batchShader(nullptr)
 		, m_effectID(effectID)
 		, m_drawStyleBitmask(0)
@@ -324,9 +324,9 @@ namespace re
 	{
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
-		m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-		m_graphicsParams.m_numInstances = 1;
-		m_graphicsParams.m_primitiveTopology = meshPrimitive->GetMeshParams().m_primitiveTopology;
+		m_rasterParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
+		m_rasterParams.m_numInstances = 1;
+		m_rasterParams.m_primitiveTopology = meshPrimitive->GetMeshParams().m_primitiveTopology;
 
 		// We assume the meshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
@@ -338,11 +338,11 @@ namespace re
 				break;
 			}
 
-			m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(vertexStreams[slotIdx].m_vertexStream);
+			m_rasterParams.m_vertexBuffers[slotIdx] = VertexBufferInput(vertexStreams[slotIdx].m_vertexStream);
 		}
-		m_graphicsParams.m_indexBuffer = meshPrimitive->GetIndexStream();
+		m_rasterParams.m_indexBuffer = meshPrimitive->GetIndexStream();
 
-		SEAssert(m_graphicsParams.m_indexBuffer.GetStream() != nullptr,
+		SEAssert(m_rasterParams.m_indexBuffer.GetStream() != nullptr,
 			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 
 		ComputeDataHash();
@@ -355,8 +355,8 @@ namespace re
 		gr::Material::MaterialInstanceRenderData const* materialInstanceData,
 		VertexStreamOverride const* vertexStreamOverride /*= nullptr*/)
 		: m_lifetime(lifetime)
-		, m_type(BatchType::Graphics)
-		, m_graphicsParams{}
+		, m_type(BatchType::Raster)
+		, m_rasterParams{}
 		, m_batchShader(nullptr)
 		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : EffectID())
 		, m_drawStyleBitmask(0)
@@ -366,9 +366,9 @@ namespace re
 
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
-		m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-		m_graphicsParams.m_numInstances = 1;
-		m_graphicsParams.m_primitiveTopology = meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology;
+		m_rasterParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
+		m_rasterParams.m_numInstances = 1;
+		m_rasterParams.m_primitiveTopology = meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology;
 
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
@@ -387,16 +387,16 @@ namespace re
 
 			if (vertexStreamOverride)
 			{
-				m_graphicsParams.m_vertexBuffers[slotIdx] = (*vertexStreamOverride)[slotIdx];
+				m_rasterParams.m_vertexBuffers[slotIdx] = (*vertexStreamOverride)[slotIdx];
 			}
 			else
 			{
-				m_graphicsParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
+				m_rasterParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
 			}
 		}
-		m_graphicsParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
+		m_rasterParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
 
-		SEAssert(m_graphicsParams.m_indexBuffer.GetStream() != nullptr,
+		SEAssert(m_rasterParams.m_indexBuffer.GetStream() != nullptr,
 			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 		
 		// Material textures/samplers:
@@ -417,7 +417,7 @@ namespace re
 				}
 			}
 
-			m_graphicsParams.m_materialUniqueID = materialInstanceData->m_srcMaterialUniqueID;
+			m_rasterParams.m_materialUniqueID = materialInstanceData->m_srcMaterialUniqueID;
 
 			// Filter bits:
 			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
@@ -432,22 +432,22 @@ namespace re
 
 	Batch::Batch(
 		re::Lifetime lifetime,
-		GraphicsParams const& graphicsParams, 
+		RasterParams const& rasterParams, 
 		EffectID effectID,
 		effect::drawstyle::Bitmask bitmask)
 		: m_lifetime(lifetime)
-		, m_type(BatchType::Graphics)
-		, m_graphicsParams{}
+		, m_type(BatchType::Raster)
+		, m_rasterParams{}
 		, m_batchShader(nullptr)
 		, m_effectID(effectID)
 		, m_drawStyleBitmask(bitmask)
 		, m_batchFilterBitmask(0)
 	{
-		SEAssert(graphicsParams.m_vertexBuffers[0].GetStream(), "Can't have a graphics batch with 0 vertex streams");
+		SEAssert(rasterParams.m_vertexBuffers[0].GetStream(), "Can't have a graphics batch with 0 vertex streams");
 
 		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
 
-		m_graphicsParams = graphicsParams;
+		m_rasterParams = rasterParams;
 
 		ComputeDataHash();
 	}
@@ -490,13 +490,13 @@ namespace re
 	{
 		switch (m_type)
 		{
-		case BatchType::Graphics:
+		case BatchType::Raster:
 		{
-			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing GraphicsParams
-			memset(&m_graphicsParams.m_vertexBuffers, 0, sizeof(m_graphicsParams.m_vertexBuffers));
-			memset(&m_graphicsParams.m_indexBuffer, 0, sizeof(m_graphicsParams.m_indexBuffer));
+			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing RasterParams
+			memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
+			memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
 
-			m_graphicsParams = {};
+			m_rasterParams = {};
 		}
 		break;
 		case BatchType::Compute:
@@ -530,9 +530,9 @@ namespace re
 
 			switch (m_type)
 			{
-			case BatchType::Graphics:
+			case BatchType::Raster:
 			{
-				m_graphicsParams = std::move(rhs.m_graphicsParams);
+				m_rasterParams = std::move(rhs.m_rasterParams);
 			}
 			break;
 			case BatchType::Compute:
@@ -578,13 +578,13 @@ namespace re
 	{
 		switch (m_type)
 		{
-		case BatchType::Graphics:
+		case BatchType::Raster:
 		{
-			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing GraphicsParams
-			memset(&m_graphicsParams.m_vertexBuffers, 0, sizeof(m_graphicsParams.m_vertexBuffers));
-			memset(&m_graphicsParams.m_indexBuffer, 0, sizeof(m_graphicsParams.m_indexBuffer));
+			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing RasterParams
+			memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
+			memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
 
-			m_graphicsParams = {};
+			m_rasterParams = {};
 		}
 		break;
 		case BatchType::Compute:
@@ -616,9 +616,9 @@ namespace re
 
 			switch (m_type)
 			{
-			case BatchType::Graphics:
+			case BatchType::Raster:
 			{
-				m_graphicsParams = rhs.m_graphicsParams;
+				m_rasterParams = rhs.m_rasterParams;
 			}
 			break;
 			case BatchType::Compute:
@@ -656,9 +656,9 @@ namespace re
 	{
 		switch (m_type)
 		{
-		case BatchType::Graphics:
+		case BatchType::Raster:
 		{
-			m_graphicsParams.~GraphicsParams();
+			m_rasterParams.~RasterParams();
 		}
 		break;
 		case BatchType::Compute:
@@ -705,43 +705,43 @@ namespace re
 		
 		m_batchShader = re::RenderManager::Get()->GetEffectDB().GetResolvedShader(m_effectID, m_drawStyleBitmask);
 
-		SEAssert(m_type != BatchType::Graphics ||
+		SEAssert(m_type != BatchType::Raster ||
 			IsBatchAndShaderTopologyCompatible(
-				GetGraphicsParams().m_primitiveTopology,
+				GetRasterParams().m_primitiveTopology,
 				m_batchShader->GetRasterizationState()->GetPrimitiveTopologyType()),
-			"Graphics topology mode is incompatible with shader pipeline state topology type");
+			"Raster topology mode is incompatible with shader pipeline state topology type");
 
 		// Resolve vertex input slots now that we've decided which shader will be used:
-		if (m_type == BatchType::Graphics)
+		if (m_type == BatchType::Raster)
 		{
 			uint8_t numVertexStreams = 0;
 			bool needsRepacking = false;
 			for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-				if (m_graphicsParams.m_vertexBuffers[i].GetStream() == nullptr)
+				if (m_rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
 				{
 					break;
 				}
 				
 				const gr::VertexStream::Type curStreamType = 
-					m_graphicsParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
+					m_rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
 				
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
 				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
-					m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
+					m_rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
+					m_rasterParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
 				{					
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
 					{
-						m_graphicsParams.m_vertexBuffers[i + semanticIdx].m_bindSlot =
+						m_rasterParams.m_vertexBuffers[i + semanticIdx].m_bindSlot =
 							m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					}
 					else
 					{
-						m_graphicsParams.m_vertexBuffers[i + semanticIdx].GetStream() = nullptr;
+						m_rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() = nullptr;
 						needsRepacking = true;
 					}
 					++semanticIdx;
@@ -758,19 +758,19 @@ namespace re
 				uint8_t numValidStreams = 0;
 				for (uint8_t i = 0; i < numVertexStreams; ++i)
 				{
-					if (m_graphicsParams.m_vertexBuffers[i].GetStream() == nullptr)
+					if (m_rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
 					{
 						uint8_t nextValidIdx = i + 1;
 						while (nextValidIdx < numVertexStreams &&
-							m_graphicsParams.m_vertexBuffers[nextValidIdx].GetStream() == nullptr)
+							m_rasterParams.m_vertexBuffers[nextValidIdx].GetStream() == nullptr)
 						{
 							++nextValidIdx;
 						}
 						if (nextValidIdx < numVertexStreams &&
-							m_graphicsParams.m_vertexBuffers[nextValidIdx].GetStream() != nullptr)
+							m_rasterParams.m_vertexBuffers[nextValidIdx].GetStream() != nullptr)
 						{
-							m_graphicsParams.m_vertexBuffers[i] = m_graphicsParams.m_vertexBuffers[nextValidIdx];
-							m_graphicsParams.m_vertexBuffers[nextValidIdx] = {};
+							m_rasterParams.m_vertexBuffers[i] = m_rasterParams.m_vertexBuffers[nextValidIdx];
+							m_rasterParams.m_vertexBuffers[nextValidIdx] = {};
 							++numValidStreams;
 						}
 						else if (nextValidIdx == numVertexStreams)
@@ -785,16 +785,16 @@ namespace re
 				}
 			}
 
-			ValidateVertexStreams(m_lifetime, m_graphicsParams.m_vertexBuffers); // _DEBUG only
+			ValidateVertexStreams(m_lifetime, m_rasterParams.m_vertexBuffers); // _DEBUG only
 		}
 	}
 
 
 	void Batch::SetInstanceCount(uint32_t numInstances)
 	{
-		SEAssert(m_type == BatchType::Graphics, "Invalid type");
+		SEAssert(m_type == BatchType::Raster, "Invalid type");
 
-		m_graphicsParams.m_numInstances = numInstances;
+		m_rasterParams.m_numInstances = numInstances;
 	}
 
 
@@ -808,14 +808,14 @@ namespace re
 
 		switch (m_type)
 		{
-		case BatchType::Graphics:
+		case BatchType::Raster:
 		{
 			// Note: We assume the hash is used to evaluate batch equivalence when sorting, to enable instancing. Thus,
 			// we don't consider the m_batchGeometryMode or m_numInstances
 
-			AddDataBytesToHash(m_graphicsParams.m_primitiveTopology);
+			AddDataBytesToHash(m_rasterParams.m_primitiveTopology);
 
-			for (VertexBufferInput const& vertexStream : m_graphicsParams.m_vertexBuffers)
+			for (VertexBufferInput const& vertexStream : m_rasterParams.m_vertexBuffers)
 			{
 				if (vertexStream.GetStream() == nullptr)
 				{
@@ -824,14 +824,14 @@ namespace re
 
 				AddDataBytesToHash(vertexStream.GetStream()->GetDataHash());
 			}
-			if (m_graphicsParams.m_indexBuffer.GetStream())
+			if (m_rasterParams.m_indexBuffer.GetStream())
 			{
-				AddDataBytesToHash(m_graphicsParams.m_indexBuffer.GetStream()->GetDataHash());
+				AddDataBytesToHash(m_rasterParams.m_indexBuffer.GetStream()->GetDataHash());
 			}
 
-			AddDataBytesToHash(m_graphicsParams.m_materialUniqueID);
+			AddDataBytesToHash(m_rasterParams.m_materialUniqueID);
 
-			SEStaticAssert(sizeof(Batch::GraphicsParams) == 1112, "Must update this if GraphicsParams size has changed");
+			SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
 		}
 		break;
 		case BatchType::Compute:

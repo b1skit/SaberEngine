@@ -550,25 +550,25 @@ namespace dx12
 	void CommandList::DrawBatchGeometry(re::Batch const& batch)
 	{
 		// Set the geometry for the draw:		
-		re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
+		re::Batch::RasterParams const& rasterParams = batch.GetRasterParams();
 
-		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_primitiveTopology));
+		SetPrimitiveType(TranslateToD3DPrimitiveTopology(rasterParams.m_primitiveTopology));
 
-		SetVertexBuffers(batchGraphicsParams.m_vertexBuffers);
+		SetVertexBuffers(rasterParams.m_vertexBuffers);
 
 		// Record the draw:
-		switch (batchGraphicsParams.m_batchGeometryMode)
+		switch (rasterParams.m_batchGeometryMode)
 		{
 		case re::Batch::GeometryMode::IndexedInstanced:
 		{
-			SEAssert(batchGraphicsParams.m_indexBuffer.GetBuffer(), "Index stream cannot be null for indexed draws");
+			SEAssert(rasterParams.m_indexBuffer.GetBuffer(), "Index stream cannot be null for indexed draws");
 
-			SetIndexBuffer(batchGraphicsParams.m_indexBuffer);
+			SetIndexBuffer(rasterParams.m_indexBuffer);
 
 			CommitGPUDescriptors();
 			
 			m_commandList->DrawIndexedInstanced(
-				batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_numElements,	// Index count, per instance
+				rasterParams.m_indexBuffer.m_view.m_streamView.m_numElements,	// Index count, per instance
 				static_cast<uint32_t>(batch.GetInstanceCount()),		// Instance count
 				0,														// Start index location
 				0,														// Base vertex location
@@ -577,7 +577,7 @@ namespace dx12
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{		
-			SEAssert(batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_type == 
+			SEAssert(rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_type == 
 				gr::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
@@ -585,8 +585,8 @@ namespace dx12
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements,	// VertexCountPerInstance
-				batchGraphicsParams.m_numInstances,										// InstanceCount
+				rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements,	// VertexCountPerInstance
+				rasterParams.m_numInstances,										// InstanceCount
 				0,																		// StartVertexLocation
 				0);																		// StartInstanceLocation
 		}

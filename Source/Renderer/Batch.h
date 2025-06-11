@@ -32,7 +32,7 @@ namespace re
 	public:
 		enum class BatchType
 		{
-			Graphics,
+			Raster,
 			Compute,
 			RayTracing,
 		};
@@ -57,14 +57,14 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 
-		struct GraphicsParams final
+		struct RasterParams final
 		{
-			GraphicsParams();
-			GraphicsParams(GraphicsParams const&) noexcept;
-			GraphicsParams(GraphicsParams&&) noexcept;
-			GraphicsParams& operator=(GraphicsParams const&) noexcept;
-			GraphicsParams& operator=(GraphicsParams&&) noexcept;
-			~GraphicsParams();
+			RasterParams();
+			RasterParams(RasterParams const&) noexcept;
+			RasterParams(RasterParams&&) noexcept;
+			RasterParams& operator=(RasterParams const&) noexcept;
+			RasterParams& operator=(RasterParams&&) noexcept;
+			~RasterParams();
 			
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
 			uint32_t m_numInstances = 0;
@@ -114,7 +114,7 @@ namespace re
 		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 
 	public:
-		// Graphics batches:
+		// Raster batches:
 		Batch(re::Lifetime, core::InvPtr<gr::MeshPrimitive> const&, EffectID); // No material; e.g. fullscreen quads, cubemap geo etc
 
 		Batch(re::Lifetime,
@@ -122,7 +122,7 @@ namespace re
 			gr::Material::MaterialInstanceRenderData const*,
 			VertexStreamOverride const* = nullptr);
 
-		Batch(re::Lifetime, GraphicsParams const&, EffectID, effect::drawstyle::Bitmask); // Custom (e.g. debug topology)
+		Batch(re::Lifetime, RasterParams const&, EffectID, effect::drawstyle::Bitmask); // Custom (e.g. debug topology)
 
 		// Compute batches:
 		Batch(re::Lifetime, ComputeParams const&, EffectID);
@@ -186,7 +186,7 @@ namespace re
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
 		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
 
-		GraphicsParams const& GetGraphicsParams() const;
+		RasterParams const& GetRasterParams() const;
 		ComputeParams const& GetComputeParams() const;
 		RayTracingParams const& GetRayTracingParams() const;
 
@@ -200,7 +200,7 @@ namespace re
 		BatchType m_type;
 		union
 		{
-			GraphicsParams m_graphicsParams;
+			RasterParams m_rasterParams;
 			ComputeParams m_computeParams;
 			RayTracingParams m_rayTracingParams;
 		};
@@ -259,8 +259,8 @@ namespace re
 
 	inline size_t Batch::GetInstanceCount() const
 	{
-		SEAssert(m_type == BatchType::Graphics, "Invalid type");
-		return m_graphicsParams.m_numInstances;
+		SEAssert(m_type == BatchType::Raster, "Invalid type");
+		return m_rasterParams.m_numInstances;
 	}
 
 
@@ -312,10 +312,10 @@ namespace re
 	}
 
 
-	inline Batch::GraphicsParams const& Batch::GetGraphicsParams() const
+	inline Batch::RasterParams const& Batch::GetRasterParams() const
 	{
-		SEAssert(m_type == BatchType::Graphics, "Invalid type");
-		return m_graphicsParams;
+		SEAssert(m_type == BatchType::Raster, "Invalid type");
+		return m_rasterParams;
 	}
 
 

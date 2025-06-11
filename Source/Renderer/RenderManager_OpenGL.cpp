@@ -211,7 +211,7 @@ namespace opengl
 					const re::Stage::Type curStageType = stage->GetStageType();
 					switch (curStageType)
 					{
-					case re::Stage::Type::LibraryGraphics: // Library stages are executed with their own internal logic
+					case re::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
 					case re::Stage::Type::LibraryCompute:
 					{
 						SEAssert(stage->GetRootConstants().GetRootConstantCount() == 0,
@@ -278,7 +278,7 @@ namespace opengl
 						opengl::TextureTargetSet::CopyTexture(copyStage->GetSrcTexture(), copyStage->GetDstTexture());
 					}
 					break;
-					case re::Stage::Type::Graphics:
+					case re::Stage::Type::Raster:
 					case re::Stage::Type::FullscreenQuad:
 					case re::Stage::Type::Compute:
 					{
@@ -299,7 +299,7 @@ namespace opengl
 							//
 						}
 						break;
-						case re::Stage::Type::Graphics:
+						case re::Stage::Type::Raster:
 						case re::Stage::Type::FullscreenQuad:
 						{
 							opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
@@ -354,17 +354,17 @@ namespace opengl
 							// Draw!
 							switch (curStageType)
 							{
-							case re::Stage::Type::Graphics:
+							case re::Stage::Type::Raster:
 							case re::Stage::Type::FullscreenQuad:
 							{
-								re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
+								re::Batch::RasterParams const& rasterParams = batch.GetRasterParams();
 
 								// Set the VAO:
 								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
 								// batch
 								const GLuint vertexStreamVAO = context->GetCreateVAO(
-									batchGraphicsParams.m_vertexBuffers,
-									batchGraphicsParams.m_indexBuffer);
+									rasterParams.m_vertexBuffers,
+									rasterParams.m_indexBuffer);
 								if (vertexStreamVAO != currentVAO)
 								{
 									glBindVertexArray(vertexStreamVAO);
@@ -374,35 +374,35 @@ namespace opengl
 								// Bind the vertex streams:
 								for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
 								{
-									if (batchGraphicsParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
+									if (rasterParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
 									{
 										break;
 									}
 
 									opengl::Buffer::Bind(
-										*batchGraphicsParams.m_vertexBuffers[slotIdx].GetBuffer(),
+										*rasterParams.m_vertexBuffers[slotIdx].GetBuffer(),
 										opengl::Buffer::Vertex,
-										batchGraphicsParams.m_vertexBuffers[slotIdx].m_view,
-										batchGraphicsParams.m_vertexBuffers[slotIdx].m_bindSlot);
+										rasterParams.m_vertexBuffers[slotIdx].m_view,
+										rasterParams.m_vertexBuffers[slotIdx].m_bindSlot);
 								}
-								if (batchGraphicsParams.m_indexBuffer.GetStream())
+								if (rasterParams.m_indexBuffer.GetStream())
 								{
 									opengl::Buffer::Bind(
-										*batchGraphicsParams.m_indexBuffer.GetBuffer(),
+										*rasterParams.m_indexBuffer.GetBuffer(),
 										opengl::Buffer::Index,
-										batchGraphicsParams.m_indexBuffer.m_view,
+										rasterParams.m_indexBuffer.m_view,
 										0); // Arbitrary: Slot is not used for indexes
 								}
 
 								// Draw!
-								switch (batchGraphicsParams.m_batchGeometryMode)
+								switch (rasterParams.m_batchGeometryMode)
 								{
 								case re::Batch::GeometryMode::IndexedInstanced:
 								{
 									glDrawElementsInstanced(
-										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),			// GLenum mode
-										static_cast<GLsizei>(batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_numElements),	// GLsizei count
-										DataTypeToGLDataType(batchGraphicsParams.m_indexBuffer.m_view.m_streamView.m_dataType), 	// GLenum type
+										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),			// GLenum mode
+										static_cast<GLsizei>(rasterParams.m_indexBuffer.m_view.m_streamView.m_numElements),	// GLsizei count
+										DataTypeToGLDataType(rasterParams.m_indexBuffer.m_view.m_streamView.m_dataType), 	// GLenum type
 										0,									// Byte offset (into index buffer)
 										(GLsizei)batch.GetInstanceCount());	// Instance count
 								}
@@ -410,10 +410,10 @@ namespace opengl
 								case re::Batch::GeometryMode::ArrayInstanced:
 								{
 									const GLsizei numElements = static_cast<GLsizei>(
-										batchGraphicsParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements);
+										rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements);
 
 									glDrawArraysInstanced(
-										PrimitiveTopologyToGLPrimitiveType(batchGraphicsParams.m_primitiveTopology),
+										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),
 										0,
 										numElements,
 										(GLsizei)batch.GetInstanceCount());

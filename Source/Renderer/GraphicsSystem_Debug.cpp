@@ -37,14 +37,14 @@ namespace
 			std::move(axisOriginPos),
 			false);
 
-		re::Batch::GraphicsParams axisBatchGraphicsParams;
-		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
-		axisBatchGraphicsParams.m_numInstances = 1;
-		axisBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
-		axisBatchGraphicsParams.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) };
+		re::Batch::RasterParams axisRasterParams;
+		axisRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
+		axisRasterParams.m_numInstances = 1;
+		axisRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
+		axisRasterParams.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) };
 
 		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
-			batchLifetime, axisBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
+			batchLifetime, axisRasterParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
 
 		return axisBatch;
 	}
@@ -87,15 +87,15 @@ namespace
 			util::ByteVector::Create<uint16_t>({ 0, 1 }),
 			false);
 
-		re::Batch::GraphicsParams lineBatchGraphicsParams;
-		lineBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		lineBatchGraphicsParams.m_numInstances = 1;
-		lineBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
-		lineBatchGraphicsParams.m_vertexBuffers = {linePositionsStream, lineColorStream };
-		lineBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(lineIndexStream);
+		re::Batch::RasterParams lineRasterParams;
+		lineRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		lineRasterParams.m_numInstances = 1;
+		lineRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		lineRasterParams.m_vertexBuffers = {linePositionsStream, lineColorStream };
+		lineRasterParams.m_indexBuffer = re::VertexBufferInput(lineIndexStream);
 
 		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
-			lifetime, lineBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_VertexIDInstancingLUTIdx);
+			lifetime, lineRasterParams, k_debugEffectID, effect::drawstyle::Debug_VertexIDInstancingLUTIdx);
 
 		return lineBatch;
 	}
@@ -189,18 +189,18 @@ namespace
 			std::move(boxIndexes),
 			false);
 
-		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
-		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		boundingBoxBatchGraphicsParams.m_numInstances = 1;
-		boundingBoxBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		re::Batch::RasterParams boundingBoxRasterParams{};
+		boundingBoxRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		boundingBoxRasterParams.m_numInstances = 1;
+		boundingBoxRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[0] = boxPositionsStream;
-		boundingBoxBatchGraphicsParams.m_vertexBuffers[1] = boxColorStream;
+		boundingBoxRasterParams.m_vertexBuffers[0] = boxPositionsStream;
+		boundingBoxRasterParams.m_vertexBuffers[1] = boxColorStream;
 
-		boundingBoxBatchGraphicsParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream);
+		boundingBoxRasterParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream);
 
 		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
-			batchLifetime, boundingBoxBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Line);
+			batchLifetime, boundingBoxRasterParams, k_debugEffectID, effect::drawstyle::Debug_Line);
 
 		return boundingBoxBatch;
 	}
@@ -226,14 +226,14 @@ namespace
 			normalStream->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 
-		re::Batch::GraphicsParams normalBatchGraphicsParams;
-		normalBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
-		normalBatchGraphicsParams.m_numInstances = 1;
-		normalBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
-		normalBatchGraphicsParams.m_vertexBuffers = { positionStream, normalStream, };
+		re::Batch::RasterParams normalRasterParams;
+		normalRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
+		normalRasterParams.m_numInstances = 1;
+		normalRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
+		normalRasterParams.m_vertexBuffers = { positionStream, normalStream, };
 
 		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
-			batchLifetime, normalBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
+			batchLifetime, normalRasterParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
 
 		return normalDebugBatch;
 	}
@@ -311,18 +311,18 @@ namespace
 			std::move(frustumIndexes),
 			false);
 
-		re::Batch::GraphicsParams frustumBatchGraphicsParams{};
-		frustumBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		frustumBatchGraphicsParams.m_numInstances = 1;
-		frustumBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		re::Batch::RasterParams frustumRasterParams{};
+		frustumRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		frustumRasterParams.m_numInstances = 1;
+		frustumRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
 
-		frustumBatchGraphicsParams.m_vertexBuffers[0] = frustumPositionsStream;
-		frustumBatchGraphicsParams.m_vertexBuffers[1] = frustumColorStream;
+		frustumRasterParams.m_vertexBuffers[0] = frustumPositionsStream;
+		frustumRasterParams.m_vertexBuffers[1] = frustumColorStream;
 
-		frustumBatchGraphicsParams.m_indexBuffer = frustumIndexStream;
+		frustumRasterParams.m_indexBuffer = frustumIndexStream;
 
 		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
-			batchLifetime, frustumBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_InstanceIDTransformIdx);
+			batchLifetime, frustumRasterParams, k_debugEffectID, effect::drawstyle::Debug_InstanceIDTransformIdx);
 
 		return frustumBatch;
 	}
@@ -339,15 +339,15 @@ namespace
 		core::InvPtr<gr::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
-		re::Batch::GraphicsParams wireframeBatchGraphicsParams;
-		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		wireframeBatchGraphicsParams.m_numInstances = 1;
-		wireframeBatchGraphicsParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-		wireframeBatchGraphicsParams.m_vertexBuffers = {positionStream};
-		wireframeBatchGraphicsParams.m_indexBuffer = indexStream;
+		re::Batch::RasterParams wireframeRasterParams;
+		wireframeRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
+		wireframeRasterParams.m_numInstances = 1;
+		wireframeRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+		wireframeRasterParams.m_vertexBuffers = {positionStream};
+		wireframeRasterParams.m_indexBuffer = indexStream;
 
 		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
-			batchLifetime, wireframeBatchGraphicsParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);
+			batchLifetime, wireframeRasterParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);
 
 		return wireframeBatch;
 	}

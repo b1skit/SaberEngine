@@ -35,11 +35,11 @@ namespace re
 		{
 			Parent, // Does not contribute batches
 
-			// Graphics queue:
-			Graphics,
+			// Raster queue:
+			Raster,
 			FullscreenQuad,
 			ClearTargetSet,
-			LibraryGraphics,
+			LibraryRaster,
 			Copy,
 
 			// Compute queue:
@@ -638,7 +638,7 @@ namespace re
 
 	inline constexpr bool Stage::IsLibraryType(Type type)
 	{
-		return type == Type::LibraryGraphics || type == Type::LibraryCompute;
+		return type == Type::LibraryRaster || type == Type::LibraryCompute;
 	}
 
 
@@ -662,7 +662,7 @@ namespace re
 
 	inline void Stage::AddDrawStyleBits(effect::drawstyle::Bitmask drawStyleBits)
 	{
-		SEAssert(m_type == re::Stage::Type::Graphics || m_type == re::Stage::Type::Compute,
+		SEAssert(m_type == re::Stage::Type::Raster || m_type == re::Stage::Type::Compute,
 			"Unexpected stage type for setting a drawstyle on");
 		m_drawStyleBits |= drawStyleBits;
 	}
