@@ -12,6 +12,9 @@
 
 namespace re
 {
+	class BufferAllocator;
+
+
 	class Buffer : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
@@ -202,6 +205,10 @@ namespace re
 		void CommitInternal(void const* data, uint64_t typeIDHash);
 
 		void CommitMutableInternal(void const* data, uint32_t baseOffset, uint32_t numBytes, uint64_t typeIDHash); // Partial
+
+	protected:
+		friend class BufferAllocator;
+		static BufferAllocator* s_bufferAllocator;
 
 
 	private:

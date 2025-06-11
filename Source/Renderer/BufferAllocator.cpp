@@ -81,6 +81,9 @@ namespace re
 			};
 		InitializeTemporaryAllocation(m_immutableAllocations);
 		InitializeTemporaryAllocation(m_singleFrameAllocations);
+
+		// Register the buffer allocator as the global allocator for buffers:
+		re::Buffer::s_bufferAllocator = this;
 	}
 
 

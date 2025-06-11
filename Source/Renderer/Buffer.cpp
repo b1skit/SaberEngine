@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Context.h"
+#include "BufferAllocator.h"
 #include "BindlessResource.h"
 #include "Buffer.h"
 #include "Buffer_Platform.h"
+#include "Context.h"
 #include "RenderManager.h"
 
 #include "Core/ProfilingMarkers.h"
@@ -63,6 +64,9 @@ namespace
 
 namespace re
 {
+	BufferAllocator* Buffer::s_bufferAllocator = nullptr;
+
+
 	// Private CTOR: Use one of the Create factories instead
 	Buffer::Buffer(
 		size_t typeIDHashCode, std::string const& bufferName, BufferParams const& bufferParams, uint32_t dataByteSize)
@@ -116,7 +120,7 @@ namespace re
 			}
 		}
 
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Register(newBuffer, numBytes);
+		s_bufferAllocator->Register(newBuffer, numBytes);
 
 		SEEndCPUEvent();
 	}
@@ -129,7 +133,7 @@ namespace re
 
 		Register(newBuffer, numBytes, typeIDHash);
 
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Stage(newBuffer->GetUniqueID(), data);
+		s_bufferAllocator->Stage(newBuffer->GetUniqueID(), data);
 
 		newBuffer->m_platObj->m_isCommitted = true;
 
@@ -145,7 +149,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 		SEAssert(m_bufferParams.m_stagingPool == StagingPool::Permanent, "Cannot set data of an immutable buffer");
 
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Stage(GetUniqueID(), data);
+		s_bufferAllocator->Stage(GetUniqueID(), data);
 		
 		m_platObj->m_isCommitted = true;
 
@@ -163,7 +167,7 @@ namespace re
 			re::Buffer::HasUsageBit(re::Buffer::Raw, m_bufferParams),
 			"Invalid buffer usage for partial updates");
 
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
+		s_bufferAllocator->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
 
 		m_platObj->m_isCommitted = true;
 	}
@@ -172,14 +176,14 @@ namespace re
 	void const* Buffer::GetData() const
 	{
 		void const* dataOut = nullptr;
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->GetData(GetUniqueID(), &dataOut);
+		s_bufferAllocator->GetData(GetUniqueID(), &dataOut);
 		return dataOut;
 	}
 
 
 	void Buffer::GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const
 	{
-		re::RenderManager::Get()->GetContext()->GetBufferAllocator()->GetData(GetUniqueID(), out_data);
+		s_bufferAllocator->GetData(GetUniqueID(), out_data);
 
 		*out_numBytes = m_dataByteSize;
 	}
@@ -220,7 +224,7 @@ namespace re
 
 		if (m_platObj->m_isCreated)
 		{
-			re::RenderManager::Get()->GetContext()->GetBufferAllocator()->Deallocate(GetUniqueID());
+			s_bufferAllocator->Deallocate(GetUniqueID());
 
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
