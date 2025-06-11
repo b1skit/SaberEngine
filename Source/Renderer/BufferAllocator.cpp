@@ -102,6 +102,8 @@ namespace re
 		SEAssert(!IsValid(),
 			"Buffer allocator destructor called before Destroy(). The buffer allocator must "
 			"be manually destroyed (i.e. in the api-specific Context::Destroy())");
+
+		re::Buffer::s_bufferAllocator = nullptr;
 	}
 	
 
