@@ -62,7 +62,7 @@ namespace core
 	{
 		SEAssert(!data.empty(), "Invalid data for hash");
 
-		util::CombineHash(m_dataHash, util::HashDataBytes(data.data(), data.size()));
+		util::CombineHash(m_dataHash, util::HashDataBytes(data));
 	}
 
 

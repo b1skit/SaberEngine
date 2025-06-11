@@ -96,7 +96,7 @@ namespace gr
 		instanceData.m_isShadowCaster = m_isShadowCaster;
 
 		// GPU data:
-		PackMaterialParamsData(std::span<std::byte>(reinterpret_cast<std::byte*>(instanceData.m_materialParamData.data()), instanceData.m_materialParamData.size()));
+		PackMaterialParamsData(instanceData.m_materialParamData.data(), instanceData.m_materialParamData.size());
 
 		// Metadata:
 		instanceData.m_effectID = m_effectID;

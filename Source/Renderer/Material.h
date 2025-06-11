@@ -150,7 +150,7 @@ namespace gr
 			core::InvPtr<re::Texture>*, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
 		
 		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
-		
+
 		inline void PackMaterialParamsData(std::span<std::byte> data) const;
 
 
@@ -270,7 +270,6 @@ namespace gr
 
 	inline void Material::PackMaterialParamsData(std::span<std::byte> data) const
 	{
-		SEAssert(!data.empty(), "Invalid data span");
 		PackMaterialParamsData(data.data(), data.size());
 	}
 }

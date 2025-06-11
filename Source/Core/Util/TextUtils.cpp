@@ -53,6 +53,12 @@ namespace util
 	}
 
 
+	inline std::string FromWideCString(std::span<const wchar_t> wstr)
+	{
+		return FromWideCString(wstr.data(), wstr.size());
+	}
+
+
 	std::string FromWideString(std::wstring const& wstr)
 	{
 		return FromWideCString(wstr.c_str());
@@ -78,11 +84,5 @@ namespace util
 			[](unsigned char c) { return std::tolower(c); });
 
 		return result;
-	}
-
-
-	inline std::string FromWideCString(std::span<const wchar_t> wstr)
-	{
-		return FromWideCString(wstr.data(), wstr.size());
 	}
 }

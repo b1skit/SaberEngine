@@ -300,7 +300,7 @@ namespace gr
 		}
 
 		static uint32_t curMissIdx = m_missShaderIdx;
-		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
+		util::ShowBasicComboBox("Miss shader index", std::span<const std::string>(comboOptions), m_missShaderIdx);
 
 		// Geometry inclusion masks:
 		auto SetInclusionMaskBits = [this](re::AccelerationStructure::InclusionMask flag, bool enabled)
