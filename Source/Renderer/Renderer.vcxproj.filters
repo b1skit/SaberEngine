@@ -122,6 +122,9 @@
     <ClInclude Include="Batch.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="BatchBuilder.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
     <ClInclude Include="BoundsRenderData.h">
       <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
@@ -722,6 +725,9 @@
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Batch.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchBuilder.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Buffer.cpp">

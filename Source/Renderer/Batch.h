@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "BufferView.h"
@@ -27,7 +27,15 @@ namespace re
 
 namespace re
 {
+	class BatchBuilder;
+}
+
+
+namespace re
+{
 	class Batch final : public virtual core::IHashedDataObject
+	{
+		friend class BatchBuilder;
 	{
 	public:
 		enum class BatchType
@@ -156,23 +164,8 @@ namespace re
 		void SetInstanceCount(uint32_t numInstances);
 
 		std::vector<BufferInput> const& GetBuffers() const;
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
-		void SetBuffer(re::BufferInput&&);
-		void SetBuffer(re::BufferInput const&);
 
-		void AddTextureInput(
-			char const* shaderName,
-			core::InvPtr<re::Texture> const&,
-			core::InvPtr<re::Sampler> const&,
-			re::TextureView const&);
-		
 		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
-
-		void AddRWTextureInput(
-			char const* shaderName,
-			core::InvPtr<re::Texture> const&,
-			re::TextureView const&);
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
@@ -193,6 +186,22 @@ namespace re
 
 	private:
 		void ComputeDataHash() override;
+
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
+		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
+		void SetBuffer(re::BufferInput&&);
+		void SetBuffer(re::BufferInput const&);
+
+		void AddTextureInput(
+			char const* shaderName,
+			core::InvPtr<re::Texture> const&,
+			core::InvPtr<re::Sampler> const&,
+			re::TextureView const&);
+
+		void AddRWTextureInput(
+			char const* shaderName,
+			core::InvPtr<re::Texture> const&,
+			re::TextureView const&);
 
 
 	private:

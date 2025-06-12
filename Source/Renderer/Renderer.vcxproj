@@ -97,6 +97,7 @@
     <ClInclude Include="AccelerationStructure_DX12.h" />
     <ClInclude Include="AccelerationStructure_Platform.h" />
     <ClInclude Include="Batch.h" />
+    <ClInclude Include="BatchBuilder.h" />
     <ClInclude Include="BindlessResourceManager.h" />
     <ClInclude Include="BindlessResourceManager_DX12.h" />
     <ClInclude Include="BindlessResourceManager_Platform.h" />
@@ -238,6 +239,7 @@
     <ClCompile Include="AccelerationStructure_DX12.cpp" />
     <ClCompile Include="AccelerationStructure_Platform.cpp" />
     <ClCompile Include="Batch.cpp" />
+    <ClCompile Include="BatchBuilder.cpp" />
     <ClCompile Include="BindlessResourceManager.cpp" />
     <ClCompile Include="BindlessResourceManager_DX12.cpp" />
     <ClCompile Include="BindlessResourceManager_Platform.cpp" />
