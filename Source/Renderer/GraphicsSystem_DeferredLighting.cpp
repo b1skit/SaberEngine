@@ -1,4 +1,5 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
 #include "Buffer.h"
 #include "IndexedBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -724,32 +725,29 @@ namespace gr
 							.m_usageMask = re::Buffer::Constant,
 						});
 
+					// Create the batch with all inputs using BatchBuilder:
+					re::Batch ambientBatch = re::BatchBuilder(re::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+						.SetEffectID(k_deferredLightingEffectID)
+						.AddTextureInput(
+							"CubeMapIEM",
+							iemTex,
+							re::Sampler::GetSampler("WrapMinMagMipLinear"),
+							re::TextureView(iemTex))
+						.AddTextureInput(
+							"CubeMapPMREM",
+							pmremTex,
+							re::Sampler::GetSampler("WrapMinMagMipLinear"),
+							re::TextureView(pmremTex))
+						.SetBuffer(AmbientLightData::s_shaderName, ambientParams)
+						.Build();
+
 					m_ambientLightData.emplace(ambientData.m_renderDataID,
 						AmbientLightRenderData{
 							.m_ambientParams = ambientParams,
 							.m_IEMTex = iemTex,
 							.m_PMREMTex = pmremTex,
-							.m_batch = re::Batch(re::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+							.m_batch = std::move(ambientBatch)
 						});
-
-					// Set the batch inputs:
-					re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
-
-					ambientBatch.SetEffectID(k_deferredLightingEffectID);
-
-					ambientBatch.AddTextureInput(
-						"CubeMapIEM",
-						iemTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"),
-						re::TextureView(iemTex));
-
-					ambientBatch.AddTextureInput(
-						"CubeMapPMREM",
-						pmremTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"),
-						re::TextureView(pmremTex));
-
-					ambientBatch.SetBuffer(AmbientLightData::s_shaderName, ambientParams);
 				}
 			}
 		}
@@ -813,13 +811,11 @@ namespace gr
 						lightID,
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
-							.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
+							.m_batch = re::BatchBuilder(re::Lifetime::Permanent, meshData, nullptr)
+								.SetEffectID(k_deferredLightingEffectID)
+								.Build(),
 							.m_hasShadow = directionalData.m_hasShadow
 						});
-
-					re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
-
-					directionalLightBatch.SetEffectID(k_deferredLightingEffectID);
 					
 					// Note: We set the shadow texture inputs per frame/batch if/as required
 				}
@@ -840,15 +836,11 @@ namespace gr
 					lightItr->GetRenderDataID(),
 					PunctualLightRenderData{
 						.m_type = lightType,
-						.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
+						.m_batch = re::BatchBuilder(re::Lifetime::Permanent, meshData, nullptr)
+							.SetEffectID(k_deferredLightingEffectID)
+							.Build(),
 						.m_hasShadow = hasShadow
 					});
-
-				const gr::RenderDataID lightID = lightItr->GetRenderDataID();
-
-				re::Batch& lightBatch = punctualLightData.at(lightID).m_batch;
-
-				lightBatch.SetEffectID(k_deferredLightingEffectID);
 				
 				// Note: We set the shadow texture inputs per frame/batch if/as required
 			};
