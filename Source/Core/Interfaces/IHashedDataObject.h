@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
 
@@ -23,8 +23,6 @@ namespace core
 		virtual util::HashKey GetDataHash() const;
 
 		void AddDataBytesToHash(void const* const data, size_t numBytes);
-
-		inline void AddDataBytesToHash(std::span<const std::byte> data);
 
 		void AddDataBytesToHash(std::string const& str);
 
@@ -55,14 +53,6 @@ namespace core
 		SEAssert(data != nullptr && numBytes > 0, "Invalid data for hash");
 
 		util::CombineHash(m_dataHash, util::HashDataBytes(data, numBytes));
-	}
-
-
-	inline void IHashedDataObject::AddDataBytesToHash(std::span<const std::byte> data)
-	{
-		SEAssert(!data.empty(), "Invalid data for hash");
-
-		util::CombineHash(m_dataHash, util::HashDataBytes(data));
 	}
 
 

@@ -1,4 +1,4 @@
-// ï¿½ 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -10,7 +10,6 @@ namespace util
 
 	std::string FromWideCString(wchar_t const* wstr, size_t wstrLen);
 	std::string FromWideCString(wchar_t const* wstr);
-	inline std::string FromWideCString(std::span<const wchar_t> wstr);
 
 	std::string FromWideString(std::wstring const& wstr);
 

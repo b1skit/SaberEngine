@@ -1,4 +1,4 @@
-// � 2025 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "EffectDB.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"

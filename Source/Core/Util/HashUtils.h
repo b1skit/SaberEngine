@@ -1,4 +1,4 @@
-// � 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -58,9 +58,9 @@ namespace util
 	}
 
 
-	inline uint64_t HashDataBytes(std::span<const std::byte> data)
+	inline void AddDataBytesToHash(uint64_t& currentHash, char const* cStr) // Constructs a temporary std::string, avoid this if you can
 	{
-		return HashDataBytes(data.data(), data.size());
+		CombineHash(currentHash, HashCStr(cStr));
 	}
 
 

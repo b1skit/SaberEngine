@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"

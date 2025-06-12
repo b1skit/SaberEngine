@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "Effect.h"
@@ -151,8 +151,6 @@ namespace gr
 		
 		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
 
-		inline void PackMaterialParamsData(std::span<std::byte> data) const;
-
 
 	protected:
 		const MaterialID m_materialID;
@@ -265,12 +263,6 @@ namespace gr
 	inline EffectID Material::GetEffectID() const
 	{
 		return m_effectID;
-	}
-
-
-	inline void Material::PackMaterialParamsData(std::span<std::byte> data) const
-	{
-		PackMaterialParamsData(data.data(), data.size());
 	}
 }
 
