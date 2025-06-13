@@ -36,7 +36,7 @@ namespace core
 		util::HashKey GetNameHash() const;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
-		void SetName(std::string const& name);
+		void SetName(std::string_view name);
 
 
 	private:
@@ -78,10 +78,12 @@ namespace core
 	}
 
 
-	inline void INamedObject::SetName(std::string const& name)
+	inline void INamedObject::SetName(std::string_view name)
 	{
+		SEAssert(name.data()[name.size()] == '\0', "std::string_view must be null-terminated for INamedObject usage");
+
 		m_name = name;
-		m_nameHash = util::HashKey(name);
+		m_nameHash = util::HashKey(name.data());
 		
 		m_wName = util::ToWideString(m_name);
 	}

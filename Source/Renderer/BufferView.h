@@ -180,7 +180,7 @@ namespace re
 		std::shared_ptr<re::Buffer>&& buffer,
 		re::BufferView&& view,
 		re::Lifetime viewLifetime)
-		: core::INamedObject(shaderName.data())
+		: core::INamedObject(shaderName)
 		, m_buffer(std::move(buffer))
 		, m_bufferView(std::move(view))
 		, m_viewLifetime(viewLifetime)
