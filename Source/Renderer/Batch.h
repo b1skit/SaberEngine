@@ -176,8 +176,7 @@ namespace re
 
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 
-		void SetRootConstant(char const* shaderName, void const* src, re::DataType);
-		void SetRootConstant(std::string const& shaderName, void const* src, re::DataType);
+		void SetRootConstant(std::string_view shaderName, void const* src, re::DataType);
 		RootConstants const& GetRootConstants() const;
 
 		re::Lifetime GetLifetime() const;
@@ -282,13 +281,7 @@ namespace re
 	}
 
 
-	inline void Batch::SetRootConstant(char const* shaderName, void const* src, re::DataType dataType)
-	{
-		m_batchRootConstants.SetRootConstant(shaderName, src, dataType);
-	}
-
-
-	inline void Batch::SetRootConstant(std::string const& shaderName, void const* src, re::DataType dataType)
+	inline void Batch::SetRootConstant(std::string_view shaderName, void const* src, re::DataType dataType)
 	{
 		m_batchRootConstants.SetRootConstant(shaderName, src, dataType);
 	}

@@ -39,8 +39,7 @@ namespace re
 	class RootConstants final
 	{
 	public:
-		void SetRootConstant(char const* shaderName, void const* src, re::DataType); // Max 16B (4x 32-bit values)
-		void SetRootConstant(std::string const& shaderName, void const* src, re::DataType); // Max 16B (4x 32-bit values)
+		void SetRootConstant(std::string_view, void const* src, re::DataType); // Max 16B (4x 32-bit values)
 
 
 	public:
@@ -56,12 +55,6 @@ namespace re
 	private:
 		std::vector<re::RootConstant> m_rootConstants;
 	};
-
-
-	inline void RootConstants::SetRootConstant(std::string const& shaderName, void const* src, re::DataType dataType)
-	{
-		SetRootConstant(shaderName.c_str(), src, dataType);
-	}
 
 
 	inline uint8_t RootConstants::GetRootConstantCount() const
