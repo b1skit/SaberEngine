@@ -409,7 +409,7 @@ namespace re
 			{
 				if (materialInstanceData->m_textures[i] && materialInstanceData->m_samplers[i])
 				{
-					AddTextureInput(
+					SetTextureInput(
 						materialInstanceData->m_shaderSamplerNames[i],
 						materialInstanceData->m_textures[i],
 						materialInstanceData->m_samplers[i],
@@ -694,7 +694,7 @@ namespace re
 	}
 
 
-	void Batch::Resolve(effect::drawstyle::Bitmask stageBitmask)
+	void Batch::Finalize(effect::drawstyle::Bitmask stageBitmask)
 	{
 		SEAssert(m_effectID != 0, "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
@@ -918,13 +918,13 @@ namespace re
 	}
 
 
-	void Batch::SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer)
+	void Batch::SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer)
 	{
 		SetBuffer(re::BufferInput(shaderName, buffer));
 	}
 
 
-	void Batch::SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
+	void Batch::SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
 	{
 		SetBuffer(re::BufferInput(shaderName, buffer, view));
 	}
@@ -957,13 +957,13 @@ namespace re
 	}
 
 
-	void Batch::AddTextureInput(
-		char const* shaderName,
+	void Batch::SetTextureInput(
+		std::string_view shaderName,
 		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
 		re::TextureView const& texView)
 	{
-		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(sampler.IsValid(), "Invalid sampler");
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
@@ -973,7 +973,7 @@ namespace re
 		for (auto const& existingTexAndSamplerInput : m_batchTextureSamplerInputs)
 		{
 			SEAssert(existingTexAndSamplerInput.m_texture != texture ||
-				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName) != 0,
+				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName.data()) != 0,
 				"This Texture has already been added with the same shader name. Re-adding it changes the data hash");
 		}
 #endif
@@ -986,12 +986,12 @@ namespace re
 	}
 
 
-	void Batch::AddRWTextureInput(
-		char const* shaderName,
+	void Batch::SetRWTextureInput(
+		std::string_view shaderName,
 		core::InvPtr<re::Texture> const& texture,
 		re::TextureView const& texView)
 	{
-		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
 		SEAssert((texture->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 && 
@@ -1002,7 +1002,7 @@ namespace re
 		for (auto const& existingTexAndSamplerInput : m_batchRWTextureInputs)
 		{
 			SEAssert(existingTexAndSamplerInput.m_texture != texture ||
-				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName) != 0,
+				strcmp(existingTexAndSamplerInput.m_shaderName.c_str(), shaderName.data()) != 0,
 				"This Texture has already been added with the same shader name. Re-adding it changes the data hash");
 		}
 #endif

@@ -148,7 +148,7 @@ namespace re
 		void SetEffectID(EffectID);
 		EffectID GetEffectID() const;
 
-		void Resolve(effect::drawstyle::Bitmask stageBitmask);
+		void Finalize(effect::drawstyle::Bitmask stageBitmask);
 
 		core::InvPtr<re::Shader> const& GetShader() const;
 
@@ -156,21 +156,21 @@ namespace re
 		void SetInstanceCount(uint32_t numInstances);
 
 		std::vector<BufferInput> const& GetBuffers() const;
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&);
-		void SetBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
+		void SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const&);
+		void SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
 		void SetBuffer(re::BufferInput&&);
 		void SetBuffer(re::BufferInput const&);
 
-		void AddTextureInput(
-			char const* shaderName,
+		void SetTextureInput(
+			std::string_view shaderName,
 			core::InvPtr<re::Texture> const&,
 			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 		
 		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
-		void AddRWTextureInput(
-			char const* shaderName,
+		void SetRWTextureInput(
+			std::string_view shaderName,
 			core::InvPtr<re::Texture> const&,
 			re::TextureView const&);
 

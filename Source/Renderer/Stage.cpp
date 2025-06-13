@@ -986,7 +986,7 @@ namespace re
 
 			if (batch.GetEffectID() != 0) // Some specialized batches (e.g. ray tracing) don't have an EffectID
 			{
-				duplicatedBatch->Resolve(m_drawStyleBits);
+				duplicatedBatch->Finalize(m_drawStyleBits);
 			}
 
 			return duplicatedBatch;

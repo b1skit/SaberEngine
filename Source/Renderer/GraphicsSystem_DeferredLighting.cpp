@@ -737,13 +737,13 @@ namespace gr
 
 					ambientBatch.SetEffectID(k_deferredLightingEffectID);
 
-					ambientBatch.AddTextureInput(
+					ambientBatch.SetTextureInput(
 						"CubeMapIEM",
 						iemTex,
 						re::Sampler::GetSampler("WrapMinMagMipLinear"),
 						re::TextureView(iemTex));
 
-					ambientBatch.AddTextureInput(
+					ambientBatch.SetTextureInput(
 						"CubeMapPMREM",
 						pmremTex,
 						re::Sampler::GetSampler("WrapMinMagMipLinear"),
@@ -1031,7 +1031,7 @@ namespace gr
 							// Note: Shadow array textures may be reallocated at the beginning of any frame; Texture
 							// inputs/views must be re-set each frame (TODO: Skip recreating the views by tracking 
 							// texture changes)						
-							duplicatedBatch->AddTextureInput(
+							duplicatedBatch->SetTextureInput(
 								shadowTexShaderName,
 								*shadowRecord.m_shadowTex,
 								re::Sampler::GetSampler(samplerTypeName),
