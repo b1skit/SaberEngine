@@ -1,4 +1,4 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #include "BufferView.h"
 #include "Buffer.h"
 
@@ -17,11 +17,8 @@ namespace re
 
 
 	BufferView::BufferView(BufferType const& view)
-		: m_bufferView(view)
-		, m_isVertexStreamView(false)
+		: BufferView(BufferType(view))
 	{
-		util::AddDataBytesToHash(m_dataHash, m_bufferView);
-		util::AddDataBytesToHash(m_dataHash, m_isVertexStreamView);
 	}
 
 
@@ -54,11 +51,8 @@ namespace re
 
 
 	BufferView::BufferView(VertexStreamType const& view)
-		: m_streamView(view)
-		, m_isVertexStreamView(true)
+		: BufferView(VertexStreamType(view))
 	{
-		util::AddDataBytesToHash(m_dataHash, m_streamView);
-		util::AddDataBytesToHash(m_dataHash, m_isVertexStreamView);
 	}
 
 

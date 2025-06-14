@@ -1,4 +1,4 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "EnumTypes.h"
 #include "VertexStream.h"
@@ -196,14 +196,8 @@ namespace re
 		std::shared_ptr<re::Buffer>&& buffer,
 		re::BufferView const& view,
 		re::Lifetime viewLifetime)
-		: core::INamedObject(shaderName)
-		, m_buffer(std::move(buffer))
-		, m_bufferView(view)
-		, m_viewLifetime(viewLifetime)
+		: BufferInput(shaderName, std::move(buffer), re::BufferView(view), viewLifetime)
 	{
-		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
-			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
-			"Incompatible BufferInput and Buffer lifetimes");
 	}
 
 
@@ -212,14 +206,8 @@ namespace re
 		std::shared_ptr<re::Buffer> const& buffer,
 		re::BufferView&& view,
 		re::Lifetime viewLifetime)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(std::move(view))
-		, m_viewLifetime(viewLifetime)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), std::move(view), viewLifetime)
 	{
-		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
-			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
-			"Incompatible BufferInput and Buffer lifetimes");
 	}
 
 
@@ -228,40 +216,22 @@ namespace re
 		std::shared_ptr<re::Buffer> const& buffer,
 		re::BufferView const& view,
 		re::Lifetime viewLifetime)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(view)
-		, m_viewLifetime(viewLifetime)
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), re::BufferView(view), viewLifetime)
 	{
-		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
-			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
-			"Incompatible BufferInput and Buffer lifetimes");
 	}
 
 
 	inline BufferInput::BufferInput(
 		std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView&& view)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(std::move(view))
-		, m_viewLifetime(buffer->GetLifetime())
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), std::move(view), buffer->GetLifetime())
 	{
-		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
-			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
-			"Incompatible BufferInput and Buffer lifetimes");
 	}
 
 
 	inline BufferInput::BufferInput(
 		std::string_view shaderName, std::shared_ptr<re::Buffer> const& buffer, re::BufferView const& view)
-		: core::INamedObject(shaderName)
-		, m_buffer(buffer)
-		, m_bufferView(view)
-		, m_viewLifetime(buffer->GetLifetime())
+		: BufferInput(shaderName, std::shared_ptr<re::Buffer>(buffer), re::BufferView(view), buffer->GetLifetime())
 	{
-		SEAssert(m_viewLifetime == m_buffer->GetLifetime() ||
-			m_viewLifetime == re::Lifetime::SingleFrame && m_buffer->GetLifetime() == re::Lifetime::Permanent,
-			"Incompatible BufferInput and Buffer lifetimes");
 	}
 
 
@@ -363,42 +333,48 @@ namespace re
 
 
 	inline VertexBufferInput::VertexBufferInput()
-		: m_view(BufferView::VertexStreamType{})
-		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
-		, m_vertexStream()
+		: m_vertexStream()
 		, m_bufferOverride(nullptr)
+		, m_view(BufferView::VertexStreamType{})
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 	}
 
 
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
-		: m_view(stream ? re::BufferView::VertexStreamType{
-			.m_firstElement = 0,
-			.m_numElements = stream->GetNumElements(),
-			.m_type = stream->GetType(),
-			.m_dataType = stream->GetDataType(),
-			.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
-		} : re::BufferView::VertexStreamType{})
-		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
-		, m_vertexStream(stream)
+		: m_vertexStream(stream)
 		, m_bufferOverride(nullptr)
+		, m_view(BufferView::VertexStreamType{})
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
+		if (m_vertexStream)
+		{
+			m_view = re::BufferView::VertexStreamType{
+				.m_firstElement = 0,
+				.m_numElements = stream->GetNumElements(),
+				.m_type = stream->GetType(),
+				.m_dataType = stream->GetDataType(),
+				.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
+			};
+		}
 	}
 
 
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
-		: m_view(re::BufferView::VertexStreamType{
+		: m_vertexStream(stream)
+		, m_bufferOverride(bufferOverride)
+		, m_view(BufferView::VertexStreamType{})
+		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
+	{
+		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");
+
+		m_view = re::BufferView::VertexStreamType{
 			.m_firstElement = 0,
 			.m_numElements = stream->GetNumElements(),
 			.m_type = stream->GetType(),
 			.m_dataType = stream->GetDataType(),
 			.m_isNormalized = static_cast<bool>(stream->DoNormalize()),			
-		})
-		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
-		, m_vertexStream(stream)
-		, m_bufferOverride(bufferOverride)
-	{
-		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");
+		};
 	}
 
 
