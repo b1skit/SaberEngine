@@ -1694,7 +1694,7 @@ namespace dx12
 		}
 		return false;
 
-		// TODO: JUST STORE AN EXTRA BITMASK INSTEAD OF SEARCHING EACH TIME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// TODO: Store an extra bitmask instead of searching each time
 	}
 
 
