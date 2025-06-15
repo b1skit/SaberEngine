@@ -12,7 +12,7 @@
 namespace re
 {
 	class AccelerationStructure;
-	class Batch;
+	class BatchHandle;
 	class Texture;
 	class VertexBufferInput;
 }
@@ -33,8 +33,8 @@ namespace gr
 
 	using TLAS = std::shared_ptr<re::AccelerationStructure>;
 
-	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::Batch>>;
-	using AllBatches = std::vector<re::Batch>;
+	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::BatchHandle>>;
+	using AllBatches = std::vector<re::BatchHandle>;
 
 	struct ShadowRecord
 	{

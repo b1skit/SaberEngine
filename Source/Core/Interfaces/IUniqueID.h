@@ -3,14 +3,12 @@
 
 
 using UniqueID = uint64_t;
+static constexpr UniqueID k_invalidUniqueID = std::numeric_limits<UniqueID>::max();
 
 namespace core
 {
 	class IUniqueID
 	{
-	public:
-		static constexpr UniqueID k_invalidUniqueID = std::numeric_limits<UniqueID>::max();
-
 	public:
 		virtual ~IUniqueID() = default;
 

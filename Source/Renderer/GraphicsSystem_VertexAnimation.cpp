@@ -1,4 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
 #include "EnumTypes.h"
 #include "GraphicsSystem_VertexAnimation.h"
 #include "GraphicsSystemManager.h"
@@ -422,16 +423,11 @@ namespace gr
 
 					for (uint8_t dispatchIdx = 0; dispatchIdx < numDispatches; ++dispatchIdx)
 					{
-						re::Batch morphBatch = re::Batch(
-							re::Lifetime::SingleFrame,
-							re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, 1u, 1u) },
-							k_vertexAnimationEffectID);
-
-						// Set the buffers:							
-
-						// AnimationData: Per-Mesh weights
-						morphBatch.SetBuffer("MorphWeights",
-							m_meshIDToMorphWeights.at(meshPrimRenderData.m_owningMeshRenderDataID));
+						gr::ComputeBatchBuilder morphBatchBuilder = gr::ComputeBatchBuilder()
+							.SetThreadGroupCount(glm::uvec3(roundedXDim, 1u, 1u))
+							.SetEffectID(k_vertexAnimationEffectID)
+							.SetBuffer("MorphWeights", // AnimationData: Per-Mesh weights
+								m_meshIDToMorphWeights.at(meshPrimRenderData.m_owningMeshRenderDataID));
 
 						// Attach input/output vertex buffers:
 						auto const& animBuffers = m_meshPrimIDToAnimBuffers.at(curID);
@@ -466,7 +462,7 @@ namespace gr
 							constexpr uint32_t k_floatStride = sizeof(float);
 
 							// Set the input vertex stream buffers:
-							morphBatch.SetBuffer(
+							morphBatchBuilder().SetBuffer(
 								"InVertexStreams",
 								meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
 								re::BufferView::BufferType{
@@ -477,7 +473,7 @@ namespace gr
 								});
 
 							// Set the output vertex stream buffers:
-							morphBatch.SetBuffer(
+							morphBatchBuilder().SetBuffer(
 								"OutVertexStreams",
 								animBuffers.m_destBuffers[srcIdx],
 								re::BufferView::BufferType{
@@ -491,7 +487,7 @@ namespace gr
 						}
 
 						// Set the dispatch metadata:
-						morphBatch.SetBuffer(
+						morphBatchBuilder().SetBuffer(
 							MorphDispatchMetadata::s_shaderName,
 							re::Buffer::Create(
 								MorphDispatchMetadata::s_shaderName,
@@ -505,16 +501,16 @@ namespace gr
 								}));
 
 						// Set the vertex stream metadata:
-						morphBatch.SetBuffer(
+						morphBatchBuilder().SetBuffer(
 							"MorphMetadataParams",
 							m_meshPrimIDToAnimBuffers.at(curID).m_morphMetadataBuffer);
 
 						// Set the interleaved morph data:
-						morphBatch.SetBuffer(
+						morphBatchBuilder().SetBuffer(
 							"MorphData",
 							meshPrimRenderData.m_interleavedMorphData);
 
-						m_morphAnimationStage->AddBatch(morphBatch);
+						m_morphAnimationStage->AddBatch(morphBatchBuilder().BuildSingleFrame());
 					}
 				}
 			}
@@ -574,10 +570,9 @@ namespace gr
 
 					AnimationBuffers const& animBuffers = m_meshPrimIDToAnimBuffers.at(curID);
 
-					re::Batch skinningBatch = re::Batch(
-						re::Lifetime::SingleFrame,
-						re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, 1u, 1u) },
-						k_vertexAnimationEffectID);
+					gr::ComputeBatchBuilder skinningBatchBuilder = gr::ComputeBatchBuilder()
+						.SetThreadGroupCount(glm::uvec3(roundedXDim, 1u, 1u))
+						.SetEffectID(k_vertexAnimationEffectID);
 
 					// Track the streams we've seen for debug validation:
 					bool seenPosition = false;
@@ -687,7 +682,7 @@ namespace gr
 						// Attach vertex buffers:
 						if (inShaderName)
 						{
-							skinningBatch.SetBuffer(
+							skinningBatchBuilder().SetBuffer(
 								inShaderName,
 								meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
 								re::BufferView::BufferType{
@@ -700,7 +695,7 @@ namespace gr
 
 						if (outShaderName)
 						{
-							skinningBatch.SetBuffer(
+							skinningBatchBuilder().SetBuffer(
 								outShaderName,
 								animBuffers.m_destBuffers[srcIdx],
 								re::BufferView::BufferType{
@@ -713,14 +708,14 @@ namespace gr
 					}
 
 					// Set the MeshPrimitive skinning buffers::
-					skinningBatch.SetBuffer(SkinningData::s_shaderName,
+					skinningBatchBuilder().SetBuffer(SkinningData::s_shaderName,
 						m_meshPrimIDToAnimBuffers.at(curID).m_skinningDataBuffer);
 
 					// Set the Mesh skinning buffers:
-					skinningBatch.SetBuffer("SkinningMatrices",
+					skinningBatchBuilder().SetBuffer("SkinningMatrices",
 						m_meshIDToSkinJoints.at(meshPrimRenderData.m_owningMeshRenderDataID));
 
-					m_skinAnimationStage->AddBatch(skinningBatch);
+					m_skinAnimationStage->AddBatch(skinningBatchBuilder().BuildSingleFrame());
 				}
 			}
 		}

@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "BatchBuilder.h"
 #include "EffectDB.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"
 #include "GraphicsSystemManager.h"
@@ -203,16 +204,15 @@ namespace gr
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
-			re::Batch::RayTracingParams rtParams{};
-			rtParams.m_operation = re::Batch::RayTracingParams::Operation::DispatchRays;
-			rtParams.m_ASInput = re::ASInput("SceneBVH", *m_sceneTLAS);
-			rtParams.m_dispatchDimensions = glm::uvec3(
-				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
-				static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
-				1u);
-			rtParams.m_rayGenShaderIdx = m_rayGenIdx;
-
-			re::Batch* rtBatch = m_rtStage->AddBatch(re::Batch(re::Lifetime::SingleFrame, rtParams));
+			re::BatchHandle& rtBatch = *m_rtStage->AddBatch(gr::RayTraceBatchBuilder()
+				.SetOperation(re::Batch::RayTracingParams::Operation::DispatchRays)
+				.SetASInput(re::ASInput("SceneBVH", *m_sceneTLAS))
+				.SetDispatchDimensions(glm::uvec3(
+					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
+					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
+					1u))
+				.SetRayGenShaderIdx(m_rayGenIdx)
+				.BuildSingleFrame());
 
 			// Attach indexed buffer LUT to the batch:
 			re::BufferInput const& indexedBufferLUT = GetInstancedBufferLUTBufferInput(

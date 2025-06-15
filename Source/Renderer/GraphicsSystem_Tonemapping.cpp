@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
@@ -72,13 +73,10 @@ namespace gr
 		const uint32_t roundedXDim = grutil::GetRoundedDispatchDimension(lightingTex->Width(), k_dispatchXYThreadDims);
 		const uint32_t roundedYDim = grutil::GetRoundedDispatchDimension(lightingTex->Height(), k_dispatchXYThreadDims);
 
-		m_tonemappingComputeBatch = std::make_unique<re::Batch>(
-			re::Lifetime::Permanent,
-			re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1),
-			},
-			k_tonemappingEffectID);
-
+		m_tonemappingComputeBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1))
+			.SetEffectID(k_tonemappingEffectID)
+			.BuildPermanent());
 
 		// Swap chain blit: Must handle this manually as a copy stage has limited format support
 		re::Stage::FullscreenQuadParams swapchainBlitStageParams{};

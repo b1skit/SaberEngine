@@ -1,5 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "BufferView.h"
+#include "Batch.h"
+#include "BatchBuilder.h"
+#include "BatchFactories.h"
 #include "EffectDB.h"
 #include "GraphicsSystem_BatchManager.h"
 #include "GraphicsSystemCommon.h"
@@ -99,8 +101,8 @@ namespace gr
 					if (cacheIdxToReplace != cacheIdxToMove)
 					{
 						m_permanentCachedBatches[cacheIdxToReplace] = re::Batch::Duplicate(
-							m_permanentCachedBatches[cacheIdxToMove],
-							m_permanentCachedBatches[cacheIdxToMove].GetLifetime());
+							*m_permanentCachedBatches[cacheIdxToMove],
+							m_permanentCachedBatches[cacheIdxToMove]->GetLifetime());
 
 						SEAssert(m_cacheIdxToRenderDataID.contains(cacheIdxToReplace), "Cache index not found");
 
@@ -157,10 +159,10 @@ namespace gr
 				{
 					const size_t newBatchIdx = m_permanentCachedBatches.size();
 
-					m_permanentCachedBatches.emplace_back(
-						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData, vertexStreamOverrides));
+					m_permanentCachedBatches.emplace_back(gr::RasterBatchBuilder::CreateInstance(
+						renderDataID, renderData, grutil::BuildInstancedRasterBatch, vertexStreamOverrides).BuildPermanent());
 
-					const uint64_t batchHash = m_permanentCachedBatches.back().GetDataHash();
+					const uint64_t batchHash = m_permanentCachedBatches.back()->GetDataHash();
 
 					// Update the metadata:
 					m_cacheIdxToRenderDataID.emplace(newBatchIdx, renderDataID);
@@ -180,11 +182,11 @@ namespace gr
 				{
 					BatchMetadata& batchMetadata = m_renderDataIDToBatchMetadata.at(renderDataID);
 
-					m_permanentCachedBatches[batchMetadata.m_cacheIndex] = 
-						re::Batch(re::Lifetime::Permanent, meshPrimRenderData, &materialRenderData, vertexStreamOverrides);
+					m_permanentCachedBatches[batchMetadata.m_cacheIndex] = gr::RasterBatchBuilder::CreateInstance(
+							renderDataID, renderData, grutil::BuildInstancedRasterBatch, vertexStreamOverrides).BuildPermanent();
 
 					// Update the batch metadata:
-					batchMetadata.m_batchHash = m_permanentCachedBatches[batchMetadata.m_cacheIndex].GetDataHash();
+					batchMetadata.m_batchHash = m_permanentCachedBatches[batchMetadata.m_cacheIndex]->GetDataHash();
 					batchMetadata.m_matEffectID = materialRenderData.m_effectID;
 				}
 			}
@@ -236,7 +238,7 @@ namespace gr
 
 			// Assemble a list of instanced batches:
 			SEBeginCPUEvent("Assemble batches");
-			std::vector<re::Batch>& batches = m_viewBatches[curView];
+			std::vector<re::BatchHandle>& batches = m_viewBatches[curView];
 			batches.reserve(batchMetadata.size());			
 
 			effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
@@ -251,16 +253,16 @@ namespace gr
 				do
 				{
 					SEBeginCPUEvent("Duplicate batches");
-					re::Batch const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx]->m_cacheIndex];
+					re::BatchHandle const& cachedBatch = m_permanentCachedBatches[batchMetadata[unmergedIdx]->m_cacheIndex];
 
 					const bool isFirstTimeSeen = seenIDs.emplace(batchMetadata[unmergedIdx]->m_renderDataID).second;
 
 					// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
 					// have a permanent Lifetime
-					batches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
+					batches.emplace_back(re::Batch::Duplicate(*cachedBatch, re::Lifetime::SingleFrame));
 					if (isFirstTimeSeen)
 					{
-						m_allBatches.emplace_back(re::Batch::Duplicate(cachedBatch, re::Lifetime::SingleFrame));
+						m_allBatches.emplace_back(re::Batch::Duplicate(*cachedBatch, re::Lifetime::SingleFrame));
 					}
 					SEEndCPUEvent(); // Duplicate batches
 
@@ -276,16 +278,16 @@ namespace gr
 
 					// Compute and set the number of instances in the batch:
 					const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
-					batches.back().SetInstanceCount(numInstances);
+					batches.back()->SetInstanceCount(numInstances);
 					if (isFirstTimeSeen)
 					{
-						m_allBatches.back().SetInstanceCount(numInstances);
+						m_allBatches.back()->SetInstanceCount(numInstances);
 					}
 					SEEndCPUEvent(); // Find mergeable instance
 
 					// Attach the instance and LUT buffers:
 					SEBeginCPUEvent("Attach instance buffers");
-					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back().GetEffectID());
+					effect::Effect const* batchEffect = effectDB.GetEffect(batches.back()->GetEffectID());
 
 					static const util::HashKey k_transformBufferNameHash(TransformData::s_shaderName);
 					static const util::HashKey k_pbrMetRoughMatBufferNameHash(PBRMetallicRoughnessData::s_shaderName);
@@ -295,19 +297,19 @@ namespace gr
 					bool setInstanceBuffer = false;
 					if (batchEffect->UsesBuffer(k_transformBufferNameHash))
 					{
-						batches.back().SetBuffer(
+						batches.back()->SetBuffer(
 							ibm.GetIndexedBufferInput(k_transformBufferNameHash, TransformData::s_shaderName));
 						setInstanceBuffer = true;
 					}
 					if (batchEffect->UsesBuffer(k_pbrMetRoughMatBufferNameHash))
 					{
-						batches.back().SetBuffer(
+						batches.back()->SetBuffer(
 							ibm.GetIndexedBufferInput(k_pbrMetRoughMatBufferNameHash, PBRMetallicRoughnessData::s_shaderName));
 						setInstanceBuffer = true;
 					}
 					if (batchEffect->UsesBuffer(k_unlitMaterialBufferNameHash))
 					{
-						batches.back().SetBuffer(
+						batches.back()->SetBuffer(
 							ibm.GetIndexedBufferInput(k_unlitMaterialBufferNameHash, UnlitData::s_shaderName));
 						setInstanceBuffer = true;
 					}
@@ -325,7 +327,7 @@ namespace gr
 									return batchMetadata->m_renderDataID;
 								});
 
-						batches.back().SetBuffer(
+						batches.back()->SetBuffer(
 							ibm.GetLUTBufferInput<InstanceIndexData>(InstanceIndexData::s_shaderName, instancedBatchView));
 
 						SEEndCPUEvent(); // GetSingleFrameLUTBufferInput

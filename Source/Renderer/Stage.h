@@ -210,10 +210,17 @@ namespace re
 		RootConstants const& GetRootConstants() const;
 
 		// Stage Batches:
-		std::vector<re::Batch> const& GetStageBatches() const;
-		void AddBatches(std::vector<re::Batch> const&);
-		re::Batch* AddBatch(re::Batch const&); // Returns Batch ptr (IFF it was successfully added)
-		re::Batch* AddBatchWithLifetime(re::Batch const&, re::Lifetime);
+		std::vector<re::BatchHandle> const& GetStageBatches() const;
+		
+		void AddBatches(std::vector<re::BatchHandle> const&);
+		
+		// TODO: These functions will eventually return a re:BatchHandle by value once this is a lightweight object
+		re::BatchHandle* AddBatch(re::BatchHandle&&); // Returns Batch ptr (IFF it was successfully added)
+		re::BatchHandle* AddBatch(re::BatchHandle const&); // Returns Batch ptr (IFF it was successfully added)
+
+		re::BatchHandle* AddBatchWithLifetime(re::BatchHandle&&, re::Lifetime);
+		re::BatchHandle* AddBatchWithLifetime(re::BatchHandle const&, re::Lifetime);
+
 
 		enum class FilterMode
 		{
@@ -251,7 +258,7 @@ namespace re
 
 		RootConstants m_stageRootConstants;
 
-		std::vector<re::Batch> m_stageBatches;
+		std::vector<re::BatchHandle> m_stageBatches;
 
 		re::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
 		re::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
@@ -304,7 +311,7 @@ namespace re
 
 	private:
 		core::InvPtr<gr::MeshPrimitive> m_screenAlignedQuad;
-		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
+		std::unique_ptr<re::BatchHandle> m_fullscreenQuadBatch;
 
 	private:
 		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, re::Lifetime);
@@ -756,7 +763,7 @@ namespace re
 	}
 
 
-	inline std::vector<re::Batch> const& Stage::GetStageBatches() const
+	inline std::vector<re::BatchHandle> const& Stage::GetStageBatches() const
 	{
 		return m_stageBatches;
 	}

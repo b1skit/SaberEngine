@@ -512,7 +512,7 @@ namespace gr
 								for (auto const& batch : m_viewBatches->at(faceView))
 								{
 									// Different views may contain the same batch, so we only add unique ones
-									const util::HashKey batchDataHash = batch.GetDataHash();
+									const util::HashKey batchDataHash = batch->GetDataHash();
 									if (!seenBatches.contains(batchDataHash))
 									{
 										shadowStageData.m_stage->AddBatch(batch);

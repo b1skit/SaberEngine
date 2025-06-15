@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "BatchBuilder.h"
 #include "BoundsRenderData.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
@@ -22,7 +23,7 @@ namespace
 	static const EffectID k_debugEffectID = effect::Effect::ComputeEffectID("Debug");
 
 
-	std::unique_ptr<re::Batch> BuildAxisBatch(
+	std::unique_ptr<re::BatchHandle> BuildAxisBatch(
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime)
 	{
@@ -37,22 +38,22 @@ namespace
 			std::move(axisOriginPos),
 			false);
 
-		re::Batch::RasterParams axisRasterParams;
-		axisRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
-		axisRasterParams.m_numInstances = 1;
-		axisRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
-		axisRasterParams.m_vertexBuffers = { re::VertexBufferInput(axisPositionStream) };
-
-		std::unique_ptr<re::Batch> axisBatch = std::make_unique<re::Batch>(
-			batchLifetime, axisRasterParams, k_debugEffectID, effect::drawstyle::Debug_Axis);
-
-		return axisBatch;
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::ArrayInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
+			.SetVertexBuffer(0, axisPositionStream)
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_Axis)
+			.Build(batchLifetime));
+		
+		return batch;
 	}
 
 
-	std::unique_ptr<re::Batch> BuildParentChildLinkBatch(
+	std::unique_ptr<re::BatchHandle> BuildParentChildLinkBatch(
 		gr::RenderDataManager const& renderData,
-		re::Lifetime lifetime,
+		re::Lifetime batchLifetime,
 		glm::vec4 const& parentColor,
 		glm::vec4 const& childColor,
 		gr::TransformID parentTransformID,
@@ -62,7 +63,7 @@ namespace
 
 		core::InvPtr<gr::VertexStream> const& linePositionsStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = lifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
@@ -71,7 +72,7 @@ namespace
 
 		core::InvPtr<gr::VertexStream> const& lineColorStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = lifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
@@ -80,28 +81,28 @@ namespace
 
 		core::InvPtr<gr::VertexStream> const& lineIndexStream = gr::VertexStream::Create(
 			gr::VertexStream::StreamDesc{
-				.m_lifetime = lifetime,
+				.m_lifetime = batchLifetime,
 				.m_type = gr::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			util::ByteVector::Create<uint16_t>({ 0, 1 }),
 			false);
 
-		re::Batch::RasterParams lineRasterParams;
-		lineRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		lineRasterParams.m_numInstances = 1;
-		lineRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
-		lineRasterParams.m_vertexBuffers = {linePositionsStream, lineColorStream };
-		lineRasterParams.m_indexBuffer = re::VertexBufferInput(lineIndexStream);
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetVertexBuffers({ linePositionsStream, lineColorStream })
+			.SetIndexBuffer(lineIndexStream)
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_VertexIDInstancingLUTIdx)
+			.Build(batchLifetime));
 
-		std::unique_ptr<re::Batch> lineBatch = std::make_unique<re::Batch>(
-			lifetime, lineRasterParams, k_debugEffectID, effect::drawstyle::Debug_VertexIDInstancingLUTIdx);
-
-		return lineBatch;
+		return batch;
 	}
 
 
-	std::unique_ptr<re::Batch> BuildBoundingBoxBatch(
+	std::unique_ptr<re::BatchHandle> BuildBoundingBoxBatch(
 		gr::RenderDataManager const& renderData,
 		gr::RenderDataID renderDataID, 
 		re::Lifetime batchLifetime,
@@ -189,24 +190,22 @@ namespace
 			std::move(boxIndexes),
 			false);
 
-		re::Batch::RasterParams boundingBoxRasterParams{};
-		boundingBoxRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		boundingBoxRasterParams.m_numInstances = 1;
-		boundingBoxRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetVertexBuffer(0, boxPositionsStream)
+			.SetVertexBuffer(1, boxColorStream)
+			.SetIndexBuffer(boxIndexStream)
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_Line)
+			.Build(batchLifetime));
 
-		boundingBoxRasterParams.m_vertexBuffers[0] = boxPositionsStream;
-		boundingBoxRasterParams.m_vertexBuffers[1] = boxColorStream;
-
-		boundingBoxRasterParams.m_indexBuffer = re::VertexBufferInput(boxIndexStream);
-
-		std::unique_ptr<re::Batch> boundingBoxBatch = std::make_unique<re::Batch>(
-			batchLifetime, boundingBoxRasterParams, k_debugEffectID, effect::drawstyle::Debug_Line);
-
-		return boundingBoxBatch;
+		return batch;
 	}
 
 
-	std::unique_ptr<re::Batch> BuildVertexNormalsBatch(
+	std::unique_ptr<re::BatchHandle> BuildVertexNormalsBatch(
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime,
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
@@ -226,20 +225,20 @@ namespace
 			normalStream->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 
-		re::Batch::RasterParams normalRasterParams;
-		normalRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
-		normalRasterParams.m_numInstances = 1;
-		normalRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::PointList;
-		normalRasterParams.m_vertexBuffers = { positionStream, normalStream, };
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::ArrayInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
+			.SetVertexBuffers({ positionStream, normalStream, })
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_Normal)
+			.Build(batchLifetime));
 
-		std::unique_ptr<re::Batch> normalDebugBatch = std::make_unique<re::Batch>(
-			batchLifetime, normalRasterParams, k_debugEffectID, effect::drawstyle::Debug_Normal);
-
-		return normalDebugBatch;
+		return batch;
 	}
 
 	
-	std::unique_ptr<re::Batch> BuildCameraFrustumBatch(
+	std::unique_ptr<re::BatchHandle> BuildCameraFrustumBatch(
 		re::Lifetime batchLifetime,
 		gr::Transform::RenderData const* transformData,
 		glm::vec4 const& frustumColor)
@@ -311,24 +310,22 @@ namespace
 			std::move(frustumIndexes),
 			false);
 
-		re::Batch::RasterParams frustumRasterParams{};
-		frustumRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		frustumRasterParams.m_numInstances = 1;
-		frustumRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::LineList;
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetVertexBuffer(0, frustumPositionsStream)
+			.SetVertexBuffer(1, frustumColorStream)
+			.SetIndexBuffer(frustumIndexStream)
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_InstanceIDTransformIdx)
+			.Build(batchLifetime));
 
-		frustumRasterParams.m_vertexBuffers[0] = frustumPositionsStream;
-		frustumRasterParams.m_vertexBuffers[1] = frustumColorStream;
-
-		frustumRasterParams.m_indexBuffer = frustumIndexStream;
-
-		std::unique_ptr<re::Batch> frustumBatch = std::make_unique<re::Batch>(
-			batchLifetime, frustumRasterParams, k_debugEffectID, effect::drawstyle::Debug_InstanceIDTransformIdx);
-
-		return frustumBatch;
+		return batch;
 	}
 	
 
-	std::unique_ptr<re::Batch> BuildWireframeBatch(
+	std::unique_ptr<re::BatchHandle> BuildWireframeBatch(
 		gr::RenderDataID renderDataID,
 		re::Lifetime batchLifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData)
@@ -339,17 +336,17 @@ namespace
 		core::InvPtr<gr::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
-		re::Batch::RasterParams wireframeRasterParams;
-		wireframeRasterParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
-		wireframeRasterParams.m_numInstances = 1;
-		wireframeRasterParams.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-		wireframeRasterParams.m_vertexBuffers = {positionStream};
-		wireframeRasterParams.m_indexBuffer = indexStream;
+		std::unique_ptr<re::BatchHandle> batch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder()
+			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetNumInstances_TEMP(1)
+			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::TriangleList)
+			.SetVertexBuffer(0, positionStream)
+			.SetIndexBuffer(indexStream)
+			.SetEffectID(k_debugEffectID)
+			.SetDrawstyleBitmask(effect::drawstyle::Debug_Wireframe)
+			.Build(batchLifetime));
 
-		std::unique_ptr<re::Batch> wireframeBatch = std::make_unique<re::Batch>(
-			batchLifetime, wireframeRasterParams, k_debugEffectID, effect::drawstyle::Debug_Wireframe);
-
-		return wireframeBatch;
+		return batch;
 	}
 	
 
@@ -455,7 +452,8 @@ namespace gr
 			{
 				m_worldCoordinateAxisBatch = BuildAxisBatch(identityObjects[0], re::Lifetime::Permanent);
 			}
-			re::Batch* batch = m_debugStage->AddBatchWithLifetime(*m_worldCoordinateAxisBatch, re::Lifetime::SingleFrame);
+			re::BatchHandle& batch = 
+				*m_debugStage->AddBatchWithLifetime(*m_worldCoordinateAxisBatch, re::Lifetime::SingleFrame);
 
 			batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 				InstanceIndexData::s_shaderName, std::views::single(identityID)));
@@ -473,8 +471,8 @@ namespace gr
 			{
 				SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
 
-				std::vector<re::Batch> const& mainCamBatches = m_viewBatches->at(mainCamID);
-				for (re::Batch const& batch : mainCamBatches)
+				std::vector<re::BatchHandle> const& mainCamBatches = m_viewBatches->at(mainCamID);
+				for (re::BatchHandle const& batch : mainCamBatches)
 				{
 					m_wireframeStage->AddBatch(batch);
 				}
@@ -516,7 +514,7 @@ namespace gr
 										boundsRenderData, 
 										m_meshPrimBoundsColor);
 							}
-							re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+							re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 								*m_meshPrimBoundsBatches.at(meshPrimRenderDataID), re::Lifetime::SingleFrame);
 
 							// For simplicity, we build our lines in world space, and attach an identity transform buffer
@@ -534,7 +532,7 @@ namespace gr
 						{
 							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
 							{
-								std::unique_ptr<re::Batch> normalsBatch = BuildVertexNormalsBatch(
+								std::unique_ptr<re::BatchHandle> normalsBatch = BuildVertexNormalsBatch(
 										meshPrimRenderDataID,
 										re::Lifetime::Permanent,
 										meshPrimRenderData);
@@ -546,7 +544,7 @@ namespace gr
 										std::move(normalsBatch));
 								}
 							}
-							re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+							re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 								*m_vertexNormalBatches.at(meshPrimRenderDataID), re::Lifetime::SingleFrame);
 							batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 								InstanceIndexData::s_shaderName, std::views::single(meshPrimRenderDataID)));
@@ -562,7 +560,7 @@ namespace gr
 								meshPrimRenderDataID, 
 								BuildAxisBatch(meshPrimRenderDataID, re::Lifetime::Permanent));
 						}
-						re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+						re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 							*m_meshCoordinateAxisBatches.at(meshPrimRenderDataID), re::Lifetime::SingleFrame);
 						batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 							InstanceIndexData::s_shaderName, std::views::single(meshPrimRenderDataID)));
@@ -581,7 +579,7 @@ namespace gr
 		auto HandleBoundsBatches = [this, &renderData, &ibm](
 			bool doShowBounds,
 			gr::RenderObjectFeature boundsFeatureBit, 
-			std::unordered_map<gr::RenderDataID, std::unique_ptr<re::Batch>>& boundsBatches,
+			std::unordered_map<gr::RenderDataID, std::unique_ptr<re::BatchHandle>>& boundsBatches,
 			glm::vec4 const& boundsColor)
 			{
 				if (doShowBounds)
@@ -602,7 +600,7 @@ namespace gr
 									boundsBatches[objectID] = BuildBoundingBoxBatch(
 										renderData, objectID, re::Lifetime::Permanent, boundsRenderData, boundsColor);
 								}
-								re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+								re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 									*boundsBatches.at(objectID), re::Lifetime::SingleFrame);
 
 								// For simplicity, we build our lines in world space, and attach an identity transform buffer
@@ -655,7 +653,7 @@ namespace gr
 						camID, 
 						BuildAxisBatch(camID, re::Lifetime::Permanent));
 				}
-				re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+				re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 					*m_cameraAxisBatches.at(camID), re::Lifetime::SingleFrame);
 				batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(camID)));
@@ -725,7 +723,7 @@ namespace gr
 							camData.second.second,
 							m_cameraFrustumColor));
 
-						m_cameraFrustumBatches.at(camID)[faceIdx]->SetBuffer(
+						(*m_cameraFrustumBatches.at(camID)[faceIdx])->SetBuffer(
 							m_cameraFrustumTransformBuffers.at(camID)[faceIdx]);
 					}
 
@@ -755,7 +753,7 @@ namespace gr
 							BuildWireframeBatch(
 								pointID, re::Lifetime::Permanent, pointItr->Get<gr::MeshPrimitive::RenderData>()));
 					}
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_deferredLightWireframeBatches.at(pointID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(pointID)));
@@ -777,7 +775,7 @@ namespace gr
 							BuildWireframeBatch(
 								spotID, re::Lifetime::Permanent, spotItr->Get<gr::MeshPrimitive::RenderData>()));
 					}
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_deferredLightWireframeBatches.at(spotID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(spotID)));
@@ -801,7 +799,7 @@ namespace gr
 						lightID,
 						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(lightID)));
@@ -818,7 +816,7 @@ namespace gr
 						lightID,
 						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(lightID)));
@@ -836,7 +834,7 @@ namespace gr
 						lightID,
 						BuildAxisBatch(lightID, re::Lifetime::Permanent));
 
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_lightCoordinateAxisBatches.at(lightID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(lightID)));
@@ -869,7 +867,7 @@ namespace gr
 							transformID, 
 							BuildAxisBatch(renderDataID, re::Lifetime::Permanent));
 					}
-					re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+					re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 						*m_transformAxisBatches.at(transformID), re::Lifetime::SingleFrame);
 					batch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 						InstanceIndexData::s_shaderName, std::views::single(renderDataID)));
@@ -896,7 +894,7 @@ namespace gr
 										parentTransformID,
 										renderDataID));
 							}
-							re::Batch* batch = m_debugStage->AddBatchWithLifetime(
+							re::BatchHandle& batch = *m_debugStage->AddBatchWithLifetime(
 								*m_transformParentChildLinkBatches.at(transformID), re::Lifetime::SingleFrame);
 
 							// Our LUT Buffers are built from RenderDataIDs; Get a list of ALL RenderDataIDs referencing the parent

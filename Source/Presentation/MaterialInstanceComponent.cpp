@@ -16,6 +16,9 @@ namespace fr
 	gr::Material::MaterialInstanceRenderData MaterialInstanceComponent::CreateRenderData(
 		entt::entity, MaterialInstanceComponent const& matComponent)
 	{
+		SEAssert(matComponent.m_instanceData.m_textures.size() == matComponent.m_instanceData.m_samplers.size(),
+			"Texture/sampler array size mismatch. We assume the all material instance arrays are the same size");
+
 		return matComponent.m_instanceData;
 	}
 

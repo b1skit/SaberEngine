@@ -344,7 +344,6 @@ namespace re
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
 		: m_vertexStream(stream)
 		, m_bufferOverride(nullptr)
-		, m_view(BufferView::VertexStreamType{})
 		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 		if (m_vertexStream)
@@ -357,13 +356,16 @@ namespace re
 				.m_isNormalized = static_cast<bool>(stream->DoNormalize()),
 			};
 		}
+		else
+		{
+			m_view = BufferView::VertexStreamType{};
+		}
 	}
 
 
 	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
 		: m_vertexStream(stream)
 		, m_bufferOverride(bufferOverride)
-		, m_view(BufferView::VertexStreamType{})
 		, m_bindSlot(k_invalidSlotIdx) // NOTE: Automatically resolved by the batch
 	{
 		SEAssert(m_vertexStream && m_bufferOverride, "Override constructure requires a valid stream and buffer");

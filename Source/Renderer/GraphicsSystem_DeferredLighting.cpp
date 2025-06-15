@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
+#include "BatchFactories.h"
 #include "Buffer.h"
 #include "IndexedBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -185,15 +187,13 @@ namespace gr
 		const uint32_t dispatchXYDims = 
 			grutil::GetRoundedDispatchDimension(brdfTexWidthHeight, BRDF_INTEGRATION_DISPATCH_XY_DIMS);
 
-		// Add our dispatch information to a compute batch
-		brdfStage->AddBatch(re::Batch(
-			re::Lifetime::SingleFrame,
-			re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(
-					dispatchXYDims,
-					dispatchXYDims,
-					1u) },
-				k_deferredLightingEffectID));
+		brdfStage->AddBatch(gr::ComputeBatchBuilder()
+			.SetThreadGroupCount(glm::uvec3(
+				dispatchXYDims,
+				dispatchXYDims,
+				1u))
+			.SetEffectID(k_deferredLightingEffectID)
+			.BuildSingleFrame());
 
 		pipeline.AppendSingleFrameStage(std::move(brdfStage));
 	}
@@ -373,10 +373,11 @@ namespace gr
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		if (m_cubeMeshBatch == nullptr)
 		{
-			m_cubeMeshBatch = std::make_unique<re::Batch>(
-				re::Lifetime::Permanent,
-				m_cubeMeshPrimitive,
-				k_deferredLightingEffectID);
+			m_cubeMeshBatch = std::make_unique<re::BatchHandle>(RasterBatchBuilder::CreateMeshPrimitiveBatch(
+				m_cubeMeshPrimitive, 
+				k_deferredLightingEffectID, 
+				grutil::BuildMeshPrimitiveRasterBatch)
+					.BuildPermanent());
 		}
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
@@ -548,12 +549,10 @@ namespace gr
 		const uint32_t roundedYDim = 
 			grutil::GetRoundedDispatchDimension(m_lightingTargetSet->GetViewport().Height(), k_dispatchXYThreadDims);
 
-		m_fullscreenComputeBatch = std::make_unique<re::Batch>(
-			re::Lifetime::Permanent,
-			re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u)
-			},
-			k_deferredLightingEffectID);
+		m_fullscreenComputeBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1u))
+			.SetEffectID(k_deferredLightingEffectID)
+			.BuildPermanent());
 
 
 		// Point light stage:
@@ -693,9 +692,6 @@ namespace gr
 
 					const gr::RenderDataID lightID = ambientData.m_renderDataID;
 
-					gr::MeshPrimitive::RenderData const& ambientMeshPrimData =
-						ambientItr->Get<gr::MeshPrimitive::RenderData>();
-
 					core::InvPtr<re::Texture> const& iblTex = ambientData.m_iblTex;
 					SEAssert(iblTex, "IBL texture cannot be null");
 
@@ -729,27 +725,22 @@ namespace gr
 							.m_ambientParams = ambientParams,
 							.m_IEMTex = iemTex,
 							.m_PMREMTex = pmremTex,
-							.m_batch = re::Batch(re::Lifetime::Permanent, ambientMeshPrimData, nullptr)
+							.m_batch = gr::RasterBatchBuilder::CreateInstance(
+								lightID, renderData, grutil::BuildInstancedRasterBatch)
+									.SetEffectID(k_deferredLightingEffectID)
+									.SetTextureInput(
+										"CubeMapIEM",
+										iemTex,
+										re::Sampler::GetSampler("WrapMinMagMipLinear"),
+										re::TextureView(iemTex))
+									.SetTextureInput(
+										"CubeMapPMREM",
+										pmremTex,
+										re::Sampler::GetSampler("WrapMinMagMipLinear"),
+										re::TextureView(pmremTex))
+									.SetBuffer(AmbientLightData::s_shaderName, ambientParams)
+									.BuildPermanent()
 						});
-
-					// Set the batch inputs:
-					re::Batch& ambientBatch = m_ambientLightData.at(lightID).m_batch;
-
-					ambientBatch.SetEffectID(k_deferredLightingEffectID);
-
-					ambientBatch.SetTextureInput(
-						"CubeMapIEM",
-						iemTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"),
-						re::TextureView(iemTex));
-
-					ambientBatch.SetTextureInput(
-						"CubeMapPMREM",
-						pmremTex,
-						re::Sampler::GetSampler("WrapMinMagMipLinear"),
-						re::TextureView(pmremTex));
-
-					ambientBatch.SetBuffer(AmbientLightData::s_shaderName, ambientParams);
 				}
 			}
 		}
@@ -805,21 +796,18 @@ namespace gr
 					gr::Light::RenderDataDirectional const& directionalData =
 						directionalItr->Get<gr::Light::RenderDataDirectional>();
 
-					gr::MeshPrimitive::RenderData const& meshData = directionalItr->Get<gr::MeshPrimitive::RenderData>();
-
 					const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
 
 					m_punctualLightData.emplace(
 						lightID,
 						PunctualLightRenderData{
 							.m_type = gr::Light::Directional,
-							.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
+							.m_batch = gr::RasterBatchBuilder::CreateInstance(
+								lightID, renderData, grutil::BuildInstancedRasterBatch)
+									.SetEffectID(k_deferredLightingEffectID)
+									.BuildPermanent(),
 							.m_hasShadow = directionalData.m_hasShadow
 						});
-
-					re::Batch& directionalLightBatch = m_punctualLightData.at(directionalData.m_renderDataID).m_batch;
-
-					directionalLightBatch.SetEffectID(k_deferredLightingEffectID);
 					
 					// Note: We set the shadow texture inputs per frame/batch if/as required
 				}
@@ -834,21 +822,18 @@ namespace gr
 			bool hasShadow,
 			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData)
 			{
-				gr::MeshPrimitive::RenderData const& meshData = lightItr->Get<gr::MeshPrimitive::RenderData>();
-
-				punctualLightData.emplace(
-					lightItr->GetRenderDataID(),
-					PunctualLightRenderData{
-						.m_type = lightType,
-						.m_batch = re::Batch(re::Lifetime::Permanent, meshData, nullptr),
-						.m_hasShadow = hasShadow
-					});
-
 				const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
-				re::Batch& lightBatch = punctualLightData.at(lightID).m_batch;
-
-				lightBatch.SetEffectID(k_deferredLightingEffectID);
+				punctualLightData.emplace(
+					lightID,
+					PunctualLightRenderData{
+						.m_type = lightType,
+						.m_batch = gr::RasterBatchBuilder::CreateInstance(
+							lightID, renderData, grutil::BuildInstancedRasterBatch)
+								.SetEffectID(k_deferredLightingEffectID)
+								.BuildPermanent(),
+						.m_hasShadow = hasShadow
+					});
 				
 				// Note: We set the shadow texture inputs per frame/batch if/as required
 			};
@@ -1017,8 +1002,8 @@ namespace gr
 					char const* shadowTexShaderName,
 					util::HashKey const& samplerTypeName)
 					{
-						re::Batch* duplicatedBatch =
-							stage->AddBatchWithLifetime(light.second.m_batch, re::Lifetime::SingleFrame);
+						re::BatchHandle& duplicatedBatch =
+							*stage->AddBatchWithLifetime(light.second.m_batch, re::Lifetime::SingleFrame);
 
 						uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
 						if (light.second.m_hasShadow)

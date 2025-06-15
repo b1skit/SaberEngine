@@ -1,10 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
 #include "GraphicsSystem_ComputeMips.h"
 #include "GraphicsUtils.h"
 #include "RenderManager.h"
 #include "Sampler.h"
-
-#include "Core/Util/MathUtils.h"
 
 #include "Renderer/Shaders/Common/MipGenerationParams.h"
 
@@ -276,12 +275,10 @@ namespace gr
 							grutil::GetRoundedDispatchDimension(firstTargetMipDimensions.y, k_numThreadsY);
 
 						// Add our dispatch information to a compute batch:
-						re::Batch computeBatch = re::Batch(
-							re::Lifetime::SingleFrame,
-							re::Batch::ComputeParams{ .m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) },
-							k_mipGenEffectID);
-
-						mipGenerationStage->AddBatch(computeBatch);
+						mipGenerationStage->AddBatch(gr::ComputeBatchBuilder()
+							.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1u))
+							.SetEffectID(k_mipGenEffectID)
+							.BuildSingleFrame());
 
 						insertItr = m_stagePipeline->AppendSingleFrameStage(insertItr, std::move(mipGenerationStage));
 					}

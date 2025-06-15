@@ -317,10 +317,10 @@ namespace opengl
 						GLuint currentVAO = 0;
 
 						// Stage batches:
-						std::vector<re::Batch> const& batches = stage->GetStageBatches();
-						for (re::Batch const& batch : batches)
+						std::vector<re::BatchHandle> const& batches = stage->GetStageBatches();
+						for (re::BatchHandle const& batch : batches)
 						{
-							core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
+							core::InvPtr<re::Shader> const& batchShader = batch->GetShader();
 							SEAssert(batchShader != nullptr, "Batch must have a shader");
 
 							if (currentShader != batchShader)
@@ -333,23 +333,23 @@ namespace opengl
 							SEAssert(currentShader, "Current shader is null");
 
 							// Batch buffers:
-							std::vector<re::BufferInput> const& batchBuffers = batch.GetBuffers();
+							std::vector<re::BufferInput> const& batchBuffers = batch->GetBuffers();
 							for (re::BufferInput const& batchBufferInput : batchBuffers)
 							{
 								opengl::Shader::SetBuffer(*currentShader, batchBufferInput);
 							}
 
 							// Set Batch Texture/Sampler inputs:
-							for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
+							for (auto const& texSamplerInput : batch->GetTextureAndSamplerInputs())
 							{
 								opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
 							}
 
 							// Batch compute inputs:
-							opengl::Shader::SetImageTextureTargets(*currentShader, batch.GetRWTextureInputs());
+							opengl::Shader::SetImageTextureTargets(*currentShader, batch->GetRWTextureInputs());
 
 							// Batch root constants:
-							opengl::Shader::SetRootConstants(*currentShader, batch.GetRootConstants());							
+							opengl::Shader::SetRootConstants(*currentShader, batch->GetRootConstants());							
 
 							// Draw!
 							switch (curStageType)
@@ -357,7 +357,7 @@ namespace opengl
 							case re::Stage::Type::Raster:
 							case re::Stage::Type::FullscreenQuad:
 							{
-								re::Batch::RasterParams const& rasterParams = batch.GetRasterParams();
+								re::Batch::RasterParams const& rasterParams = batch->GetRasterParams();
 
 								// Set the VAO:
 								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
@@ -404,7 +404,7 @@ namespace opengl
 										static_cast<GLsizei>(rasterParams.m_indexBuffer.m_view.m_streamView.m_numElements),	// GLsizei count
 										DataTypeToGLDataType(rasterParams.m_indexBuffer.m_view.m_streamView.m_dataType), 	// GLenum type
 										0,									// Byte offset (into index buffer)
-										(GLsizei)batch.GetInstanceCount());	// Instance count
+										(GLsizei)batch->GetInstanceCount());	// Instance count
 								}
 								break;
 								case re::Batch::GeometryMode::ArrayInstanced:
@@ -416,7 +416,7 @@ namespace opengl
 										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),
 										0,
 										numElements,
-										(GLsizei)batch.GetInstanceCount());
+										(GLsizei)batch->GetInstanceCount());
 								}
 								break;
 								default: SEAssertF("Invalid batch geometry type");
@@ -425,7 +425,7 @@ namespace opengl
 							break;
 							case re::Stage::Type::Compute:
 							{
-								glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
+								glm::uvec3 const& threadGroupCount = batch->GetComputeParams().m_threadGroupCount;
 								glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
 								// Barrier to prevent reading before texture writes have finished.

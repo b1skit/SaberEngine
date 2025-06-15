@@ -1,19 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer.h"
-#include "Material.h"
 #include "RenderManager.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "TextureView.h"
+#include "VertexStream.h"
 
 #include "Core/Assert.h"
 
 
 namespace
 {
-	constexpr size_t k_batchBufferIDsReserveAmount = 10;
-
-
 	void ValidateBufferLifetimeCompatibility(re::Lifetime batchLifetime, re::BufferInput const& bufferInput)
 	{
 #if defined(_DEBUG)
@@ -161,332 +159,12 @@ namespace
 
 namespace re
 {
-	Batch::RasterParams::RasterParams()
-		: m_batchGeometryMode(GeometryMode::Invalid)
-		, m_numInstances(0)
-		, m_primitiveTopology(gr::MeshPrimitive::PrimitiveTopology::TriangleList)
-		, m_vertexBuffers{}
-		, m_indexBuffer{}
-		, m_materialUniqueID(core::IUniqueID::k_invalidUniqueID)
-	{
-		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
-	}
-
-
-	Batch::RasterParams::RasterParams(RasterParams const& rhs) noexcept
-	{
-		*this = rhs;
-	}
-
-
-	Batch::RasterParams::RasterParams(RasterParams&& rhs) noexcept
-		: m_vertexBuffers{}
-		, m_indexBuffer{}
-	{
-		*this = std::move(rhs);
-	}
-
-
-	Batch::RasterParams& Batch::RasterParams::operator=(Batch::RasterParams const& rhs) noexcept
-	{
-		if (this != &rhs)
-		{
-			m_batchGeometryMode = rhs.m_batchGeometryMode;
-			m_numInstances = rhs.m_numInstances;
-			m_primitiveTopology = rhs.m_primitiveTopology;
-
-			m_vertexBuffers = rhs.m_vertexBuffers;
-
-			m_indexBuffer = rhs.m_indexBuffer;
-
-			m_materialUniqueID = rhs.m_materialUniqueID;
-		}
-		return *this;
-
-		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
-	}
-
-
-	Batch::RasterParams& Batch::RasterParams::operator=(Batch::RasterParams&& rhs) noexcept
-	{
-		if (this != &rhs)
-		{
-			m_batchGeometryMode = rhs.m_batchGeometryMode;
-			rhs.m_batchGeometryMode = GeometryMode::Invalid;
-
-			m_numInstances = rhs.m_numInstances;
-			rhs.m_numInstances = 0;
-
-			m_primitiveTopology = rhs.m_primitiveTopology;
-			rhs.m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-
-			m_vertexBuffers = std::move(rhs.m_vertexBuffers);
-
-			m_indexBuffer = std::move(rhs.m_indexBuffer);
-
-			m_materialUniqueID = rhs.m_materialUniqueID;
-			rhs.m_materialUniqueID = core::IUniqueID::k_invalidUniqueID;
-		}
-		return *this;
-
-		SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
-	}
-
-
-	Batch::RasterParams::~RasterParams()
-	{
-		m_vertexBuffers = {};
-		m_indexBuffer = {};
-	}
-
-
-	Batch::RayTracingParams::RayTracingParams()
-		: m_operation(Operation::Invalid)
-		, m_ASInput{}
-		, m_dispatchDimensions(0)
-		, m_rayGenShaderIdx(0)
-	{
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 80 || sizeof(Batch::RayTracingParams) == 72,
-			"Must update this if RayTracingParams debug/release size has changed");
-	}
-
-
-	Batch::RayTracingParams::RayTracingParams(RayTracingParams const& rhs) noexcept
-	{
-		*this = rhs;
-	}
-
-
-	Batch::RayTracingParams::RayTracingParams(RayTracingParams&& rhs) noexcept
-	{
-		*this = std::move(rhs);
-	}
-
-
-	Batch::RayTracingParams& Batch::RayTracingParams::operator=(Batch::RayTracingParams const& rhs) noexcept
-	{
-		if (this != &rhs)
-		{
-			m_operation = rhs.m_operation;
-			m_ASInput.m_shaderName = rhs.m_ASInput.m_shaderName;
-			m_ASInput.m_accelerationStructure = rhs.m_ASInput.m_accelerationStructure;
-			m_dispatchDimensions = rhs.m_dispatchDimensions;
-			m_rayGenShaderIdx = rhs.m_rayGenShaderIdx;
-		}
-		return *this;
-
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 80 || sizeof(Batch::RayTracingParams) == 72,
-			"Must update this if RayTracingParams debug/release size has changed");
-	}
-
-
-	Batch::RayTracingParams& Batch::RayTracingParams::operator=(Batch::RayTracingParams&& rhs) noexcept
-	{
-		if (this != &rhs)
-		{
-			m_operation = rhs.m_operation;
-			rhs.m_operation = Operation::Invalid;
-
-			m_ASInput.m_shaderName = std::move(rhs.m_ASInput.m_shaderName);
-			m_ASInput.m_accelerationStructure = std::move(rhs.m_ASInput.m_accelerationStructure);
-			m_dispatchDimensions = std::move(rhs.m_dispatchDimensions);
-			
-			m_rayGenShaderIdx = rhs.m_rayGenShaderIdx;
-			rhs.m_rayGenShaderIdx = 0;
-		}
-		return *this;
-
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 80 || sizeof(Batch::RayTracingParams) == 72,
-			"Must update this if RayTracingParams debug/release size has changed");
-	}
-
-
-	Batch::RayTracingParams::~RayTracingParams()
-	{
-		m_ASInput = {};
-
-		SEStaticAssert(sizeof(Batch::RayTracingParams) == 80 || sizeof(Batch::RayTracingParams) == 72,
-			"Must update this if RayTracingParams debug/release size has changed");
-	}
-
-
-	Batch::Batch(
-		re::Lifetime lifetime,
-		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
-		EffectID effectID)
-		: m_lifetime(lifetime)
-		, m_type(BatchType::Raster)
-		, m_rasterParams{}
-		, m_batchShader(nullptr)
-		, m_effectID(effectID)
+	Batch::Batch(BatchType batchType)
+		: m_lifetime(re::Lifetime::SingleFrame)
+		, m_type(batchType)
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
-	{
-		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
-
-		m_rasterParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-		m_rasterParams.m_numInstances = 1;
-		m_rasterParams.m_primitiveTopology = meshPrimitive->GetMeshParams().m_primitiveTopology;
-
-		// We assume the meshPrimitive's vertex streams are ordered such that identical stream types are tightly
-		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
-		std::vector<gr::MeshPrimitive::MeshVertexStream> const& vertexStreams = meshPrimitive->GetVertexStreams();
-		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(vertexStreams.size()); slotIdx++)
-		{
-			if (vertexStreams[slotIdx].m_vertexStream == nullptr)
-			{
-				break;
-			}
-
-			m_rasterParams.m_vertexBuffers[slotIdx] = VertexBufferInput(vertexStreams[slotIdx].m_vertexStream);
-		}
-		m_rasterParams.m_indexBuffer = meshPrimitive->GetIndexStream();
-
-		SEAssert(m_rasterParams.m_indexBuffer.GetStream() != nullptr,
-			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
-
-		ComputeDataHash();
-	}
-
-
-	Batch::Batch(
-		re::Lifetime lifetime,
-		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		gr::Material::MaterialInstanceRenderData const* materialInstanceData,
-		VertexStreamOverride const* vertexStreamOverride /*= nullptr*/)
-		: m_lifetime(lifetime)
-		, m_type(BatchType::Raster)
-		, m_rasterParams{}
-		, m_batchShader(nullptr)
-		, m_effectID(materialInstanceData ? materialInstanceData->m_effectID : EffectID())
-		, m_drawStyleBitmask(0)
-		, m_batchFilterBitmask(0)
-	{
-		ValidateVertexStreamOverrides(m_lifetime, meshPrimRenderData.m_vertexStreams, vertexStreamOverride); // _DEBUG only
-
-		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
-
-		m_rasterParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-		m_rasterParams.m_numInstances = 1;
-		m_rasterParams.m_primitiveTopology = meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology;
-
-		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
-		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
-		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_numVertexStreams); slotIdx++)
-		{
-			if (meshPrimRenderData.m_vertexStreams[slotIdx] == nullptr)
-			{
-				break;
-			}
-
-			SEAssert((m_lifetime == re::Lifetime::SingleFrame) ||
-				(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == 
-					re::Lifetime::Permanent && 
-					m_lifetime == re::Lifetime::Permanent),
-				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
-
-			if (vertexStreamOverride)
-			{
-				m_rasterParams.m_vertexBuffers[slotIdx] = (*vertexStreamOverride)[slotIdx];
-			}
-			else
-			{
-				m_rasterParams.m_vertexBuffers[slotIdx] = VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]);
-			}
-		}
-		m_rasterParams.m_indexBuffer = meshPrimRenderData.m_indexStream;
-
-		SEAssert(m_rasterParams.m_indexBuffer.GetStream() != nullptr,
-			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
-		
-		// Material textures/samplers:
-		if (materialInstanceData)
-		{
-			SEAssert(materialInstanceData->m_textures.size() == materialInstanceData->m_samplers.size(),
-				"Texture/sampler array size mismatch. We assume the all material instance arrays are the same size");
-
-			for (size_t i = 0; i < materialInstanceData->m_textures.size(); i++)
-			{
-				if (materialInstanceData->m_textures[i] && materialInstanceData->m_samplers[i])
-				{
-					SetTextureInput(
-						materialInstanceData->m_shaderSamplerNames[i],
-						materialInstanceData->m_textures[i],
-						materialInstanceData->m_samplers[i],
-						re::TextureView(materialInstanceData->m_textures[i]));
-				}
-			}
-
-			m_rasterParams.m_materialUniqueID = materialInstanceData->m_srcMaterialUniqueID;
-
-			// Filter bits:
-			SetFilterMaskBit(Filter::AlphaBlended, materialInstanceData->m_alphaMode == gr::Material::AlphaMode::Blend);
-			SetFilterMaskBit(Filter::ShadowCaster, materialInstanceData->m_isShadowCaster);
-		}
-
-		m_drawStyleBitmask = gr::Material::MaterialInstanceRenderData::GetDrawstyleBits(materialInstanceData);
-
-		ComputeDataHash();
-	}
-
-
-	Batch::Batch(
-		re::Lifetime lifetime,
-		RasterParams const& rasterParams, 
-		EffectID effectID,
-		effect::drawstyle::Bitmask bitmask)
-		: m_lifetime(lifetime)
-		, m_type(BatchType::Raster)
-		, m_rasterParams{}
-		, m_batchShader(nullptr)
-		, m_effectID(effectID)
-		, m_drawStyleBitmask(bitmask)
-		, m_batchFilterBitmask(0)
-	{
-		SEAssert(rasterParams.m_vertexBuffers[0].GetStream(), "Can't have a graphics batch with 0 vertex streams");
-
-		m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
-
-		m_rasterParams = rasterParams;
-
-		ComputeDataHash();
-	}
-
-
-	Batch::Batch(
-		re::Lifetime lifetime,
-		ComputeParams const& computeParams, 
-		EffectID effectID)
-		: m_lifetime(lifetime)
-		, m_type(BatchType::Compute)
-		, m_computeParams(computeParams)
-		, m_batchShader(nullptr)
-		, m_effectID(effectID)
-		, m_drawStyleBitmask(0)
-		, m_batchFilterBitmask(0)
-	{
-		ComputeDataHash();
-	}
-
-
-	Batch::Batch(re::Lifetime lifetime, RayTracingParams const& rtParams)
-		: m_lifetime(lifetime)
-		, m_type(BatchType::RayTracing)
-		, m_rayTracingParams(rtParams)
-		, m_batchShader(nullptr)
-		, m_drawStyleBitmask(0)
-		, m_batchFilterBitmask(0)
-	{
-		ComputeDataHash();
-	}
-
-
-	Batch::Batch(Batch&& rhs) noexcept
-		: m_lifetime(rhs.m_lifetime)
-		, m_type(rhs.m_type)
-		, m_batchShader(nullptr)
-		, m_drawStyleBitmask(0)
-		, m_batchFilterBitmask(0)
+		, m_renderDataID(gr::k_invalidRenderDataID)
 	{
 		switch (m_type)
 		{
@@ -514,8 +192,34 @@ namespace re
 		break;
 		default: SEAssertF("Invalid type");
 		}
+	};
 
-		m_batchRootConstants = std::move(rhs.m_batchRootConstants);
+
+	Batch::Batch(Batch&& rhs) noexcept
+	{
+		switch (rhs.m_type)
+		{
+		case BatchType::Raster:
+		{
+			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing RasterParams
+			memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
+			memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
+		}
+		break;
+		case BatchType::Compute:
+		{
+			// Zero-initialize for consistency
+			memset(&m_computeParams, 0, sizeof(m_computeParams));
+		}
+		break;
+		case BatchType::RayTracing:
+		{
+			// Zero-initialize to ensure shared_ptr doesn't contain garbage
+			memset(&m_rayTracingParams, 0, sizeof(m_rayTracingParams));
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
 
 		*this = std::move(rhs);
 	};
@@ -562,6 +266,8 @@ namespace re
 			m_batchTextureSamplerInputs = std::move(rhs.m_batchTextureSamplerInputs);
 			m_batchRWTextureInputs = std::move(rhs.m_batchRWTextureInputs);
 
+			m_batchRootConstants = std::move(rhs.m_batchRootConstants);
+
 			SetDataHash(rhs.GetDataHash());
 			rhs.ResetDataHash();
 		}
@@ -570,34 +276,26 @@ namespace re
 
 
 	Batch::Batch(Batch const& rhs) noexcept
-		: m_lifetime(re::Lifetime::SingleFrame)
-		, m_type(rhs.m_type)
-		, m_batchShader(nullptr)
-		, m_drawStyleBitmask(0)
-		, m_batchFilterBitmask(0)
 	{
-		switch (m_type)
+		switch (rhs.m_type)
 		{
 		case BatchType::Raster:
 		{
 			// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing RasterParams
 			memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
 			memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
-
-			m_rasterParams = {};
 		}
 		break;
 		case BatchType::Compute:
 		{
-			m_computeParams = {};
+			// Zero-initialize for consistency
+			memset(&m_computeParams, 0, sizeof(m_computeParams));
 		}
 		break;
 		case BatchType::RayTracing:
 		{
 			// Zero-initialize to ensure shared_ptr doesn't contain garbage
 			memset(&m_rayTracingParams, 0, sizeof(m_rayTracingParams));
-
-			m_rayTracingParams = {};
 		}
 		break;
 		default: SEAssertF("Invalid type");
@@ -644,7 +342,7 @@ namespace re
 			m_batchTextureSamplerInputs = rhs.m_batchTextureSamplerInputs;
 			m_batchRWTextureInputs = rhs.m_batchRWTextureInputs;
 
-			m_batchRootConstants = std::move(rhs.m_batchRootConstants);
+			m_batchRootConstants = rhs.m_batchRootConstants;
 
 			SetDataHash(rhs.GetDataHash());
 		}
@@ -671,10 +369,51 @@ namespace re
 			m_rayTracingParams.~RayTracingParams();
 		}
 		break;
+		case BatchType::Invalid:
+		{
+			// Do nothing
+		}
 		default: SEAssertF("Invalid type");
 		}
 		
 		// We'll let everything else be destroyed when it goes out of scope
+	};
+
+
+	void Batch::Destroy()
+	{
+		switch (m_type)
+		{
+		case BatchType::Raster:
+		{
+			m_rasterParams.~RasterParams();
+		}
+		break;
+		case BatchType::Compute:
+		{
+			m_computeParams.~ComputeParams();
+		}
+		break;
+		case BatchType::RayTracing:
+		{
+			m_rayTracingParams.~RayTracingParams();
+		}
+		break;
+		default: SEAssertF("Invalid type: Was Batch already destroyed?");
+		}
+		m_type = BatchType::Invalid;
+
+		m_batchShader = nullptr;
+		m_effectID = 0;
+		m_drawStyleBitmask = 0;
+		m_batchFilterBitmask = 0;
+		m_renderDataID = gr::k_invalidRenderDataID;
+		
+		m_batchBuffers.clear();
+
+		m_batchTextureSamplerInputs.clear();
+		m_batchRWTextureInputs.clear();
+		m_batchRootConstants.Destroy();
 	};
 
 
@@ -696,6 +435,7 @@ namespace re
 
 	void Batch::Finalize(effect::drawstyle::Bitmask stageBitmask)
 	{
+		SEAssert(GetDataHash() != 0, "Batch data hash has not been computed")
 		SEAssert(m_effectID != 0, "Invalid EffectID");
 		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
 
@@ -723,6 +463,11 @@ namespace re
 				{
 					break;
 				}
+
+				SEAssert((m_lifetime == re::Lifetime::SingleFrame) ||
+					(m_rasterParams.m_vertexBuffers[i].GetStream()->GetLifetime() == re::Lifetime::Permanent &&
+						m_lifetime == re::Lifetime::Permanent),
+					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 				
 				const gr::VertexStream::Type curStreamType = 
 					m_rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
@@ -800,7 +545,7 @@ namespace re
 
 	void Batch::ComputeDataHash()
 	{		
-		ResetDataHash();
+		SEAssert(GetDataHash() == 0, "Data hash already computed. This is unexpected");
 
 		// Note: We don't consider the re::Lifetime m_lifetime, as we want single frame/permanent batches to instance
 
@@ -865,9 +610,6 @@ namespace re
 		AddDataBytesToHash(m_effectID);
 		AddDataBytesToHash(m_drawStyleBitmask);
 		AddDataBytesToHash(m_batchFilterBitmask);
-
-		// Root constants:
-		AddDataBytesToHash(m_batchRootConstants.GetDataHash());
 		
 		// Note: We must consider buffers added before instancing has been calcualted, as they allow us to
 		// differentiate batches that are otherwise identical. We'll use the same, identical buffer on the merged
@@ -877,7 +619,21 @@ namespace re
 			AddDataBytesToHash(m_batchBuffers[i].GetBuffer()->GetUniqueID());
 		}
 
-		// Note: We don't compute hashes for batch textures/samplers here; they're appended as they're added
+		// Include textures/samplers in the batch hash:
+		for (auto const& texSamplerInput : m_batchTextureSamplerInputs)
+		{
+			AddDataBytesToHash(texSamplerInput.m_texture->GetUniqueID());
+			AddDataBytesToHash(texSamplerInput.m_sampler->GetUniqueID());
+		}
+
+		// Include RW textures in the batch hash:
+		for (auto const& rwTexInput : m_batchRWTextureInputs)
+		{
+			AddDataBytesToHash(rwTexInput.m_texture->GetUniqueID());
+		}
+
+		// Root constants:
+		AddDataBytesToHash(m_batchRootConstants.GetDataHash());
 	}
 
 
@@ -945,7 +701,10 @@ namespace re
 				"Buffer with the same name has already been set. Re-adding it changes the data hash");
 		}
 #endif
-		AddDataBytesToHash(bufferInput.GetBuffer()->GetUniqueID());
+		if (m_batchBuffers.empty())
+		{
+			m_batchBuffers.reserve(k_batchBufferIDsReserveAmount);
+		}
 
 		m_batchBuffers.emplace_back(std::move(bufferInput));
 	}
@@ -978,11 +737,12 @@ namespace re
 		}
 #endif
 
-		m_batchTextureSamplerInputs.emplace_back(shaderName, texture, sampler, texView);
+		if (m_batchTextureSamplerInputs.empty())
+		{
+			m_batchTextureSamplerInputs.reserve(k_texSamplerInputReserveAmount);
+		}
 
-		// Include textures/samplers in the batch hash:
-		AddDataBytesToHash(texture->GetUniqueID());
-		AddDataBytesToHash(sampler->GetUniqueID());
+		m_batchTextureSamplerInputs.emplace_back(shaderName, texture, sampler, texView);
 	}
 
 
@@ -1007,10 +767,11 @@ namespace re
 		}
 #endif
 
-		m_batchRWTextureInputs.emplace_back(
-			RWTextureInput{ shaderName, texture, texView });
+		if (m_batchRWTextureInputs.empty())
+		{
+			m_batchRWTextureInputs.reserve(k_rwTextureInputReserveAmount);
+		}
 
-		// Include RW textures in the batch hash:
-		AddDataBytesToHash(texture->GetUniqueID());
+		m_batchRWTextureInputs.emplace_back(RWTextureInput{ shaderName, texture, texView });
 	}
 }

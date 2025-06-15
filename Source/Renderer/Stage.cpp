@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
+#include "BatchFactories.h"
 #include "Buffer.h"
 #include "BufferView.h"
 #include "RenderManager.h"
@@ -257,10 +259,11 @@ namespace re
 
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 
-		m_fullscreenQuadBatch = std::make_unique<re::Batch>(
-			re::Lifetime::Permanent,
+		m_fullscreenQuadBatch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder::CreateMeshPrimitiveBatch(
 			m_screenAlignedQuad,
-			stageParams->m_effectID);
+			stageParams->m_effectID,
+			grutil::BuildMeshPrimitiveRasterBatch)
+				.BuildPermanent());
 		
 		AddBatch(*m_fullscreenQuadBatch);
 	}
@@ -855,8 +858,8 @@ namespace re
 
 			for (auto const& batch : m_stageBatches)
 			{
-				ValidateInput(batch.GetTextureAndSamplerInputs());
-				ValidateInput(batch.GetRWTextureInputs());
+				ValidateInput(batch->GetTextureAndSamplerInputs());
+				ValidateInput(batch->GetRWTextureInputs());
 			}
 
 			// Validate depth texture usage
@@ -922,7 +925,7 @@ namespace re
 	}
 
 
-	void Stage::AddBatches(std::vector<re::Batch> const& batches)
+	void Stage::AddBatches(std::vector<re::BatchHandle> const& batches)
 	{
 		SEBeginCPUEvent("Stage::AddBatches");
 
@@ -937,13 +940,19 @@ namespace re
 	}
 
 
-	re::Batch* Stage::AddBatch(re::Batch const& batch)
+	re::BatchHandle* Stage::AddBatch(re::BatchHandle&& batch)
 	{
-		return AddBatchWithLifetime(batch, batch.GetLifetime());
+		return AddBatchWithLifetime(std::move(batch), batch->GetLifetime());
 	}
 
 
-	re::Batch* Stage::AddBatchWithLifetime(re::Batch const& batch, re::Lifetime lifetime)
+	re::BatchHandle* Stage::AddBatch(re::BatchHandle const& batch)
+	{
+		return AddBatch(re::BatchHandle(batch));
+	}
+
+
+	re::BatchHandle* Stage::AddBatchWithLifetime(re::BatchHandle&& batch, re::Lifetime lifetime)
 	{
 		SEAssert(m_type != re::Stage::Type::Parent &&
 			m_type != re::Stage::Type::ClearTargetSet,
@@ -952,21 +961,21 @@ namespace re
 		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
-		SEAssert(batch.GetEffectID() != 0 ||
-			batch.GetType() == re::Batch::BatchType::RayTracing,
+		SEAssert(batch->GetEffectID() != 0 ||
+			batch->GetType() == re::Batch::BatchType::RayTracing,
 			"Batch has not been assigned an Effect");
 
-		SEAssert((batch.GetType() == re::Batch::BatchType::Raster &&
-				(m_type == Type::Raster || m_type == Type::FullscreenQuad)) ||
-			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute) ||
-			(batch.GetType() == re::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
+		SEAssert((batch->GetType() == re::Batch::BatchType::Raster &&
+			(m_type == Type::Raster || m_type == Type::FullscreenQuad)) ||
+			(batch->GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute) ||
+			(batch->GetType() == re::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
 			"Incompatible batch type");
 
 #if defined(_DEBUG)
-		for (auto const& batchBufferInput : batch.GetBuffers())
+		for (auto const& batchBufferInput : batch->GetBuffers())
 		{
 			for (auto const& singleFrameBufferInput : m_singleFrameBuffers)
-			{				
+			{
 				SEAssert(batchBufferInput.GetBuffer()->GetUniqueID() != singleFrameBufferInput.GetBuffer()->GetUniqueID() &&
 					batchBufferInput.GetShaderNameHash() != singleFrameBufferInput.GetShaderNameHash(),
 					"Batch and render stage have a duplicate single frame buffer");
@@ -980,18 +989,25 @@ namespace re
 		}
 #endif
 
-		if (batch.MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
+		if (batch->MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
-			re::Batch* duplicatedBatch = &m_stageBatches.emplace_back(re::Batch::Duplicate(batch, lifetime));
+			re::BatchHandle& duplicatedBatch =
+				m_stageBatches.emplace_back(re::BatchHandle(re::Batch::Duplicate(*batch, lifetime)));
 
-			if (batch.GetEffectID() != 0) // Some specialized batches (e.g. ray tracing) don't have an EffectID
+			if (batch->GetEffectID() != 0) // Some specialized batches (e.g. ray tracing) don't have an EffectID
 			{
 				duplicatedBatch->Finalize(m_drawStyleBits);
 			}
 
-			return duplicatedBatch;
+			return &duplicatedBatch;
 		}
 		return nullptr;
+	}
+
+
+	re::BatchHandle* Stage::AddBatchWithLifetime(re::BatchHandle const& batch, re::Lifetime lifetime)
+	{
+		return AddBatchWithLifetime(re::BatchHandle(batch), lifetime);
 	}
 
 

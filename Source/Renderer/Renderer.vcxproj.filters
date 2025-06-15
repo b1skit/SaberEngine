@@ -533,6 +533,12 @@
     <ClInclude Include="Shaders\Common\TransformParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="BatchBuilder.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="BatchFactories.h">
+      <Filter>Header Files\gr\grutil</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -885,6 +891,9 @@
     </ClCompile>
     <ClCompile Include="Material_GLTF_Unlit.cpp">
       <Filter>Source Files\gr\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchFactories.cpp">
+      <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

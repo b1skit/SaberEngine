@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Batch.h"
+#include "BatchBuilder.h"
 #include "Buffer.h"
 #include "EnumTypes.h"
 #include "GraphicsSystem_SceneAccelerationStructure.h"
@@ -434,11 +435,10 @@ namespace gr
 				}
 
 				// Add a single-frame stage to create/update the BLAS on the GPU:
-				re::Batch::RayTracingParams blasCreateBatchParams;
-				blasCreateBatchParams.m_operation = batchOperation;
-				blasCreateBatchParams.m_ASInput = re::ASInput(blas);
-
-				(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, blasCreateBatchParams));
+				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
+					.SetOperation(batchOperation)
+					.SetASInput(re::ASInput(blas))
+					.BuildSingleFrame());
 			}
 		}
 
@@ -507,7 +507,10 @@ namespace gr
 				tlasBatchParams.m_operation = tlasOperation,
 					tlasBatchParams.m_ASInput = re::ASInput(m_sceneTLAS);
 
-				(*singleFrameBlasCreateStageItr)->AddBatch(re::Batch(re::Lifetime::SingleFrame, tlasBatchParams));
+				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
+					.SetOperation(tlasOperation)
+					.SetASInput(m_sceneTLAS)
+					.BuildSingleFrame());
 			}
 		}
 	}

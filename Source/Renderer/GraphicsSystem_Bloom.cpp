@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BatchBuilder.h"
 #include "CameraRenderData.h"
 #include "Effect.h"
 #include "GraphicsSystemManager.h"
@@ -319,14 +320,13 @@ namespace gr
 		{
 			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
 			
-			re::Batch computeBatch = re::Batch(
-				re::Lifetime::SingleFrame,
-				re::Batch::ComputeParams{
-					.m_threadGroupCount = glm::uvec3(
-						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
-						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
-						1u) },
-				k_bloomEffectID);
+			re::BatchHandle computeBatch = gr::ComputeBatchBuilder()
+				.SetThreadGroupCount(glm::uvec3(
+					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
+					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
+					1u))
+				.SetEffectID(k_bloomEffectID)
+				.BuildSingleFrame();
 
 			downStage->AddBatch(computeBatch);
 		}
@@ -336,14 +336,13 @@ namespace gr
 		{
 			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
 			
-			re::Batch computeBatch = re::Batch(
-				re::Lifetime::SingleFrame,
-				re::Batch::ComputeParams{
-					.m_threadGroupCount = glm::uvec3(
-						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
-						grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
-						1u) },
-				k_bloomEffectID);
+			re::BatchHandle computeBatch = gr::ComputeBatchBuilder()
+				.SetThreadGroupCount(glm::uvec3(
+					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
+					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
+					1u))
+				.SetEffectID(k_bloomEffectID)
+				.BuildSingleFrame();
 
 			upStage->AddBatch(computeBatch);
 		}
