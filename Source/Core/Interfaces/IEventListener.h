@@ -17,6 +17,9 @@ namespace core
 
 	public:
 		void RegisterEvent(core::EventManager::EventInfo const& eventInfo);
+
+
+	protected:		
 		bool HasEvents() const;
 		core::EventManager::EventInfo GetEvent();
 
