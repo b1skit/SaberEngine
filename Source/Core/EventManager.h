@@ -1,7 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
-
 #include "Interfaces/IEngineComponent.h"
 
 #include "Util/CHashKey.h"

@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
 #include "EventManager.h"
 #include "EventManager_Platform.h"
 #include "Logger.h"
@@ -49,7 +48,7 @@ namespace core
 				{
 					for (auto& listener : m_eventListeners.at(curEvent.m_eventKey))
 					{
-						listener->RegisterEvent(curEvent);
+						listener->PostEvent(curEvent);
 					}
 				}
 			}

@@ -16,7 +16,7 @@ namespace core
 
 
 	public:
-		void RegisterEvent(core::EventManager::EventInfo const& eventInfo);
+		void PostEvent(core::EventManager::EventInfo const& eventInfo);
 
 
 	protected:		
@@ -30,7 +30,7 @@ namespace core
 	};
 
 
-	inline void IEventListener::RegisterEvent(core::EventManager::EventInfo const& eventInfo)
+	inline void IEventListener::PostEvent(core::EventManager::EventInfo const& eventInfo)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_eventsMutex);
