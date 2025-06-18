@@ -456,11 +456,6 @@ namespace gr
 
 			didReallocate = (m_buffer != nullptr);
 
-			if (!didReallocate)
-			{
-				m_dummyBuffer = nullptr;
-			}
-
 			// If the Buffer already exists, we rely on the deferred delete to keep it in scope for any in-flight frames
 			m_buffer = re::Buffer::CreateUncommittedArray<BufferDataType>(
 				m_bufferName.c_str(),
