@@ -136,6 +136,7 @@
     <ClInclude Include="GPUTimer_DX12.h" />
     <ClInclude Include="GPUTimer_OpenGL.h" />
     <ClInclude Include="GPUTimer_Platform.h" />
+    <ClInclude Include="GraphicsEvent.h" />
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />

@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "BufferView.h"
+#include "GraphicsEvent.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 
@@ -9,6 +10,9 @@ namespace gr
 {
 	class GraphicsSystem;
 	class RenderSystem;
+
+	template<typename T>
+	concept GraphicsSystemType = std::derived_from<T, gr::GraphicsSystem>;
 
 
 	class GraphicsSystemManager
@@ -53,7 +57,23 @@ namespace gr
 		bool HasActiveAmbientLight() const;
 		gr::RenderDataID GetActiveAmbientLightID() const;
 
-	
+
+	public: // Graphics system events: These functions are only available to GraphicsSystems
+		template<typename T>
+		void SubscribeToGraphicsEvent(
+			util::CHashKey const& eventKey, gr::GraphicsSystem* listener) requires GraphicsSystemType<T>;
+
+		template<typename T>
+		void PostGraphicsEvent(gr::GraphicsEvent const& newEvent) requires GraphicsSystemType<T>;
+
+		template<typename T>
+		void PostGraphicsEvent(util::CHashKey const&, GraphicsEvent::GraphicsEventData&&) requires GraphicsSystemType<T>;
+
+
+	private:
+		std::unordered_map<util::CHashKey, std::vector<gr::GraphicsSystem*>> m_eventListeners;
+
+
 	public:
 		void ShowImGuiWindow();
 
@@ -131,6 +151,41 @@ namespace gr
 	inline gr::RenderDataID GraphicsSystemManager::GetActiveCameraRenderDataID() const
 	{
 		return m_activeCameraRenderDataID;
+	}
+
+
+	template<typename T>
+	void GraphicsSystemManager::SubscribeToGraphicsEvent(
+		util::CHashKey const& eventKey, gr::GraphicsSystem* listener)
+		requires GraphicsSystemType<T>
+	{
+		m_eventListeners[eventKey].emplace_back(listener);
+	}
+
+
+	template<typename T>
+	void GraphicsSystemManager::PostGraphicsEvent(gr::GraphicsEvent const& newEvent)
+		requires GraphicsSystemType<T>
+	{
+		auto itr = m_eventListeners.find(newEvent.m_eventKey);
+		if (itr != m_eventListeners.end())
+		{
+			for (auto& listener : itr->second)
+			{
+				listener->PostEvent(gr::GraphicsEvent(newEvent));
+			}
+		}
+	}
+
+
+	template<typename T>
+	void GraphicsSystemManager::PostGraphicsEvent(util::CHashKey const& eventKey, GraphicsEvent::GraphicsEventData&& data)
+		requires GraphicsSystemType<T>
+	{
+		PostGraphicsEvent<T>(gr::GraphicsEvent{
+			.m_eventKey = std::move(eventKey),
+			.m_data = std::forward<GraphicsEvent::GraphicsEventData>(data)
+			});
 	}
 }
 

@@ -539,6 +539,9 @@
     <ClInclude Include="BatchFactories.h">
       <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsEvent.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">

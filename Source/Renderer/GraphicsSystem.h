@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
+#include "GraphicsEvent.h"
 #include "GraphicsSystemCommon.h"
 #include "RenderPipeline.h"
 #include "Texture.h"
@@ -152,6 +153,20 @@ namespace gr
 	private:
 		std::set<util::CHashKey> m_dataInputs;
 		std::map<util::CHashKey, void const*> m_dataOutputs;
+
+
+		// Graphics Events:
+	public:
+		void PostEvent(gr::GraphicsEvent&&);
+
+	protected:
+		virtual void HandleEvents(); // Override this
+		bool HasEvents() const;
+		gr::GraphicsEvent GetEvent();
+
+	private:
+		std::queue<gr::GraphicsEvent> m_events;
+		mutable std::shared_mutex m_eventsMutex; // Multiple GS's running asyncronously may post events for their dependencies
 
 
 	public:
@@ -413,6 +428,38 @@ namespace gr
 	inline void GraphicsSystem::RegisterDataOutput(util::CHashKey const& scriptName, void const* data)
 	{
 		m_dataOutputs.emplace(scriptName, data);
+	}
+
+
+	inline void GraphicsSystem::PostEvent(gr::GraphicsEvent&& newEvent)
+	{
+		{
+			std::unique_lock writeLock(m_eventsMutex);
+
+			m_events.emplace(std::forward<gr::GraphicsEvent>(newEvent));
+		}
+	}
+
+
+	inline bool GraphicsSystem::HasEvents() const
+	{
+		{
+			std::shared_lock readLock(m_eventsMutex);
+			return m_events.empty() == false;
+		}
+	}
+
+
+	inline gr::GraphicsEvent GraphicsSystem::GetEvent()
+	{
+		{
+			std::unique_lock writeLock(m_eventsMutex);
+
+			SEAssert(!m_events.empty(), "No events to get");
+			const gr::GraphicsEvent nextEvent = m_events.front();
+			m_events.pop();
+			return nextEvent;
+		}
 	}
 
 

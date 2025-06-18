@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraRenderData.h"
+#include "GraphicsEvent.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystemManager.h"
 #include "LightParamsHelpers.h"
@@ -742,6 +743,8 @@ namespace gr
 				{
 					re::Texture::TextureParams shadowArrayParams;
 
+					util::CHashKey const* shadowUpdateEventName = nullptr;
+
 					switch (lightType)
 					{
 					case gr::Light::Directional:
@@ -752,6 +755,8 @@ namespace gr
 						shadowArrayParams.m_width = defaultDirectionalWidthHeight;
 						shadowArrayParams.m_height = defaultDirectionalWidthHeight;
 						shadowArrayParams.m_dimension = re::Texture::Dimension::Texture2DArray;
+						
+						shadowUpdateEventName = &greventkey::GS_Shadows_DirectionalShadowArrayUpdated;
 					}
 					break;
 					case gr::Light::Point:
@@ -762,6 +767,8 @@ namespace gr
 						shadowArrayParams.m_width = defaultCubemapWidthHeight;
 						shadowArrayParams.m_height = defaultCubemapWidthHeight;
 						shadowArrayParams.m_dimension = re::Texture::Dimension::TextureCubeArray;
+
+						shadowUpdateEventName = &greventkey::GS_Shadows_PointShadowArrayUpdated;
 					}
 					break;
 					case gr::Light::Spot:
@@ -772,6 +779,8 @@ namespace gr
 						shadowArrayParams.m_width = defaultSpotWidthHeight;
 						shadowArrayParams.m_height = defaultSpotWidthHeight;
 						shadowArrayParams.m_dimension = re::Texture::Dimension::Texture2DArray;
+
+						shadowUpdateEventName = &greventkey::GS_Shadows_SpotShadowArrayUpdated;
 					}
 					break;
 					case gr::Light::AmbientIBL:
@@ -808,6 +817,10 @@ namespace gr
 							entry.second.m_shadowTexArrayIdx = newArrayIdx++;
 						}
 					}
+
+					// Post an event to notify other systems that the shadow texture has been updated:
+					m_graphicsSystemManager->PostGraphicsEvent<ShadowsGraphicsSystem>(
+						*shadowUpdateEventName, true); // Arbitrary: Need a value
 				}
 			};
 		UpdateShadowTexture(gr::Light::Directional, m_directionalShadowTexMetadata, "Directional shadows");

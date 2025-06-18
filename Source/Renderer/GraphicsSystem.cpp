@@ -92,4 +92,10 @@ namespace gr
 	{
 		return CreateByName(scriptName.c_str(), gsm);
 	}
+
+
+	void GraphicsSystem::HandleEvents()
+	{
+		SEAssertF("Graphics has not implemented HandleEvents()");
+	}
 }
