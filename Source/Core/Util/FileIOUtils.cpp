@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "FileIOUtils.h"
 #include "TextUtils.h"
 
@@ -40,7 +40,7 @@ namespace util
 
 	bool FileExists(std::string_view path)
 	{
-		return std::filesystem::exists(std::string(path));
+		return std::filesystem::exists(path);
 	}
 
 
