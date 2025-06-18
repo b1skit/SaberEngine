@@ -21,6 +21,12 @@ namespace core
 
 	public:
 		explicit INamedObject(std::string_view name);
+		
+		// Perfect forwarding constructor for string-like types
+		template<typename StringType, 
+			typename = std::enable_if_t<!std::is_same_v<std::decay_t<StringType>, INamedObject> &&
+				std::is_constructible_v<std::string, StringType>>>
+		explicit INamedObject(StringType&& name);
 
 		INamedObject(INamedObject const&) = default;
 		INamedObject(INamedObject&&) noexcept = default;
@@ -37,6 +43,7 @@ namespace core
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string_view name);
+		void SetName(std::string&& name);
 
 
 	private:
@@ -57,6 +64,19 @@ namespace core
 		SEAssert(name.data()[name.size()] == '\0', "std::string_view must be null-terminated for INamedObject usage");
 
 		SetName(std::string(name));
+	}
+
+
+	template<typename StringType, typename>
+	inline INamedObject::INamedObject(StringType&& name)
+	{
+		// Create string directly from forwarded parameter to avoid temporary
+		std::string nameStr(std::forward<StringType>(name));
+		
+		SEAssert(nameStr.size() > 0 && nameStr.size() < k_maxNameLength,
+			"Empty or excessively long name strings are not allowed");
+
+		SetName(std::move(nameStr));
 	}
 
 
@@ -84,6 +104,15 @@ namespace core
 
 		m_name = name;
 		m_nameHash = util::HashKey(name.data());
+		
+		m_wName = util::ToWideString(m_name);
+	}
+
+
+	inline void INamedObject::SetName(std::string&& name)
+	{
+		m_name = std::move(name);
+		m_nameHash = util::HashKey(m_name.c_str());
 		
 		m_wName = util::ToWideString(m_name);
 	}

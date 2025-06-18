@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
 
@@ -111,6 +111,12 @@ namespace core
 	{
 	public:
 		inline LambdaCommandWrapper(std::function<void(void)>&& lambda) : m_lambda(std::move(lambda)) { }
+		
+		// Perfect forwarding constructor for any callable type
+		template<typename Callable,
+			typename = std::enable_if_t<!std::is_same_v<std::decay_t<Callable>, LambdaCommandWrapper> &&
+				std::is_invocable_v<Callable>>>
+		inline LambdaCommandWrapper(Callable&& callable) : m_lambda(std::forward<Callable>(callable)) { }
 
 		LambdaCommandWrapper(LambdaCommandWrapper const&) = default;
 		LambdaCommandWrapper(LambdaCommandWrapper&&) noexcept = default;
@@ -146,6 +152,11 @@ namespace core
 		// Note: This is a convenience helper intended to reduce boilerplate for one-off commands. Avoid use in hot
 		// paths, as std::function will likely use dynamic allocation to hold any captures
 		void Enqueue(std::function<void(void)>&&);
+		
+		// Perfect forwarding convenience method for any callable
+		template<typename Callable,
+			typename = std::enable_if_t<std::is_invocable_v<Callable>>>
+		void Enqueue(Callable&& callable);
 
 		void SwapBuffers();
 
@@ -181,6 +192,15 @@ namespace core
 	{
 		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::move(lambda)));
 	}
+	
+	
+	// Perfect forwarding convenience method for any callable
+	template<typename Callable,
+		typename = std::enable_if_t<std::is_invocable_v<Callable>>>
+	inline void CommandManager::Enqueue(Callable&& callable)
+	{
+		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::forward<Callable>(callable)));
+	}
 
 
 	inline bool CommandManager::HasCommandsToExecute() const
@@ -203,6 +223,11 @@ namespace core
 		// Note: This is a convenience helper intended to reduce boilerplate for one-off commands. Avoid use in hot
 		// paths, as std::function will likely use dynamic allocation to hold any captures
 		void Enqueue(uint64_t frameNum, std::function<void(void)>&&);
+		
+		// Perfect forwarding convenience method for any callable
+		template<typename Callable,
+			typename = std::enable_if_t<std::is_invocable_v<Callable>>>
+		void Enqueue(uint64_t frameNum, Callable&& callable);
 
 		void Execute(uint64_t frameNum); // Single-threaded execution to ensure deterministic command ordering
 
@@ -247,6 +272,13 @@ namespace core
 	inline void FrameIndexedCommandManager::Enqueue(uint64_t frameNum, std::function<void(void)>&& lambda)
 	{
 		Enqueue<LambdaCommandWrapper>(frameNum, LambdaCommandWrapper(std::move(lambda)));
+	}
+	
+	
+	template<typename Callable, typename>
+	inline void FrameIndexedCommandManager::Enqueue(uint64_t frameNum, Callable&& callable)
+	{
+		Enqueue<LambdaCommandWrapper>(frameNum, LambdaCommandWrapper(std::forward<Callable>(callable)));
 	}
 
 
