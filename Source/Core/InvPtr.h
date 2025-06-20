@@ -137,14 +137,44 @@ namespace core
 			// Populate the unique_ptr held by the ResourceSystem.
 			// Note: We don't lock m_loadContextMutex here to modify m_object as the Loading state can only be reached
 			// by a single thread, but it will be locked internally to add dependencies
-			*m_control->m_object =
-				std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext)->CallLoad();
+			auto loadContext = std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext);
+			if (!loadContext) {
+				m_control->m_state.store(core::ResourceState::Error, std::memory_order_release);
+				m_control->m_state.notify_all();
+				
+				{
+					std::lock_guard<std::mutex> lock(m_control->m_loadContextMutex);
+					if (m_control->m_loadContext) {
+						m_control->m_loadContext->Finalize();
+						m_control->m_loadContext = nullptr;
+					}
+				}
+				
+				SEAssertF("Failed to cast load context to correct type. This indicates a programming error.");
+				return;
+			}
+			
+			*m_control->m_object = loadContext->CallLoad();
 
 			if (*m_control->m_object == nullptr)
 			{
 				m_control->m_state.store(core::ResourceState::Error, std::memory_order_release);
+				
+				// Notify waiting threads even in error case to prevent deadlock
+				m_control->m_state.notify_all();
 
-				SEAssertF("Resource loading error. TODO: Handle dependencies now that we have an error state");
+				// TODO: Implement proper error propagation to dependent resources
+				// For now, we handle dependencies to prevent resource leaks
+				{
+					std::lock_guard<std::mutex> lock(m_control->m_loadContextMutex);
+					if (m_control->m_loadContext) {
+						m_control->m_loadContext->Finalize();
+						m_control->m_loadContext = nullptr;
+					}
+				}
+
+				SEAssertF("Resource loading error. Error handling completed to prevent resource leaks.");
+				return; // Early return to avoid executing the success path
 			}
 			else
 			{
@@ -188,12 +218,19 @@ namespace core
 			SEAssert(newInvPtr.m_control->m_loadContext != nullptr,
 				"Load context is null: It cannot be null for the transition to Requested");
 
-			std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->Initialize(
-				newInvPtr.m_control->m_id, newInvPtr);
+			auto loadContext = std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext);
+			if (!loadContext) {
+				// Failed to cast - set error state and return invalid InvPtr
+				newInvPtr.m_control->m_state.store(core::ResourceState::Error, std::memory_order_release);
+				SEAssertF("Failed to cast load context to correct type in Create. This indicates a programming error.");
+				return newInvPtr; // Return the invalid InvPtr
+			}
+
+			loadContext->Initialize(newInvPtr.m_control->m_id, newInvPtr);
 
 			// Do this on the current thread; guarantees the InvPtr can be registered with any systems that might
 			// require it before the creation can possibly have finished
-			std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->CallOnLoadBegin();
+			loadContext->CallOnLoadBegin();
 
 			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
 				{
@@ -263,6 +300,13 @@ namespace core
 		TryToLoad(); // Check if we can steal the work
 
 		m_control->m_state.wait(ResourceState::Loading); // Block until the resource is loaded
+		
+		// Check if loading resulted in an error
+		if (m_control->m_state.load(std::memory_order_acquire) == ResourceState::Error) {
+			SEAssertF("Resource failed to load. Cannot access object.");
+			return nullptr; // This will likely crash, but at least we've logged the issue
+		}
+		
 		SEAssert(IsValid() && m_control->m_object && m_control->m_object->get(), "InvPtr is invalid after loading");
 		
 		// Update this object's local cache of the object pointer, now that loading has finished:
