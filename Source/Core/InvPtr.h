@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
 #include "ResourceSystem.h"
@@ -106,19 +106,20 @@ namespace core
 		SEAssert(m_control, "Control cannot be null here");
 		SEAssert(m_control->m_object != nullptr, "Control object pointer cannot be null here");
 
-		SEAssert(m_control->m_state.load() != core::ResourceState::Released ||
-			m_control->m_refCount.load() == 0,
+		SEAssert(m_control->m_state.load(std::memory_order_acquire) != core::ResourceState::Released ||
+			m_control->m_refCount.load(std::memory_order_relaxed) == 0,
 			"State is Released, but ref count is not 0. This should not be possible");
 
 		// If the resource was Released, set its state back to Ready as it is still loaded
 		core::ResourceState expected = core::ResourceState::Released;
-		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Ready))
+		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Ready,
+			std::memory_order_acq_rel, std::memory_order_acquire))
 		{
 			// If the object was released, we need to re-set the local cache of the object pointer
 			m_objectCache = m_control->m_object->get();
 		}
 
-		m_control->m_refCount++;
+		m_control->m_refCount.fetch_add(1, std::memory_order_relaxed);
 	}
 
 
@@ -127,7 +128,8 @@ namespace core
 	{
 		// Work stealing: First thread to get here will do the loading work rather than block
 		core::ResourceState expected = core::ResourceState::Requested;
-		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Loading))
+		if (m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Loading, 
+			std::memory_order_acq_rel, std::memory_order_acquire))
 		{
 			SEAssert(m_control->m_object != nullptr && m_control->m_object->get() == nullptr,
 				"Pointer should refer to an empty unique pointer here");
@@ -140,7 +142,7 @@ namespace core
 
 			if (*m_control->m_object == nullptr)
 			{
-				m_control->m_state.store(core::ResourceState::Error);
+				m_control->m_state.store(core::ResourceState::Error, std::memory_order_release);
 
 				SEAssertF("Resource loading error. TODO: Handle dependencies now that we have an error state");
 			}
@@ -150,7 +152,7 @@ namespace core
 				m_objectCache = m_control->m_object->get();
 
 				// We're done! Mark ourselves as ready, and notify anybody waiting on us
-				m_control->m_state.store(core::ResourceState::Ready);
+				m_control->m_state.store(core::ResourceState::Ready, std::memory_order_release);
 
 			}
 			m_control->m_state.notify_all();
@@ -180,7 +182,8 @@ namespace core
 
 		// If we're in the Empty state, kick off an asyncronous loading job:
 		core::ResourceState expected = core::ResourceState::Empty;
-		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Requested))
+		if (newInvPtr.m_control->m_state.compare_exchange_strong(expected, core::ResourceState::Requested,
+			std::memory_order_acq_rel, std::memory_order_acquire))
 		{
 			SEAssert(newInvPtr.m_control->m_loadContext != nullptr,
 				"Load context is null: It cannot be null for the transition to Requested");
@@ -207,7 +210,7 @@ namespace core
 	{
 		if (this != &rhs) // It is possible rhs is invalid, but we still want to copy whatever it contains
 		{
-			if (m_control && m_control->m_refCount.load() > 0) // Don't release brand new control blocks
+			if (m_control && m_control->m_refCount.load(std::memory_order_relaxed) > 0) // Don't release brand new control blocks
 			{
 				Release(); // The InvPtr might already represent something, release first so we don't leak
 			}
@@ -215,10 +218,10 @@ namespace core
 			m_control = rhs.m_control;
 			if (m_control)
 			{
-				SEAssert(m_control->m_refCount.load() < std::numeric_limits<core::ResourceSystem<T>::RefCountType>::max(),
+				SEAssert(m_control->m_refCount.load(std::memory_order_relaxed) < std::numeric_limits<core::ResourceSystem<T>::RefCountType>::max(),
 					"Ref count is about to overflow");
 
-				m_control->m_refCount++;
+				m_control->m_refCount.fetch_add(1, std::memory_order_relaxed);
 			}
 
 			m_objectCache = rhs.m_objectCache;
@@ -232,7 +235,7 @@ namespace core
 	{
 		if (this != &rhs)
 		{
-			if (m_control && m_control->m_refCount.load() > 0) // Don't release brand new control blocks
+			if (m_control && m_control->m_refCount.load(std::memory_order_relaxed) > 0) // Don't release brand new control blocks
 			{
 				Release(); // The InvPtr might already represent something, release first so we don't leak
 			}
@@ -309,13 +312,13 @@ namespace core
 	{
 		if (m_control) // If we're valid and our refcount is 0, free our memory:
 		{
-			SEAssert(m_control->m_refCount.load() > 0, "Ref count is about to underflow");
+			SEAssert(m_control->m_refCount.load(std::memory_order_relaxed) > 0, "Ref count is about to underflow");
 
-			if (--m_control->m_refCount == 0)
+			if (m_control->m_refCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
 			{
 				SEAssert(m_control->m_loadContext == nullptr, "Load context is not null. This should not be possible");
 
-				m_control->m_state.store(core::ResourceState::Released);
+				m_control->m_state.store(core::ResourceState::Released, std::memory_order_release);
 				m_control->m_owningResourceSystem->Release(m_control->m_id);
 				m_control = nullptr; // Release() will delete the control object, null out our copy to invalidate ourselves
 
@@ -330,11 +333,18 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
+		// Ensure consistent lock ordering to prevent deadlock by ordering based on pointer values
+		std::mutex* first_mutex = &m_control->m_loadContextMutex;
+		std::mutex* second_mutex = &child.m_control->m_loadContextMutex;
+		if (first_mutex > second_mutex) {
+			std::swap(first_mutex, second_mutex);
+		}
+
 		{
-			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(*first_mutex, *second_mutex);
 
 			SEAssert(child.m_control->m_loadContext ||
-				child.m_control->m_state.load() == ResourceState::Ready,
+				child.m_control->m_state.load(std::memory_order_acquire) == ResourceState::Ready,
 				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
 
 			// Add our callback to the child:
@@ -343,7 +353,7 @@ namespace core
 			// ignore this, as accessing a loading InvPtr will block
 			if (m_control->m_loadContext && // Might be null if Resource finished loading (potentially early...)
 				child.m_control->m_loadContext && // If the child has no load context, it must be Ready
-				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
+				child.m_control->m_state.load(std::memory_order_acquire) != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
 				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
 			}
@@ -359,11 +369,18 @@ namespace core
 	{
 		SEAssert(IsValid() && child.IsValid(), "Cannot add dependencies to invalid InvPtrs");
 
+		// Ensure consistent lock ordering to prevent deadlock by ordering based on pointer values
+		std::mutex* first_mutex = &m_control->m_loadContextMutex;
+		std::mutex* second_mutex = &child.m_control->m_loadContextMutex;
+		if (first_mutex > second_mutex) {
+			std::swap(first_mutex, second_mutex);
+		}
+
 		{
-			std::scoped_lock lock(m_control->m_loadContextMutex, child.m_control->m_loadContextMutex);
+			std::scoped_lock lock(*first_mutex, *second_mutex);
 
 			SEAssert(child.m_control->m_loadContext ||
-				child.m_control->m_state.load() == ResourceState::Ready,
+				child.m_control->m_state.load(std::memory_order_acquire) == ResourceState::Ready,
 				"Trying to add a null load context as a child dependency, this should only be possible if it is Ready");
 
 			// Add our callback to the child:
@@ -372,7 +389,7 @@ namespace core
 			// ignore this, as accessing a loading InvPtr will block
 			if (m_control->m_loadContext && // Might be null if Resource finished loading (potentially early...)
 				child.m_control->m_loadContext && // If the child has no load context, it must be Ready
-				child.m_control->m_state.load() != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
+				child.m_control->m_state.load(std::memory_order_acquire) != ResourceState::Ready) // It might be ready, but not have cleared its load context yet
 			{
 				ILoadContextBase::CreateLoadDependency(m_control->m_loadContext, child.m_control->m_loadContext);
 			}
@@ -385,14 +402,14 @@ namespace core
 	template<typename T>
 	inline core::ResourceSystem<T>::RefCountType InvPtr<T>::UseCount() const
 	{
-		return m_control->m_refCount.load();
+		return m_control->m_refCount.load(std::memory_order_relaxed);
 	}
 
 
 	template<typename T>
 	inline core::ResourceState InvPtr<T>::GetState() const
 	{
-		return m_control->m_state.load();
+		return m_control->m_state.load(std::memory_order_acquire);
 	}
 
 
@@ -401,7 +418,7 @@ namespace core
 	{
 		if (m_control != nullptr)
 		{
-			const core::ResourceState currentState = m_control->m_state.load();
+			const core::ResourceState currentState = m_control->m_state.load(std::memory_order_acquire);
 
 			return currentState != core::ResourceState::Empty &&
 				currentState != core::ResourceState::Released &&

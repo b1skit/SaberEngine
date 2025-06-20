@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "InvPtr.h"
 #include "ResourceSystem.h"
@@ -107,43 +107,32 @@ namespace core
 	template<typename T>
 	ResourceSystem<T>* Inventory::GetCreateResourceSystem()
 	{
-		ResourceSystem<T>* resourceSystem = nullptr;
-
 		const std::type_index typeIdx = std::type_index(typeid(T));
+		
+		// Fast path: Check if the ResourceSystem already exists
 		{
-			std::shared_lock readLock(m_resourceSystemsMutex);
-
-			auto iResourceSystemItr = m_resourceSystems.find(typeIdx);
-			if (iResourceSystemItr == m_resourceSystems.end())
+			std::shared_lock<std::shared_mutex> readLock(m_resourceSystemsMutex);
+			auto itr = m_resourceSystems.find(typeIdx);
+			if (itr != m_resourceSystems.end())
 			{
-				readLock.unlock();
-
-				// Convert to a write lock, and create the ResourceSystem:
-				{
-					std::unique_lock<std::shared_mutex> writeLock(m_resourceSystemsMutex);
-
-					iResourceSystemItr = m_resourceSystems.find(typeIdx);
-					if (iResourceSystemItr == m_resourceSystems.end())
-					{
-						iResourceSystemItr = m_resourceSystems.emplace(
-							typeIdx,
-							new ResourceSystem<T>()).first;
-
-						resourceSystem = dynamic_cast<ResourceSystem<T>*>(iResourceSystemItr->second.get());
-					}
-					else // The ResourceSystem was created while we waited, just get it
-					{
-						resourceSystem = dynamic_cast<ResourceSystem<T>*>(iResourceSystemItr->second.get());
-					}
-				}
-			}
-			else // Otherwise, we still hold the read lock here so get the pointer:
-			{
-				resourceSystem = dynamic_cast<ResourceSystem<T>*>(iResourceSystemItr->second.get());
+				return dynamic_cast<ResourceSystem<T>*>(itr->second.get());
 			}
 		}
-		SEAssert(resourceSystem, "Failed to find or create a ResourceSystem");
-
-		return resourceSystem;
+		
+		// Slow path: Create the ResourceSystem with proper synchronization
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_resourceSystemsMutex);
+			
+			// Double-check after acquiring write lock (another thread may have created it)
+			auto itr = m_resourceSystems.find(typeIdx);
+			if (itr == m_resourceSystems.end())
+			{
+				itr = m_resourceSystems.emplace(typeIdx, std::make_unique<ResourceSystem<T>>()).first;
+			}
+			
+			ResourceSystem<T>* resourceSystem = dynamic_cast<ResourceSystem<T>*>(itr->second.get());
+			SEAssert(resourceSystem, "Failed to find or create a ResourceSystem");
+			return resourceSystem;
+		}
 	}
 }
