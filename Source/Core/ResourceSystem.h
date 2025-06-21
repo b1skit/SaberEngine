@@ -1,5 +1,7 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "ProfilingMarkers.h"
+
 #include "Interfaces/ILoadContext.h"
 
 #include "Util/HashKey.h"
@@ -127,7 +129,7 @@ namespace core
 #if defined (_DEBUG)
 		for (auto& entry : m_ptrAndControlBlocks)
 		{
-			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load();
+			const RefCountType entryRefCount = entry.second.m_control->m_refCount.load(std::memory_order_relaxed);
 
 			SEAssert(entryRefCount == 0 ||
 				(entryRefCount == 1 && entry.second.m_retentionPolicy == core::RetentionPolicy::Permanent),
@@ -167,7 +169,8 @@ namespace core
 			auto ptrCtrlItr = m_ptrAndControlBlocks.find(id);
 			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
 			{
-				return m_ptrAndControlBlocks.at(id).m_control->m_state.load() == ResourceState::Ready;
+				return m_ptrAndControlBlocks.at(id).m_control->m_state.load(
+					std::memory_order_acquire) == ResourceState::Ready;
 			}
 			return false;
 		}
@@ -183,7 +186,8 @@ namespace core
 			auto ptrCtrlItr = m_ptrAndControlBlocks.find(id);
 			if (ptrCtrlItr != m_ptrAndControlBlocks.end())
 			{
-				const ResourceState resourceState = m_ptrAndControlBlocks.at(id).m_control->m_state.load();
+				const ResourceState resourceState =
+					m_ptrAndControlBlocks.at(id).m_control->m_state.load(std::memory_order_acquire);
 
 				// Note: We cannot say we have a resource if it is in the Empty state, as this allows a race condition
 				// where a thread that does not supply a load context might transition the resource state to Requested
@@ -253,7 +257,7 @@ namespace core
 				// Bump the ref. count to keep permanent objects from going out of scope
 				if (newPtrAndCntrl.m_retentionPolicy == core::RetentionPolicy::Permanent)
 				{
-					newPtrAndCntrl.m_control->m_refCount++;
+					newPtrAndCntrl.m_control->m_refCount.fetch_add(1, std::memory_order_relaxed);
 				}
 
 				return newPtrAndCntrl.m_control.get();
@@ -265,15 +269,21 @@ namespace core
 	template<typename T>
 	void ResourceSystem<T>::OnEndOfFrame()
 	{
+		SEBeginCPUEvent("ResourceSystem::OnEndOfFrame");
+
 		++m_currentFrameNum; // Increment the relative frame number each time this is called
 
 		FreeDeferredReleases(m_currentFrameNum);
+
+		SEEndCPUEvent(); // "ResourceSystem::OnEndOfFrame"
 	}
 
 
 	template<typename T>
 	void ResourceSystem<T>::FreeDeferredReleases(uint64_t frameNum)
 	{
+		SEBeginCPUEvent("ResourceSystem::FreeDeferredReleases");
+
 		{
 			std::scoped_lock lock(m_deferredReleaseMutex, m_ptrAndControlBlocksMutex);
 
@@ -289,9 +299,10 @@ namespace core
 				if (entryItr != m_ptrAndControlBlocks.end())
 				{
 					PtrAndControl& ptrAndCtrl = entryItr->second;
-					if (ptrAndCtrl.m_control->m_refCount.load() == 0)
+					if (ptrAndCtrl.m_control->m_refCount.load(std::memory_order_acquire) == 0)
 					{
-						SEAssert(ptrAndCtrl.m_control->m_state.load() == core::ResourceState::Released,
+						SEAssert(ptrAndCtrl.m_control->m_state.load(
+								std::memory_order_acquire) == core::ResourceState::Released,
 							"Ref count is 0, but state is not Released. This should not be possible");
 
 						ptrAndCtrl.m_object->Destroy();
@@ -302,6 +313,8 @@ namespace core
 				m_deferredRelease.pop();
 			}
 		}
+
+		SEEndCPUEvent(); // "ResourceSystem::FreeDeferredReleases"
 	}
 
 
@@ -317,8 +330,9 @@ namespace core
 
 			if (m_ptrAndControlBlocks.at(ID).m_retentionPolicy == core::RetentionPolicy::ForceNew)
 			{
-				SEAssert(m_ptrAndControlBlocks.at(ID).m_control->m_refCount.load() == 0 &&
-					m_ptrAndControlBlocks.at(ID).m_control->m_state.load() == core::ResourceState::Released,
+				SEAssert(m_ptrAndControlBlocks.at(ID).m_control->m_refCount.load(std::memory_order_acquire) == 0 &&
+					m_ptrAndControlBlocks.at(ID).m_control->m_state.load(
+						std::memory_order_acquire) == core::ResourceState::Released,
 					"Immediately-released resources must have a ref. count of 0 and Released state");
 
 				m_ptrAndControlBlocks.at(ID).m_object->Destroy();

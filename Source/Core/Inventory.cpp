@@ -1,6 +1,8 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Inventory.h"
 
+#include "ProfilingMarkers.h"
+
 
 namespace core
 {
@@ -20,6 +22,8 @@ namespace core
 
 	void Inventory::OnEndOfFrame()
 	{
+		SEBeginCPUEvent("Inventory::OnEndOfFrame");
+
 		{
 			std::lock_guard<std::shared_mutex> lock(m_resourceSystemsMutex);
 
@@ -28,5 +32,7 @@ namespace core
 				resourceSystem.second->OnEndOfFrame();
 			}
 		}
+
+		SEEndCPUEvent(); // "Inventory::OnEndOfFrame"
 	}
 }
