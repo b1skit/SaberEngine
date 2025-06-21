@@ -301,6 +301,11 @@ namespace core
 	inline InvPtr<T>::~InvPtr()
 	{
 		Release();
+
+		// Note: We intentionally null these out here to prevent accidental reuse (e.g. when manual dtor calls are made,
+		// but the memory is not freed)
+		m_control = nullptr;
+		m_objectCache = nullptr;
 	}
 
 

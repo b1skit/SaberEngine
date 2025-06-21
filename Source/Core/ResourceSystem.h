@@ -61,7 +61,7 @@ namespace core
 			std::unique_ptr<T> m_object;
 			std::unique_ptr<ControlBlock> m_control;
 			
-			RetentionPolicy m_retentionPolicy;
+			RetentionPolicy m_retentionPolicy = RetentionPolicy::Reusable;
 		};
 		
 
