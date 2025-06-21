@@ -632,6 +632,7 @@ namespace re
 				stageBatchHandle.Resolve(m_drawStyleBits, 1, effectDB);
 			}
 
+			SEEndCPUEvent(); // "Stage::ResolveBatches"
 			return;
 		}
 

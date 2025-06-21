@@ -306,7 +306,7 @@ namespace re
 			renderSystem->ExecuteUpdatePipeline();
 			renderSystem->PostUpdatePreRender(m_renderData.GetInstancingIndexedBufferManager(), m_effectDB);
 		}
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "Execute update pipeline"
 
 		// Clear our cache of new objects, now that our anything that needs them has had a chance to access them.
 		ClearNewObjectCache();
@@ -320,14 +320,14 @@ namespace re
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");
 		Render();
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "platform::RenderManager::Render"
 
 		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
 		m_context->Present();
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "re::Context::Present"
 
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "re::RenderManager::Update"
 	}
 
 
@@ -342,7 +342,7 @@ namespace re
 				renderSystem->EndOfFrame();
 			}
 		}
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "Process render systems"
 		
 		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
 
@@ -358,7 +358,7 @@ namespace re
 
 		platform::RenderManager::EndFrame(*this);
 
-		SEEndCPUEvent();
+		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
 	}
 
 

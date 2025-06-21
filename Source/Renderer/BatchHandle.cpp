@@ -225,6 +225,8 @@ namespace gr
 		if (m_isResolved) // e.g. Batches resolved in a previous frame
 		{
 			SEAssert(m_instanceCount == instanceCount, "Batch already resolved with a different instance count");
+
+			SEEndCPUEvent(); // "StageBatchHandle::Resolve"
 			return;
 		}
 		
