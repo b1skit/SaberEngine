@@ -57,50 +57,64 @@ namespace opengl
 
 	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
+		SEBeginCPUEvent("RenderManager::CreateAPIResources");
+		
 		// Note: We've already obtained the read lock on all new resources by this point
 
 		// Textures:
 		if (renderManager.m_newTextures.HasReadData())
 		{
+			SEBeginCPUEvent("Create textures");
 			for (auto const& newObject : renderManager.m_newTextures.GetReadData())
 			{
 				platform::Texture::CreateAPIResource(newObject, nullptr);
 			}
+			SEEndCPUEvent(); // "Create Textures"
 		}
 		// Samplers:
 		if (renderManager.m_newSamplers.HasReadData())
 		{
+			SEBeginCPUEvent("Create samplers");
 			for (auto& newObject : renderManager.m_newSamplers.GetReadData())
 			{
 				opengl::Sampler::Create(*newObject);
 			}
+			SEEndCPUEvent(); // "Create Samplers"
 		}
 		// Texture Target Sets:
 		if (renderManager.m_newTargetSets.HasReadData())
 		{
+			SEBeginCPUEvent("Create texture target sets");
 			for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
 			{
 				newObject->Commit();
 				opengl::TextureTargetSet::CreateColorTargets(*newObject);
 				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject);
 			}
+			SEEndCPUEvent(); // "Create texture target sets"
 		}
 		// Shaders:
 		if (renderManager.m_newShaders.HasReadData())
 		{
+			SEBeginCPUEvent("Create shaders");
 			for (auto& newObject : renderManager.m_newShaders.GetReadData())
 			{
 				opengl::Shader::Create(*newObject);
 			}
+			SEEndCPUEvent(); // "Create shaders"
 		}
 		// Vertex streams:
 		if (renderManager.m_newVertexStreams.HasReadData())
 		{
+			SEBeginCPUEvent("Create vertex streams");
 			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 			{
 				vertexStream->CreateBuffers(vertexStream);
 			}
+			SEEndCPUEvent(); // "Create vertex streams"
 		}
+
+		SEEndCPUEvent(); // "RenderManager::CreateAPIResources"
 	}
 
 
@@ -118,6 +132,8 @@ namespace opengl
 
 	void RenderManager::Render()
 	{
+		SEBeginCPUEvent("RenderManager::Render");
+
 		opengl::Context* context = GetContext()->As<opengl::Context*>();
 
 		re::GPUTimer& gpuTimer = context->GetGPUTimer();
@@ -476,6 +492,8 @@ namespace opengl
 		frameTimer.StopTimer(nullptr);
 
 		gpuTimer.EndFrame();
+
+		SEEndCPUEvent(); // "RenderManager::Render"
 	}
 
 

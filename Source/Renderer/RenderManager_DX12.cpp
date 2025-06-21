@@ -37,6 +37,8 @@ namespace dx12
 
 	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
+		SEBeginCPUEvent("RenderManager::CreateAPIResources");
+
 		// Note: We've already obtained the read lock on all new resources by this point
 
 		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
@@ -54,6 +56,8 @@ namespace dx12
 		{
 			auto CreateTextures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create textures");
+
 					dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 
 					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
@@ -87,6 +91,8 @@ namespace dx12
 					copyQueue->Execute(1, &copyCommandList);
 
 					SEEndGPUEvent(copyQueue->GetD3DCommandQueue().Get());
+
+					SEEndCPUEvent(); // "Create Textures"
 				};
 			
 			if (singleThreadResourceCreate)
@@ -103,6 +109,8 @@ namespace dx12
 		{
 			auto CreateSamplers = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create samplers");
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newSamplers.AquireReadLock();
@@ -115,6 +123,8 @@ namespace dx12
 					{
 						renderManager.m_newSamplers.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create Samplers"
 				};
 
 			if (singleThreadResourceCreate)
@@ -132,6 +142,8 @@ namespace dx12
 		{
 			auto CreateTextureTargetSets = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create texture target sets");
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newTargetSets.AquireReadLock();
@@ -146,6 +158,8 @@ namespace dx12
 					{
 						renderManager.m_newTargetSets.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create texture target sets"
 				};
 
 			if (singleThreadResourceCreate)
@@ -163,6 +177,8 @@ namespace dx12
 		{
 			auto CreateShaders = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create shaders");
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newShaders.AquireReadLock();
@@ -175,6 +191,8 @@ namespace dx12
 					{
 						renderManager.m_newShaders.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create shaders"
 				};
 
 			if (singleThreadResourceCreate)
@@ -192,6 +210,8 @@ namespace dx12
 		{
 			auto CreateVertexStreams = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create vertex streams");
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newVertexStreams.AquireReadLock();
@@ -204,6 +224,8 @@ namespace dx12
 					{
 						renderManager.m_newVertexStreams.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create vertex streams"
 				};
 
 			if (singleThreadResourceCreate)
@@ -220,6 +242,8 @@ namespace dx12
 		{
 			auto CreateAccelerationStructures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create acceleration structures");
+
 					if (!singleThreaded)
 					{
 						renderManager.m_newAccelerationStructures.AquireReadLock();
@@ -232,6 +256,8 @@ namespace dx12
 					{
 						renderManager.m_newAccelerationStructures.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create acceleration structures"
 				};
 
 			if (singleThreadResourceCreate)
@@ -249,6 +275,8 @@ namespace dx12
 			auto CreateShaderBindingTables =
 				[&renderManager, &createTasks, shaderTasksIdx, singleThreaded = singleThreadResourceCreate]()
 				{
+					SEBeginCPUEvent("Create shader binding tables");
+
 					// Shader binding tables require shaders to have already been loaded (as they access their loaded
 					// blobs etc). We must wait for loading to be complete before proceeding
 					if (!singleThreaded &&
@@ -269,6 +297,8 @@ namespace dx12
 					{
 						renderManager.m_newShaderBindingTables.ReleaseReadLock();
 					}
+
+					SEEndCPUEvent(); // "Create shader binding tables"
 				};
 
 			if (singleThreadResourceCreate)
@@ -285,6 +315,7 @@ namespace dx12
 			"Too many create tasks, vector may have been reallocated: k_createTasksReserveAmt must be updated");
 
 		// Finally, wait for everything to complete:
+		SEBeginCPUEvent("Wait on task threads");
 		if (!singleThreadResourceCreate)
 		{
 			for (auto& createTask : createTasks)
@@ -292,6 +323,9 @@ namespace dx12
 				createTask.wait();
 			}
 		}
+		SEEndCPUEvent(); // "Wait on task threads"
+
+		SEEndCPUEvent(); // "RenderManager::CreateAPIResources"
 	}
 
 
@@ -314,6 +348,8 @@ namespace dx12
 
 	void RenderManager::Render()
 	{
+		SEBeginCPUEvent("RenderManager::Render");
+
 		dx12::Context* context = m_context->As<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
@@ -381,6 +417,8 @@ namespace dx12
 			std::shared_ptr<dx12::CommandList>&& cmdListIn)
 				-> std::shared_ptr<dx12::CommandList>
 			{
+				SEBeginCPUEvent("RecordCommandList");
+
 				std::shared_ptr<dx12::CommandList> cmdList = std::move(cmdListIn);
 
 				// We move the WorkRange here to ensure it is cleared even if we're recording single-threaded
@@ -396,6 +434,8 @@ namespace dx12
 					dx12::CommandList* commandList,
 					bool doSetStageInputsAndTargets)
 					{
+						SEBeginCPUEvent("SetDrawState");
+
 						// Set the pipeline state and root signature first:
 						dx12::PipelineState const* pso = context->GetPipelineStateObject(*shader, targetSet);
 						commandList->SetPipelineState(*pso);
@@ -453,6 +493,8 @@ namespace dx12
 
 						// Set root constants:
 						commandList->SetRootConstants(stage->GetRootConstants());
+
+						SEEndCPUEvent(); // "SetDrawState"
 					};			
 
 
@@ -489,6 +531,8 @@ namespace dx12
 				auto workRangeItr = workRange.begin();
 				while (workRangeItr != workRange.end())
 				{
+					SEBeginCPUEvent("WorkRange");
+
 					const bool isLastWorkEntry = std::next(workRangeItr) == workRange.end();
 
 					re::RenderPipeline const* renderPipeline = workRangeItr->m_renderPipeline;
@@ -533,6 +577,8 @@ namespace dx12
 					auto stageItr = workRangeItr->m_stageBeginItr;
 					while (stageItr != workRangeItr->m_stageEndItr)
 					{
+						SEBeginCPUEvent(std::format("Stage: {}", (*stageItr)->GetName()).c_str());
+
 						SEBeginGPUEvent( // Stage
 							cmdList->GetD3DCommandList().Get(),
 							perfMarkerType,
@@ -785,6 +831,7 @@ namespace dx12
 						SEEndGPUEvent(cmdList->GetD3DCommandList().Get()); // Stage
 
 						++stageItr;
+						SEEndCPUEvent(); // "Stage: <stage name>"
 					}
 
 					if (isLastOfStagePipeline)
@@ -799,8 +846,10 @@ namespace dx12
 						// No RenderSystem GPUEvent marker to end
 					}
 					
+					SEEndCPUEvent(); // "WorkRange"
 					++workRangeItr;
 				}
+				SEEndCPUEvent(); // "RecordCommandList"
 
 				return cmdList;
 			};
@@ -809,6 +858,8 @@ namespace dx12
 			[this, &commandListJobs, &RecordCommandList, &StageTypeToCommandListType, &directQueue, &computeQueue, &frameTimer]
 			(std::vector<WorkRange>&& workRange, bool startGPUFrameTimer, bool stopGPUFrameTimer)
 			{
+				SEBeginCPUEvent("EnqueueWorkRecording");
+
 				if (workRange.empty())
 				{
 					return;
@@ -886,8 +937,12 @@ namespace dx12
 							return populatedCmdList;
 						}));
 				}
+
+				SEEndCPUEvent(); // "EnqueueWorkRecording"
 			};
 
+
+		SEBeginCPUEvent("Populate work ranges");
 
 		// Populate sets of WorkRanges that can be recorded on the same command list. A single WorkRange spans a
 		// contiguous subset of the Stages of a single StagePipeline, we asyncronously record all work on a single 
@@ -980,16 +1035,22 @@ namespace dx12
 			++renderSystemItr;
 		}
 
+		SEEndCPUEvent(); // "Populate work ranges"
+
 		// Enqueue any remaining work:
 		SEAssert(!workRange.empty(), "No work to record: Frame timer won't be closed");
 		EnqueueWorkRecording(std::move(workRange), false, true);
 
 		// Submit asyncronously recorded command lists:
+		SEBeginCPUEvent("Submit command lists");
 		for (auto& job : commandListJobs)
 		{
 			try
 			{
 				std::shared_ptr<dx12::CommandList> cmdList = job.get();
+
+				SEBeginCPUEvent(std::format("Submit {}", 
+					dx12::CommandList::GetCommandListTypeName(cmdList->GetCommandListType())).c_str());
 
 				switch (cmdList->GetCommandListType())
 				{
@@ -1005,14 +1066,20 @@ namespace dx12
 				break;
 				default: SEAssertF("Unexpected command list type");
 				}
+
+				SEEndCPUEvent(); // "Submit <command list type>"
 			}
 			catch (std::exception const& e)
 			{
+				SEEndCPUEvent(); // "Submit command lists"
 				SEAssertF(e.what());
 			}
 		}
-
+		SEEndCPUEvent(); // "Submit command lists"
+		
 		m_context->GetGPUTimer().EndFrame();
+
+		SEEndCPUEvent(); // "RenderManager::Render"
 	}
 
 

@@ -644,6 +644,8 @@ namespace re
 		};
 
 		// Populate the batch metadata:
+		SEBeginCPUEvent("Populate batchMetadata");
+
 		std::vector<BatchMetadata> batchMetadata;
 		batchMetadata.reserve(m_resolvedBatches.size());
 		for (size_t i = 0; i < m_resolvedBatches.size(); i++)
@@ -655,77 +657,88 @@ namespace re
 				});
 		}
 
+		SEEndCPUEvent(); // "Populate batchMetadata"
+
+
+		// Sort the batch metadata:
+		SEBeginCPUEvent("Sort batchMetadata");
+
+		std::sort(batchMetadata.begin(), batchMetadata.end(),
+			[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
+
+		SEEndCPUEvent(); // "Sort batchMetadata"
+
+
+		// Merge the batches:
+		SEBeginCPUEvent("Merge batches");
+
 		std::vector<gr::StageBatchHandle> mergedBatches;
-
-		if (!batchMetadata.empty())
+		mergedBatches.reserve(m_resolvedBatches.size()); // Over-estimation
+		
+		size_t unmergedIdx = 0;
+		do
 		{
-			// Sort the batch metadata:
-			std::sort(batchMetadata.begin(), batchMetadata.end(),
-				[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
+			gr::StageBatchHandle const& stageBatchHandle =
+				m_resolvedBatches[batchMetadata[unmergedIdx].m_stageBatchesIdx];
 
-			size_t unmergedIdx = 0;
-			do
+			// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
+			// have a permanent Lifetime
+			mergedBatches.emplace_back(stageBatchHandle);
+
+			// Find the index of the last batch with a matching hash in the sequence:
+			const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
+			const size_t instanceStartIdx = unmergedIdx++;
+			while (unmergedIdx < batchMetadata.size() &&
+				batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
 			{
-				gr::StageBatchHandle const& stageBatchHandle =
-					m_resolvedBatches[batchMetadata[unmergedIdx].m_stageBatchesIdx];
+				unmergedIdx++;
+			}
 
-				// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
-				// have a permanent Lifetime
-				mergedBatches.emplace_back(stageBatchHandle);
+			// Compute and set the number of instances in the batch:
+			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
 
-				// Find the index of the last batch with a matching hash in the sequence:
-				const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
-				const size_t instanceStartIdx = unmergedIdx++;
-				while (unmergedIdx < batchMetadata.size() &&
-					batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
-				{
-					unmergedIdx++;
-				}
+			// Resolve the batch: Internally, this gets the Shader, sets the instance count, and resolves raster
+			// batch vertex streams etc 
+			mergedBatches.back().Resolve(m_drawStyleBits, numInstances, effectDB);
 
-				// Compute and set the number of instances in the batch:
-				const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
-				
-				// Resolve the batch: Internally, this gets the Shader, sets the instance count, and resolves raster
-				// batch vertex streams etc 
-				mergedBatches.back().Resolve(m_drawStyleBits, numInstances, effectDB);
+			// Attach the instance and LUT buffers:
+			effect::Effect const* batchEffect = effectDB.GetEffect((*mergedBatches.back())->GetEffectID());
 
-				// Attach the instance and LUT buffers:
-				effect::Effect const* batchEffect = effectDB.GetEffect((*mergedBatches.back())->GetEffectID());
+			auto const& effectBufferShaderNames = batchEffect->GetRequestedBufferShaderNames();
 
-				auto const& effectBufferShaderNames = batchEffect->GetRequestedBufferShaderNames();
+			bool setInstanceBuffer = false;
+			for (auto const& bufferNameHash : effectBufferShaderNames)
+			{
+				mergedBatches.back().SetSingleFrameBuffer(
+					ibm.GetIndexedBufferInput(bufferNameHash.first, bufferNameHash.second.c_str()));
 
-				bool setInstanceBuffer = false;
-				for (auto const& bufferNameHash : effectBufferShaderNames)
-				{
-					mergedBatches.back().SetSingleFrameBuffer(
-						ibm.GetIndexedBufferInput(bufferNameHash.first, bufferNameHash.second.c_str()));
+				setInstanceBuffer = true;
+			}
 
-					setInstanceBuffer = true;
-				}
+			// Indexed buffer LUTs require a valid RenderDataID, but it's still valid to attach an instanced buffer
+			// (e.g. if the GS handled the LUT manually)
+			if (setInstanceBuffer &&
+				(*stageBatchHandle).GetRenderDataID() != gr::k_invalidRenderDataID)
+			{
+				// Use a view of our batch metadata to get the list of RenderDataIDs for each instance:
+				std::ranges::range auto&& instancedBatchView = batchMetadata
+					| std::views::drop(instanceStartIdx)
+					| std::views::take(numInstances)
+					| std::ranges::views::transform([](BatchMetadata const& batchMetadata) -> gr::RenderDataID
+						{
+							return batchMetadata.m_renderDataID;
+						});
 
-				// Indexed buffer LUTs require a valid RenderDataID, but it's still valid to attach an instanced buffer
-				// (e.g. if the GS handled the LUT manually)
-				if (setInstanceBuffer &&
-					(*stageBatchHandle).GetRenderDataID() != gr::k_invalidRenderDataID)
-				{
-					// Use a view of our batch metadata to get the list of RenderDataIDs for each instance:
-					std::ranges::range auto&& instancedBatchView = batchMetadata
-						| std::views::drop(instanceStartIdx)
-						| std::views::take(numInstances)
-						| std::ranges::views::transform([](BatchMetadata const& batchMetadata) -> gr::RenderDataID
-							{
-								return batchMetadata.m_renderDataID;
-							});
+				mergedBatches.back().SetSingleFrameBuffer(
+					ibm.GetLUTBufferInput<InstanceIndexData>(InstanceIndexData::s_shaderName, instancedBatchView));
+			}
 
-					mergedBatches.back().SetSingleFrameBuffer(
-						ibm.GetLUTBufferInput<InstanceIndexData>(InstanceIndexData::s_shaderName, instancedBatchView));
-				}
+		} while (unmergedIdx < batchMetadata.size());
 
-			} while (unmergedIdx < batchMetadata.size());
+		// Swap in our merged results:
+		m_resolvedBatches = std::move(mergedBatches);
 
-			// Swap in our merged results:
-			m_resolvedBatches = std::move(mergedBatches);
-		}
+		SEEndCPUEvent(); // "Merge batches"
 
 		SEEndCPUEvent(); // "Stage::ResolveBatches"
 	}

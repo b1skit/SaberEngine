@@ -300,7 +300,7 @@ namespace re
 		CreateAPIResources();
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
-		SEBeginCPUEvent("Execute update pipeline");
+		SEBeginCPUEvent("RenderManager::Update: Execute update pipeline");
 		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
