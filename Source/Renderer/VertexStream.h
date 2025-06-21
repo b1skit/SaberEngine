@@ -65,8 +65,6 @@ namespace gr
 	public:
 		struct StreamDesc final
 		{
-			re::Lifetime m_lifetime = re::Lifetime::Permanent;
-
 			Type m_type = Type::Type_Count;
 
 			re::DataType m_dataType = re::DataType::DataType_Count; // Per component in each element. Eg. Color/Float4 == Float
@@ -105,8 +103,6 @@ namespace gr
 		~VertexStream();
 
 		void Destroy();
-
-		re::Lifetime GetLifetime() const;
 
 		Type GetType() const;
 
@@ -162,12 +158,6 @@ namespace gr
 		VertexStream(VertexStream const&) = delete;
 		VertexStream& operator=(VertexStream const&) = delete;
 	};
-
-
-	inline re::Lifetime VertexStream::GetLifetime() const
-	{
-		return m_streamDesc.m_lifetime;
-	}
 
 
 	inline VertexStream::Type VertexStream::GetType() const

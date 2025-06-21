@@ -73,10 +73,10 @@ namespace gr
 		const uint32_t roundedXDim = grutil::GetRoundedDispatchDimension(lightingTex->Width(), k_dispatchXYThreadDims);
 		const uint32_t roundedYDim = grutil::GetRoundedDispatchDimension(lightingTex->Height(), k_dispatchXYThreadDims);
 
-		m_tonemappingComputeBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+		m_tonemappingComputeBatch = gr::ComputeBatchBuilder()
 			.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1))
 			.SetEffectID(k_tonemappingEffectID)
-			.BuildPermanent());
+			.Build();
 
 		// Swap chain blit: Must handle this manually as a copy stage has limited format support
 		re::Stage::FullscreenQuadParams swapchainBlitStageParams{};
@@ -102,7 +102,7 @@ namespace gr
 	{
 		if (m_currentMode != TonemappingMode::PassThrough)
 		{
-			m_tonemappingStage->AddBatch(*m_tonemappingComputeBatch);
+			m_tonemappingStage->AddBatch(m_tonemappingComputeBatch);
 		}
 	}
 

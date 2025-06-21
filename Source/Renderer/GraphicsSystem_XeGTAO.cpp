@@ -439,33 +439,33 @@ namespace gr
 			"Resolution has changed, this graphics system needs to be recreated");
 
 		// Depth pre-filter stage:
-		if (m_prefilterDepthComputeBatch == nullptr)
+		if (m_prefilterDepthComputeBatch.IsValid() == false)
 		{
 			// The depth prefilter shader executes numthreads(8, 8, 1), with each logical thread handling a 2x2 block.
 			// Thus, we perform a total of (width, height) / (16, 16) dispatches, but round up via an integer floor) to
 			// handle the edges
 			constexpr uint8_t k_blockSize = 16;
 
-			m_prefilterDepthComputeBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			m_prefilterDepthComputeBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(m_xRes, k_blockSize),
 					grutil::GetRoundedDispatchDimension(m_yRes, k_blockSize),
 					1))
 				.SetBuffer(m_XeGTAOConstants)
 				.SetEffectID(k_XeGTAOEffectID)
-				.BuildPermanent());
+				.Build();
 		}
-		m_prefilterDepthsStage->AddBatch(*m_prefilterDepthComputeBatch);
+		m_prefilterDepthsStage->AddBatch(m_prefilterDepthComputeBatch);
 
 		// Main stage:
-		if (m_mainBatch == nullptr)
+		if (m_mainBatch.IsValid() == false)
 		{
 			// The main stage executes numthreads(XE_GTAO_NUMTHREADS_X, XE_GTAO_NUMTHREADS_Y, 1), as per the values
 			// defined in XeeGTAO.h (and mirrored in our XeGTAOCommon.hlsli library).
 			constexpr int k_extraX = XE_GTAO_NUMTHREADS_X - 1;
 			constexpr int k_extraY = XE_GTAO_NUMTHREADS_Y - 1;
 
-			m_mainBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			m_mainBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(m_xRes, XE_GTAO_NUMTHREADS_X),
 					grutil::GetRoundedDispatchDimension(m_yRes, XE_GTAO_NUMTHREADS_Y),
@@ -473,23 +473,23 @@ namespace gr
 				.SetEffectID(k_XeGTAOEffectID)
 				.SetBuffer(m_XeGTAOConstants)
 				.SetBuffer(m_graphicsSystemManager->GetActiveCameraParams())
-				.BuildPermanent());
+				.Build();
 		}
-		m_mainStage->AddBatch(*m_mainBatch);
+		m_mainStage->AddBatch(m_mainBatch);
 
 		// Denoise stages:
-		if (m_denoiseBatch == nullptr || m_lastPassDenoiseBatch == nullptr)
+		if (m_denoiseBatch.IsValid() == false || m_lastPassDenoiseBatch.IsValid() == false)
 		{
-			m_denoiseBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			m_denoiseBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(m_xRes, XE_GTAO_NUMTHREADS_X * 2),
 					grutil::GetRoundedDispatchDimension(m_yRes, XE_GTAO_NUMTHREADS_Y),
 					1))
 				.SetEffectID(k_XeGTAOEffectID)
 				.SetBuffer(m_XeGTAOConstants)
-				.BuildPermanent());
+				.Build();
 
-			m_lastPassDenoiseBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+			m_lastPassDenoiseBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(m_xRes, XE_GTAO_NUMTHREADS_X * 2),
 					grutil::GetRoundedDispatchDimension(m_yRes, XE_GTAO_NUMTHREADS_Y),
@@ -497,7 +497,7 @@ namespace gr
 				.SetEffectID(k_XeGTAOEffectID)
 				.SetBuffer(m_XeGTAOConstants)
 				.SetBuffer(m_SEXeGTAOSettings) // Needed for final stage ONLY
-				.BuildPermanent());
+				.Build();
 		}
 
 		const uint8_t lastStageIdx = util::CheckedCast<uint8_t>(m_denoiseStages.size() - 1);
@@ -505,11 +505,11 @@ namespace gr
 		{
 			if (denoiseIdx == lastStageIdx)
 			{
-				m_denoiseStages[denoiseIdx]->AddBatch(*m_lastPassDenoiseBatch);
+				m_denoiseStages[denoiseIdx]->AddBatch(m_lastPassDenoiseBatch);
 			}
 			else
 			{
-				m_denoiseStages[denoiseIdx]->AddBatch(*m_denoiseBatch);
+				m_denoiseStages[denoiseIdx]->AddBatch(m_denoiseBatch);
 			}
 		}
 	}

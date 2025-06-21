@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "Batch.h"
+#include "BatchHandle.h"
 #include "BindlessResourceManager_DX12.h"
 #include "Buffer.h"
+#include "BufferView.h"
 #include "Buffer_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
@@ -547,37 +549,37 @@ namespace dx12
 	}
 
 
-	void CommandList::DrawBatchGeometry(re::Batch const& batch)
+	void CommandList::DrawBatchGeometry(gr::StageBatchHandle const& batch)
 	{
 		// Set the geometry for the draw:		
-		re::Batch::RasterParams const& rasterParams = batch.GetRasterParams();
+		re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(rasterParams.m_primitiveTopology));
 
-		SetVertexBuffers(rasterParams.m_vertexBuffers);
+		SetVertexBuffers(batch);
 
 		// Record the draw:
 		switch (rasterParams.m_batchGeometryMode)
 		{
 		case re::Batch::GeometryMode::IndexedInstanced:
 		{
-			SEAssert(rasterParams.m_indexBuffer.GetBuffer(), "Index stream cannot be null for indexed draws");
+			SEAssert(batch.GetIndexBuffer().GetBuffer(), "Index stream cannot be null for indexed draws");
 
-			SetIndexBuffer(rasterParams.m_indexBuffer);
+			SetIndexBuffer(batch.GetIndexBuffer());
 
 			CommitGPUDescriptors();
 			
 			m_commandList->DrawIndexedInstanced(
-				rasterParams.m_indexBuffer.m_view.m_streamView.m_numElements,	// Index count, per instance
-				static_cast<uint32_t>(batch.GetInstanceCount()),		// Instance count
-				0,														// Start index location
-				0,														// Base vertex location
-				0);														// Start instance location
+				batch.GetIndexBuffer().m_view.m_streamView.m_numElements,		// Index count, per instance
+				batch.GetInstanceCount(),										// Instance count
+				0,																// Start index location
+				0,																// Base vertex location
+				0);																// Start instance location
 		}
 		break;
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{		
-			SEAssert(rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_type == 
+			SEAssert(batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_type ==
 				gr::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
@@ -585,10 +587,10 @@ namespace dx12
 			CommitGPUDescriptors();
 
 			m_commandList->DrawInstanced(
-				rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements,	// VertexCountPerInstance
-				rasterParams.m_numInstances,										// InstanceCount
-				0,																		// StartVertexLocation
-				0);																		// StartInstanceLocation
+				batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_numElements,	// VertexCountPerInstance
+				batch.GetInstanceCount(),													// InstanceCount
+				0,																			// StartVertexLocation
+				0);																			// StartInstanceLocation
 		}
 		break;
 		default: SEAssertF("Invalid batch geometry type");
@@ -596,10 +598,11 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(
-		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
+	void CommandList::SetVertexBuffers(gr::StageBatchHandle const& batch)
 	{
 		SEAssert(m_type == dx12::CommandListType::Direct, "Unexpected command list type");
+
+		gr::StageBatchHandle::ResolvedVertexBuffers const& vertexBuffers = batch.GetResolvedVertexBuffers();
 
 		// Batch all of the resource transitions in advance:
 		std::vector<TransitionMetadata> resourceTransitions;
@@ -607,13 +610,18 @@ namespace dx12
 
 		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
+			SEAssert(!vertexBuffers[streamIdx].first || 
+				(vertexBuffers[streamIdx].first->GetStream() &&
+					vertexBuffers[streamIdx].second != re::VertexBufferInput::k_invalidSlotIdx),
+				"Non-null VertexBufferInput pointer does not have a stream. This should not be possible");
+
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			if (!vertexBuffers[streamIdx].GetStream())
+			if (!vertexBuffers[streamIdx].first)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
 			}
-			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
+			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].first->GetBuffer();
 
 			const bool isInSharedHeap = dx12::Buffer::IsInSharedHeap(streamBuffer);
 			const D3D12_RESOURCE_STATES toState = isInSharedHeap ? 
@@ -633,31 +641,36 @@ namespace dx12
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
 		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);
 
-		uint8_t startSlotIdx = vertexBuffers[0].m_bindSlot;
+		uint8_t startSlotIdx = vertexBuffers[0].second;
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
 		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
+			SEAssert(!vertexBuffers[streamIdx].first ||
+				(vertexBuffers[streamIdx].first->GetStream() &&
+					vertexBuffers[streamIdx].second != re::VertexBufferInput::k_invalidSlotIdx),
+				"Non-null VertexBufferInput pointer does not have a stream. This should not be possible");
+
 			// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-			if (!vertexBuffers[streamIdx].GetStream())
+			if (!vertexBuffers[streamIdx].first)
 			{
 				SEAssert(streamIdx > 0, "Failed to find a valid vertex stream");
 				break;
 			}
-			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].GetBuffer();
+			re::Buffer const* streamBuffer = vertexBuffers[streamIdx].first->GetBuffer();
 
 			dx12::Buffer::PlatObj* streamBufferPlatObj =
 				streamBuffer->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 			
 			streamViews.emplace_back(
-				*dx12::Buffer::GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].m_view));
+				*dx12::Buffer::GetOrCreateVertexBufferView(*streamBuffer, vertexBuffers[streamIdx].first->m_view));
 
 			// Peek ahead: If there are no more contiguous slots, flush the stream views
 			const uint32_t nextStreamIdx = streamIdx + 1;
 			if (nextStreamIdx >= gr::VertexStream::k_maxVertexStreams ||
-				vertexBuffers[nextStreamIdx].m_bindSlot != nextConsecutiveSlotIdx)
+				vertexBuffers[nextStreamIdx].second != nextConsecutiveSlotIdx)
 			{
 				SEAssert(nextStreamIdx >= gr::VertexStream::k_maxVertexStreams ||
-					vertexBuffers[nextStreamIdx].m_bindSlot > nextConsecutiveSlotIdx, 
+					vertexBuffers[nextStreamIdx].second > nextConsecutiveSlotIdx, 
 					"Out of order vertex streams detected");
 
 				// Flush the list we've built so far
@@ -674,7 +687,7 @@ namespace dx12
 				// Prepare for the next iteration:
 				if (nextStreamIdx < gr::VertexStream::k_maxVertexStreams)
 				{
-					startSlotIdx = vertexBuffers[nextStreamIdx].m_bindSlot;
+					startSlotIdx = vertexBuffers[nextStreamIdx].second;
 					uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
 				}
 			}

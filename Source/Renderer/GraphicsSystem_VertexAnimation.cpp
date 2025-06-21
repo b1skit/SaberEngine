@@ -462,7 +462,7 @@ namespace gr
 							constexpr uint32_t k_floatStride = sizeof(float);
 
 							// Set the input vertex stream buffers:
-							morphBatchBuilder().SetBuffer(
+							std::move(morphBatchBuilder).SetBuffer(
 								"InVertexStreams",
 								meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
 								re::BufferView::BufferType{
@@ -473,7 +473,7 @@ namespace gr
 								});
 
 							// Set the output vertex stream buffers:
-							morphBatchBuilder().SetBuffer(
+							std::move(morphBatchBuilder).SetBuffer(
 								"OutVertexStreams",
 								animBuffers.m_destBuffers[srcIdx],
 								re::BufferView::BufferType{
@@ -487,7 +487,7 @@ namespace gr
 						}
 
 						// Set the dispatch metadata:
-						morphBatchBuilder().SetBuffer(
+						std::move(morphBatchBuilder).SetBuffer(
 							MorphDispatchMetadata::s_shaderName,
 							re::Buffer::Create(
 								MorphDispatchMetadata::s_shaderName,
@@ -501,16 +501,16 @@ namespace gr
 								}));
 
 						// Set the vertex stream metadata:
-						morphBatchBuilder().SetBuffer(
+						std::move(morphBatchBuilder).SetBuffer(
 							"MorphMetadataParams",
 							m_meshPrimIDToAnimBuffers.at(curID).m_morphMetadataBuffer);
 
 						// Set the interleaved morph data:
-						morphBatchBuilder().SetBuffer(
+						std::move(morphBatchBuilder).SetBuffer(
 							"MorphData",
 							meshPrimRenderData.m_interleavedMorphData);
 
-						m_morphAnimationStage->AddBatch(morphBatchBuilder().BuildSingleFrame());
+						m_morphAnimationStage->AddBatch(std::move(morphBatchBuilder).Build());
 					}
 				}
 			}
@@ -682,7 +682,7 @@ namespace gr
 						// Attach vertex buffers:
 						if (inShaderName)
 						{
-							skinningBatchBuilder().SetBuffer(
+							std::move(skinningBatchBuilder).SetBuffer(
 								inShaderName,
 								meshPrimRenderData.m_vertexStreams[srcIdx]->GetBufferSharedPtr(),
 								re::BufferView::BufferType{
@@ -695,7 +695,7 @@ namespace gr
 
 						if (outShaderName)
 						{
-							skinningBatchBuilder().SetBuffer(
+							std::move(skinningBatchBuilder).SetBuffer(
 								outShaderName,
 								animBuffers.m_destBuffers[srcIdx],
 								re::BufferView::BufferType{
@@ -708,14 +708,14 @@ namespace gr
 					}
 
 					// Set the MeshPrimitive skinning buffers::
-					skinningBatchBuilder().SetBuffer(SkinningData::s_shaderName,
+					std::move(skinningBatchBuilder).SetBuffer(SkinningData::s_shaderName,
 						m_meshPrimIDToAnimBuffers.at(curID).m_skinningDataBuffer);
 
 					// Set the Mesh skinning buffers:
-					skinningBatchBuilder().SetBuffer("SkinningMatrices",
+					std::move(skinningBatchBuilder).SetBuffer("SkinningMatrices",
 						m_meshIDToSkinJoints.at(meshPrimRenderData.m_owningMeshRenderDataID));
 
-					m_skinAnimationStage->AddBatch(skinningBatchBuilder().BuildSingleFrame());
+					m_skinAnimationStage->AddBatch(std::move(skinningBatchBuilder).Build());
 				}
 			}
 		}

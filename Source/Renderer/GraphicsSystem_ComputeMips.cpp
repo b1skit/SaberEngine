@@ -278,7 +278,7 @@ namespace gr
 						mipGenerationStage->AddBatch(gr::ComputeBatchBuilder()
 							.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1u))
 							.SetEffectID(k_mipGenEffectID)
-							.BuildSingleFrame());
+							.Build());
 
 						insertItr = m_stagePipeline->AppendSingleFrameStage(insertItr, std::move(mipGenerationStage));
 					}

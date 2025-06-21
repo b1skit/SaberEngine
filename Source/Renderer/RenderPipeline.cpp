@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#pragma once
+#include "IndexedBuffer.h"
 #include "RenderPipeline.h"
 
 #include "Core/ProfilingMarkers.h"
@@ -111,13 +111,13 @@ namespace re
 	}
 
 
-	void StagePipeline::PostUpdatePreRender()
+	void StagePipeline::PostUpdatePreRender(gr::IndexedBufferManager& ibm, effect::EffectDB const& effectDB)
 	{
 		SEBeginCPUEvent("StagePipeline::PostUpdatePreRender");
 
 		for (std::shared_ptr<re::Stage>& stage : m_stages)
 		{
-			stage->PostUpdatePreRender();
+			stage->PostUpdatePreRender(ibm, effectDB);
 		}
 
 		SEEndCPUEvent();
@@ -180,13 +180,13 @@ namespace re
 	}
 
 
-	void RenderPipeline::PostUpdatePreRender()
+	void RenderPipeline::PostUpdatePreRender(gr::IndexedBufferManager& ibm, effect::EffectDB const& effectDB)
 	{
 		SEBeginCPUEvent(GetName().c_str());
 
 		for (StagePipeline& stagePipeline : m_stagePipeline)
 		{
-			stagePipeline.PostUpdatePreRender();
+			stagePipeline.PostUpdatePreRender(ibm, effectDB);
 		}
 
 		SEEndCPUEvent();

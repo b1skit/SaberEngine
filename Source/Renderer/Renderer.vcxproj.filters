@@ -539,6 +539,12 @@
     <ClInclude Include="BatchFactories.h">
       <Filter>Header Files\gr\grutil</Filter>
     </ClInclude>
+    <ClInclude Include="BatchHandle.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="BatchPool.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
     <ClInclude Include="GraphicsEvent.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -897,6 +903,12 @@
     </ClCompile>
     <ClCompile Include="BatchFactories.cpp">
       <Filter>Source Files\gr\grutil</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchPool.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchHandle.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -83,7 +83,7 @@ namespace gr
 			std::shared_ptr<re::Buffer> m_ambientParams;
 			core::InvPtr<re::Texture> m_IEMTex;
 			core::InvPtr<re::Texture> m_PMREMTex;
-			re::BatchHandle m_batch;
+			gr::BatchHandle m_batch;
 		};
 		std::unordered_map<gr::RenderDataID, AmbientLightRenderData> m_ambientLightData;
 
@@ -105,13 +105,13 @@ namespace gr
 
 		// For rendering into a cube map (IEM/PMREM generation)
 		core::InvPtr<gr::MeshPrimitive> m_cubeMeshPrimitive;
-		std::unique_ptr<re::BatchHandle> m_cubeMeshBatch;
+		gr::BatchHandle m_cubeMeshBatch;
 		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;
 
 
 		// TODO: Convert all fullscreen lights (i.e. ambient, directional) to this stage
 		std::shared_ptr<re::Stage> m_fullscreenStage;
-		std::unique_ptr<re::BatchHandle> m_fullscreenComputeBatch;
+		gr::BatchHandle m_fullscreenComputeBatch;
 		static constexpr uint32_t k_dispatchXYThreadDims = 8;
 
 
@@ -119,7 +119,7 @@ namespace gr
 		struct PunctualLightRenderData
 		{
 			gr::Light::Type m_type;
-			re::BatchHandle m_batch;
+			gr::BatchHandle m_batch;
 			bool m_hasShadow = false;
 			bool m_canContribute = true;
 		};
@@ -140,11 +140,18 @@ namespace gr
 		PunctualLightCullingResults const* m_pointCullingResults;
 		PunctualLightCullingResults const* m_spotCullingResults;
 
-		std::unordered_map<gr::RenderDataID, gr::ShadowRecord> const* m_lightIDToShadowRecords;
+		LightIDToShadowRecordMap const* m_lightIDToShadowRecords;
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
 
 
 	private:
 		void CreateBatches();
+
+	private:
+		void HandleEvents() override;
+
+		bool m_directionalShadowTexArrayUpdated;
+		bool m_pointShadowTexArrayUpdated;
+		bool m_spotShadowTexArrayUpdated;
 	};
 }

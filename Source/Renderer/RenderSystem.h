@@ -8,9 +8,14 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
+namespace effect
+{
+	class EffectDB;
+}
 namespace gr
 {
 	struct RenderSystemDescription;
+	class IndexedBufferManager;
 
 
 	class RenderSystem : public virtual core::INamedObject, public virtual core::IUniqueID
@@ -34,7 +39,7 @@ namespace gr
 
 
 	public:
-		void PostUpdatePreRender(); // Called after ExecuteUpdatePipeline()
+		void PostUpdatePreRender(IndexedBufferManager&, effect::EffectDB const&); // Called after ExecuteUpdatePipeline()
 		void EndOfFrame();
 
 

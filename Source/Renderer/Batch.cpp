@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "Buffer.h"
-#include "RenderManager.h"
-#include "Shader.h"
 #include "Texture.h"
 #include "TextureView.h"
 #include "VertexStream.h"
@@ -10,161 +8,26 @@
 #include "Core/Assert.h"
 
 
-namespace
-{
-	void ValidateBufferLifetimeCompatibility(re::Lifetime batchLifetime, re::BufferInput const& bufferInput)
-	{
-#if defined(_DEBUG)
-		SEAssert(batchLifetime == bufferInput.GetLifetime() ||
-			(batchLifetime == re::Lifetime::SingleFrame && bufferInput.GetLifetime() == re::Lifetime::Permanent),
-			"Trying to set a buffer with a mismatching lifetime. Permanent batches cannot (currently) hold "
-			"single frame buffers, as they'd incorrectly maintain their life beyond the frame. Single frame "
-			"batches can hold any type of buffers (but should not be responsible for the lifetime of a "
-			"permanent buffer as they're expensive to create/destroy)");
-#endif
-	}
-
-
-	void ValidateVertexStreamLifetime(re::Lifetime batchLifetime, re::Lifetime vertexStreamLifetime)
-	{
-#if defined(_DEBUG)
-		SEAssert(batchLifetime == re::Lifetime::SingleFrame ||
-				(batchLifetime == re::Lifetime::Permanent &&
-					vertexStreamLifetime == re::Lifetime::Permanent),
-			"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
-#endif
-	}
-
-
-	void ValidateVertexStreams(
-		re::Lifetime batchLifetime, 
-		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers)
-	{
-#if defined(_DEBUG)
-
-		std::unordered_set<uint8_t> seenSlots;
-		seenSlots.reserve(gr::VertexStream::k_maxVertexStreams);
-
-		SEAssert(vertexBuffers[0].GetStream(), "Must have at least 1 non-null vertex stream");
-		
-		bool seenNull = false;
-		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
-		{
-			if (vertexBuffers[i].GetStream() == nullptr)
-			{
-				seenNull = true;
-			}
-			SEAssert(!seenNull || vertexBuffers[i].GetStream() == nullptr,
-				"Found a non-null entry after a null. Vertex streams must be tightly packed");
-
-			if (vertexBuffers[i].GetStream() && vertexBuffers[i].GetBuffer()) // Buffer might not have been created yet
-			{
-				ValidateVertexStreamLifetime(batchLifetime, vertexBuffers[i].GetBuffer()->GetLifetime());
-			}
-
-			SEAssert(vertexBuffers[i].GetStream() == nullptr ||
-				vertexBuffers[i].m_bindSlot != re::VertexBufferInput::k_invalidSlotIdx,
-				"Invalid bind slot detected");
-			
-			SEAssert(vertexBuffers[i].GetStream() == nullptr ||
-				i + 1 == gr::VertexStream::k_maxVertexStreams ||
-				vertexBuffers[i + 1].GetStream() == nullptr ||
-				(vertexBuffers[i].m_view.m_streamView.m_type < vertexBuffers[i + 1].m_view.m_streamView.m_type) ||
-				vertexBuffers[i].m_bindSlot + 1 == vertexBuffers[i + 1].m_bindSlot,
-				"Vertex streams of the same type must be stored in monotoically-increasing slot order");
-
-			if (vertexBuffers[i].GetStream() != nullptr)
-			{
-				SEAssert(!seenSlots.contains(vertexBuffers[i].m_bindSlot), "Duplicate slot index detected");
-				seenSlots.emplace(vertexBuffers[i].m_bindSlot);
-			}
-		}
-
-#endif
-	}
-
-	void ValidateVertexStreamOverrides(
-		re::Lifetime batchLifetime,
-		std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> const& streams,
-		re::Batch::VertexStreamOverride const* overrides)
-	{
-#if defined(_DEBUG)
-		if (!overrides)
-		{
-			return;
-		}
-
-		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
-		{
-			SEAssert((streams[i] == nullptr) == ((*overrides)[i].GetStream() == nullptr),
-				"Vertex stream overrides must map 1:1 with mesh primitive buffers");
-
-			if ((*overrides)[i].GetStream())
-			{
-				ValidateVertexStreamLifetime(batchLifetime, (*overrides)[i].GetBuffer()->GetLifetime());
-
-				SEAssert(i + 1 == gr::VertexStream::k_maxVertexStreams ||
-					(*overrides)[i + 1].GetStream() == nullptr ||
-					((*overrides)[i].m_view.m_streamView.m_type < (*overrides)[i + 1].m_view.m_streamView.m_type) ||
-					(*overrides)[i].m_bindSlot + 1 == (*overrides)[i + 1].m_bindSlot ||
-					((*overrides)[i].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx && 
-						(*overrides)[i + 1].m_bindSlot == re::VertexBufferInput::k_invalidSlotIdx),
-					"Vertex streams of the same type must be stored in monotoically-increasing slot order");
-			}
-		}
-#endif
-	}
-
-
-	bool IsBatchAndShaderTopologyCompatible(
-		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::RasterizationState::PrimitiveTopologyType topologyType)
-	{
-		switch (topologyType)
-		{
-		case re::RasterizationState::PrimitiveTopologyType::Point:
-		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::PointList;
-		}
-		break;
-		case re::RasterizationState::PrimitiveTopologyType::Line:
-		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
-		}
-		break;
-		case re::RasterizationState::PrimitiveTopologyType::Triangle:
-		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
-		}
-		break;
-		case re::RasterizationState::PrimitiveTopologyType::Patch:
-		{
-			SEAssertF("Patch topology is (currently) unsupported");
-		}
-		break;
-		default: SEAssertF("Invalid topology type");
-		}
-		return false;
-	}
-}
-
 namespace re
 {
-	Batch::Batch(BatchType batchType)
-		: m_lifetime(re::Lifetime::SingleFrame)
-		, m_type(batchType)
+	Batch::Batch()
+		: m_type(BatchType::Invalid)
 		, m_drawStyleBitmask(0)
 		, m_batchFilterBitmask(0)
-		, m_renderDataID(gr::k_invalidRenderDataID)
+	{
+		// We must zero-initialize our InvPtrs to ensure they don't contain garbage before initializing RasterParams
+		memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
+		memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
+
+		// Note: We don't actually initialize a union member here, as we don't know which one will be used. But we need
+		// to ensure that the union is zero-initialized to avoid garbage values in the InvPtrs etc
+	}
+
+
+	Batch::Batch(BatchType batchType)
+		: m_type(batchType)
+		, m_drawStyleBitmask(0)
+		, m_batchFilterBitmask(0)
 	{
 		switch (m_type)
 		{
@@ -229,7 +92,6 @@ namespace re
 	{
 		if (this != &rhs)
 		{
-			m_lifetime = rhs.m_lifetime;
 			m_type = rhs.m_type;
 
 			switch (m_type)
@@ -252,7 +114,6 @@ namespace re
 			default: SEAssertF("Invalid type");
 			}
 
-			m_batchShader = std::move(rhs.m_batchShader);
 			m_effectID = std::move(rhs.m_effectID);
 
 			m_drawStyleBitmask = rhs.m_drawStyleBitmask;
@@ -309,7 +170,6 @@ namespace re
 	{
 		if (this != &rhs)
 		{
-			m_lifetime = rhs.m_lifetime;
 			m_type = rhs.m_type;
 
 			switch (m_type)
@@ -332,7 +192,6 @@ namespace re
 			default: SEAssertF("Invalid type");
 			}
 
-			m_batchShader = rhs.m_batchShader;
 			m_effectID = rhs.m_effectID;
 			m_drawStyleBitmask = rhs.m_drawStyleBitmask;
 			m_batchFilterBitmask = rhs.m_batchFilterBitmask;
@@ -373,6 +232,7 @@ namespace re
 		{
 			// Do nothing
 		}
+		break;
 		default: SEAssertF("Invalid type");
 		}
 		
@@ -382,165 +242,48 @@ namespace re
 
 	void Batch::Destroy()
 	{
+		// This function is effectively an in-place destructor for Batches held by the BatchPool. We zero out the unions
+		// as a precaution, as the memory might be reused
 		switch (m_type)
 		{
 		case BatchType::Raster:
 		{
 			m_rasterParams.~RasterParams();
+
+			memset(&m_rasterParams.m_vertexBuffers, 0, sizeof(m_rasterParams.m_vertexBuffers));
+			memset(&m_rasterParams.m_indexBuffer, 0, sizeof(m_rasterParams.m_indexBuffer));
 		}
 		break;
 		case BatchType::Compute:
 		{
 			m_computeParams.~ComputeParams();
+
+			memset(&m_computeParams, 0, sizeof(m_computeParams));
 		}
 		break;
 		case BatchType::RayTracing:
 		{
 			m_rayTracingParams.~RayTracingParams();
+
+			memset(&m_rayTracingParams, 0, sizeof(m_rayTracingParams));
 		}
 		break;
 		default: SEAssertF("Invalid type: Was Batch already destroyed?");
 		}
 		m_type = BatchType::Invalid;
 
-		m_batchShader = nullptr;
 		m_effectID = 0;
 		m_drawStyleBitmask = 0;
 		m_batchFilterBitmask = 0;
-		m_renderDataID = gr::k_invalidRenderDataID;
 		
 		m_batchBuffers.clear();
 
 		m_batchTextureSamplerInputs.clear();
 		m_batchRWTextureInputs.clear();
 		m_batchRootConstants.Destroy();
+
+		ResetDataHash();
 	};
-
-
-	Batch Batch::Duplicate(Batch const& rhs, re::Lifetime newLifetime)
-	{
-		Batch result(rhs);
-		result.m_lifetime = newLifetime;
-
-#if defined(_DEBUG)
-		for (auto const& bufferInput : result.m_batchBuffers)
-		{
-			ValidateBufferLifetimeCompatibility(result.m_lifetime, bufferInput);
-		}
-#endif
-
-		return result;
-	}
-
-
-	void Batch::Finalize(effect::drawstyle::Bitmask stageBitmask)
-	{
-		SEAssert(GetDataHash() != 0, "Batch data hash has not been computed")
-		SEAssert(m_effectID != 0, "Invalid EffectID");
-		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
-
-		// TODO: We don't update the data hash even though we're modifying the m_drawStyleBitmask, as by this point
-		// instancing has (currently) already been handled. This will probably change in future!
-		m_drawStyleBitmask |= stageBitmask;
-		
-		m_batchShader = re::RenderManager::Get()->GetEffectDB().GetResolvedShader(m_effectID, m_drawStyleBitmask);
-
-		SEAssert(m_type != BatchType::Raster ||
-			IsBatchAndShaderTopologyCompatible(
-				GetRasterParams().m_primitiveTopology,
-				m_batchShader->GetRasterizationState()->GetPrimitiveTopologyType()),
-			"Raster topology mode is incompatible with shader pipeline state topology type");
-
-		// Resolve vertex input slots now that we've decided which shader will be used:
-		if (m_type == BatchType::Raster)
-		{
-			uint8_t numVertexStreams = 0;
-			bool needsRepacking = false;
-			for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
-			{
-				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-				if (m_rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
-				{
-					break;
-				}
-
-				SEAssert((m_lifetime == re::Lifetime::SingleFrame) ||
-					(m_rasterParams.m_vertexBuffers[i].GetStream()->GetLifetime() == re::Lifetime::Permanent &&
-						m_lifetime == re::Lifetime::Permanent),
-					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
-				
-				const gr::VertexStream::Type curStreamType = 
-					m_rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
-				
-				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
-				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
-				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
-					m_rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
-					m_rasterParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
-				{					
-					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
-					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
-					{
-						m_rasterParams.m_vertexBuffers[i + semanticIdx].m_bindSlot =
-							m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
-					}
-					else
-					{
-						m_rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() = nullptr;
-						needsRepacking = true;
-					}
-					++semanticIdx;
-					++numVertexStreams;
-				}
-				if (semanticIdx > 1) // Skip ahead: We've already handled all consecutive streams of the same type
-				{
-					i = i + (semanticIdx - 1); // -1 b/c of the last ++semanticIdx;
-				}
-			}
-
-			if (needsRepacking)
-			{
-				uint8_t numValidStreams = 0;
-				for (uint8_t i = 0; i < numVertexStreams; ++i)
-				{
-					if (m_rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
-					{
-						uint8_t nextValidIdx = i + 1;
-						while (nextValidIdx < numVertexStreams &&
-							m_rasterParams.m_vertexBuffers[nextValidIdx].GetStream() == nullptr)
-						{
-							++nextValidIdx;
-						}
-						if (nextValidIdx < numVertexStreams &&
-							m_rasterParams.m_vertexBuffers[nextValidIdx].GetStream() != nullptr)
-						{
-							m_rasterParams.m_vertexBuffers[i] = m_rasterParams.m_vertexBuffers[nextValidIdx];
-							m_rasterParams.m_vertexBuffers[nextValidIdx] = {};
-							++numValidStreams;
-						}
-						else if (nextValidIdx == numVertexStreams)
-						{
-							break; // Didn't find anything valid in the remaining elements, no point continuing
-						}
-					}
-					else
-					{
-						++numValidStreams;					
-					}
-				}
-			}
-
-			ValidateVertexStreams(m_lifetime, m_rasterParams.m_vertexBuffers); // _DEBUG only
-		}
-	}
-
-
-	void Batch::SetInstanceCount(uint32_t numInstances)
-	{
-		SEAssert(m_type == BatchType::Raster, "Invalid type");
-
-		m_rasterParams.m_numInstances = numInstances;
-	}
 
 
 	void Batch::ComputeDataHash()
@@ -576,7 +319,7 @@ namespace re
 
 			AddDataBytesToHash(m_rasterParams.m_materialUniqueID);
 
-			SEStaticAssert(sizeof(Batch::RasterParams) == 1112, "Must update this if RasterParams size has changed");
+			SEStaticAssert(sizeof(Batch::RasterParams) == 968, "Must update this if RasterParams size has changed");
 		}
 		break;
 		case BatchType::Compute:
@@ -602,11 +345,6 @@ namespace re
 		}
 
 		// Shader:
-		if (m_batchShader)
-		{
-			AddDataBytesToHash(m_batchShader->GetShaderIdentifier());
-		}
-
 		AddDataBytesToHash(m_effectID);
 		AddDataBytesToHash(m_drawStyleBitmask);
 		AddDataBytesToHash(m_batchFilterBitmask);
@@ -692,7 +430,8 @@ namespace re
 			bufferInput.GetBuffer() != nullptr,
 			"Cannot set a unnamed or null buffer");
 
-		ValidateBufferLifetimeCompatibility(m_lifetime, bufferInput);
+		SEAssert(bufferInput.GetLifetime() != re::Lifetime::SingleFrame,
+			"Single frame buffers cannot be set directly on a batch");
 
 #if defined(_DEBUG)
 		for (auto const& existingBuffer : m_batchBuffers)

@@ -8,11 +8,13 @@
 
 #include "Core/Util/CHashKey.h"
 
-
+namespace gr
+{
+	class BatchHandle;
+}
 namespace re
 {
 	class AccelerationStructure;
-	class BatchHandle;
 	class Texture;
 	class VertexBufferInput;
 }
@@ -33,8 +35,8 @@ namespace gr
 
 	using TLAS = std::shared_ptr<re::AccelerationStructure>;
 
-	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<re::BatchHandle>>;
-	using AllBatches = std::vector<re::BatchHandle>;
+	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<gr::BatchHandle>>;
+	using AllBatches = std::vector<gr::BatchHandle>;
 
 	struct ShadowRecord
 	{

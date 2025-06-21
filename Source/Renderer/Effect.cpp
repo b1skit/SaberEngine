@@ -109,9 +109,14 @@ namespace effect
 	}
 
 
-	void Effect::AddBufferName(util::HashKey bufferNameHash)
+	std::map<util::HashKey, std::string> const& Effect::GetRequestedBufferShaderNames() const
 	{
-		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
-		m_buffers.emplace(bufferNameHash);
+		return m_requestedBufferShaderNames;
+	}
+
+
+	void Effect::AddBufferName(std::string const& bufferShaderName)
+	{
+		m_requestedBufferShaderNames.emplace(std::make_pair(util::HashKey(bufferShaderName), bufferShaderName));
 	}
 }

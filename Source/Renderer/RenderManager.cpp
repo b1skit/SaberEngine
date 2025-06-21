@@ -238,6 +238,8 @@ namespace re
 
 		m_effectDB.LoadEffectManifest();
 
+		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
+
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
@@ -288,6 +290,8 @@ namespace re
 
 		m_renderData.Update(); // Post-render-command render data manager updates
 
+		m_batchPool->Update(m_renderFrameNum); // Update the batch pool for the current frame
+
 		m_context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
 		// We must create any API resources that were passed via render commands, as they may be required during GS
@@ -300,7 +304,7 @@ namespace re
 		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
-			renderSystem->PostUpdatePreRender();
+			renderSystem->PostUpdatePreRender(m_renderData.GetInstancingIndexedBufferManager(), m_effectDB);
 		}
 		SEEndCPUEvent();
 
@@ -407,6 +411,9 @@ namespace re
 			renderSystem->Destroy();
 		}
 		m_renderSystems.clear();
+
+		m_batchPool->Destroy();
+		m_batchPool = nullptr;
 
 		m_renderData.Destroy();
 

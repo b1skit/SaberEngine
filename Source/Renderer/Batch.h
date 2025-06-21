@@ -15,19 +15,22 @@
 #include "Core/Interfaces/IHashedDataObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "_generated/DrawStyles.h"
+
 
 namespace gr
 {
+	class BatchPoolPage;
 	class ComputeBatchBuilder;
 	template<typename BuilderImpl>
 	class IBatchBuilder;
 	class RasterBatchBuilder;
 	class RayTraceBatchBuilder;
+	class StageBatchHandle;
 }
 
 namespace re
 {
-	class BatchHandle;
 	class Buffer;
 	class Shader;
 	class Texture;
@@ -38,7 +41,7 @@ namespace re
 	class Batch final : public virtual core::IHashedDataObject
 	{
 	public:
-		enum class BatchType
+		enum class BatchType : uint8_t
 		{
 			Raster,
 			Compute,
@@ -47,7 +50,7 @@ namespace re
 			Invalid,
 		};
 
-		enum class GeometryMode
+		enum class GeometryMode : uint8_t
 		{
 			// Note: All draws are instanced, even if an API supports non-instanced drawing
 			IndexedInstanced,
@@ -67,22 +70,29 @@ namespace re
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 		struct RasterParams final
-		{		
-			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
-			uint32_t m_numInstances = 0;
-			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+		{
+			friend class re::Batch;
+			friend class gr::RasterBatchBuilder;
+			friend class gr::StageBatchHandle;
 
+		protected: // Use the StageBatchHandle's resolved vertex buffers instead
 			// Vertex streams must be contiguously packed, with streams of the same type stored consecutively
 			std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
 
 			VertexBufferInput m_indexBuffer{};
 
-			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceRenderData, we store the 
-			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and
-			// materials will sort together
+
+		public:
+			// If a batch is created via a RenderDataID associated with a gr::Material::MaterialInstanceRenderData, we 
+			// store the material's unique ID so we can include it in the data hash to ensure batches with identical
+			// geometry and materials will sort together
 			UniqueID m_materialUniqueID = k_invalidUniqueID;
+
+			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
+			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 		};
-		
+		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
+
 		struct ComputeParams final
 		{
 			// No. groups dispatched in XYZ directions:
@@ -107,37 +117,29 @@ namespace re
 			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width/height/depth
 			uint32_t m_rayGenShaderIdx = 0;
 		};
-		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
 
 
 	private:
-		friend class BatchHandle;
-
+		Batch(); // Invalid/uninitialized
+		
 		Batch(BatchType batchType); // Used by BatchBuilders
 
 		Batch(Batch&&) noexcept;
-		Batch(Batch const&) noexcept;
-
 		Batch& operator=(Batch&&) noexcept;
-		Batch& operator=(Batch const&) noexcept;
 
-		void Destroy();
+		Batch(Batch const&) noexcept;
+		Batch& operator=(Batch const&) noexcept;
 		
+		void Destroy();
+
 
 	public:
 		~Batch();
 
 
-	public:		
-		static Batch Duplicate(Batch const&, re::Lifetime);
-
-
 	public:
 		BatchType GetType() const;
 
-		size_t GetInstanceCount() const;
-
-		core::InvPtr<re::Shader> const& GetShader() const;
 		EffectID GetEffectID() const;
 
 		std::vector<BufferInput> const& GetBuffers() const;
@@ -145,24 +147,21 @@ namespace re
 		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
 		RootConstants const& GetRootConstants() const;
 
-		re::Lifetime GetLifetime() const;
-
 		FilterBitmask GetBatchFilterMask() const;
+		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
+
+		effect::drawstyle::Bitmask GetDrawstyleBits() const;
 
 		RasterParams const& GetRasterParams() const;
 		ComputeParams const& GetComputeParams() const;
 		RayTracingParams const& GetRayTracingParams() const;
 
+		bool IsValid() const;
+
 
 	private:
-		void SetRenderDataID(gr::RenderDataID);
 		void SetEffectID(EffectID);
 		void SetDrawstyleBits(effect::drawstyle::Bitmask);
-		void SetLifetime(re::Lifetime);
-	
-
-	public: // TODO: Make these private
-		void SetInstanceCount(uint32_t numInstances);
 
 		void SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const&);
 		void SetBuffer(std::string_view shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
@@ -175,8 +174,6 @@ namespace re
 			core::InvPtr<re::Sampler> const&,
 			re::TextureView const&);
 	
-
-	private:
 		void SetRWTextureInput(
 			std::string_view shaderName,
 			core::InvPtr<re::Texture> const&,
@@ -186,22 +183,11 @@ namespace re
 		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
 
 
-	public: // TODO: Make these private
-		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
-
-		void Finalize(effect::drawstyle::Bitmask stageBitmask); // Called by the owning re::Stage
-
-
 	private:
-		void ComputeBatchHash();
-
-
-	private: 
 		void ComputeDataHash() override; // core::IHashedDataObject
 
 
 	private:
-		re::Lifetime m_lifetime;
 		BatchType m_type;
 
 		union
@@ -210,20 +196,10 @@ namespace re
 			ComputeParams m_computeParams;
 			RayTracingParams m_rayTracingParams;
 		};
-		friend class gr::ComputeBatchBuilder;
-		template<typename BuilderImpl>
-		friend class gr::IBatchBuilder;
-		friend class gr::RasterBatchBuilder;
-		friend class gr::RayTraceBatchBuilder;
-		
-		core::InvPtr<re::Shader> m_batchShader;
 
 		EffectID m_effectID;
 		effect::drawstyle::Bitmask m_drawStyleBitmask;
 		FilterBitmask m_batchFilterBitmask;
-
-		// Render data ID of the batch, if created from render data
-		gr::RenderDataID m_renderDataID; 
 
 
 	private:
@@ -243,64 +219,12 @@ namespace re
 
 
 	private:
-		Batch() = delete;
-	};
-
-
-	// ---
-
-
-	class BatchHandle final
-	{
-		// TODO: Eventually this will be a lightweight wrapper around an integer handle to Batches held in a pool
-	public:
-		BatchHandle(re::Batch&& batch) noexcept
-			: m_batch(std::move(batch))
-		{
-		}
-
-		BatchHandle(re::Batch const& batch) noexcept
-			: BatchHandle(re::Batch(batch))
-		{
-		}
-
-		BatchHandle(BatchHandle&&) noexcept = default;
-		BatchHandle& operator=(BatchHandle&&) noexcept = default;
-		BatchHandle(BatchHandle const&) noexcept = default;
-		BatchHandle& operator=(BatchHandle const&) noexcept = default;
-
-		~BatchHandle() noexcept = default;
-
-
-		re::Batch* operator->() noexcept
-		{
-			return &m_batch;
-		}
-
-		re::Batch const* operator->() const noexcept
-		{
-			return &m_batch;
-		}
-
-		re::Batch& operator*() noexcept
-		{
-			return m_batch;
-		}
-
-		re::Batch const& operator*() const noexcept
-		{
-			return m_batch;
-		}
-
-
-	private:
+		friend class gr::BatchPoolPage;
 		friend class gr::ComputeBatchBuilder;
 		template<typename BuilderImpl>
 		friend class gr::IBatchBuilder;
 		friend class gr::RasterBatchBuilder;
 		friend class gr::RayTraceBatchBuilder;
-
-		re::Batch m_batch;
 	};
 
 
@@ -310,13 +234,6 @@ namespace re
 	inline re::Batch::BatchType Batch::GetType() const
 	{
 		return m_type;
-	}
-
-
-	inline void Batch::SetRenderDataID(gr::RenderDataID renderDataID)
-	{
-		SEAssert(m_renderDataID == gr::k_invalidRenderDataID, "RenderDataID already set. This is unexpected");
-		m_renderDataID = renderDataID;
 	}
 
 
@@ -337,31 +254,6 @@ namespace re
 	{
 		SEAssert(m_drawStyleBitmask == 0, "Drawstyle bits already set, this is unexpected");
 		m_drawStyleBitmask = drawstyleBits;
-	}
-
-
-	inline void Batch::SetLifetime(re::Lifetime lifetime)
-	{
-		m_lifetime = lifetime;
-	}
-
-
-	inline void Batch::ComputeBatchHash()
-	{
-		ComputeDataHash();
-	}
-
-
-	inline core::InvPtr<re::Shader> const& Batch::GetShader() const
-	{
-		return m_batchShader;
-	}
-
-
-	inline size_t Batch::GetInstanceCount() const
-	{
-		SEAssert(m_type == BatchType::Raster, "Invalid type");
-		return m_rasterParams.m_numInstances;
 	}
 
 
@@ -395,15 +287,15 @@ namespace re
 	}
 
 
-	inline re::Lifetime Batch::GetLifetime() const
-	{
-		return m_lifetime;
-	}
-
-
 	inline re::Batch::FilterBitmask Batch::GetBatchFilterMask() const
 	{
 		return m_batchFilterBitmask;
+	}
+
+
+	inline effect::drawstyle::Bitmask Batch::GetDrawstyleBits() const
+	{
+		return m_drawStyleBitmask;
 	}
 
 
@@ -425,5 +317,11 @@ namespace re
 	{
 		SEAssert(m_type == BatchType::RayTracing, "Invalid type");
 		return m_rayTracingParams;
+	}
+
+
+	inline bool Batch::IsValid() const
+	{
+		return m_type != BatchType::Invalid;
 	}
 }

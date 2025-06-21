@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
 #include "RenderManager.h"
@@ -395,10 +396,10 @@ namespace gr
 	}
 
 
-	void RenderSystem::PostUpdatePreRender()
+	void RenderSystem::PostUpdatePreRender(IndexedBufferManager& ibm, effect::EffectDB const& effectDB)
 	{
 		SEBeginCPUEvent(GetName().c_str());
-		m_renderPipeline.PostUpdatePreRender();
+		m_renderPipeline.PostUpdatePreRender(ibm, effectDB);
 		SEEndCPUEvent();
 	}
 

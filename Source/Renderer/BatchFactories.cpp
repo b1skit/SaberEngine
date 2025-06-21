@@ -21,11 +21,8 @@ namespace grutil
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 			renderData.GetObjectData<gr::MeshPrimitive::RenderData>(renderDataID);
 
-		batchBuilder().SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
-		batchBuilder().SetPrimitiveTopology(meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology);
-
-		// This will be removed once we're using batch handles and instancing is resolved as a post-processing step
-		batchBuilder().SetNumInstances_TEMP(1);
+		std::move(batchBuilder).SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetPrimitiveTopology(meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology);
 
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
@@ -38,14 +35,14 @@ namespace grutil
 
 			if (vertexStreamOverrides)
 			{
-				batchBuilder().SetVertexBuffer(slotIdx, (*vertexStreamOverrides)[slotIdx]);
+				std::move(batchBuilder).SetVertexBuffer(slotIdx, (*vertexStreamOverrides)[slotIdx]);
 			}
 			else
 			{
-				batchBuilder().SetVertexBuffer(slotIdx, re::VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]));
+				std::move(batchBuilder).SetVertexBuffer(slotIdx, re::VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]));
 			}
 		}
-		batchBuilder().SetIndexBuffer(meshPrimRenderData.m_indexStream);
+		std::move(batchBuilder).SetIndexBuffer(meshPrimRenderData.m_indexStream);
 
 		SEAssert(meshPrimRenderData.m_indexStream != nullptr,
 			"This callback is for IndexedInstanced geometry. The index buffer cannot be null");
@@ -56,13 +53,13 @@ namespace grutil
 			gr::Material::MaterialInstanceRenderData const& materialInstanceData =
 				renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(renderDataID);
 
-			batchBuilder().SetEffectID(materialInstanceData.m_effectID);
+			std::move(batchBuilder).SetEffectID(materialInstanceData.m_effectID);
 
 			for (size_t i = 0; i < materialInstanceData.m_textures.size(); i++)
 			{
 				if (materialInstanceData.m_textures[i] && materialInstanceData.m_samplers[i])
 				{
-					batchBuilder().SetTextureInput(
+					std::move(batchBuilder).SetTextureInput(
 						materialInstanceData.m_shaderSamplerNames[i],
 						materialInstanceData.m_textures[i],
 						materialInstanceData.m_samplers[i],
@@ -70,16 +67,16 @@ namespace grutil
 				}
 			}
 
-			batchBuilder().SetMaterialUniqueID(materialInstanceData.m_srcMaterialUniqueID);
+			std::move(batchBuilder).SetMaterialUniqueID(materialInstanceData.m_srcMaterialUniqueID);
 
 			// Filter bits:
-			batchBuilder().SetFilterMaskBit(
+			std::move(batchBuilder).SetFilterMaskBit(
 				re::Batch::Filter::AlphaBlended, materialInstanceData.m_alphaMode == gr::Material::AlphaMode::Blend);
 
-			batchBuilder().SetFilterMaskBit(
+			std::move(batchBuilder).SetFilterMaskBit(
 				re::Batch::Filter::ShadowCaster, materialInstanceData.m_isShadowCaster);
 
-			batchBuilder().SetDrawstyleBitmask(
+			std::move(batchBuilder).SetDrawstyleBitmask(
 				gr::Material::MaterialInstanceRenderData::GetDrawstyleBits(&materialInstanceData));
 		}
 
@@ -95,10 +92,9 @@ namespace grutil
 		SEAssert(meshPrim->GetIndexStream() != nullptr,
 			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 
-		batchBuilder().SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
-		batchBuilder().SetNumInstances_TEMP(1);
-		batchBuilder().SetPrimitiveTopology(meshPrim->GetMeshParams().m_primitiveTopology);
-		batchBuilder().SetEffectID(effectID);
+		std::move(batchBuilder).SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetPrimitiveTopology(meshPrim->GetMeshParams().m_primitiveTopology);
+		std::move(batchBuilder).SetEffectID(effectID);
 
 		// We assume the meshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
@@ -109,9 +105,9 @@ namespace grutil
 			{
 				break;
 			}
-			batchBuilder().SetVertexBuffer(slotIdx, re::VertexBufferInput(vertexStreams[slotIdx].m_vertexStream));
+			std::move(batchBuilder).SetVertexBuffer(slotIdx, re::VertexBufferInput(vertexStreams[slotIdx].m_vertexStream));
 		}
-		batchBuilder().SetIndexBuffer(meshPrim->GetIndexStream());
+		std::move(batchBuilder).SetIndexBuffer(meshPrim->GetIndexStream());
 
 		return std::move(batchBuilder);
 	}

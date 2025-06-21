@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BatchPool.h"
 #include "Context.h"
 #include "EffectDB.h"
 #include "RenderSystem.h"
@@ -113,6 +114,7 @@ namespace re
 	private:
 		gr::RenderDataManager m_renderData;
 		effect::EffectDB m_effectDB;
+		std::unique_ptr<gr::BatchPool> m_batchPool;
 
 
 	public: // Render commands:

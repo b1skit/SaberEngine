@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "BatchHandle.h"
 #include "BufferView.h"
 #include "Effect.h"
 #include "MeshFactory.h"
@@ -13,6 +14,15 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
+
+namespace effect
+{
+	class EffectDB;
+}
+namespace gr
+{
+	class IndexedBufferManager;
+}
 
 namespace re
 {
@@ -132,7 +142,7 @@ namespace re
 		Stage(Stage&&) noexcept = default;
 		Stage& operator=(Stage&&) noexcept = default;
 
-		void PostUpdatePreRender();
+		void PostUpdatePreRender(gr::IndexedBufferManager&, effect::EffectDB const&);
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
 		bool IsSkippable() const;
@@ -210,17 +220,13 @@ namespace re
 		RootConstants const& GetRootConstants() const;
 
 		// Stage Batches:
-		std::vector<re::BatchHandle> const& GetStageBatches() const;
+		std::vector<gr::StageBatchHandle> const& GetStageBatches() const;
 		
-		void AddBatches(std::vector<re::BatchHandle> const&);
+		void AddBatches(std::vector<gr::BatchHandle> const&);
 		
-		// TODO: These functions will eventually return a re:BatchHandle by value once this is a lightweight object
-		re::BatchHandle* AddBatch(re::BatchHandle&&); // Returns Batch ptr (IFF it was successfully added)
-		re::BatchHandle* AddBatch(re::BatchHandle const&); // Returns Batch ptr (IFF it was successfully added)
+		gr::StageBatchHandle* AddBatch(gr::BatchHandle); // Returns Batch ptr (IFF it was successfully added)
 
-		re::BatchHandle* AddBatchWithLifetime(re::BatchHandle&&, re::Lifetime);
-		re::BatchHandle* AddBatchWithLifetime(re::BatchHandle const&, re::Lifetime);
-
+		void SetInstancingEnabled(bool instancingEnabled); // Raster stages only
 
 		enum class FilterMode
 		{
@@ -236,6 +242,8 @@ namespace re
 
 	private:
 		void UpdateDepthTextureInputIndex();
+		void ResolveBatches(gr::IndexedBufferManager&, effect::EffectDB const&);
+
 		void ValidateTexturesAndTargets();
 
 
@@ -258,19 +266,28 @@ namespace re
 
 		RootConstants m_stageRootConstants;
 
-		std::vector<re::BatchHandle> m_stageBatches;
+		std::vector<gr::StageBatchHandle> m_resolvedBatches;
 
 		re::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
 		re::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
 
 		effect::drawstyle::Bitmask m_drawStyleBits;
 
+		bool m_instancingEnabled; // Raster stages only
 
 	private:
 		Stage() = delete;
 		Stage(Stage const&) = delete;
 		Stage& operator=(Stage const&) = delete;
 	};
+
+
+	inline void Stage::SetInstancingEnabled(bool instancingEnabled)
+	{
+		SEAssert(m_type == re::Stage::Type::Raster || m_type == re::Stage::Type::LibraryRaster,
+			"Invalid stage type for instancing");
+		m_instancingEnabled = instancingEnabled;
+	}
 
 
 	//---
@@ -311,7 +328,7 @@ namespace re
 
 	private:
 		core::InvPtr<gr::MeshPrimitive> m_screenAlignedQuad;
-		std::unique_ptr<re::BatchHandle> m_fullscreenQuadBatch;
+		gr::BatchHandle m_fullscreenQuadBatch;
 
 	private:
 		FullscreenQuadStage(char const* name, std::unique_ptr<FullscreenQuadParams>&&, re::Lifetime);
@@ -763,8 +780,8 @@ namespace re
 	}
 
 
-	inline std::vector<re::BatchHandle> const& Stage::GetStageBatches() const
+	inline std::vector<gr::StageBatchHandle> const& Stage::GetStageBatches() const
 	{
-		return m_stageBatches;
+		return m_resolvedBatches;
 	}
 }

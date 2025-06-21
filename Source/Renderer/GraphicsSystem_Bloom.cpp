@@ -320,13 +320,13 @@ namespace gr
 		{
 			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(downsampleDstMipLevel++).xy;
 			
-			re::BatchHandle computeBatch = gr::ComputeBatchBuilder()
+			gr::BatchHandle computeBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
 					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
 					1u))
 				.SetEffectID(k_bloomEffectID)
-				.BuildSingleFrame();
+				.Build();
 
 			downStage->AddBatch(computeBatch);
 		}
@@ -336,13 +336,13 @@ namespace gr
 		{
 			glm::vec2 const& dstMipWidthHeight = m_bloomTargetTex->GetMipLevelDimensions(upsampleDstMipLevel--).xy;
 			
-			re::BatchHandle computeBatch = gr::ComputeBatchBuilder()
+			gr::BatchHandle computeBatch = gr::ComputeBatchBuilder()
 				.SetThreadGroupCount(glm::uvec3(
 					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.x), BLOOM_DISPATCH_XY_DIMS),
 					grutil::GetRoundedDispatchDimension(static_cast<uint32_t>(dstMipWidthHeight.y), BLOOM_DISPATCH_XY_DIMS),
 					1u))
 				.SetEffectID(k_bloomEffectID)
-				.BuildSingleFrame();
+				.Build();
 
 			upStage->AddBatch(computeBatch);
 		}

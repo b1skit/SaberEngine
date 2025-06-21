@@ -43,21 +43,20 @@ namespace effect
 
 		Technique const* GetResolvedTechnique(effect::drawstyle::Bitmask) const;
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> const& GetAllTechniques() const;
-
 		bool UsesBuffer(util::HashKey bufferNameHash) const;
-		std::set<util::HashKey> const& GetUsedBufferNameHashes() const;
+		std::map<util::HashKey, std::string> const& GetRequestedBufferShaderNames() const;
 
 
 	public:
 		void AddTechnique(effect::drawstyle::Bitmask, effect::Technique const*);
-
-		void AddBufferName(util::HashKey);
+		void AddBufferName(std::string const& bufferShaderName);
 
 
 	private:
 		std::unordered_map<effect::drawstyle::Bitmask, effect::Technique const*> m_techniques;
 
-		std::set<util::HashKey> m_buffers; // Opt-in: A Effect can optionally associate itself with buffers by name
+		// Opt-in: A Effect can optionally associate itself with buffers by shader name
+		std::map<util::HashKey, std::string> m_requestedBufferShaderNames;
 
 
 	private:
@@ -98,12 +97,6 @@ namespace effect
 	inline bool Effect::UsesBuffer(util::HashKey bufferNameHash) const
 	{
 		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
-		return m_buffers.contains(bufferNameHash);
-	}
-
-
-	inline std::set<util::HashKey> const& Effect::GetUsedBufferNameHashes() const
-	{
-		return m_buffers;
+		return m_requestedBufferShaderNames.contains(bufferNameHash);
 	}
 }

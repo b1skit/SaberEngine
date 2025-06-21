@@ -43,7 +43,7 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::Stage> m_tonemappingStage;
-		std::unique_ptr<re::BatchHandle> m_tonemappingComputeBatch;
+		gr::BatchHandle m_tonemappingComputeBatch;
 		static constexpr uint32_t k_dispatchXYThreadDims = 8;
 
 		std::shared_ptr<re::Stage> m_swapchainBlitStage; // Fullscreen quad stage

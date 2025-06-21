@@ -66,7 +66,7 @@ namespace gr
 			EffectID m_matEffectID;
 			size_t m_cacheIndex; // m_permanentCachedBatches
 		};
-		std::vector<re::BatchHandle> m_permanentCachedBatches;
+		std::vector<gr::BatchHandle> m_permanentCachedBatches;
 		std::unordered_map<gr::RenderDataID, BatchMetadata> m_renderDataIDToBatchMetadata;
 		std::unordered_map<size_t, gr::RenderDataID> m_cacheIdxToRenderDataID;
 
@@ -74,6 +74,6 @@ namespace gr
 		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 		
 		ViewBatches m_viewBatches; // Map of gr::Camera::View to vectors of Batches that passed culling
-		std::vector<re::BatchHandle> m_allBatches; // Per-frame copy of m_permanentCachedBatches, with Buffers set
+		std::vector<gr::BatchHandle> m_allBatches; // Per-frame copy of m_permanentCachedBatches, with Buffers set
 	};
 }

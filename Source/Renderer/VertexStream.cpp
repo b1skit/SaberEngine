@@ -133,10 +133,7 @@ namespace gr
 		};
 		std::shared_ptr<VertexStreamLoadContext> loadContext = std::make_shared<VertexStreamLoadContext>();
 
-		loadContext->m_retentionPolicy = streamDesc.m_lifetime == re::Lifetime::SingleFrame ?
-			core::RetentionPolicy::ForceNew : // We must re-create single frame Buffers
-			core::RetentionPolicy::Reusable;
-
+		loadContext->m_retentionPolicy = core::RetentionPolicy::Reusable;
 		loadContext->m_dataHash = streamDataHash;
 		loadContext->m_streamDesc = streamDesc;
 		loadContext->m_data = std::move(data);
@@ -163,27 +160,17 @@ namespace gr
 		std::string const& bufferName =
 			std::format("VertexStream_{}_{}", TypeToCStr(m_streamDesc.m_type), GetDataHash());
 
-		const re::Buffer::MemoryPoolPreference bufMemPoolPref =
-			m_streamDesc.m_lifetime == re::Lifetime::SingleFrame ? re::Buffer::UploadHeap : re::Buffer::DefaultHeap;
-
 		const re::Buffer::UsageMask bufferUsage =
 			re::Buffer::Raw | m_deferredBufferCreateParams->m_extraUsageBits;
-
-		re::Buffer::AccessMask bufAccessMask = re::Buffer::GPURead;
-		if (bufMemPoolPref == re::Buffer::UploadHeap)
-		{
-			bufAccessMask |= re::Buffer::CPUWrite;
-		}
 
 		m_streamBuffer = re::Buffer::Create(
 			bufferName,
 			m_deferredBufferCreateParams->m_data.data().data(),
 			util::CheckedCast<uint32_t>(m_deferredBufferCreateParams->m_data.GetTotalNumBytes()),
 			re::Buffer::BufferParams{
-				.m_lifetime = m_streamDesc.m_lifetime,
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
-				.m_memPoolPreference = bufMemPoolPref,
-				.m_accessMask = bufAccessMask,
+				.m_memPoolPreference = re::Buffer::DefaultHeap,
+				.m_accessMask = re::Buffer::GPURead,
 				.m_usageMask = bufferUsage,
 				.m_arraySize = util::CheckedCast<uint32_t>(m_deferredBufferCreateParams->m_data.size()),
 			});

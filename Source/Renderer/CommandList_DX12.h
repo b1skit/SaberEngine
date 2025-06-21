@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Batch.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "ResourceStateTracker_DX12.h"
@@ -13,18 +12,23 @@
 namespace gr
 {
 	class VertexStream;
+	class StageBatchHandle;
 }
 
 namespace re
 {
-	struct ASInput;
+	class AccelerationStructure;
 	class BindlessResourceManager;
 	class Buffer;
+	class BufferInput;
 	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
 	class RootConstants;
+	class ShaderBindingTable;
+	class VertexBufferInput;
 
+	struct ASInput;
 	struct RWTextureInput;
 	struct TextureAndSamplerInput;
 	struct TextureView;
@@ -138,7 +142,7 @@ namespace dx12
 
 		void AttachBindlessResources(re::ShaderBindingTable const&, re::BindlessResourceManager const&);
 
-		void DrawBatchGeometry(re::Batch const&);
+		void DrawBatchGeometry(gr::StageBatchHandle const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);
 		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx);
 
@@ -177,7 +181,7 @@ namespace dx12
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
-		void SetVertexBuffers(std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const&);
+		void SetVertexBuffers(gr::StageBatchHandle const&);
 
 		void SetIndexBuffer(re::VertexBufferInput const&);
 

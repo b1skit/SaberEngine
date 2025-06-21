@@ -3,14 +3,25 @@
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "BufferView.h"
+#include "EffectDB.h"
+#include "IndexedBuffer.h"
 #include "RenderManager.h"
-#include "Stage.h"
+#include "RenderObjectIDs.h"
 #include "RLibrary_Platform.h"
+#include "Stage.h"
 #include "Sampler.h"
+#include "SwapChain.h"
 #include "SwapChain_Platform.h"
 #include "Texture.h"
 
 #include "Core/ProfilingMarkers.h"
+
+#include "Core/Util/HashKey.h"
+
+#include "Renderer/Shaders/Common/InstancingParams.h"
+#include "Renderer/Shaders/Common/MaterialParams.h"
+#include "Renderer/Shaders/Common/TransformParams.h"
+
 
 
 namespace re
@@ -36,6 +47,9 @@ namespace re
 			std::make_unique<GraphicsStageParams>(stageParams), 
 			Stage::Type::Raster,
 			re::Lifetime::Permanent));
+
+		newGFXStage->m_instancingEnabled = true; // Instancing is enabled by default for raster stages
+
 		return newGFXStage;
 	}
 
@@ -49,6 +63,9 @@ namespace re
 			std::make_unique<GraphicsStageParams>(stageParams),
 			Stage::Type::Raster,
 			re::Lifetime::SingleFrame));
+		
+		newGFXStage->m_instancingEnabled = true; // Instancing is enabled by default for raster stages
+
 		return newGFXStage;
 	}
 
@@ -87,6 +104,12 @@ namespace re
 			name,
 			std::make_unique<LibraryStageParams>(stageParams),
 			re::Lifetime::Permanent));
+
+		if (newLibraryStage->m_type == Stage::Type::LibraryRaster)
+		{
+			newLibraryStage->m_instancingEnabled = true; // Instancing is enabled by default for raster stages
+		}
+
 		return newLibraryStage;
 	}
 
@@ -226,6 +249,7 @@ namespace re
 		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_requiredBatchFilterBitmasks(0)	// Accept all batches by default
 		, m_excludedBatchFilterBitmasks(0)
+		, m_instancingEnabled(false)
 	{
 		SEAssert(!GetName().empty(), "Invalid Stage name");
 
@@ -259,13 +283,13 @@ namespace re
 
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 
-		m_fullscreenQuadBatch = std::make_unique<re::BatchHandle>(gr::RasterBatchBuilder::CreateMeshPrimitiveBatch(
+		m_fullscreenQuadBatch = gr::RasterBatchBuilder::CreateMeshPrimitiveBatch(
 			m_screenAlignedQuad,
 			stageParams->m_effectID,
 			grutil::BuildMeshPrimitiveRasterBatch)
-				.BuildPermanent());
+				.Build();
 		
-		AddBatch(*m_fullscreenQuadBatch);
+		AddBatch(m_fullscreenQuadBatch);
 	}
 
 
@@ -561,8 +585,11 @@ namespace re
 
 	void Stage::UpdateDepthTextureInputIndex()
 	{
+		SEBeginCPUEvent("Stage::UpdateDepthTextureInputIndex");
+
 		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
 		{
+			SEEndCPUEvent(); // "Stage::UpdateDepthTextureInputIndex"
 			return;
 		}
 
@@ -587,6 +614,119 @@ namespace re
 				}
 			}
 		}
+
+		SEEndCPUEvent(); // "Stage::UpdateDepthTextureInputIndex"
+	}
+
+
+	void Stage::ResolveBatches(gr::IndexedBufferManager& ibm, effect::EffectDB const& effectDB)
+	{
+		SEBeginCPUEvent("Stage::ResolveBatches");
+
+		// Early out:
+		if (m_resolvedBatches.empty() || m_instancingEnabled == false)
+		{
+			// Resolve the batches without trying to apply instancing
+			for (auto& stageBatchHandle : m_resolvedBatches)
+			{
+				stageBatchHandle.Resolve(m_drawStyleBits, 1, effectDB);
+			}
+
+			return;
+		}
+
+		struct BatchMetadata
+		{
+			uint64_t m_batchHash;
+			uint32_t m_stageBatchesIdx;
+			gr::RenderDataID m_renderDataID;
+		};
+
+		// Populate the batch metadata:
+		std::vector<BatchMetadata> batchMetadata;
+		batchMetadata.reserve(m_resolvedBatches.size());
+		for (size_t i = 0; i < m_resolvedBatches.size(); i++)
+		{
+			batchMetadata.emplace_back(BatchMetadata{ 
+				.m_batchHash = (*m_resolvedBatches[i])->GetDataHash(),
+				.m_stageBatchesIdx = util::CheckedCast<uint32_t>(i),
+				.m_renderDataID = (*m_resolvedBatches[i]).GetRenderDataID(),
+				});
+		}
+
+		std::vector<gr::StageBatchHandle> mergedBatches;
+
+		if (!batchMetadata.empty())
+		{
+			// Sort the batch metadata:
+			std::sort(batchMetadata.begin(), batchMetadata.end(),
+				[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
+
+			size_t unmergedIdx = 0;
+			do
+			{
+				gr::StageBatchHandle const& stageBatchHandle =
+					m_resolvedBatches[batchMetadata[unmergedIdx].m_stageBatchesIdx];
+
+				// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
+				// have a permanent Lifetime
+				mergedBatches.emplace_back(stageBatchHandle);
+
+				// Find the index of the last batch with a matching hash in the sequence:
+				const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
+				const size_t instanceStartIdx = unmergedIdx++;
+				while (unmergedIdx < batchMetadata.size() &&
+					batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
+				{
+					unmergedIdx++;
+				}
+
+				// Compute and set the number of instances in the batch:
+				const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
+				
+				// Resolve the batch: Internally, this gets the Shader, sets the instance count, and resolves raster
+				// batch vertex streams etc 
+				mergedBatches.back().Resolve(m_drawStyleBits, numInstances, effectDB);
+
+				// Attach the instance and LUT buffers:
+				effect::Effect const* batchEffect = effectDB.GetEffect((*mergedBatches.back())->GetEffectID());
+
+				auto const& effectBufferShaderNames = batchEffect->GetRequestedBufferShaderNames();
+
+				bool setInstanceBuffer = false;
+				for (auto const& bufferNameHash : effectBufferShaderNames)
+				{
+					mergedBatches.back().SetSingleFrameBuffer(
+						ibm.GetIndexedBufferInput(bufferNameHash.first, bufferNameHash.second.c_str()));
+
+					setInstanceBuffer = true;
+				}
+
+				// Indexed buffer LUTs require a valid RenderDataID, but it's still valid to attach an instanced buffer
+				// (e.g. if the GS handled the LUT manually)
+				if (setInstanceBuffer &&
+					(*stageBatchHandle).GetRenderDataID() != gr::k_invalidRenderDataID)
+				{
+					// Use a view of our batch metadata to get the list of RenderDataIDs for each instance:
+					std::ranges::range auto&& instancedBatchView = batchMetadata
+						| std::views::drop(instanceStartIdx)
+						| std::views::take(numInstances)
+						| std::ranges::views::transform([](BatchMetadata const& batchMetadata) -> gr::RenderDataID
+							{
+								return batchMetadata.m_renderDataID;
+							});
+
+					mergedBatches.back().SetSingleFrameBuffer(
+						ibm.GetLUTBufferInput<InstanceIndexData>(InstanceIndexData::s_shaderName, instancedBatchView));
+				}
+
+			} while (unmergedIdx < batchMetadata.size());
+
+			// Swap in our merged results:
+			m_resolvedBatches = std::move(mergedBatches);
+		}
+
+		SEEndCPUEvent(); // "Stage::ResolveBatches"
 	}
 
 
@@ -856,10 +996,10 @@ namespace re
 			ValidateInput(m_permanentRWTextureInputs);
 			ValidateInput(m_singleFrameRWTextureInputs);
 
-			for (auto const& batch : m_stageBatches)
+			for (auto const& batch : m_resolvedBatches)
 			{
-				ValidateInput(batch->GetTextureAndSamplerInputs());
-				ValidateInput(batch->GetRWTextureInputs());
+				ValidateInput((*batch)->GetTextureAndSamplerInputs());
+				ValidateInput((*batch)->GetRWTextureInputs());
 			}
 
 			// Validate depth texture usage
@@ -894,17 +1034,24 @@ namespace re
 		{
 			return false; // Assume library and utility stages always do work
 		}
-		return m_type == Type::Parent || m_stageBatches.empty();
+		return m_type == Type::Parent || m_resolvedBatches.empty();
 
 		SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 10,
 			"Number of stage types has changed. This must be updated");
 	}
 	
 
-	void Stage::PostUpdatePreRender()
+	void Stage::PostUpdatePreRender(gr::IndexedBufferManager& ibm, effect::EffectDB const& effectDB)
 	{
+		SEBeginCPUEvent("Stage::PostUpdatePreRender");
+
 		UpdateDepthTextureInputIndex();
+
+		ResolveBatches(ibm, effectDB);
+
 		ValidateTexturesAndTargets(); // _DEBUG only
+
+		SEEndCPUEvent(); // "Stage::PostUpdatePreRender"
 	}
 
 
@@ -918,18 +1065,18 @@ namespace re
 
 		if (m_type != Stage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
 		{
-			m_stageBatches.clear();
+			m_resolvedBatches.clear();
 		}
 
 		SEEndCPUEvent();
 	}
 
 
-	void Stage::AddBatches(std::vector<re::BatchHandle> const& batches)
+	void Stage::AddBatches(std::vector<gr::BatchHandle> const& batches)
 	{
 		SEBeginCPUEvent("Stage::AddBatches");
 
-		m_stageBatches.reserve(m_stageBatches.size() + batches.size());
+		m_resolvedBatches.reserve(m_resolvedBatches.size() + batches.size());
 
 		for (size_t i = 0; i < batches.size(); i++)
 		{
@@ -940,25 +1087,13 @@ namespace re
 	}
 
 
-	re::BatchHandle* Stage::AddBatch(re::BatchHandle&& batch)
-	{
-		return AddBatchWithLifetime(std::move(batch), batch->GetLifetime());
-	}
-
-
-	re::BatchHandle* Stage::AddBatch(re::BatchHandle const& batch)
-	{
-		return AddBatch(re::BatchHandle(batch));
-	}
-
-
-	re::BatchHandle* Stage::AddBatchWithLifetime(re::BatchHandle&& batch, re::Lifetime lifetime)
+	gr::StageBatchHandle* Stage::AddBatch(gr::BatchHandle batch)
 	{
 		SEAssert(m_type != re::Stage::Type::Parent &&
 			m_type != re::Stage::Type::ClearTargetSet,
 			"Incompatible stage type: Cannot add batches");
 
-		SEAssert(m_type != Type::FullscreenQuad || m_stageBatches.empty(),
+		SEAssert(m_type != Type::FullscreenQuad || m_resolvedBatches.empty(),
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
 		SEAssert(batch->GetEffectID() != 0 ||
@@ -991,23 +1126,10 @@ namespace re
 
 		if (batch->MatchesFilterBits(m_requiredBatchFilterBitmasks, m_excludedBatchFilterBitmasks))
 		{
-			re::BatchHandle& duplicatedBatch =
-				m_stageBatches.emplace_back(re::BatchHandle(re::Batch::Duplicate(*batch, lifetime)));
-
-			if (batch->GetEffectID() != 0) // Some specialized batches (e.g. ray tracing) don't have an EffectID
-			{
-				duplicatedBatch->Finalize(m_drawStyleBits);
-			}
-
-			return &duplicatedBatch;
+			gr::StageBatchHandle& unresolvedBatch = m_resolvedBatches.emplace_back(batch);
+			return &unresolvedBatch;
 		}
 		return nullptr;
-	}
-
-
-	re::BatchHandle* Stage::AddBatchWithLifetime(re::BatchHandle const& batch, re::Lifetime lifetime)
-	{
-		return AddBatchWithLifetime(re::BatchHandle(batch), lifetime);
 	}
 
 

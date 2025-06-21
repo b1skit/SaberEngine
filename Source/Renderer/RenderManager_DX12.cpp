@@ -634,12 +634,12 @@ namespace dx12
 								dynamic_cast<re::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
 							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
 
-							std::vector<re::BatchHandle> const& batches = (*stageItr)->GetStageBatches();
+							std::vector<gr::StageBatchHandle> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
-								re::BatchHandle const& batch = batches[batchIdx];
+								gr::StageBatchHandle const& batch = batches[batchIdx];
 
-								re::Batch::RayTracingParams const& batchRTParams = batch->GetRayTracingParams();
+								re::Batch::RayTracingParams const& batchRTParams = (*batch)->GetRayTracingParams();
 								
 								SEAssert(batchRTParams.m_ASInput.m_accelerationStructure,
 									"AccelerationStructure is null");
@@ -681,7 +681,7 @@ namespace dx12
 										*context->GetBindlessResourceManager());
 
 									cmdList->SetRootConstants((*stageItr)->GetRootConstants());
-									cmdList->SetRootConstants(batch->GetRootConstants());
+									cmdList->SetRootConstants((*batch)->GetRootConstants());
 
 									cmdList->DispatchRays(
 										*batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
@@ -711,10 +711,10 @@ namespace dx12
 							bool hasSetStageInputsAndTargets = false;
 
 							// Stage batches:
-							std::vector<re::BatchHandle> const& batches = (*stageItr)->GetStageBatches();
+							std::vector<gr::StageBatchHandle> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
-								core::InvPtr<re::Shader> const& batchShader = batches[batchIdx]->GetShader();
+								core::InvPtr<re::Shader> const& batchShader = batches[batchIdx].GetShader();
 								SEAssert(batchShader != nullptr, "Batch must have a shader");
 
 								if (currentShader != batchShader)
@@ -733,11 +733,12 @@ namespace dx12
 								SEAssert(currentShader, "Current shader is null");
 
 								// Batch buffers:
-								cmdList->SetBuffers(batches[batchIdx]->GetBuffers());
+								cmdList->SetBuffers((*batches[batchIdx])->GetBuffers());
+								cmdList->SetBuffers(batches[batchIdx].GetSingleFrameBuffers());
 
 								// Batch Texture / Sampler inputs :
 #if defined (_DEBUG)
-								for (auto const& texSamplerInput : batches[batchIdx]->GetTextureAndSamplerInputs())
+								for (auto const& texSamplerInput : (*batches[batchIdx])->GetTextureAndSamplerInputs())
 								{
 									SEAssert(!stageTargets->HasDepthTarget() ||
 										texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget().GetTexture(),
@@ -745,13 +746,13 @@ namespace dx12
 										"a texture input. We need to make sure skipping transitions is handled correctly here");
 								}
 #endif
-								cmdList->SetTextures(batches[batchIdx]->GetTextureAndSamplerInputs());
+								cmdList->SetTextures((*batches[batchIdx])->GetTextureAndSamplerInputs());
 
 								// Batch compute inputs:
-								cmdList->SetRWTextures(batches[batchIdx]->GetRWTextureInputs());
+								cmdList->SetRWTextures((*batches[batchIdx])->GetRWTextureInputs());
 
 								// Set root constants:
-								cmdList->SetRootConstants(batches[batchIdx]->GetRootConstants());
+								cmdList->SetRootConstants((*batches[batchIdx])->GetRootConstants());
 
 								switch (curStageType)
 								{
@@ -761,7 +762,7 @@ namespace dx12
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 										"Incorrect command list type");
 
-									cmdList->DrawBatchGeometry(*batches[batchIdx]);
+									cmdList->DrawBatchGeometry(batches[batchIdx]);
 								}
 								break;
 								case re::Stage::Type::Compute:
@@ -769,7 +770,7 @@ namespace dx12
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
 										"Incorrect command list type");
 
-									cmdList->Dispatch(batches[batchIdx]->GetComputeParams().m_threadGroupCount);
+									cmdList->Dispatch((*batches[batchIdx])->GetComputeParams().m_threadGroupCount);
 								}
 								break;
 								default: SEAssertF("Unexpected render stage type");

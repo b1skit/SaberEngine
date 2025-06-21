@@ -438,7 +438,7 @@ namespace gr
 				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
 					.SetOperation(batchOperation)
 					.SetASInput(re::ASInput(blas))
-					.BuildSingleFrame());
+					.Build());
 			}
 		}
 
@@ -510,7 +510,7 @@ namespace gr
 				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
 					.SetOperation(tlasOperation)
 					.SetASInput(m_sceneTLAS)
-					.BuildSingleFrame());
+					.Build());
 			}
 		}
 	}

@@ -1,6 +1,8 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "BatchHandle.h"
+#include "BatchPool.h"
 #include "BufferView.h"
 #include "EnumTypes.h"
 #include "RenderObjectIDs.h"
@@ -14,6 +16,7 @@
 namespace re
 {
 	class Buffer;
+	class Sampler;
 	class Shader;
 	class Texture;
 	struct TextureView;
@@ -27,14 +30,12 @@ namespace gr
 	template<typename BuilderImpl>
 	class IBatchBuilder
 	{
-	public:
+	protected:
 		IBatchBuilder(re::Batch::BatchType) noexcept;
 		
 		IBatchBuilder(IBatchBuilder&&) noexcept = default;
 		IBatchBuilder& operator=(IBatchBuilder&&) noexcept = default;
 		virtual ~IBatchBuilder() noexcept = default;
-
-		inline IBatchBuilder&& operator()() noexcept { return std::move(*this); }; // Convenience accessor
 
 
 	public:
@@ -62,13 +63,17 @@ namespace gr
 
 
 	public:
-		re::BatchHandle Build(re::Lifetime) && noexcept;
-		re::BatchHandle BuildPermanent()&& noexcept;
-		re::BatchHandle BuildSingleFrame()&& noexcept;
+		gr::BatchHandle Build() && noexcept;
 		
 
 	protected:
 		re::Batch m_batch; // The batch we're building
+		gr::RenderDataID m_renderDataID; // RenderDataID associated with the Batch we're building (if any)
+
+
+	private:
+		friend class gr::BatchPool;
+		static gr::BatchPool* s_batchPool;
 
 
 	private: // R-value only:
@@ -78,6 +83,10 @@ namespace gr
 	};
 
 
+	template<typename BuilderImpl>
+	gr::BatchPool* IBatchBuilder<BuilderImpl>::s_batchPool = nullptr;
+
+
 	// ---
 
 
@@ -85,8 +94,6 @@ namespace gr
 	{
 	public:
 		RasterBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::Raster) {}
-		
-		inline RasterBatchBuilder&& operator()() noexcept { return std::move(*this); }; // Convenience accessor
 
 
 	public:
@@ -129,9 +136,6 @@ namespace gr
 
 		RasterBatchBuilder&& SetMaterialUniqueID(UniqueID)&& noexcept;
 
-		// TODO: Replace this once we're using BatchHandles and resolving instancing as a post-processing step
-		RasterBatchBuilder&& SetNumInstances_TEMP(uint32_t numInstances) && noexcept;
-
 
 	private:
 		RasterBatchBuilder(gr::RenderDataID) noexcept; // Instanced raster batches: Use create
@@ -145,8 +149,6 @@ namespace gr
 	{
 	public:
 		ComputeBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::Compute) {}
-
-		inline ComputeBatchBuilder&& operator()() noexcept { return std::move(*this); }; // Convenience accessor
 
 
 	public:
@@ -162,8 +164,6 @@ namespace gr
 	{
 	public:
 		RayTraceBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::RayTracing) {}
-
-		inline RayTraceBatchBuilder&& operator()() noexcept { return std::move(*this); }; // Convenience accessor
 
 
 	public:
@@ -182,6 +182,7 @@ namespace gr
 	template<typename BuilderImpl>
 	IBatchBuilder<BuilderImpl>::IBatchBuilder(re::Batch::BatchType batchType) noexcept
 		: m_batch(batchType)
+		, m_renderDataID(gr::k_invalidRenderDataID)
 	{
 	}
 
@@ -233,7 +234,7 @@ namespace gr
 		std::string_view shaderName,
 		core::InvPtr<re::Texture> const& texture,
 		core::InvPtr<re::Sampler> const& sampler,
-		re::TextureView const& view) && noexcept
+		re::TextureView const& view)&& noexcept
 	{
 		m_batch.SetTextureInput(shaderName, texture, sampler, view);
 		return static_cast<BuilderImpl&&>(*this);
@@ -269,26 +270,11 @@ namespace gr
 
 
 	template<typename BuilderImpl>
-	re::BatchHandle IBatchBuilder<BuilderImpl>::Build(re::Lifetime lifetime) && noexcept
+	gr::BatchHandle IBatchBuilder<BuilderImpl>::Build() && noexcept
 	{
-		m_batch.SetLifetime(lifetime); // TODO: Use this to move the batch to an appropriate Batch pool
-		m_batch.ComputeBatchHash();
-
-		return re::BatchHandle(std::move(m_batch));
-	}
-
-
-	template<typename BuilderImpl>
-	re::BatchHandle IBatchBuilder<BuilderImpl>::BuildPermanent() && noexcept
-	{
-		return std::move(static_cast<BuilderImpl&&>(*this)).Build(re::Lifetime::Permanent);
-	}
-
-
-	template<typename BuilderImpl>
-	re::BatchHandle IBatchBuilder<BuilderImpl>::BuildSingleFrame() && noexcept
-	{
-		return std::move(static_cast<BuilderImpl&&>(*this)).Build(re::Lifetime::SingleFrame);
+		m_batch.ComputeDataHash();
+	
+		return s_batchPool->AddBatch(std::move(m_batch), m_renderDataID);
 	}
 
 
@@ -316,7 +302,7 @@ namespace gr
 	inline RasterBatchBuilder::RasterBatchBuilder(gr::RenderDataID renderDataID) noexcept
 		: IBatchBuilder<RasterBatchBuilder>(re::Batch::BatchType::Raster)
 	{
-		m_batch.SetRenderDataID(renderDataID);
+		m_renderDataID = renderDataID;
 	}
 
 
@@ -404,13 +390,6 @@ namespace gr
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetMaterialUniqueID(UniqueID materialID) && noexcept
 	{
 		m_batch.m_rasterParams.m_materialUniqueID = materialID;
-		return std::move(*this);
-	}
-
-
-	inline RasterBatchBuilder&& RasterBatchBuilder::SetNumInstances_TEMP(uint32_t numInstances) && noexcept
-	{
-		m_batch.m_rasterParams.m_numInstances = numInstances;
 		return std::move(*this);
 	}
 

@@ -72,18 +72,18 @@ namespace gr
 	private:
 		std::shared_ptr<re::Stage> m_prefilterDepthsStage;
 		core::InvPtr<re::Texture> m_prefilterDepthsTex;
-		std::unique_ptr<re::BatchHandle> m_prefilterDepthComputeBatch;
+		gr::BatchHandle m_prefilterDepthComputeBatch;
 			
 		std::shared_ptr<re::Stage> m_mainStage;
 		core::InvPtr<re::Texture> m_workingAOTex;
 		core::InvPtr<re::Texture> m_workingEdgesTargetTex;
-		std::unique_ptr<re::BatchHandle> m_mainBatch;
+		gr::BatchHandle m_mainBatch;
 
 		uint8_t m_denoiseFinalOutputIdx;
 		std::vector<std::shared_ptr<re::Stage>> m_denoiseStages;
 		core::InvPtr<re::Texture> m_denoisePingTargetTex;
-		std::unique_ptr<re::BatchHandle> m_denoiseBatch;
-		std::unique_ptr<re::BatchHandle> m_lastPassDenoiseBatch;
+		gr::BatchHandle m_denoiseBatch;
+		gr::BatchHandle m_lastPassDenoiseBatch;
 
 		static constexpr char const* k_hilbertLutTexName = "g_srcHilbertLUT"; // As defined in 
 		core::InvPtr<re::Texture> m_hilbertLUT;

@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Batch.h"
 #include "Buffer_OpenGL.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"
@@ -317,10 +318,10 @@ namespace opengl
 						GLuint currentVAO = 0;
 
 						// Stage batches:
-						std::vector<re::BatchHandle> const& batches = stage->GetStageBatches();
-						for (re::BatchHandle const& batch : batches)
+						std::vector<gr::StageBatchHandle> const& batches = stage->GetStageBatches();
+						for (gr::StageBatchHandle const& batch : batches)
 						{
-							core::InvPtr<re::Shader> const& batchShader = batch->GetShader();
+							core::InvPtr<re::Shader> const& batchShader = batch.GetShader();
 							SEAssert(batchShader != nullptr, "Batch must have a shader");
 
 							if (currentShader != batchShader)
@@ -333,23 +334,30 @@ namespace opengl
 							SEAssert(currentShader, "Current shader is null");
 
 							// Batch buffers:
-							std::vector<re::BufferInput> const& batchBuffers = batch->GetBuffers();
+							std::vector<re::BufferInput> const& batchBuffers = (*batch)->GetBuffers();
 							for (re::BufferInput const& batchBufferInput : batchBuffers)
 							{
 								opengl::Shader::SetBuffer(*currentShader, batchBufferInput);
 							}
 
+							// Single frame buffers:
+							std::vector<re::BufferInput> const& singleFrameBuffers = batch.GetSingleFrameBuffers();
+							for (re::BufferInput const& singleFrameBuffer : singleFrameBuffers)
+							{
+								opengl::Shader::SetBuffer(*currentShader, singleFrameBuffer);
+							}
+
 							// Set Batch Texture/Sampler inputs:
-							for (auto const& texSamplerInput : batch->GetTextureAndSamplerInputs())
+							for (auto const& texSamplerInput : (*batch)->GetTextureAndSamplerInputs())
 							{
 								opengl::Shader::SetTextureAndSampler(*currentShader, texSamplerInput);
 							}
 
 							// Batch compute inputs:
-							opengl::Shader::SetImageTextureTargets(*currentShader, batch->GetRWTextureInputs());
+							opengl::Shader::SetImageTextureTargets(*currentShader, (*batch)->GetRWTextureInputs());
 
 							// Batch root constants:
-							opengl::Shader::SetRootConstants(*currentShader, batch->GetRootConstants());							
+							opengl::Shader::SetRootConstants(*currentShader, (*batch)->GetRootConstants());							
 
 							// Draw!
 							switch (curStageType)
@@ -357,14 +365,14 @@ namespace opengl
 							case re::Stage::Type::Raster:
 							case re::Stage::Type::FullscreenQuad:
 							{
-								re::Batch::RasterParams const& rasterParams = batch->GetRasterParams();
-
+								re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
+								
 								// Set the VAO:
 								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
 								// batch
 								const GLuint vertexStreamVAO = context->GetCreateVAO(
-									rasterParams.m_vertexBuffers,
-									rasterParams.m_indexBuffer);
+									batch,
+									batch.GetIndexBuffer());
 								if (vertexStreamVAO != currentVAO)
 								{
 									glBindVertexArray(vertexStreamVAO);
@@ -374,23 +382,28 @@ namespace opengl
 								// Bind the vertex streams:
 								for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
 								{
-									if (rasterParams.m_vertexBuffers[slotIdx].GetStream() == nullptr)
+									SEAssert(!batch.GetResolvedVertexBuffer(slotIdx).first ||
+										(batch.GetResolvedVertexBuffer(slotIdx).first->GetStream() &&
+											batch.GetResolvedVertexBuffer(slotIdx).second != re::VertexBufferInput::k_invalidSlotIdx),
+										"Non-null VertexBufferInput pointer does not have a stream. This should not be possible");
+
+									if (batch.GetResolvedVertexBuffer(slotIdx).first == nullptr)
 									{
 										break;
 									}
 
 									opengl::Buffer::Bind(
-										*rasterParams.m_vertexBuffers[slotIdx].GetBuffer(),
+										*batch.GetResolvedVertexBuffer(slotIdx).first->GetBuffer(),
 										opengl::Buffer::Vertex,
-										rasterParams.m_vertexBuffers[slotIdx].m_view,
-										rasterParams.m_vertexBuffers[slotIdx].m_bindSlot);
+										batch.GetResolvedVertexBuffer(slotIdx).first->m_view,
+										batch.GetResolvedVertexBuffer(slotIdx).second);
 								}
-								if (rasterParams.m_indexBuffer.GetStream())
+								if (batch.GetIndexBuffer().GetStream())
 								{
 									opengl::Buffer::Bind(
-										*rasterParams.m_indexBuffer.GetBuffer(),
+										*batch.GetIndexBuffer().GetBuffer(),
 										opengl::Buffer::Index,
-										rasterParams.m_indexBuffer.m_view,
+										batch.GetIndexBuffer().m_view,
 										0); // Arbitrary: Slot is not used for indexes
 								}
 
@@ -400,23 +413,23 @@ namespace opengl
 								case re::Batch::GeometryMode::IndexedInstanced:
 								{
 									glDrawElementsInstanced(
-										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),			// GLenum mode
-										static_cast<GLsizei>(rasterParams.m_indexBuffer.m_view.m_streamView.m_numElements),	// GLsizei count
-										DataTypeToGLDataType(rasterParams.m_indexBuffer.m_view.m_streamView.m_dataType), 	// GLenum type
+										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),	// GLenum mode
+										static_cast<GLsizei>(batch.GetIndexBuffer().m_view.m_streamView.m_numElements),	// GLsizei count
+										DataTypeToGLDataType(batch.GetIndexBuffer().m_view.m_streamView.m_dataType), 	// GLenum type
 										0,									// Byte offset (into index buffer)
-										(GLsizei)batch->GetInstanceCount());	// Instance count
+										(GLsizei)batch.GetInstanceCount());	// Instance count
 								}
 								break;
 								case re::Batch::GeometryMode::ArrayInstanced:
 								{
 									const GLsizei numElements = static_cast<GLsizei>(
-										rasterParams.m_vertexBuffers[0].m_view.m_streamView.m_numElements);
+										batch.GetResolvedVertexBuffers()[0].first->m_view.m_streamView.m_numElements);
 
 									glDrawArraysInstanced(
 										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),
 										0,
 										numElements,
-										(GLsizei)batch->GetInstanceCount());
+										(GLsizei)batch.GetInstanceCount());
 								}
 								break;
 								default: SEAssertF("Invalid batch geometry type");
@@ -425,7 +438,7 @@ namespace opengl
 							break;
 							case re::Stage::Type::Compute:
 							{
-								glm::uvec3 const& threadGroupCount = batch->GetComputeParams().m_threadGroupCount;
+								glm::uvec3 const& threadGroupCount = (*batch)->GetComputeParams().m_threadGroupCount;
 								glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
 								// Barrier to prevent reading before texture writes have finished.

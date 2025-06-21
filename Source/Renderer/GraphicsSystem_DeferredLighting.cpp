@@ -3,6 +3,7 @@
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "IndexedBuffer.h"
+#include "GraphicsEvent.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
@@ -27,6 +28,13 @@
 namespace
 {
 	static const EffectID k_deferredLightingEffectID = effect::Effect::ComputeEffectID("DeferredLighting");
+
+	static const util::HashKey k_sampler2DShadowName("BorderCmpMinMagLinearMipPoint");
+	static const util::HashKey k_samplerCubeShadowName("WrapCmpMinMagLinearMipPoint");
+
+	static constexpr char const* k_directionalShadowShaderName = "DirectionalShadows";
+	static constexpr char const* k_pointShadowShaderName = "PointShadows";
+	static constexpr char const* k_spotShadowShaderName = "SpotShadows";
 
 
 	BRDFIntegrationData GetBRDFIntegrationParamsDataData()
@@ -105,6 +113,9 @@ namespace gr
 		, m_spotCullingResults(nullptr)
 		, m_lightIDToShadowRecords(nullptr)
 		, m_PCSSSampleParamsBuffer(nullptr)
+		, m_directionalShadowTexArrayUpdated(false)
+		, m_pointShadowTexArrayUpdated(false)
+		, m_spotShadowTexArrayUpdated(false)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
 	}
@@ -193,7 +204,7 @@ namespace gr
 				dispatchXYDims,
 				1u))
 			.SetEffectID(k_deferredLightingEffectID)
-			.BuildSingleFrame());
+			.Build());
 
 		pipeline.AppendSingleFrameStage(std::move(brdfStage));
 	}
@@ -261,7 +272,7 @@ namespace gr
 
 			iemStage->SetTextureTargetSet(iemTargets);
 
-			iemStage->AddBatch(*m_cubeMeshBatch);
+			iemStage->AddBatch(m_cubeMeshBatch);
 
 			pipeline->AppendSingleFrameStage(std::move(iemStage));
 		}
@@ -346,7 +357,7 @@ namespace gr
 
 				pmremStage->SetTextureTargetSet(pmremTargetSet);
 
-				pmremStage->AddBatch(*m_cubeMeshBatch);
+				pmremStage->AddBatch(m_cubeMeshBatch);
 
 				pipeline->AppendSingleFrameStage(std::move(pmremStage));
 			}
@@ -371,13 +382,13 @@ namespace gr
 		}
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		if (m_cubeMeshBatch == nullptr)
+		if (m_cubeMeshBatch.IsValid() == false)
 		{
-			m_cubeMeshBatch = std::make_unique<re::BatchHandle>(RasterBatchBuilder::CreateMeshPrimitiveBatch(
+			m_cubeMeshBatch = RasterBatchBuilder::CreateMeshPrimitiveBatch(
 				m_cubeMeshPrimitive, 
 				k_deferredLightingEffectID, 
 				grutil::BuildMeshPrimitiveRasterBatch)
-					.BuildPermanent());
+					.Build();
 		}
 
 		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
@@ -460,6 +471,12 @@ namespace gr
 		m_directionalStage = re::Stage::CreateGraphicsStage("Directional light stage", gfxStageParams);
 		m_pointStage = re::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
 		m_spotStage = re::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
+
+
+		// TODO: Enable instancing for deferred light mesh batches
+		m_directionalStage->SetInstancingEnabled(false);
+		m_pointStage->SetInstancingEnabled(false);
+		m_spotStage->SetInstancingEnabled(false);
 
 		m_fullscreenStage = re::Stage::CreateComputeStage("Deferred Fullscreen stage", re::Stage::ComputeStageParams{});
 
@@ -549,10 +566,10 @@ namespace gr
 		const uint32_t roundedYDim = 
 			grutil::GetRoundedDispatchDimension(m_lightingTargetSet->GetViewport().Height(), k_dispatchXYThreadDims);
 
-		m_fullscreenComputeBatch = std::make_unique<re::BatchHandle>(gr::ComputeBatchBuilder()
+		m_fullscreenComputeBatch = gr::ComputeBatchBuilder()
 			.SetThreadGroupCount(glm::uvec3(roundedXDim, roundedYDim, 1u))
 			.SetEffectID(k_deferredLightingEffectID)
-			.BuildPermanent());
+			.Build();
 
 
 		// Point light stage:
@@ -635,11 +652,23 @@ namespace gr
 		
 		m_ambientStage->AddPermanentTextureInput(
 			"DFG", m_BRDF_integrationMap, clampMinMagMipPoint, re::TextureView(m_BRDF_integrationMap));
+
+		// Register for events:
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightingGraphicsSystem>(
+			greventkey::GS_Shadows_DirectionalShadowArrayUpdated, this);
+
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightingGraphicsSystem>(
+			greventkey::GS_Shadows_PointShadowArrayUpdated, this);
+
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightingGraphicsSystem>(
+			greventkey::GS_Shadows_SpotShadowArrayUpdated, this);
 	}
 
 
 	void DeferredLightingGraphicsSystem::PreRender()
 	{
+		HandleEvents();
+
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
 
@@ -710,7 +739,7 @@ namespace gr
 						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 						m_ssaoTex);
 
-					std::shared_ptr<re::Buffer> ambientParams = re::Buffer::Create(
+					std::shared_ptr<re::Buffer> const& ambientParams = re::Buffer::Create(
 						AmbientLightData::s_shaderName,
 						ambientLightParamsData,
 						re::Buffer::BufferParams{
@@ -739,7 +768,7 @@ namespace gr
 										re::Sampler::GetSampler("WrapMinMagMipLinear"),
 										re::TextureView(pmremTex))
 									.SetBuffer(AmbientLightData::s_shaderName, ambientParams)
-									.BuildPermanent()
+									.Build()
 						});
 				}
 			}
@@ -783,34 +812,71 @@ namespace gr
 			m_activeAmbientLightData.m_IEMTex = activeAmbientLightData.m_IEMTex;
 			m_activeAmbientLightData.m_PMREMTex = activeAmbientLightData.m_PMREMTex;
 		}
-		
-		// Register new directional lights:
-		if (renderData.HasIDsWithNewData<gr::Light::RenderDataDirectional>())
+
+
+		// If the shadow array texture was recreated, we need to recreate all light batches. Otherwise, we only need
+		// to create batches for any new lights
+		std::vector<gr::RenderDataID> const* dirlLightIDsForNewBatch = nullptr;
+		if (m_directionalShadowTexArrayUpdated)
 		{
-			std::vector<gr::RenderDataID> const* newDirectionalIDs =
-				renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
-			if (newDirectionalIDs)
+			dirlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+		}
+		else
+		{
+			dirlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
+		}
+
+		std::vector<gr::RenderDataID> const* pointlLightIDsForNewBatch = nullptr;
+		if (m_pointShadowTexArrayUpdated)
+		{
+			pointlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+		}
+		else
+		{
+			pointlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
+		}
+
+		std::vector<gr::RenderDataID> const* spotlLightIDsForNewBatch = nullptr;
+		if (m_spotShadowTexArrayUpdated)
+		{
+			spotlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
+		}
+		else
+		{
+			spotlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
+		}
+
+		// Register new directional lights:
+		if (dirlLightIDsForNewBatch && !dirlLightIDsForNewBatch->empty())
+		{
+			for (auto const& directionalItr : gr::IDAdapter(renderData, *dirlLightIDsForNewBatch))
 			{
-				for (auto const& directionalItr : gr::IDAdapter(renderData, *newDirectionalIDs))
+				gr::Light::RenderDataDirectional const& directionalData =
+					directionalItr->Get<gr::Light::RenderDataDirectional>();
+
+				const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
+
+				gr::RasterBatchBuilder batchBuilder = gr::RasterBatchBuilder::CreateInstance(
+						lightID, renderData, grutil::BuildInstancedRasterBatch)
+					.SetEffectID(k_deferredLightingEffectID);
+
+				if (directionalData.m_hasShadow)
 				{
-					gr::Light::RenderDataDirectional const& directionalData =
-						directionalItr->Get<gr::Light::RenderDataDirectional>();
+					SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
+					gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
 
-					const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
-
-					m_punctualLightData.emplace(
-						lightID,
-						PunctualLightRenderData{
-							.m_type = gr::Light::Directional,
-							.m_batch = gr::RasterBatchBuilder::CreateInstance(
-								lightID, renderData, grutil::BuildInstancedRasterBatch)
-									.SetEffectID(k_deferredLightingEffectID)
-									.BuildPermanent(),
-							.m_hasShadow = directionalData.m_hasShadow
-						});
-					
-					// Note: We set the shadow texture inputs per frame/batch if/as required
+					std::move(batchBuilder).SetTextureInput(k_directionalShadowShaderName,
+						*shadowRecord.m_shadowTex,
+						re::Sampler::GetSampler(k_sampler2DShadowName),
+						CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
 				}
+
+				// Create/update the punctual light data record:
+				m_punctualLightData[lightID] = PunctualLightRenderData{
+					.m_type = gr::Light::Directional,
+					.m_batch = std::move(batchBuilder).Build(),
+					.m_hasShadow = directionalData.m_hasShadow
+				};
 			}
 		}
 
@@ -824,45 +890,63 @@ namespace gr
 			{
 				const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
-				punctualLightData.emplace(
-					lightID,
-					PunctualLightRenderData{
-						.m_type = lightType,
-						.m_batch = gr::RasterBatchBuilder::CreateInstance(
-							lightID, renderData, grutil::BuildInstancedRasterBatch)
-								.SetEffectID(k_deferredLightingEffectID)
-								.BuildPermanent(),
-						.m_hasShadow = hasShadow
-					});
-				
-				// Note: We set the shadow texture inputs per frame/batch if/as required
-			};
-		if (renderData.HasIDsWithNewData<gr::Light::RenderDataPoint>())
-		{
-			std::vector<gr::RenderDataID> const* newPointIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
-			if (newPointIDs)
-			{
-				for (auto const& pointItr : gr::IDAdapter(renderData, *newPointIDs))
-				{
-					gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
-					const bool hasShadow = pointData.m_hasShadow;
+				gr::RasterBatchBuilder batchBuilder = gr::RasterBatchBuilder::CreateInstance(
+					lightID, renderData, grutil::BuildInstancedRasterBatch)
+					.SetEffectID(k_deferredLightingEffectID);
 
-					RegisterNewDeferredMeshLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
+				if (hasShadow)
+				{
+					SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
+					gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
+
+					switch (lightType)
+					{
+					case gr::Light::Type::Point:
+					{
+						std::move(batchBuilder).SetTextureInput(k_pointShadowShaderName,
+							*shadowRecord.m_shadowTex,
+							re::Sampler::GetSampler(k_samplerCubeShadowName),
+							CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
+					}
+					break;
+					case gr::Light::Type::Spot:
+					{
+						std::move(batchBuilder).SetTextureInput(k_spotShadowShaderName,
+							*shadowRecord.m_shadowTex,
+							re::Sampler::GetSampler(k_sampler2DShadowName),
+							CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
+					}
+					break;
+					default: SEAssertF("Invalid light type for this function");
+					}
 				}
+
+				// Create/update the punctual light data record:
+				punctualLightData[lightID] = PunctualLightRenderData{
+					.m_type = lightType,
+					.m_batch = std::move(batchBuilder).Build(),
+					.m_hasShadow = hasShadow
+				};
+			};
+
+		if (pointlLightIDsForNewBatch && !pointlLightIDsForNewBatch->empty())
+		{
+			for (auto const& pointItr : gr::IDAdapter(renderData, *pointlLightIDsForNewBatch))
+			{
+				gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
+				const bool hasShadow = pointData.m_hasShadow;
+
+				RegisterNewDeferredMeshLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
 			}
 		}
-		if (renderData.HasIDsWithNewData<gr::Light::RenderDataSpot>())
+		if (spotlLightIDsForNewBatch && !spotlLightIDsForNewBatch->empty())
 		{
-			std::vector<gr::RenderDataID> const* newSpotIDs = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
-			if (newSpotIDs)
+			for (auto const& spotItr : gr::IDAdapter(renderData, *spotlLightIDsForNewBatch))
 			{
-				for (auto const& spotItr : gr::IDAdapter(renderData, *newSpotIDs))
-				{
-					gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
-					const bool hasShadow = spotData.m_hasShadow;
+				gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
+				const bool hasShadow = spotData.m_hasShadow;
 
-					RegisterNewDeferredMeshLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
-				}
+				RegisterNewDeferredMeshLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
 			}
 		}
 
@@ -909,7 +993,7 @@ namespace gr
 			m_ambientStage->AddBatch(m_ambientLightData.at(m_activeAmbientLightData.m_renderDataID).m_batch);
 		}
 
-		m_fullscreenStage->AddBatch(*m_fullscreenComputeBatch);
+		m_fullscreenStage->AddBatch(m_fullscreenComputeBatch);
 		
 		// Hash culled visible light IDs so we can quickly check if we need to add a point/spot light's batch:
 		std::unordered_set<gr::RenderDataID> visibleLightIDs;
@@ -997,13 +1081,9 @@ namespace gr
 				(light.second.m_type == gr::Light::Type::Directional || 
 					visibleLightIDs.contains(lightID)))
 			{
-				auto AddDuplicatedBatch = [&light, &lightID, &ibm, this](
-					re::Stage* stage,
-					char const* shadowTexShaderName,
-					util::HashKey const& samplerTypeName)
+				auto AddDuplicatedBatch = [&light, &lightID, &ibm, this](re::Stage* stage)
 					{
-						re::BatchHandle& duplicatedBatch =
-							*stage->AddBatchWithLifetime(light.second.m_batch, re::Lifetime::SingleFrame);
+						gr::StageBatchHandle& duplicatedBatch = *stage->AddBatch(light.second.m_batch);
 
 						uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
 						if (light.second.m_hasShadow)
@@ -1012,46 +1092,37 @@ namespace gr
 							gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
 
 							shadowTexArrayIdx = shadowRecord.m_shadowTexArrayIdx;
-
-							// Note: Shadow array textures may be reallocated at the beginning of any frame; Texture
-							// inputs/views must be re-set each frame (TODO: Skip recreating the views by tracking 
-							// texture changes)						
-							duplicatedBatch->SetTextureInput(
-								shadowTexShaderName,
-								*shadowRecord.m_shadowTex,
-								re::Sampler::GetSampler(samplerTypeName),
-								CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
 						}
 
-						char const* shaderName = nullptr;
+						char const* lutShaderName = nullptr;
 						switch (light.second.m_type)
 						{
 						case gr::Light::Type::Directional:
 						{
-							shaderName = LightShadowLUTData::s_shaderNameDirectional;
+							lutShaderName = LightShadowLUTData::s_shaderNameDirectional;
 						}
 						break;
 						case gr::Light::Type::Point:
 						{
-							shaderName = LightShadowLUTData::s_shaderNamePoint;
+							lutShaderName = LightShadowLUTData::s_shaderNamePoint;
 
 							// Add the Transform and instanced index LUT:
-							duplicatedBatch->SetBuffer(
+							duplicatedBatch.SetSingleFrameBuffer(
 								ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 
-							duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+							duplicatedBatch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 								InstanceIndexData::s_shaderName, std::views::single(lightID)));
 						}
 						break;
 						case gr::Light::Type::Spot:
 						{
-							shaderName = LightShadowLUTData::s_shaderNameSpot;
+							lutShaderName = LightShadowLUTData::s_shaderNameSpot;
 
 							// Add the Transform and instanced index LUT:
-							duplicatedBatch->SetBuffer(
+							duplicatedBatch.SetSingleFrameBuffer(
 								ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 
-							duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+							duplicatedBatch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
 								InstanceIndexData::s_shaderName, std::views::single(lightID)));
 						}
 						break;						
@@ -1068,34 +1139,65 @@ namespace gr
 								light.second.m_type),
 						};
 
-						duplicatedBatch->SetBuffer(ibm.GetLUTBufferInput<LightShadowLUTData>(
-							shaderName,
+						duplicatedBatch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<LightShadowLUTData>(
+							lutShaderName,
 							{ lightShadowLUT },
 							std::span<const gr::RenderDataID>{&lightID, 1}));
 					};
 
-				const util::HashKey sampler2DShadowName("BorderCmpMinMagLinearMipPoint");
-				const util::HashKey samplerCubeShadowName("WrapCmpMinMagLinearMipPoint");
+				
 				switch (light.second.m_type)
 				{
 				case gr::Light::Type::Directional:
 				{
-					AddDuplicatedBatch(m_directionalStage.get(), "DirectionalShadows", sampler2DShadowName);
+					AddDuplicatedBatch(m_directionalStage.get());
 				}
 				break;
 				case gr::Light::Type::Point:
 				{
-					AddDuplicatedBatch(m_pointStage.get(), "PointShadows", samplerCubeShadowName);
+					AddDuplicatedBatch(m_pointStage.get());
 				}
 				break;
 				case gr::Light::Type::Spot:
 				{
-					AddDuplicatedBatch(m_spotStage.get(), "SpotShadows", sampler2DShadowName);
+					AddDuplicatedBatch(m_spotStage.get());
 				}
 				break;
 				case gr::Light::Type::AmbientIBL:
 				default: SEAssertF("Invalid light type");
 				}
+			}
+		}
+	}
+
+
+	void DeferredLightingGraphicsSystem::HandleEvents()
+	{
+		m_directionalShadowTexArrayUpdated = false;
+		m_pointShadowTexArrayUpdated = false;
+		m_spotShadowTexArrayUpdated = false;
+
+		while (HasEvents())
+		{
+			gr::GraphicsEvent const& event = GetEvent();
+			switch (event.m_eventKey)
+			{
+			case greventkey::GS_Shadows_DirectionalShadowArrayUpdated:
+			{
+				m_directionalShadowTexArrayUpdated = true;
+			}
+			break;
+			case greventkey::GS_Shadows_PointShadowArrayUpdated:
+			{
+				m_pointShadowTexArrayUpdated = true;
+			}
+			break;
+			case greventkey::GS_Shadows_SpotShadowArrayUpdated:
+			{
+				m_spotShadowTexArrayUpdated = true;
+			}
+			break;
+			default: SEAssertF("Unexpected event key");
 			}
 		}
 	}

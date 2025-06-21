@@ -5,6 +5,15 @@
 #include "Core/Interfaces/INamedObject.h"
 
 
+namespace effect
+{
+	class EffectDB;
+}
+namespace gr
+{
+	class IndexedBufferManager;
+}
+
 namespace re
 {
 	class StagePipeline final : public virtual core::INamedObject
@@ -37,7 +46,7 @@ namespace re
 
 
 	public:
-		void PostUpdatePreRender();
+		void PostUpdatePreRender(gr::IndexedBufferManager&, effect::EffectDB const& effectDB);
 		void EndOfFrame(); // Calls Stage::EndOfFrame, clears single frame data etc
 
 
@@ -68,7 +77,7 @@ namespace re
 
 
 	public:
-		void PostUpdatePreRender();
+		void PostUpdatePreRender(gr::IndexedBufferManager&, effect::EffectDB const&);
 		void EndOfFrame();
 
 

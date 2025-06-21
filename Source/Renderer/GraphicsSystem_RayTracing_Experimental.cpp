@@ -204,7 +204,11 @@ namespace gr
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
-			re::BatchHandle& rtBatch = *m_rtStage->AddBatch(gr::RayTraceBatchBuilder()
+			re::BufferInput const& indexedBufferLUT = GetInstancedBufferLUTBufferInput(
+				(*m_sceneTLAS).get(),
+				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());
+
+			gr::StageBatchHandle& rtBatch = *m_rtStage->AddBatch(gr::RayTraceBatchBuilder()
 				.SetOperation(re::Batch::RayTracingParams::Operation::DispatchRays)
 				.SetASInput(re::ASInput("SceneBVH", *m_sceneTLAS))
 				.SetDispatchDimensions(glm::uvec3(
@@ -212,23 +216,17 @@ namespace gr
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
 					1u))
 				.SetRayGenShaderIdx(m_rayGenIdx)
-				.BuildSingleFrame());
-
-			// Attach indexed buffer LUT to the batch:
-			re::BufferInput const& indexedBufferLUT = GetInstancedBufferLUTBufferInput(
-				(*m_sceneTLAS).get(),
-				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());
-
-			rtBatch->SetBuffer(indexedBufferLUT);
+				.Build());
 
 			// Descriptor indexes buffer:
-			std::shared_ptr<re::Buffer> descriptorIndexes = CreateDescriptorIndexesBuffer(
+			std::shared_ptr<re::Buffer> const& descriptorIndexes = CreateDescriptorIndexesBuffer(
 				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
 				indexedBufferLUT.GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
 				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetBindlessResourceHandle(re::ViewType::CBV),
 				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV));
 
-			rtBatch->SetBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);
+			rtBatch.SetSingleFrameBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);
+			rtBatch.SetSingleFrameBuffer(indexedBufferLUT);
 
 			// Ray tracing params:
 			std::shared_ptr<re::Buffer> const& traceRayParams = CreateTraceRayParams(
