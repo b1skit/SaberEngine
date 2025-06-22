@@ -7,6 +7,7 @@
 #include "RenderDataManager.h"
 
 #include "Core/Config.h"
+#include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
 #include "Core/Util/ThreadSafeVector.h"
@@ -21,6 +22,8 @@ namespace
 		gr::Camera::Frustum const& frustum,
 		float* camToMeshBoundsDistOut = nullptr) // Optional, will be populated if not null
 	{
+		SEBeginCPUEvent("TestBoundsVisibility");
+
 		// Transform our Bounds into world space:
 		constexpr uint8_t k_numBoundsPoints = 8;
 		const std::array<glm::vec3, k_numBoundsPoints> boundsPoints = {
@@ -56,6 +59,7 @@ namespace
 			}
 			if (isCompletelyOutsideOfPlane)
 			{
+				SEEndCPUEvent(); // "TestBoundsVisibility"
 				return false; // Any Bounds totally outside of any plane is not visible
 			}
 		}
@@ -65,6 +69,8 @@ namespace
 		{
 			*camToMeshBoundsDistOut = glm::length(frustum.m_camWorldPos - boundsWorldCenter);
 		}
+
+		SEEndCPUEvent(); // "TestBoundsVisibility"
 		return true;
 	}
 
@@ -76,6 +82,8 @@ namespace
 		std::vector<gr::RenderDataID>& spotLightIDsOut,
 		bool cullingEnabled)
 	{
+		SEBeginCPUEvent("CullLights");
+
 		SEAssert(pointLightIDsOut.empty() && spotLightIDsOut.empty(), "ID vectors are not empty");
 
 		pointLightIDsOut.reserve(renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>());
@@ -104,6 +112,8 @@ namespace
 		};
 		DoCulling(gr::LinearAdapter<gr::Light::RenderDataPoint>(renderData), pointLightIDsOut);
 		DoCulling(gr::LinearAdapter<gr::Light::RenderDataSpot>(renderData), spotLightIDsOut);
+
+		SEEndCPUEvent(); // "CullLights"
 	}
 
 
@@ -114,6 +124,8 @@ namespace
 		std::vector<gr::RenderDataID>& visibleIDsOut,
 		bool cullingEnabled)
 	{
+		SEBeginCPUEvent("CullGeometry");
+
 		struct IDAndDistance
 		{
 			gr::RenderDataID m_visibleID;
@@ -170,6 +182,8 @@ namespace
 		{
 			visibleIDsOut.emplace_back(idAndDist.m_visibleID);			
 		}
+
+		SEEndCPUEvent(); // "CullGeometry"
 	}
 }
 
@@ -207,8 +221,11 @@ namespace gr
 
 	void CullingGraphicsSystem::PreRender()
 	{
+		SEBeginCPUEvent("CullingGraphicsSystem::PreRender");
+
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		
+		SEBeginCPUEvent("Add new Bounds");
 		if (renderData.HasIDsWithNewData<gr::Bounds::RenderData>())
 		{
 			// Add any new bounds to our tracking tables:
@@ -252,8 +269,10 @@ namespace gr
 				}
 			}
 		}		
+		SEEndCPUEvent(); // "Add new Bounds"
 
 		// Remove any deleted bounds from our tracking tables:
+		SEBeginCPUEvent("Remove deleted Bounds");
 		if (renderData.HasIDsWithDeletedData<gr::Bounds::RenderData>())
 		{
 			std::vector<gr::RenderDataID> const* deletedBoundsIDs =
@@ -281,8 +300,10 @@ namespace gr
 				}
 			}
 		}
+		SEEndCPUEvent(); // "Remove deleted Bounds"
 
 		// Erase any cached frustums for deleted cameras:
+		SEBeginCPUEvent("Erase cached frustums");
 		std::vector<gr::RenderDataID> const* deletedCamIDs = renderData.GetIDsWithDeletedData<gr::Camera::RenderData>();
 		if (deletedCamIDs)
 		{
@@ -300,9 +321,11 @@ namespace gr
 				}
 			}
 		}
+		SEEndCPUEvent(); // "Erase cached frustums"
 
 		// CPU-side frustum culling:
 		// -------------------------
+		SEBeginCPUEvent("Do culling");
 
 		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
 		m_viewToVisibleIDs.clear();
@@ -340,11 +363,15 @@ namespace gr
 					[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
 					this, &renderData]()
 					{
+						SEBeginCPUEvent(std::format("Culling camera {}", std::to_string(cameraID)).c_str());
+
 						// Create/update frustum planes for dirty cameras:
 						// A Camera will be dirty if it has just been created, or if it has just been modified
 						const uint8_t numViews = gr::Camera::NumViews(*camData);
 						if (cameraIsDirty)
 						{
+							SEBeginCPUEvent("Build camera frustum(s)");
+
 							// Clear any existing FrustumPlanes:
 							for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 							{
@@ -403,9 +430,12 @@ namespace gr
 							break;
 							default: SEAssertF("Invalid number of views");
 							}
+
+							SEEndCPUEvent(); // "Build camera frustum(s)"
 						} //cameraIsDirty
 
 						// Clear any previous visibility results (Objects may have moved, we need to cull everything each frame)
+						SEBeginCPUEvent("Cull geometry");
 						for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 						{
 							gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
@@ -443,10 +473,13 @@ namespace gr
 								}
 							}
 						}
+						SEEndCPUEvent(); // "Cull geometry"
 
 						// If we're the active camera, also cull the lights:
 						if (cameraID == activeCamRenderDataID)
 						{
+							SEBeginCPUEvent("Cull lights");
+
 							gr::Camera::Frustum lightFrustum;
 							{
 								std::lock_guard<std::mutex> lock(m_cachedFrustumsMutex);
@@ -464,7 +497,11 @@ namespace gr
 									m_visibleSpotLightIDs,
 									m_cullingEnabled);
 							}
+
+							SEEndCPUEvent(); // "Cull lights"
 						}
+
+						SEEndCPUEvent(); // "Culling camera{RenderDataID}"						
 					}));
 			}
 
@@ -474,6 +511,9 @@ namespace gr
 				cullingFutures[cullingFutureIdx].wait();
 			}
 		}
+		SEEndCPUEvent(); // "Do culling"
+
+		SEEndCPUEvent(); // "CullingGraphicsSystem::PreRender"
 	}
 
 
