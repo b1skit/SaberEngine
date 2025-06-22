@@ -87,11 +87,10 @@ namespace gr
 		using ResolvedVertexBuffers =
 			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, gr::VertexStream::k_maxVertexStreams>;
 
-
 	public:
 		StageBatchHandle(BatchHandle);
 
-		BatchHandle& operator*() noexcept { return m_batchHandle; }
+	public:
 		BatchHandle const& operator*() const noexcept { return m_batchHandle; }
 
 
@@ -101,6 +100,7 @@ namespace gr
 		void SetSingleFrameBuffer(re::BufferInput const&);
 
 
+	public:
 		void Resolve(effect::drawstyle::Bitmask stageDrawstyleBits, uint32_t instanceCount, effect::EffectDB const&);
 
 

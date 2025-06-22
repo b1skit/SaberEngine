@@ -635,9 +635,8 @@ namespace re
 
 		struct BatchMetadata
 		{
-			uint64_t m_batchHash;
-			uint32_t m_stageBatchesIdx;
-			gr::RenderDataID m_renderDataID;
+			gr::BatchHandle const* m_batchHandle;
+			gr::StageBatchHandle const* m_stageBatchHandle;
 		};
 
 		// Populate the batch metadata:
@@ -647,11 +646,9 @@ namespace re
 		batchMetadata.reserve(m_resolvedBatches.size());
 		for (size_t i = 0; i < m_resolvedBatches.size(); i++)
 		{
-			batchMetadata.emplace_back(BatchMetadata{ 
-				.m_batchHash = (*m_resolvedBatches[i])->GetDataHash(),
-				.m_stageBatchesIdx = util::CheckedCast<uint32_t>(i),
-				.m_renderDataID = (*m_resolvedBatches[i]).GetRenderDataID(),
-				});
+			batchMetadata.emplace_back( 
+				&(*m_resolvedBatches[i]),
+				&m_resolvedBatches[i]);
 		}
 
 		SEEndCPUEvent(); // "Populate batchMetadata"
@@ -661,8 +658,9 @@ namespace re
 		SEBeginCPUEvent("Sort batchMetadata");
 
 		std::sort(batchMetadata.begin(), batchMetadata.end(),
-			[](BatchMetadata const& a, BatchMetadata const& b) { return (a.m_batchHash < b.m_batchHash); });
-
+			[](BatchMetadata const& a, BatchMetadata const& b) 
+			{ return (*a.m_batchHandle)->GetDataHash() < (*b.m_batchHandle)->GetDataHash(); });
+			
 		SEEndCPUEvent(); // "Sort batchMetadata"
 
 
@@ -675,18 +673,17 @@ namespace re
 		size_t unmergedIdx = 0;
 		do
 		{
-			gr::StageBatchHandle const& stageBatchHandle =
-				m_resolvedBatches[batchMetadata[unmergedIdx].m_stageBatchesIdx];
+			gr::StageBatchHandle const& stageBatchHandle = *batchMetadata[unmergedIdx].m_stageBatchHandle;
 
 			// Add the first batch in the sequence to our final list. We duplicate the batch, as cached batches
 			// have a permanent Lifetime
 			mergedBatches.emplace_back(stageBatchHandle);
 
 			// Find the index of the last batch with a matching hash in the sequence:
-			const uint64_t curBatchHash = batchMetadata[unmergedIdx].m_batchHash;
+			const uint64_t curBatchHash = (*batchMetadata[unmergedIdx].m_batchHandle)->GetDataHash();
 			const size_t instanceStartIdx = unmergedIdx++;
 			while (unmergedIdx < batchMetadata.size() &&
-				batchMetadata[unmergedIdx].m_batchHash == curBatchHash)
+				(*batchMetadata[unmergedIdx].m_batchHandle)->GetDataHash() == curBatchHash)
 			{
 				unmergedIdx++;
 			}
@@ -704,14 +701,17 @@ namespace re
 			auto const& effectBufferShaderNames = batchEffect->GetRequestedBufferShaderNames();
 
 			bool setInstanceBuffer = false;
-			for (auto const& bufferNameHash : effectBufferShaderNames)
+			if (!effectBufferShaderNames.empty())
 			{
-				mergedBatches.back().SetSingleFrameBuffer(
-					ibm.GetIndexedBufferInput(bufferNameHash.first, bufferNameHash.second.c_str()));
+				for (auto const& bufferNameHash : effectBufferShaderNames)
+				{
+					mergedBatches.back().SetSingleFrameBuffer(
+						ibm.GetIndexedBufferInput(bufferNameHash.first, bufferNameHash.second.c_str()));
 
-				setInstanceBuffer = true;
+					setInstanceBuffer = true;
+				}
 			}
-
+			
 			// Indexed buffer LUTs require a valid RenderDataID, but it's still valid to attach an instanced buffer
 			// (e.g. if the GS handled the LUT manually)
 			if (setInstanceBuffer &&
@@ -723,7 +723,7 @@ namespace re
 					| std::views::take(numInstances)
 					| std::ranges::views::transform([](BatchMetadata const& batchMetadata) -> gr::RenderDataID
 						{
-							return batchMetadata.m_renderDataID;
+							return batchMetadata.m_batchHandle->GetRenderDataID();
 						});
 
 				mergedBatches.back().SetSingleFrameBuffer(
