@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
 
@@ -210,8 +210,8 @@ namespace core
 
 
 	private:
-		uint8_t GetReadIdx(uint64_t frameNum) const;
-		uint8_t GetWriteIdx(uint64_t frameNum) const;
+		uint8_t GetReadIdx(uint64_t frameNum) const noexcept;
+		uint8_t GetWriteIdx(uint64_t frameNum) const noexcept;
 
 
 	private:
@@ -256,13 +256,13 @@ namespace core
 	}
 
 
-	inline uint8_t FrameIndexedCommandManager::GetReadIdx(uint64_t frameNum) const
+	inline uint8_t FrameIndexedCommandManager::GetReadIdx(uint64_t frameNum) const noexcept
 	{
 		return frameNum % m_numBuffers;
 	}
 
 
-	inline uint8_t FrameIndexedCommandManager::GetWriteIdx(uint64_t frameNum) const
+	inline uint8_t FrameIndexedCommandManager::GetWriteIdx(uint64_t frameNum) const noexcept
 	{
 		return frameNum % m_numBuffers;
 	}

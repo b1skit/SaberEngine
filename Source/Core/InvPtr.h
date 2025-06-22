@@ -22,7 +22,7 @@ namespace core
 
 		T* operator->() const noexcept;
 		T& operator*() const noexcept;
-		T& operator[](std::ptrdiff_t idx) const;
+		T& operator[](std::ptrdiff_t idx) const noexcept;
 
 		bool operator==(InvPtr<T> const&) const noexcept;
 
@@ -38,10 +38,10 @@ namespace core
 		template<typename Child>
 		InvPtr<Child> AddDependency(InvPtr<Child>&&);
 
-		core::ResourceSystem<T>::RefCountType UseCount() const;
-		core::ResourceState GetState() const;
+		core::ResourceSystem<T>::RefCountType UseCount() const noexcept;
+		core::ResourceState GetState() const noexcept;
 
-		bool IsValid() const; // Is this InvPtr Empty/Requested/Loaded/Loading?
+		bool IsValid() const noexcept; // Is this InvPtr Empty/Requested/Loaded/Loading?
 
 	private:
 		void TryToLoad() const; // Work stealing: First thread to call this will do the load job
@@ -280,7 +280,7 @@ namespace core
 
 
 	template<typename T>
-	inline T& InvPtr<T>::operator[](std::ptrdiff_t idx) const
+	inline T& InvPtr<T>::operator[](std::ptrdiff_t idx) const noexcept
 	{
 		return operator->()[idx];
 	}
@@ -393,21 +393,21 @@ namespace core
 
 
 	template<typename T>
-	inline core::ResourceSystem<T>::RefCountType InvPtr<T>::UseCount() const
+	inline core::ResourceSystem<T>::RefCountType InvPtr<T>::UseCount() const noexcept
 	{
 		return m_control->m_refCount.load(std::memory_order_relaxed);
 	}
 
 
 	template<typename T>
-	inline core::ResourceState InvPtr<T>::GetState() const
+	inline core::ResourceState InvPtr<T>::GetState() const noexcept
 	{
 		return m_control->m_state.load(std::memory_order_acquire);
 	}
 
 
 	template<typename T>
-	inline bool InvPtr<T>::IsValid() const
+	inline bool InvPtr<T>::IsValid() const noexcept
 	{
 		if (m_control != nullptr)
 		{

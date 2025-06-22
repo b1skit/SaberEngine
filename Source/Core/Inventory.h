@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "InvPtr.h"
 #include "ResourceSystem.h"
@@ -12,10 +12,10 @@ namespace core
 		Inventory() = default;
 
 		Inventory(Inventory const&) = default;
-		Inventory(Inventory&&) = default;
+		Inventory(Inventory&&) noexcept = default;
 
 		Inventory& operator=(Inventory const&) = default;
-		Inventory& operator=(Inventory&&) = default;
+		Inventory& operator=(Inventory&&) noexcept = default;
 
 		~Inventory() = default;
 

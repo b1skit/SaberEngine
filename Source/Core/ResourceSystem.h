@@ -71,10 +71,10 @@ namespace core
 		ResourceSystem();
 
 		ResourceSystem(ResourceSystem const&) = default;
-		ResourceSystem(ResourceSystem&&) = default;
+		ResourceSystem(ResourceSystem&&) noexcept = default;
 
 		ResourceSystem& operator=(ResourceSystem const&) = default;
-		ResourceSystem& operator=(ResourceSystem&&) = default;
+		ResourceSystem& operator=(ResourceSystem&&) noexcept = default;
 
 		~ResourceSystem();
 

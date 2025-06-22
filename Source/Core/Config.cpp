@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
 #include "EventManager.h"
@@ -61,7 +61,7 @@ namespace core
 			const std::string m_key;
 			std::string m_value;
 
-			bool HasValue() const { return !m_value.empty(); }
+			bool HasValue() const noexcept { return !m_value.empty(); }
 		};
 		std::vector<KeyValue> keysValues;
 		keysValues.reserve(static_cast<size_t>(m_argc) - 1);
