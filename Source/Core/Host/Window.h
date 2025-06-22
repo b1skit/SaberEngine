@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "../Interfaces/IPlatformObject.h"
 
@@ -38,7 +38,7 @@ namespace host
 		Window& operator=(Window&&) noexcept = default;
 		~Window();
 
-		Window::PlatObj* GetPlatformObject() const { return m_platObj.get(); }
+		Window::PlatObj* GetPlatformObject() const noexcept { return m_platObj.get(); }
 		void SetPlatformObject(std::unique_ptr<Window::PlatObj> platObj) { m_platObj = std::move(platObj); }
 
 		// Platform wrappers:

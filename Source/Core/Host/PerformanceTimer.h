@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -22,7 +22,7 @@ namespace host
 		double StopMs(); // Stops the timer, and returns the high precision time since Start() in ms
 		double StopSec(); // Stops the timer, and returns the high precision time since Start() in seconds
 
-		bool IsRunning() const; // Has the timer been started?
+		bool IsRunning() const noexcept; // Has the timer been started?
 
 
 	private:
@@ -35,7 +35,7 @@ namespace host
 	};
 
 
-	inline bool PerformanceTimer::IsRunning() const
+	inline bool PerformanceTimer::IsRunning() const noexcept
 	{
 		return m_isStarted;
 	}
