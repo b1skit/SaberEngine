@@ -32,6 +32,7 @@ namespace gr
 	{
 	protected:
 		IBatchBuilder(re::Batch::BatchType) noexcept;
+		IBatchBuilder(re::Batch const&) noexcept;
 		
 		IBatchBuilder(IBatchBuilder&&) noexcept = default;
 		IBatchBuilder& operator=(IBatchBuilder&&) noexcept = default;
@@ -71,7 +72,7 @@ namespace gr
 		gr::RenderDataID m_renderDataID; // RenderDataID associated with the Batch we're building (if any)
 
 
-	private:
+	protected:
 		friend class gr::BatchPool;
 		static gr::BatchPool* s_batchPool;
 
@@ -116,6 +117,8 @@ namespace gr
 		static RasterBatchBuilder CreateMeshPrimitiveBatch(
 			core::InvPtr<gr::MeshPrimitive> const&, EffectID, BuildFromMeshPrimitiveCallback);
 
+		static RasterBatchBuilder CloneAndModify(BatchHandle) noexcept;
+
 
 	public:
 		RasterBatchBuilder&& SetGeometryMode(re::Batch::GeometryMode)&& noexcept;
@@ -139,6 +142,7 @@ namespace gr
 
 	private:
 		RasterBatchBuilder(gr::RenderDataID) noexcept; // Instanced raster batches: Use create
+		RasterBatchBuilder(re::Batch const& existingBatch) noexcept;
 	};
 
 
@@ -184,6 +188,16 @@ namespace gr
 		: m_batch(batchType)
 		, m_renderDataID(gr::k_invalidRenderDataID)
 	{
+	}
+
+
+	template<typename BuilderImpl>
+	IBatchBuilder<BuilderImpl>::IBatchBuilder(re::Batch const& existingBatch) noexcept
+		: m_batch(existingBatch)
+		, m_renderDataID(gr::k_invalidRenderDataID)
+	{
+		SEAssert(existingBatch.GetType() != re::Batch::BatchType::Invalid, "Existing batch must not be invalid");
+		m_batch.ResetDataHash(); // We're cloning the batch, reset the hash as we expect it will be modified
 	}
 
 
@@ -299,10 +313,27 @@ namespace gr
 	}
 
 
+	inline RasterBatchBuilder RasterBatchBuilder::CloneAndModify(BatchHandle existingBatchHandle) noexcept
+	{
+		re::Batch const* existingBatch = s_batchPool->GetBatch(existingBatchHandle.GetPoolIndex());
+		SEAssert(existingBatch != nullptr, "Existing batch must not be null");
+		SEAssert(existingBatch->GetType() == re::Batch::BatchType::Raster, "Existing batch must be a raster batch");
+
+		return RasterBatchBuilder(*existingBatch);
+	}
+
+
 	inline RasterBatchBuilder::RasterBatchBuilder(gr::RenderDataID renderDataID) noexcept
 		: IBatchBuilder<RasterBatchBuilder>(re::Batch::BatchType::Raster)
 	{
 		m_renderDataID = renderDataID;
+	}
+
+
+	inline RasterBatchBuilder::RasterBatchBuilder(re::Batch const& existingBatch) noexcept
+		: IBatchBuilder(existingBatch)
+	{
+		SEAssert(existingBatch.GetType() == re::Batch::BatchType::Raster, "Existing batch must be a raster batch");
 	}
 
 

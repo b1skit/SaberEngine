@@ -71,6 +71,7 @@ namespace re
 
 		struct RasterParams final
 		{
+		private:
 			friend class re::Batch;
 			friend class gr::RasterBatchBuilder;
 			friend class gr::StageBatchHandle;
@@ -80,6 +81,11 @@ namespace re
 			std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
 
 			VertexBufferInput m_indexBuffer{};
+
+
+		public:
+			bool HasVertexStream(gr::VertexStream::Type) const noexcept;
+			re::VertexBufferInput const* GetVertexStreamInput(gr::VertexStream::Type, uint8_t setIdx = 0) const noexcept;
 
 
 		public:
@@ -231,6 +237,63 @@ namespace re
 	// ---
 
 
+	inline bool re::Batch::RasterParams::HasVertexStream(gr::VertexStream::Type streamType) const noexcept
+	{
+		for (auto const& vertexBuffer : m_vertexBuffers)
+		{
+			if (vertexBuffer.GetStream() == nullptr)
+			{
+				return false;
+			}
+			if (vertexBuffer.GetStream()->GetType() == streamType)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	inline re::VertexBufferInput const* re::Batch::RasterParams::GetVertexStreamInput(
+		gr::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const noexcept
+	{
+		SEAssert(streamType != gr::VertexStream::Type::Type_Count, "Invalid vertex stream type");
+
+		if (streamType == gr::VertexStream::Type::Index)
+		{
+			if (m_indexBuffer.GetStream() == nullptr)
+			{
+				return nullptr; // No index buffer set, return nullptr here to be consistent with behavior below
+			}
+			return &m_indexBuffer;
+		}
+
+		for (uint8_t streamIdx = 0; streamIdx < m_vertexBuffers.size(); ++streamIdx)
+		{
+			if (m_vertexBuffers[streamIdx].GetStream()->GetType() == gr::VertexStream::Type_Count)
+			{
+				return nullptr;
+			}
+
+			if (m_vertexBuffers[streamIdx].GetStream()->GetType() == streamType)
+			{
+				const uint8_t offsetIdx = streamIdx + setIdx;
+				SEAssert(offsetIdx < m_vertexBuffers.size(), "Invalid set index");
+
+				// Note: It is valid to find a stream with a different type (e.g. UV1 doesn't exist)
+				if (m_vertexBuffers[offsetIdx].GetStream()->GetType() == streamType)
+				{
+					return &m_vertexBuffers[offsetIdx];
+				}
+			}
+		}
+		return nullptr;
+	}
+
+
+	// ---
+
+
 	inline re::Batch::BatchType Batch::GetType() const
 	{
 		return m_type;
@@ -239,7 +302,6 @@ namespace re
 
 	inline void Batch::SetEffectID(EffectID effectID)
 	{
-		SEAssert(m_effectID == 0, "EffectID has already been set. This is unexpected");
 		m_effectID = effectID;
 	}
 
@@ -252,7 +314,6 @@ namespace re
 
 	inline void Batch::SetDrawstyleBits(effect::drawstyle::Bitmask drawstyleBits)
 	{
-		SEAssert(m_drawStyleBitmask == 0, "Drawstyle bits already set, this is unexpected");
 		m_drawStyleBitmask = drawstyleBits;
 	}
 

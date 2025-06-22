@@ -2,6 +2,7 @@
 #include "Batch.h"
 #include "BatchBuilder.h"
 #include "BoundsRenderData.h"
+#include "BufferView.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
@@ -178,27 +179,26 @@ namespace
 	}
 
 
-	gr::BatchHandle BuildVertexNormalsBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
+	gr::BatchHandle BuildVertexNormalsBatch(gr::BatchHandle existingBatch)
 	{
-		core::InvPtr<gr::VertexStream> const& normalStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
-				meshPrimRenderData, gr::VertexStream::Type::Normal);
-		if (normalStream == nullptr)
+		if ((*existingBatch).GetRasterParams().HasVertexStream(gr::VertexStream::Type::Normal) == false)
 		{
 			return gr::BatchHandle(); // No normals? Nothing to build
 		}
 
-		core::InvPtr<gr::VertexStream> const& positionStream = gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
-			meshPrimRenderData, gr::VertexStream::Type::Position);
-		SEAssert(positionStream, "Cannot find position stream");
+		SEAssert((*existingBatch).GetRasterParams().HasVertexStream(gr::VertexStream::Position),
+			"Existing Batch has no Position vertex stream. This should not be possible");
 
-		SEAssert(positionStream->GetDataType() == re::DataType::Float3 && 
-			normalStream->GetDataType() == re::DataType::Float3,
+		re::Batch::RasterParams const& rasterParams = (*existingBatch).GetRasterParams();
+
+		SEAssert(
+			rasterParams.GetVertexStreamInput(gr::VertexStream::Position)->GetStream()->GetDataType() == re::DataType::Float3 &&
+			rasterParams.GetVertexStreamInput(gr::VertexStream::Normal)->GetStream()->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 
-		gr::BatchHandle batch = gr::RasterBatchBuilder()
+		gr::BatchHandle batch = gr::RasterBatchBuilder::CloneAndModify(existingBatch)
 			.SetGeometryMode(re::Batch::GeometryMode::ArrayInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
-			.SetVertexBuffers({ positionStream, normalStream, })
 			.SetEffectID(k_debugEffectID)
 			.SetDrawstyleBitmask(effect::drawstyle::Debug_Normal)
 			.Build();
@@ -212,14 +212,14 @@ namespace
 		re::BufferInput const& camFrustumTransformBuffer)
 	{
 		// NDC coordinates:
-		glm::vec4 farTL = glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = glm::vec4(1.f, -1.f, 0.f, 1.f);
+		glm::vec4 farTL(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR(1.f, -1.f, 0.f, 1.f);
 
 		util::ByteVector frustumPositions = util::ByteVector::Create<glm::vec3>(
 			{ farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR });
@@ -398,6 +398,11 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
 
+		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+		SEAssert(mainCamID == gr::k_invalidRenderDataID ||
+			m_viewBatches->contains(mainCamID),
+			"Cannot find main camera ID in view batches");
+
 		if (m_showWorldCoordinateAxis)
 		{
 			// Use the 1st RenderDataID that references the identity transform to obtain a view
@@ -420,24 +425,46 @@ namespace gr
 			m_worldCoordinateAxisBatch = BatchHandle();
 		}
 
-		if (m_showAllWireframe)
+		if (m_showAllWireframe && mainCamID != gr::k_invalidRenderDataID)
 		{
-			const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
-			if (mainCamID != gr::k_invalidRenderDataID)
+			std::vector<gr::BatchHandle> const& mainCamBatches = m_viewBatches->at(mainCamID);
+			for (gr::BatchHandle const& batch : mainCamBatches)
 			{
-				SEAssert(m_viewBatches->contains(mainCamID), "Cannot find main camera ID in view batches");
-
-				std::vector<gr::BatchHandle> const& mainCamBatches = m_viewBatches->at(mainCamID);
-				for (gr::BatchHandle const& batch : mainCamBatches)
-				{
-					m_wireframeStage->AddBatch(batch);
-				}
+				m_wireframeStage->AddBatch(batch);
 			}
 		}
 
+		if (m_showAllVertexNormals && mainCamID != gr::k_invalidRenderDataID)
+		{
+			std::vector<gr::BatchHandle> const& mainCamBatches = m_viewBatches->at(mainCamID);
+			for (gr::BatchHandle const& batch : mainCamBatches)
+			{
+				const gr::RenderDataID batchRenderDataID = batch.GetRenderDataID();
+				SEAssert(batchRenderDataID != gr::k_invalidRenderDataID,
+					"Found a main camera batch with an invalid RenderDataID");
+
+				if (!m_vertexNormalBatches.contains(batchRenderDataID))
+				{
+					const gr::BatchHandle normalsBatch = BuildVertexNormalsBatch(batch);
+					if (normalsBatch.IsValid())
+					{
+						m_vertexNormalBatches.emplace(batchRenderDataID, normalsBatch);
+					}
+				}
+				gr::StageBatchHandle& batch =
+					*m_debugStage->AddBatch(m_vertexNormalBatches.at(batchRenderDataID));
+				batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+					InstanceIndexData::s_shaderName, std::views::single(batchRenderDataID)));
+				batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
+			}
+		}
+		else
+		{
+			m_vertexNormalBatches.clear();
+		}
+
 		if (m_showAllMeshPrimitiveBounds || 
-			m_showMeshCoordinateAxis || 
-			m_showAllVertexNormals)
+			m_showMeshCoordinateAxis)
 		{
 			for (auto const& meshPrimItr : gr::ObjectAdapter<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>(
 				renderData, gr::RenderObjectFeature::IsMeshPrimitiveConcept))
@@ -478,23 +505,6 @@ namespace gr
 									InstanceIndexData::s_shaderName, std::views::single(associatedRenderDataIDs[0])));
 							batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 						}
-
-						if (m_showAllVertexNormals)
-						{
-							if (!m_vertexNormalBatches.contains(meshPrimRenderDataID))
-							{
-								const gr::BatchHandle normalsBatch = BuildVertexNormalsBatch(meshPrimRenderData);
-								if (normalsBatch.IsValid())
-								{
-									m_vertexNormalBatches.emplace(meshPrimRenderDataID, normalsBatch);
-								}
-							}
-							gr::StageBatchHandle& batch = 
-								*m_debugStage->AddBatch(m_vertexNormalBatches.at(meshPrimRenderDataID));
-							batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
-								InstanceIndexData::s_shaderName, std::views::single(meshPrimRenderDataID)));
-							batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
-						}
 					}
 
 					if (m_showMeshCoordinateAxis)
@@ -515,7 +525,6 @@ namespace gr
 		else
 		{
 			m_meshPrimBoundsBatches.clear();
-			m_vertexNormalBatches.clear();
 			m_meshCoordinateAxisBatches.clear();
 		}
 
