@@ -86,7 +86,7 @@ namespace re
 				None					= 0,
 				ReadOnlyDepth			= 1 << 0,
 				ReadOnlyStencil			= 1 << 1,
-				ReadOnlyDepthStencil	= (ReadOnlyDepth & ReadOnlyStencil),
+				ReadOnlyDepthStencil	= (ReadOnlyDepth | ReadOnlyStencil),
 			} m_depthStencil = DepthFlags::None;
 		} ViewFlags;
 

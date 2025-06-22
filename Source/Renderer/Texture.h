@@ -411,7 +411,7 @@ namespace re
 		case re::Texture::Format::R32_UINT:
 		{
 			return b == re::Texture::Format::R32F || 
-				b == re::Texture::Format::R32F;
+				b == re::Texture::Format::R32_UINT;
 		}
 		break;
 		case re::Texture::Format::RGBA16F:
