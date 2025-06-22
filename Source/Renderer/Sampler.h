@@ -116,7 +116,7 @@ namespace re
 			float m_minLOD;
 			float m_maxLOD;
 
-			bool operator==(SamplerDesc const& rhs) const;
+			bool operator==(SamplerDesc const& rhs) const noexcept;
 		};
 
 
@@ -157,7 +157,7 @@ namespace re
 	};
 
 
-	inline bool re::Sampler::SamplerDesc::operator==(SamplerDesc const& rhs) const
+	inline bool re::Sampler::SamplerDesc::operator==(SamplerDesc const& rhs) const noexcept
 	{
 		return m_filterMode == rhs.m_filterMode &&
 			m_edgeModeU == rhs.m_edgeModeU &&

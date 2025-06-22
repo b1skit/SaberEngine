@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 namespace util
@@ -34,12 +34,12 @@ namespace util
 
 		~CHashKey() = default;
 
-		bool operator==(CHashKey const& rhs) const { return m_keyHash == rhs.m_keyHash; }
-		bool operator<(CHashKey const& rhs) const { return m_keyHash < rhs.m_keyHash; }
-		bool operator>(CHashKey const& rhs) const { return m_keyHash > rhs.m_keyHash; }
+		bool operator==(CHashKey const& rhs) const noexcept { return m_keyHash == rhs.m_keyHash; }
+		bool operator<(CHashKey const& rhs) const noexcept { return m_keyHash < rhs.m_keyHash; }
+		bool operator>(CHashKey const& rhs) const noexcept { return m_keyHash > rhs.m_keyHash; }
 
-		bool operator()(CHashKey const& lhs, CHashKey const& rhs) const { return lhs == rhs; }
-		bool operator()(CHashKey const& rhs) const { return m_keyHash == rhs.m_keyHash; }
+		bool operator()(CHashKey const& lhs, CHashKey const& rhs) const noexcept { return lhs == rhs; }
+		bool operator()(CHashKey const& rhs) const noexcept { return m_keyHash == rhs.m_keyHash; }
 
 		constexpr operator uint64_t() const { return m_keyHash; }
 
@@ -86,7 +86,7 @@ namespace util
 template<>
 struct std::hash<util::CHashKey>
 {
-	std::size_t operator()(util::CHashKey const& hashKey) const
+	std::size_t operator()(util::CHashKey const& hashKey) const noexcept
 	{
 		return hashKey.GetHash();
 	}
@@ -96,7 +96,7 @@ struct std::hash<util::CHashKey>
 template<>
 struct std::hash<util::CHashKey const>
 {
-	std::size_t operator()(util::CHashKey const& hashKey) const
+	std::size_t operator()(util::CHashKey const& hashKey) const noexcept
 	{
 		return hashKey.GetHash();
 	}

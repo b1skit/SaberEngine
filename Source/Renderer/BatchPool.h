@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
 
@@ -98,8 +98,8 @@ namespace gr
 	public:
 		BatchPool(uint8_t numFramesInFlight);
 
-		BatchPool(BatchPool&&) = default;
-		BatchPool& operator=(BatchPool&&) = default;
+		BatchPool(BatchPool&&) noexcept = default;
+		BatchPool& operator=(BatchPool&&) noexcept = default;
 		~BatchPool() = default;
 
 		void Destroy();

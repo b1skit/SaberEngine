@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
@@ -38,9 +38,9 @@ namespace re
 		ASInput() = default;
 		~ASInput() = default;
 		ASInput(ASInput const&) = default;
-		ASInput(ASInput&&) = default;
+		ASInput(ASInput&&) noexcept = default;
 		ASInput& operator=(ASInput const&) = default;
-		ASInput& operator=(ASInput&&) = default;
+		ASInput& operator=(ASInput&&) noexcept = default;
 
 
 	public:
