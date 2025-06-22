@@ -18,7 +18,6 @@ namespace
 	// Returns true if a bounds is visible, or false otherwise
 	bool TestBoundsVisibility(
 		gr::Bounds::RenderData const& bounds,
-		gr::Transform::RenderData const& transform,
 		gr::Camera::Frustum const& frustum,
 		float* camToMeshBoundsDistOut = nullptr) // Optional, will be populated if not null
 	{
@@ -100,11 +99,8 @@ namespace
 				gr::Bounds::RenderData const& lightBounds =
 					renderData.GetObjectData<gr::Bounds::RenderData>(lightRenderData.m_renderDataID);
 
-				gr::Transform::RenderData const& lightTransform =
-					renderData.GetTransformDataFromTransformID(lightRenderData.m_transformID);
-
 				if (!cullingEnabled ||
-					TestBoundsVisibility(lightBounds, lightTransform, frustum))
+					TestBoundsVisibility(lightBounds, frustum))
 				{
 					lightIDs.emplace_back(lightRenderData.m_renderDataID);
 				}
@@ -140,10 +136,9 @@ namespace
 
 			// Hierarchical culling: Only test the MeshPrimitive Bounds if the Mesh Bounds is visible
 			gr::Bounds::RenderData const& meshBounds = renderData.GetObjectData<gr::Bounds::RenderData>(meshID);
-			gr::Transform::RenderData const& meshTransform = renderData.GetTransformDataFromRenderDataID(meshID);
 
 			float camToMeshBoundsDist = 0.f;
-			const bool meshIsVisible = TestBoundsVisibility(meshBounds, meshTransform, frustum, &camToMeshBoundsDist);
+			const bool meshIsVisible = TestBoundsVisibility(meshBounds, frustum, &camToMeshBoundsDist);
 
 			if (meshIsVisible || !cullingEnabled)
 			{
@@ -152,12 +147,10 @@ namespace
 				{
 					gr::Bounds::RenderData const& primBounds = 
 						renderData.GetObjectData<gr::Bounds::RenderData>(meshPrimID);
-					gr::Transform::RenderData const& primTransform = 
-						renderData.GetTransformDataFromRenderDataID(meshPrimID);
 
 					float camToMeshPrimBoundsDist = 0.f;
 					const bool meshPrimIsVisible = 
-						TestBoundsVisibility(primBounds, primTransform, frustum, &camToMeshPrimBoundsDist);
+						TestBoundsVisibility(primBounds, frustum, &camToMeshPrimBoundsDist);
 
 					if (meshPrimIsVisible || !cullingEnabled)
 					{
