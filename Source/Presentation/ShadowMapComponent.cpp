@@ -221,7 +221,7 @@ namespace fr
 		owningTransform->GetTransform().Recompute();
 
 		// Attach a shadow map render camera:
-		fr::CameraComponent::AttachCameraComponent(
+		fr::CameraComponent& shadowCamCmpt = fr::CameraComponent::AttachCameraComponent(
 			em,
 			owningEntity,
 			std::format("{}_ShadowCam", name).c_str(),
@@ -232,6 +232,9 @@ namespace fr
 				nullptr,
 				nullptr));
 
+		// Activate the camera:
+		shadowCamCmpt.GetCameraForModification().SetActive(true);
+		
 		// Add a shadow marker:
 		em.EmplaceComponent<HasShadowMarker>(owningEntity);
 
@@ -358,6 +361,9 @@ namespace fr
 					lightCmpt.GetLight(),
 					sceneWorldBounds,
 					activeSceneCam));
+
+			// Ensure the shadow camera is active if the shadow map is enabled:
+			shadowCamCmpt.GetCameraForModification().SetActive(shadowMapCmpt.GetShadowMap().IsEnabled());
 
 			shadowMapCmpt.GetShadowMap().MarkClean();
 

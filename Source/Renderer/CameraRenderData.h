@@ -170,14 +170,16 @@ namespace gr
 	public:
 		struct RenderData final
 		{
-			gr::Camera::Config m_cameraConfig;
-
 			// We compute this once on the main thread, and then pass for reuse on the render thread
-			CameraData m_cameraParams; 
+			CameraData m_cameraParams;
+
+			char m_cameraName[core::INamedObject::k_maxNameLength];
+
+			gr::Camera::Config m_cameraConfig;
 
 			gr::TransformID m_transformID;
 
-			char m_cameraName[core::INamedObject::k_maxNameLength];
+			bool m_isActive;
 		};
 
 		static uint8_t NumViews(gr::Camera::RenderData const& camData);

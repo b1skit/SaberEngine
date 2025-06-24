@@ -291,6 +291,10 @@ namespace fr
 
 				m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
 
+				// Deactivate the current main camera:
+				fr::CameraComponent& cameraComponent = m_registry.get<fr::CameraComponent>(entity);
+				cameraComponent.GetCameraForModification().SetActive(false);
+
 				// If the main camera was added during the current frame, ensure we don't end up with 2 new camera markers
 				if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
 				{
@@ -300,6 +304,10 @@ namespace fr
 
 			m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(newMainCamera);
 			m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(newMainCamera);
+
+			// Activate the new main camera:
+			fr::CameraComponent& cameraComponent = m_registry.get<fr::CameraComponent>(newMainCamera);
+			cameraComponent.GetCameraForModification().SetActive(true);
 
 			// Find and update the camera controller:
 			entt::entity camController = entt::null;

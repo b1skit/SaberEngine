@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
+#include "Camera.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
 #include "EntityManager.h"
@@ -80,6 +81,10 @@ namespace fr
 			// Clear the cached hierarchy records:
 			camControlCmpt.m_prevCameraParentEntity = entt::null;
 			camControlCmpt.m_prevCameraTransformParent = nullptr;
+
+			// Deactivate the camera:
+			fr::CameraComponent& currentCamCmpt = em.GetComponent<fr::CameraComponent>(currentCamCmptEntity);
+			currentCamCmpt.GetCameraForModification().SetActive(false);
 		}
 		
 		// Attach the new camera (if any) to the controller:
@@ -109,6 +114,10 @@ namespace fr
 			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(newCamCmptEntity);
 			camControlCmpt.m_prevCameraParentEntity = currentCamRelationship.GetParent();
 			currentCamRelationship.SetParent(em, camControlCmptEntity);
+
+			// Activate the camera:
+			fr::CameraComponent& newCamCmpt = em.GetComponent<fr::CameraComponent>(newCamCmptEntity);
+			newCamCmpt.GetCameraForModification().SetActive(true);
 		}
 	}
 

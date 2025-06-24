@@ -429,43 +429,65 @@ namespace gr
 			SEAssert(cameraIDs, "No cameras exist");
 			for (auto const& cameraItr : gr::IDAdapter(renderData, *cameraIDs))
 			{
-				// Skip culling for shadow cameras if the light can't contribute
+				// Skip culling for any inactive/unused cameras
 				bool canSkipCamera = false;
-				const bool isShadowCamera = cameraItr->HasObjectData<gr::ShadowMap::RenderData>();
-				if (isShadowCamera)
-				{
-					gr::ShadowMap::RenderData const& shadowRenderData = cameraItr->Get<gr::ShadowMap::RenderData>();
 
-					switch (shadowRenderData.m_lightType)
+				// Is the camera active?
+				gr::Camera::RenderData const* camData = &cameraItr->Get<gr::Camera::RenderData>();
+				canSkipCamera = camData->m_isActive == false;
+
+				// Is this a shadow camera for an inactive light?
+				if (!canSkipCamera)
+				{
+					const bool isShadowCamera = cameraItr->HasObjectData<gr::ShadowMap::RenderData>();
+					if (isShadowCamera)
 					{
-					case gr::Light::Directional:
-					{
-						canSkipCamera = cameraItr->Get<gr::Light::RenderDataDirectional>().m_canContribute == false;
-					}
-					break;
-					case gr::Light::Point:
-					{
-						canSkipCamera = cameraItr->Get<gr::Light::RenderDataPoint>().m_canContribute == false;
-					}
-					break;
-					case gr::Light::Spot:
-					{
-						canSkipCamera = cameraItr->Get<gr::Light::RenderDataSpot>().m_canContribute == false;
-					}
-					break;
-					default: SEAssertF("Invalid light type");
+						gr::ShadowMap::RenderData const& shadowRenderData = cameraItr->Get<gr::ShadowMap::RenderData>();
+
+						switch (shadowRenderData.m_lightType)
+						{
+						case gr::Light::Directional:
+						{
+							canSkipCamera |= cameraItr->Get<gr::Light::RenderDataDirectional>().m_canContribute == false;
+						}
+						break;
+						case gr::Light::Point:
+						{
+							canSkipCamera |= cameraItr->Get<gr::Light::RenderDataPoint>().m_canContribute == false;
+						}
+						break;
+						case gr::Light::Spot:
+						{
+							canSkipCamera |= cameraItr->Get<gr::Light::RenderDataSpot>().m_canContribute == false;
+						}
+						break;
+						default: SEAssertF("Invalid light type");
+						}
 					}
 				}
 
+				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
+
+				// Can we early out?
 				if (canSkipCamera)
 				{
+					// We must ensure we have a vector of visible IDs for every Camera view, even if it is empty:
+					const uint8_t numViews = gr::Camera::NumViews(*camData);
+					{
+						std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
+
+						for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+						{
+							m_viewToVisibleIDs[gr::Camera::View(cameraID, faceIdx)] = {};
+						}
+					}
+
 					continue;
 				}
 
 				// Gather the data we'll pass by value:
-				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
+				
 
-				gr::Camera::RenderData const* camData = &cameraItr->Get<gr::Camera::RenderData>();
 				gr::Transform::RenderData const* camTransformData = &cameraItr->GetTransformData();
 
 				const bool cameraIsDirty = cameraItr->IsDirty<gr::Camera::RenderData>();

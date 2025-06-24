@@ -92,6 +92,7 @@ namespace fr
 	Camera::Camera(gr::Camera::Config const& camConfig, fr::Transform const* transform)
 		: m_transform(transform)
 		, m_cameraConfig(camConfig)
+		, m_isActive(false) // Cameras must be activated before rendering anything
 		, m_isDirty(true)
 	{
 	}
@@ -112,6 +113,8 @@ namespace fr
 		if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
+
+			m_isDirty |= ImGui::Checkbox(std::format("Active##{}", uniqueID).c_str(), &m_isActive);
 
 			std::string const& nearSliderLabel = std::format("Near plane distance##{}", uniqueID);
 			m_isDirty |= ImGui::SliderFloat(

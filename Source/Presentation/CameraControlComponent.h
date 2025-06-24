@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "CameraComponent.h"
 
 
 namespace fr
 {
 	class Camera;
 	class EntityManager;
+	class Transform;
 
 
 	class CameraControlComponent final

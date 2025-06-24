@@ -29,7 +29,7 @@ namespace fr
 	}
 
 
-	void CameraComponent::AttachCameraComponent(
+	CameraComponent& CameraComponent::AttachCameraComponent(
 		fr::EntityManager& em, entt::entity owningEntity, std::string_view name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert(owningEntity != entt::null, "Cannot attach a CameraComponent to a null entity");
@@ -47,6 +47,8 @@ namespace fr
 			em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
 
 		cameraComponent->MarkDirty(em, owningEntity);
+
+		return *cameraComponent;
 	}
 
 
@@ -62,9 +64,10 @@ namespace fr
 		fr::NameComponent const& nameCmpt = em->GetComponent<fr::NameComponent>(entity);
 
 		gr::Camera::RenderData renderData = gr::Camera::RenderData{
-			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
 			.m_cameraParams = fr::Camera::BuildCameraData(cameraComponent.GetCamera()),
-			.m_transformID = cameraComponent.GetTransformID()
+			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
+			.m_transformID = cameraComponent.GetTransformID(),
+			.m_isActive = cameraComponent.GetCamera().IsActive(),
 		};
 
 		strncpy(renderData.m_cameraName, nameCmpt.GetName().c_str(), core::INamedObject::k_maxNameLength);

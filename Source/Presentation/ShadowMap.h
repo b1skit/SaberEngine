@@ -107,8 +107,6 @@ namespace fr
 	private:
 		ShadowParams m_typeProperties;
 
-		
-
 		bool m_isEnabled;
 		bool m_isDirty;
 

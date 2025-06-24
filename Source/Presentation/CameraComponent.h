@@ -27,7 +27,7 @@ namespace fr
 		static void CreateCameraConcept(
 			fr::EntityManager&, entt::entity sceneNode, std::string_view name, gr::Camera::Config const&);
 
-		static void AttachCameraComponent(
+		static fr::CameraComponent& AttachCameraComponent(
 			fr::EntityManager&, entt::entity owningEntity, std::string_view name, gr::Camera::Config const&);
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);

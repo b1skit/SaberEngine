@@ -46,6 +46,9 @@ namespace fr
 
 		fr::Transform const* GetTransform() const;
 
+		bool SetActive(bool isActive);
+		bool IsActive() const;
+
 		bool IsDirty() const;
 		void MarkClean();
 
@@ -57,6 +60,8 @@ namespace fr
 
 		gr::Camera::Config m_cameraConfig;
 		
+		bool m_isActive; // Is this camera actively used to render things? If not, we'll skip culling for it
+
 		bool m_isDirty;
 
 
@@ -138,6 +143,23 @@ namespace fr
 	inline fr::Transform const* Camera::GetTransform() const
 	{
 		return m_transform;
+	}
+
+
+	inline bool Camera::SetActive(bool isActive)
+	{
+		if (m_isActive != isActive)
+		{
+			m_isDirty = true;
+		}
+		m_isActive = isActive;
+		return m_isActive;
+	}
+
+
+	inline bool Camera::IsActive() const
+	{
+		return m_isActive;
 	}
 
 
