@@ -15,17 +15,57 @@
 
 namespace
 {
+	void GetAxisProjection(
+		std::array<glm::vec3, 8> const& cornerPoints,
+		const glm::vec3& axis,
+		float& minOut,
+		float& maxOut)
+	{
+		// Micro-optimization: Get the first point's projection to skip a round of min/max comparisons
+		minOut = glm::dot(cornerPoints[0], axis);
+		maxOut = minOut;
+
+		for (uint8_t i = 1; i < cornerPoints.size(); ++i)
+		{
+			const float projection = glm::dot(cornerPoints[i], axis);
+			minOut = std::min(minOut, projection);
+			maxOut = std::max(maxOut, projection);
+		}
+	}
+
+
+	bool TestAxisSeparation(
+		std::array<glm::vec3, 8> const& boundsCorners,
+		std::array<glm::vec3, 8> const& frustumCorners,
+		const glm::vec3& axis)
+	{
+		constexpr float k_epsilon = 0.000001f;
+		if (glm::dot(axis, axis) < k_epsilon) // Guard against degenerate axis (e.g. cross product of 2 near-parallel vectors)
+		{
+			return false; // Skip degenerate axis
+		}
+
+		float boundsProjectedMin, boundsProjectedMax;
+		GetAxisProjection(boundsCorners, axis, boundsProjectedMin, boundsProjectedMax);
+
+		float frustumProjectedMin, frustumProjectedMax;
+		GetAxisProjection(frustumCorners, axis, frustumProjectedMin, frustumProjectedMax);
+
+		return (boundsProjectedMax < frustumProjectedMin || 
+			frustumProjectedMax < boundsProjectedMin); // Do our projected regions overlap?
+	}
+
+
+	// Uses the separating axis theoreom to test AABB bounds against a world-space camera frustum.
 	// Returns true if a bounds is visible, or false otherwise
 	bool TestBoundsVisibility(
 		gr::Bounds::RenderData const& bounds,
 		gr::Camera::Frustum const& frustum,
-		float* camToMeshBoundsDistOut = nullptr) // Optional, will be populated if not null
+		float* camToMeshBoundsDistOut = nullptr)
 	{
 		SEBeginCPUEvent("TestBoundsVisibility");
 
-		// Transform our Bounds into world space:
-		constexpr uint8_t k_numBoundsPoints = 8;
-		const std::array<glm::vec3, k_numBoundsPoints> boundsPoints = {
+		const std::array<glm::vec3, 8> expandedBoundsPoints = {
 			glm::vec3(bounds.m_worldMinXYZ.x, bounds.m_worldMaxXYZ.y, bounds.m_worldMaxXYZ.z), // farTL
 			glm::vec3(bounds.m_worldMinXYZ.x, bounds.m_worldMinXYZ.y, bounds.m_worldMaxXYZ.z), // farBL
 			glm::vec3(bounds.m_worldMaxXYZ.x, bounds.m_worldMaxXYZ.y, bounds.m_worldMaxXYZ.z), // farTR
@@ -35,40 +75,66 @@ namespace
 			glm::vec3(bounds.m_worldMaxXYZ.x, bounds.m_worldMaxXYZ.y, bounds.m_worldMinXYZ.z), // nearTR
 			glm::vec3(bounds.m_worldMaxXYZ.x, bounds.m_worldMinXYZ.y, bounds.m_worldMinXYZ.z), // nearBR
 		};
+		
+		static constexpr glm::vec3 k_boundsFaceAxes[3] = {
+			gr::Transform::WorldAxisX,
+			gr::Transform::WorldAxisY,
+			gr::Transform::WorldAxisZ
+		};
+		SEAssert(
+			glm::dot(glm::normalize(expandedBoundsPoints[2] - expandedBoundsPoints[0]), gr::Transform::WorldAxisX) > 0.99f &&
+			glm::dot(glm::normalize(expandedBoundsPoints[4] - expandedBoundsPoints[5]), gr::Transform::WorldAxisY) > 0.99f &&
+			glm::dot(glm::normalize(expandedBoundsPoints[0] - expandedBoundsPoints[4]), gr::Transform::WorldAxisZ) > 0.99f,
+			"Expanded bounds points are not axis aligned");
 
-		// We sort our results based on the distance to the bounds center:
-		const glm::vec3 boundsWorldCenter = (bounds.m_worldMinXYZ + bounds.m_worldMaxXYZ) * 0.5f;
 
-		// Note: Frustum normals point outward
+		// Separating Axis theorem: The following separating axes must be tested:
+		// 1) 6 face normals of the frustum
+		// 2) 3 face normals of the AABB Bounds (i.e. world XYZ)
+		// 3) The cross products of the edges of the frustum and Bounds
 
-		// Detect Bounds completely outside of any plane:
-		for (gr::Camera::FrustumPlane const& plane : frustum.m_planes)
+		// 1) Test the frustum face normals:
+		for (uint8_t i = 0; i < frustum.m_normals.size(); ++i)
 		{
-			bool isCompletelyOutsideOfPlane = true;
-			for (uint8_t pointIdx = 0; pointIdx < k_numBoundsPoints; pointIdx++)
-			{
-				glm::vec3 const& planeToBoundsDir = boundsPoints[pointIdx] - plane.m_point;
-
-				const bool isOutsideOfPlane = glm::dot(planeToBoundsDir, plane.m_normal) > 0.f;
-				if (!isOutsideOfPlane)
-				{
-					isCompletelyOutsideOfPlane = false;
-					break;
-				}
-			}
-			if (isCompletelyOutsideOfPlane)
+			if (TestAxisSeparation(expandedBoundsPoints, frustum.m_corners, frustum.m_normals[i]))
 			{
 				SEEndCPUEvent(); // "TestBoundsVisibility"
-				return false; // Any Bounds totally outside of any plane is not visible
+				return false;
+			}
+		}
+
+		// 2) Test the bounds face normals:
+		for (glm::vec3 const& axis : k_boundsFaceAxes)
+		{
+			if (TestAxisSeparation(expandedBoundsPoints, frustum.m_corners, axis))
+			{
+				SEEndCPUEvent(); // "TestBoundsVisibility"
+				return false;
+			}
+		}
+
+		// 2) Test all edge x edge pairs (Note: This ):
+		for (const auto& boundsFaceAxis : k_boundsFaceAxes)
+		{
+			for (uint8_t i = 0; i < frustum.m_edgeDirections.size(); ++i)
+			{
+				glm::vec3 const& crossAxis = glm::cross(boundsFaceAxis, frustum.m_edgeDirections[i]);
+
+				if (TestAxisSeparation(expandedBoundsPoints, frustum.m_corners, crossAxis))
+				{
+					SEEndCPUEvent(); // "TestBoundsVisibility"
+					return false;
+				}
 			}
 		}
 
 		// If we've made it this far, the object is visible
 		if (camToMeshBoundsDistOut)
 		{
-			*camToMeshBoundsDistOut = glm::length(frustum.m_camWorldPos - boundsWorldCenter);
+			glm::vec3 const& boundsCenter = (expandedBoundsPoints[0] + expandedBoundsPoints[6]) * 0.5f;
+			*camToMeshBoundsDistOut = glm::length(frustum.m_camPosition - boundsCenter);
 		}
-
+		
 		SEEndCPUEvent(); // "TestBoundsVisibility"
 		return true;
 	}
@@ -100,7 +166,8 @@ namespace
 					renderData.GetObjectData<gr::Bounds::RenderData>(lightRenderData.m_renderDataID);
 
 				if (!cullingEnabled ||
-					TestBoundsVisibility(lightBounds, frustum))
+					(lightRenderData.m_canContribute &&
+						TestBoundsVisibility(lightBounds, frustum)))
 				{
 					lightIDs.emplace_back(lightRenderData.m_renderDataID);
 				}
@@ -387,8 +454,9 @@ namespace gr
 
 									m_cachedFrustums.emplace(
 										gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
-										gr::Camera::BuildWorldSpaceFrustumData(
-											camTransformData->m_globalPosition, camData->m_cameraParams.g_invViewProjection));
+										gr::Camera::Frustum(
+											camTransformData->m_globalPosition,
+											camData->m_cameraParams.g_invViewProjection));
 								}
 							}
 							break;
@@ -415,8 +483,9 @@ namespace gr
 
 										m_cachedFrustums.emplace(
 											gr::Camera::View(cameraID, faceIdx),
-											gr::Camera::BuildWorldSpaceFrustumData(
-												camTransformData->m_globalPosition, invViewProjMats[faceIdx]));
+											gr::Camera::Frustum(
+												camTransformData->m_globalPosition,
+												invViewProjMats[faceIdx]));
 									}
 								}
 							}
@@ -604,39 +673,39 @@ namespace gr
 
 				ImGui::Text("Near:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[0].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[0]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[0].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[0]).c_str()).c_str());
 
 				ImGui::Text("Far:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[1].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[1]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[1].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[1]).c_str()).c_str());
 
 				ImGui::Text("Left:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[2].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[2]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[2].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[2]).c_str()).c_str());
 
 				ImGui::Text("Right:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[3].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[3]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[3].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[3]).c_str()).c_str());
 
 				ImGui::Text("Top:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[4].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[4]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[4].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[4]).c_str()).c_str());
 
 				ImGui::Text("Bottom:");
 				ImGui::Text(std::format("Point: {}", 
-					glm::to_string(viewFrustum.second.m_planes[5].m_point).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_points[5]).c_str()).c_str());
 				ImGui::Text(std::format("Normal: {}", 
-					glm::to_string(viewFrustum.second.m_planes[5].m_normal).c_str()).c_str());
+					glm::to_string(viewFrustum.second.m_normals[5]).c_str()).c_str());
 
 				ImGui::Separator();
 			}

@@ -153,7 +153,7 @@ namespace gr
 	}
 
 
-	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection)
+	gr::Camera::Frustum::Frustum(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection)
 	{
 		// Convert cube in NDC space to world space
 		glm::vec4 farTL = invViewProjection * glm::vec4(-1.f, 1.f, 1.f, 1.f);
@@ -174,41 +174,46 @@ namespace gr
 		nearTR /= nearTR.w;
 		nearBR /= nearBR.w;
 
-		gr::Camera::Frustum frustum{};
+		// Store the frustum corners:
+		m_corners[0] = farTL.xyz;
+		m_corners[1] = farBL.xyz;
+		m_corners[2] = farTR.xyz;
+		m_corners[3] = farBR.xyz;
+		m_corners[4] = nearTL.xyz;
+		m_corners[5] = nearBL.xyz;
+		m_corners[6] = nearTR.xyz;
+		m_corners[7] = nearBR.xyz;
 
 		// Near face (Behind the camera)
-		frustum.m_planes[0].m_point = nearBL;
-		frustum.m_planes[0].m_normal = glm::normalize(glm::cross((nearBR.xyz - nearBL.xyz), (nearTL.xyz - nearBL.xyz)));
-
+		m_points[0] = nearBL;
+		m_edgeDirections[0] = glm::normalize(nearBR.xyz - nearBL.xyz);
+		m_normals[0] = glm::normalize(glm::cross(m_edgeDirections[0], (nearTL.xyz - nearBL.xyz)));
+		
 		// Far face (beyond the far plane)
-		frustum.m_planes[1].m_point = farBR;
-		frustum.m_planes[1].m_normal = glm::normalize(glm::cross((farBL.xyz - farBR.xyz), (farTR.xyz - farBR.xyz)));
-
+		m_points[1] = farBR;
+		m_edgeDirections[1] = glm::normalize(farBL.xyz - farBR.xyz);
+		m_normals[1] = glm::normalize(glm::cross(m_edgeDirections[1], (farTR.xyz - farBR.xyz)));
+		
 		// Left face
-		frustum.m_planes[2].m_point = farBL;
-		frustum.m_planes[2].m_normal = glm::normalize(glm::cross((nearBL.xyz - farBL.xyz), (farTL.xyz - farBL.xyz)));
-
+		m_points[2] = farBL;
+		m_edgeDirections[2] = glm::normalize(nearBL.xyz - farBL.xyz);
+		m_normals[2] = glm::normalize(glm::cross(m_edgeDirections[2], (farTL.xyz - farBL.xyz)));
+		
 		// Right face
-		frustum.m_planes[3].m_point = nearBR;
-		frustum.m_planes[3].m_normal = glm::normalize(glm::cross((farBR.xyz - nearBR.xyz), (nearTR.xyz - nearBR.xyz)));
-
+		m_points[3] = nearBR;
+		m_edgeDirections[3] = glm::normalize(farBR.xyz - nearBR.xyz);
+		m_normals[3] = glm::normalize(glm::cross(m_edgeDirections[3], (nearTR.xyz - nearBR.xyz)));
+		
 		// Top face
-		frustum.m_planes[4].m_point = nearTL;
-		frustum.m_planes[4].m_normal = glm::normalize(glm::cross((nearTR.xyz - nearTL.xyz), (farTL.xyz - nearTL.xyz)));
-
+		m_points[4] = nearTL;
+		m_edgeDirections[4] = glm::normalize(nearTR.xyz - nearTL.xyz);
+		m_normals[4] = glm::normalize(glm::cross(m_edgeDirections[4], (farTL.xyz - nearTL.xyz)));
+		
 		// Bottom face
-		frustum.m_planes[5].m_point = farBL;
-		frustum.m_planes[5].m_normal = glm::normalize(glm::cross((farBR.xyz - farBL.xyz), (nearBL.xyz - farBL.xyz)));
+		m_points[5] = farBL;
+		m_edgeDirections[5] = glm::normalize(farBR.xyz - farBL.xyz);
+		m_normals[5] = glm::normalize(glm::cross(m_edgeDirections[5], (nearBL.xyz - farBL.xyz)));		
 
-		frustum.m_camWorldPos = camWorldPos;
-
-		return frustum;
-	}
-
-
-	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(
-		glm::vec3 camWorldPos, glm::mat4 const& projection, glm::mat4 const& view)
-	{
-		return BuildWorldSpaceFrustumData(camWorldPos, glm::inverse(projection * view));
+		m_camPosition = camWorldPos;
 	}
 }

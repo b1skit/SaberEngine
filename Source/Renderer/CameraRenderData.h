@@ -17,16 +17,27 @@ namespace gr
 	class Camera
 	{
 	public:
-		struct FrustumPlane final
-		{
-			glm::vec3 m_point;
-			glm::vec3 m_normal;
-		};
 		struct Frustum final
 		{
-			std::array<FrustumPlane, 6> m_planes{};
-			glm::vec3 m_camWorldPos;
+			Frustum() = default;
+
+			Frustum(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection);
+
+			// Corners of the frustum in world space: {farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR}
+			std::array<glm::vec3, 8> m_corners; 
+
+			// Points on the frustum faces: {nearBL, farBR, farBL, nearBR, nearTL, farBL}
+			std::array<glm::vec3, 6> m_points;
+
+			// Normals of the frustum faces: {near face, far face, left face, right face, top face, bottom face}
+			std::array<glm::vec3, 6> m_normals;
+
+			// Directions of the edges of the frustum faces: {near edge, far edge, left edge, right edge, top edge, bottom edge}
+			std::array<glm::vec3, 6> m_edgeDirections;
+
+			glm::vec3 m_camPosition;
 		};
+
 		class View final
 		{
 		public:
@@ -204,9 +215,6 @@ namespace gr
 			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);
 
 		static float ComputeExposure(float ev100);
-
-		static Frustum BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection);
-		static Frustum BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& projection, glm::mat4 const& view);
 	};
 }
 
