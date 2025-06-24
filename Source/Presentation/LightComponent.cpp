@@ -152,10 +152,10 @@ namespace fr
 		bool hasShadow)
 	{
 		// Create a MeshPrimitive:
-		glm::vec3 minPos = glm::vec3(0.f);
-		glm::vec3 maxPos = glm::vec3(0.f);
+		glm::vec3 minPos(0.f);
+		glm::vec3 maxPos(0.f);
 
-		gr::meshfactory::FactoryOptions coneFactoryOptions{ 
+		const gr::meshfactory::FactoryOptions coneFactoryOptions{ 
 			.m_inventory = em.GetInventory(),
 			.m_orientation = gr::meshfactory::Orientation::ZNegative,
 			.m_positionMinXYZOut = &minPos, 

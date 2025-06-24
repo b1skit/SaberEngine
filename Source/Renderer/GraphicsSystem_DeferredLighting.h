@@ -7,8 +7,9 @@
 namespace re
 {
 	class MeshPrimitive;
+	class StagePipeline;
+	class Texture;
 }
-
 
 namespace gr
 {
@@ -55,8 +56,11 @@ namespace gr
 
 		~DeferredLightingGraphicsSystem() override = default;
 
-		void InitializeResourceGenerationStages(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitializeResourceGenerationStages(
+			re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+
+		void InitPipeline(
+			re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 

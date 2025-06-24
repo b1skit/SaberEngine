@@ -29,7 +29,8 @@ namespace fr
 	public:
 		static fr::BoundsComponent& CreateSceneBoundsConcept(fr::EntityManager&);
 		
-		static fr::BoundsComponent& AttachBoundsComponent(fr::EntityManager&, entt::entity owningEntity, entt::entity encapsulatingBounds);
+		static fr::BoundsComponent& AttachBoundsComponent(
+			fr::EntityManager&, entt::entity owningEntity, entt::entity encapsulatingBounds);
 
 		static fr::BoundsComponent& AttachBoundsComponent(
 			fr::EntityManager&, 
@@ -84,7 +85,6 @@ namespace fr
 
 
 	private:
-
 		void ExpandEncapsulatingBounds(
 			fr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
 		void ExpandEncapsulatingBounds(

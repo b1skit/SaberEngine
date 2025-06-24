@@ -2,6 +2,7 @@
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
+#include "Effect.h"
 #include "IndexedBuffer.h"
 #include "GraphicsEvent.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -17,6 +18,8 @@
 #include "Stage.h"
 
 #include "Core/Config.h"
+
+#include "Core/Util/HashKey.h"
 
 #include "Renderer/Shaders/Common/IBLGenerationParams.h"
 #include "Renderer/Shaders/Common/InstancingParams.h"

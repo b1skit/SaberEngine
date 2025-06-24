@@ -681,44 +681,49 @@ namespace gr
 			m_cameraFrustumTransformBuffers.clear();
 		}
 
-		if (m_showDeferredLightWireframe && 
-			renderData.HasObjectData<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>())
+		if (m_showDeferredLightWireframe)
 		{
-			for (auto const& pointItr : gr::ObjectAdapter<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>(renderData))
+			if (renderData.HasObjectData<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>())
 			{
-				const gr::RenderDataID pointID = pointItr->GetRenderDataID();
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointID))
+				for (auto const& pointItr : gr::ObjectAdapter<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>(renderData))
 				{
-					if (!m_deferredLightWireframeBatches.contains(pointID))
+					const gr::RenderDataID pointID = pointItr->GetRenderDataID();
+					if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointID))
 					{
-						m_deferredLightWireframeBatches.emplace(
-							pointID,
-							BuildWireframeBatch(pointItr->Get<gr::MeshPrimitive::RenderData>()));
+						if (!m_deferredLightWireframeBatches.contains(pointID))
+						{
+							m_deferredLightWireframeBatches.emplace(
+								pointID,
+								BuildWireframeBatch(pointItr->Get<gr::MeshPrimitive::RenderData>()));
+						}
+						gr::StageBatchHandle& batch = *m_debugStage->AddBatch(m_deferredLightWireframeBatches.at(pointID));
+						batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+							InstanceIndexData::s_shaderName, std::views::single(pointID)));
+						batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 					}
-					gr::StageBatchHandle& batch = *m_debugStage->AddBatch(m_deferredLightWireframeBatches.at(pointID));
-					batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
-						InstanceIndexData::s_shaderName, std::views::single(pointID)));
-					batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 				}
 			}
 
-			auto const& spotLightMeshObjects = 
-				gr::ObjectAdapter< gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>(renderData);
-			for (auto const& spotItr : spotLightMeshObjects)
+			if (renderData.HasObjectData<gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>())
 			{
-				const gr::RenderDataID spotID = spotItr->GetRenderDataID();
-				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(spotID))
+				auto const& spotLightMeshObjects =
+					gr::ObjectAdapter< gr::Light::RenderDataSpot, gr::MeshPrimitive::RenderData>(renderData);
+				for (auto const& spotItr : spotLightMeshObjects)
 				{
-					if (!m_deferredLightWireframeBatches.contains(spotID))
+					const gr::RenderDataID spotID = spotItr->GetRenderDataID();
+					if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(spotID))
 					{
-						m_deferredLightWireframeBatches.emplace(
-							spotID,
-							BuildWireframeBatch(spotItr->Get<gr::MeshPrimitive::RenderData>()));
+						if (!m_deferredLightWireframeBatches.contains(spotID))
+						{
+							m_deferredLightWireframeBatches.emplace(
+								spotID,
+								BuildWireframeBatch(spotItr->Get<gr::MeshPrimitive::RenderData>()));
+						}
+						gr::StageBatchHandle& batch = *m_debugStage->AddBatch(m_deferredLightWireframeBatches.at(spotID));
+						batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
+							InstanceIndexData::s_shaderName, std::views::single(spotID)));
+						batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 					}
-					gr::StageBatchHandle& batch = *m_debugStage->AddBatch(m_deferredLightWireframeBatches.at(spotID));
-					batch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<InstanceIndexData>(
-						InstanceIndexData::s_shaderName, std::views::single(spotID)));
-					batch.SetSingleFrameBuffer(ibm.GetIndexedBufferInput(TransformData::s_shaderName, TransformData::s_shaderName));
 				}
 			}
 		}

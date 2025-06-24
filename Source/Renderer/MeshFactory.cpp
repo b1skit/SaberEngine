@@ -440,19 +440,44 @@ namespace
 			return;
 		}
 
-		if (factoryOptions.m_positionMinXYZOut)
+		switch (factoryOptions.m_orientation)
 		{
-			factoryOptions.m_positionMinXYZOut->x = -radius;
-			factoryOptions.m_positionMinXYZOut->y = -height;
-			factoryOptions.m_positionMinXYZOut->z = -radius;
-		}
+		case gr::meshfactory::Orientation::Default: // Extending from (0,0,0) to -Y
+		{
+			if (factoryOptions.m_positionMinXYZOut)
+			{
+				factoryOptions.m_positionMinXYZOut->x = -radius;
+				factoryOptions.m_positionMinXYZOut->y = -height;
+				factoryOptions.m_positionMinXYZOut->z = -radius;
+			}
 
-		if (factoryOptions.m_positionMaxXYZOut)
-		{
-			factoryOptions.m_positionMaxXYZOut->x = radius;
-			factoryOptions.m_positionMaxXYZOut->y = 0.f;
-			factoryOptions.m_positionMaxXYZOut->z = radius;
+			if (factoryOptions.m_positionMaxXYZOut)
+			{
+				factoryOptions.m_positionMaxXYZOut->x = radius;
+				factoryOptions.m_positionMaxXYZOut->y = 0.f;
+				factoryOptions.m_positionMaxXYZOut->z = radius;
+			}
 		}
+		break;
+		case gr::meshfactory::Orientation::ZNegative: // Towards -Z
+		{
+			if (factoryOptions.m_positionMinXYZOut)
+			{
+				factoryOptions.m_positionMinXYZOut->x = -radius;
+				factoryOptions.m_positionMinXYZOut->y = -radius;
+				factoryOptions.m_positionMinXYZOut->z = -height;
+			}
+
+			if (factoryOptions.m_positionMaxXYZOut)
+			{
+				factoryOptions.m_positionMaxXYZOut->x = radius;
+				factoryOptions.m_positionMaxXYZOut->y = radius;
+				factoryOptions.m_positionMaxXYZOut->z = 0.f;
+			}
+		}
+		break;
+		default: SEAssertF("Invalid orientation");
+		}		
 	}
 }
 
