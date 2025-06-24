@@ -164,7 +164,7 @@ namespace gr
 				return !operator==(rhs);
 			}
 		};
-		static_assert(sizeof(Config) == 72); // Don't forget to update operator== if the properties change
+		SEStaticAssert(sizeof(Config) == 72, "Config has changed, operator== must be updated");
 
 
 	public:

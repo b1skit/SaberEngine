@@ -473,7 +473,9 @@ namespace gr
 						bool canContribute = false;
 						if (shadowStageData.m_lightType == gr::Light::Directional)
 						{
-							canContribute = true;
+							gr::Light::RenderDataDirectional const& directionalData =
+								lightItr->Get<gr::Light::RenderDataDirectional>();
+							canContribute = directionalData.m_canContribute;
 						}
 						else
 						{

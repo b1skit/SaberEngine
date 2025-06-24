@@ -5,6 +5,7 @@
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
+#include "ShadowMapRenderData.h"
 
 #include "Core/Config.h"
 #include "Core/ProfilingMarkers.h"
@@ -428,6 +429,39 @@ namespace gr
 			SEAssert(cameraIDs, "No cameras exist");
 			for (auto const& cameraItr : gr::IDAdapter(renderData, *cameraIDs))
 			{
+				// Skip culling for shadow cameras if the light can't contribute
+				bool canSkipCamera = false;
+				const bool isShadowCamera = cameraItr->HasObjectData<gr::ShadowMap::RenderData>();
+				if (isShadowCamera)
+				{
+					gr::ShadowMap::RenderData const& shadowRenderData = cameraItr->Get<gr::ShadowMap::RenderData>();
+
+					switch (shadowRenderData.m_lightType)
+					{
+					case gr::Light::Directional:
+					{
+						canSkipCamera = cameraItr->Get<gr::Light::RenderDataDirectional>().m_canContribute == false;
+					}
+					break;
+					case gr::Light::Point:
+					{
+						canSkipCamera = cameraItr->Get<gr::Light::RenderDataPoint>().m_canContribute == false;
+					}
+					break;
+					case gr::Light::Spot:
+					{
+						canSkipCamera = cameraItr->Get<gr::Light::RenderDataSpot>().m_canContribute == false;
+					}
+					break;
+					default: SEAssertF("Invalid light type");
+					}
+				}
+
+				if (canSkipCamera)
+				{
+					continue;
+				}
+
 				// Gather the data we'll pass by value:
 				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
 
