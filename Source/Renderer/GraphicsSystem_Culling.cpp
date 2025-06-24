@@ -203,9 +203,18 @@ namespace
 
 			// Hierarchical culling: Only test the MeshPrimitive Bounds if the Mesh Bounds is visible
 			gr::Bounds::RenderData const& meshBounds = renderData.GetObjectData<gr::Bounds::RenderData>(meshID);
+			gr::Transform::RenderData const& meshTransform = renderData.GetTransformDataFromRenderDataID(meshID);
+			
+			// GLTF specs: When the scale is 0 on all three axes, rendering can be skipped
+			const bool meshScaleNonZero = 
+				meshTransform.m_globalScale.x + 
+				meshTransform.m_globalScale.y + 
+				meshTransform.m_globalScale.z > 0.f;
 
 			float camToMeshBoundsDist = 0.f;
-			const bool meshIsVisible = TestBoundsVisibility(meshBounds, frustum, &camToMeshBoundsDist);
+
+			const bool meshIsVisible = meshScaleNonZero &&
+				TestBoundsVisibility(meshBounds, frustum, &camToMeshBoundsDist);
 
 			if (meshIsVisible || !cullingEnabled)
 			{
@@ -214,9 +223,18 @@ namespace
 				{
 					gr::Bounds::RenderData const& primBounds = 
 						renderData.GetObjectData<gr::Bounds::RenderData>(meshPrimID);
+					gr::Transform::RenderData const& meshPrimTransform = 
+						renderData.GetTransformDataFromRenderDataID(meshPrimID);
+
+					// GLTF specs: When the scale is 0 on all three axes, rendering can be skipped
+					const bool meshPrimScaleNonZero = 
+						meshPrimTransform.m_globalScale.x +
+						meshPrimTransform.m_globalScale.y +
+						meshPrimTransform.m_globalScale.z > 0.f;
 
 					float camToMeshPrimBoundsDist = 0.f;
-					const bool meshPrimIsVisible = 
+
+					const bool meshPrimIsVisible = meshPrimScaleNonZero &&
 						TestBoundsVisibility(primBounds, frustum, &camToMeshPrimBoundsDist);
 
 					if (meshPrimIsVisible || !cullingEnabled)
