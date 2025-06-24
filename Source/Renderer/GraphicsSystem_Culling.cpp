@@ -113,7 +113,7 @@ namespace
 			}
 		}
 
-		// 2) Test all edge x edge pairs (Note: This ):
+		// 2) Test all edge x edge pairs:
 		for (const auto& boundsFaceAxis : k_boundsFaceAxes)
 		{
 			for (uint8_t i = 0; i < frustum.m_edgeDirections.size(); ++i)
