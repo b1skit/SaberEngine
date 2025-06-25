@@ -154,6 +154,11 @@ namespace fr
 		bool EntityExists() const;
 
 
+	public:
+		template<typename T, typename... Args, typename Callback>
+		auto QueryRegistry(Callback&& callback);
+
+
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
 		mutable std::recursive_mutex m_registeryMutex;
@@ -361,6 +366,17 @@ namespace fr
 		return false;
 	}
 
+
+	template<typename T, typename... Args, typename Callback>
+	auto EntityManager::QueryRegistry(Callback&& callback)
+	{
+		{
+			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+			auto view = m_registry.view<T, Args...>();
+			return std::forward<Callback>(callback)(view);
+		}
+	}
 
 
 	template<typename T, typename... Args>
