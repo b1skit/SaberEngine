@@ -16,7 +16,10 @@ namespace load
 	template<typename T>
 	struct TextureFromFilePath;
 }
-
+namespace platform
+{
+	class Texture;
+}
 namespace
 {
 	template<typename T>
@@ -280,8 +283,8 @@ namespace re
 		friend struct load::TextureFromFilePath<re::Texture>;
 		friend struct TextureFromCGLTF<re::Texture>;
 
-		// Load context helper:
-		static void RegisterBindlessResourceHandles(re::Texture* tex, core::InvPtr<re::Texture> const& loadingTexPtr);
+		friend class platform::Texture;
+		static void RegisterBindlessResourceHandles(core::InvPtr<re::Texture> const&);
 
 		explicit Texture(std::string const& name, TextureParams const& params);
 		explicit Texture(std::string const& name, TextureParams const& params, std::vector<ImageDataUniquePtr>&&);

@@ -685,8 +685,6 @@ namespace
 				tex = std::unique_ptr<re::Texture>(new re::Texture(m_texName, texParams, std::move(imageData)));
 			}
 
-			re::Texture::RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
-
 			return std::move(tex);
 		}
 

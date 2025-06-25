@@ -153,8 +153,6 @@ namespace re
 					totalBytesPerFace,
 					std::move(m_initialDataBytes));
 
-				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
-
 				return tex;
 			}
 
@@ -206,8 +204,6 @@ namespace re
 
 				std::unique_ptr<re::Texture> tex(new re::Texture(m_texName, m_texParams, std::move(initialData)));
 
-				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
-
 				return tex;
 			}
 
@@ -247,8 +243,6 @@ namespace re
 			{
 				std::unique_ptr<re::Texture> tex(new re::Texture(m_idName, m_texParams));
 
-				RegisterBindlessResourceHandles(tex.get(), loadingTexPtr);
-
 				return tex;
 			}
 
@@ -277,7 +271,7 @@ namespace re
 	}
 
 
-	void Texture::RegisterBindlessResourceHandles(re::Texture* tex, core::InvPtr<re::Texture> const& loadingTexPtr)
+	void Texture::RegisterBindlessResourceHandles(core::InvPtr<re::Texture> const& tex)
 	{
 		if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
 		{
@@ -286,12 +280,12 @@ namespace re
 			{
 				if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
 				{
-					tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(loadingTexPtr));
+					tex->m_srvResourceHandle = brm->RegisterResource(std::make_unique<re::TextureResource>(tex));
 				}
 				if (tex->HasUsageBit(re::Texture::Usage::ColorTarget))
 				{
 					tex->m_uavResourceHandle = brm->RegisterResource(
-						std::make_unique<re::TextureResource>(loadingTexPtr, re::ViewType::UAV));
+						std::make_unique<re::TextureResource>(tex, re::ViewType::UAV));
 				}
 			}
 		}

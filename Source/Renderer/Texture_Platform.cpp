@@ -35,6 +35,8 @@ namespace platform
 	void Texture::CreateAPIResource(core::InvPtr<re::Texture> const& texture, void* platformObject)
 	{
 		platform::Texture::Create(texture, platformObject);
+
+		re::Texture::RegisterBindlessResourceHandles(texture);
 	}
 
 
