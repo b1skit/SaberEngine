@@ -361,6 +361,9 @@ namespace gr
 		m_debugStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_debugStage->AddPermanentBuffer(m_debugParams);
 
+		// We'll set our transform buffers manually, disable instancing so they don't get stomped
+		m_debugStage->SetInstancingEnabled(false);
+
 		stagePipeline.AppendStage(m_debugStage);
 
 
