@@ -156,7 +156,7 @@ namespace fr
 
 	public:
 		template<typename T, typename... Args, typename Callback>
-		auto QueryRegistry(Callback&& callback);
+		auto QueryRegistry(Callback&& callback) const;
 
 
 	private:
@@ -368,7 +368,7 @@ namespace fr
 
 
 	template<typename T, typename... Args, typename Callback>
-	auto EntityManager::QueryRegistry(Callback&& callback)
+	auto EntityManager::QueryRegistry(Callback&& callback) const
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
