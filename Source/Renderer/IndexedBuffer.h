@@ -875,6 +875,11 @@ namespace gr
 
 				lutMetadataItr->second.MarkAsShrunk();
 			}
+			else if (requiredSize > initialLUTData.size() &&
+				requiredSize >= k_defaultLUTBufferArraySize)
+			{
+				initialLUTData.resize(requiredSize);
+			}
 			else if (initialLUTData.size() < k_defaultLUTBufferArraySize) // Ensure a minimum size
 			{
 				initialLUTData.resize(k_defaultLUTBufferArraySize);
