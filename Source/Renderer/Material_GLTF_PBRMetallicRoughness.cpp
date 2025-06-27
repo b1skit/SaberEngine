@@ -1,4 +1,4 @@
-// ï¿½ 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #include "EnumTypes.h"
 #include "Material_GLTF_PBRMetallicRoughness.h"
 #include "Sampler.h"

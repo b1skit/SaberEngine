@@ -1,4 +1,4 @@
-// ï¿½ 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
