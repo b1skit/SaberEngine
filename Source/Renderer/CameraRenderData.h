@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
 
@@ -119,14 +119,19 @@ namespace gr
 
 			} m_projectionType = ProjectionType::Perspective;
 
+			// Ordered from largest to smallest to reduce padding:
+			
+			// 16-byte members
+			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
+			
+			// 8-byte members
+			glm::vec2 m_bloomRadius = glm::vec2(1.f, 1.f);
+			
+			// 4-byte members
 			float m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f; // In radians; 0 if orthographic
-
 			float m_near = 1.0f;
 			float m_far = 100.0f;
 			float m_aspectRatio = 1.0f; // == width / height
-
-			// Orthographic properties:
-			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
 
 			// Sensor properties:
 			// f/stops: == focal length / diameter of aperture (entrance pupil). Commonly 1.4, 2, 2.8, 4, 5.6, 8, 11, 16
@@ -137,8 +142,9 @@ namespace gr
 			// TODO: Add a lens size, and compute the aperture from that
 
 			float m_bloomStrength = 0.2f;
-			glm::vec2 m_bloomRadius = glm::vec2(1.f, 1.f);
 			float m_bloomExposureCompensation = 0.f; // Overdrive bloom contribution
+			
+			// 1-byte members
 			bool m_deflickerEnabled = true;
 
 			bool operator==(Config const& rhs) const
@@ -170,15 +176,17 @@ namespace gr
 	public:
 		struct RenderData final
 		{
-			// We compute this once on the main thread, and then pass for reuse on the render thread
-			CameraData m_cameraParams;
-
-			char m_cameraName[core::INamedObject::k_maxNameLength];
-
+			// Ordered from largest to smallest to reduce padding:
+			
+			// Largest members first
 			gr::Camera::Config m_cameraConfig;
-
+			CameraData m_cameraParams; // We compute this once on the main thread, and then pass for reuse on the render thread
+			char m_cameraName[core::INamedObject::k_maxNameLength];
+			
+			// 8-byte members
 			gr::TransformID m_transformID;
-
+			
+			// 1-byte members
 			bool m_isActive;
 		};
 

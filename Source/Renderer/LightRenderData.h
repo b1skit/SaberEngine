@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
 #include "Texture.h"
@@ -29,18 +29,17 @@ namespace gr
 
 		struct RenderDataAmbientIBL
 		{
+			// Ordered from largest to smallest to reduce padding:
+			char m_lightName[core::INamedObject::k_maxNameLength];
+			core::InvPtr<re::Texture> m_iblTex;
+			
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[core::INamedObject::k_maxNameLength];
-
-			// Ambient type data:
-			core::InvPtr<re::Texture> m_iblTex;
-
-			bool m_isActive = false; // Note: Only *one* ambient light can be active at any time
-
 			float m_diffuseScale = 1.f;
 			float m_specularScale = 1.f;
+
+			bool m_isActive = false; // Note: Only *one* ambient light can be active at any time
 
 		public:
 			RenderDataAmbientIBL(char const* name, gr::RenderDataID, gr::TransformID);
@@ -52,18 +51,17 @@ namespace gr
 
 		struct RenderDataDirectional
 		{
+			// Ordered from largest to smallest to reduce padding:
+			char m_lightName[core::INamedObject::k_maxNameLength];
+			
+			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			char m_lightName[core::INamedObject::k_maxNameLength];
-
-			// Directional type data:
-			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
-
+			// 1-byte members grouped together
 			bool m_hasShadow = false;
-
 			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
-
 			// Debug params:
 			bool m_diffuseEnabled = false;
 			bool m_specularEnabled = false;
@@ -78,22 +76,21 @@ namespace gr
 
 		struct RenderDataPoint
 		{
+			// Ordered from largest to smallest to reduce padding:
+			char m_lightName[core::INamedObject::k_maxNameLength];
+			
+			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
-
-			char m_lightName[core::INamedObject::k_maxNameLength];
-
-			// Point type data:
-			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			
 			float m_emitterRadius = 0.f; // For non-singular attenuation function
 			float m_intensityCuttoff = 0.f; // Intensity value at which we stop drawing the deferred mesh
-
 			float m_sphericalRadius = 0.f; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
+			// 1-byte members grouped together
 			bool m_hasShadow = false;
-
 			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
-
 			// Debug params:
 			bool m_diffuseEnabled = false;
 			bool m_specularEnabled = false;
@@ -108,24 +105,23 @@ namespace gr
 
 		struct RenderDataSpot
 		{
+			// Ordered from largest to smallest to reduce padding:
+			char m_lightName[core::INamedObject::k_maxNameLength];
+			
+			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
-
-			char m_lightName[core::INamedObject::k_maxNameLength];
-
-			// Spot type data:
-			glm::vec4 m_colorIntensity = glm::vec4(0.f); // .rgb = hue, .a = intensity
+			
 			float m_emitterRadius = 0.f; // For non-singular attenuation function
 			float m_intensityCuttoff = 0.f; // Intensity value at which we stop drawing the deferred mesh
-
 			float m_innerConeAngle = 0.f; // Radians: Angle from the center of the light where falloff begins
 			float m_outerConeAngle = 0.f;
 			float m_coneHeight = 0.f; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 
+			// 1-byte members grouped together
 			bool m_hasShadow = false;
-
 			bool m_canContribute = true; // True if color != black, intensity > 0, and debug flags are enabled
-
 			// Debug params:
 			bool m_diffuseEnabled = false;
 			bool m_specularEnabled = false;

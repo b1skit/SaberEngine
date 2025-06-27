@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Renderer/RenderObjectIDs.h"
 #include "Renderer/RenderManager.h"
@@ -45,10 +45,10 @@ namespace fr
 
 
 	private:
+		// Ordered from largest to smallest to reduce padding:
+		std::atomic<gr::FeatureBitmask> m_featureBits; // RenderDataComponents are shared
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
-
-		std::atomic<gr::FeatureBitmask> m_featureBits; // RenderDataComponents are shared
 
 
 	private:
