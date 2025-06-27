@@ -1,4 +1,4 @@
-// ï¿½ 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -8,7 +8,7 @@ namespace core
 	{
 	public:
 		template<typename Function>
-		FunctionWrapper(Function&& function) : m_impl(new ImplType<Function>(std::forward<Function>(function))) {}
+		FunctionWrapper(Function&& function) : m_impl(new ImplType<Function>(std::forward<Function>(function)))  {}
 	
 		FunctionWrapper(FunctionWrapper&& other) noexcept : m_impl(std::move(other.m_impl)) {}
 
