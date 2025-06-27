@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
 
@@ -20,7 +20,6 @@ namespace gr
 		struct Frustum final
 		{
 			Frustum() = default;
-
 			Frustum(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection);
 
 			// Corners of the frustum in world space: {farTL, farBL, farTR, farBR, nearTL, nearBL, nearTR, nearBR}
@@ -34,26 +33,21 @@ namespace gr
 
 			// Directions of the edges of the frustum faces: {near edge, far edge, left edge, right edge, top edge, bottom edge}
 			std::array<glm::vec3, 6> m_edgeDirections;
-
 			glm::vec3 m_camPosition;
 		};
-
 		class View final
 		{
 		public:
 			const gr::RenderDataID m_cameraRenderDataID;
-
 			enum Face : uint8_t // Corresponds to the ordering of cubemap view matrices
 			{
 				Default = 0,
-
 				XPos = 0,
 				XNeg = 1,
 				YPos = 2,
 				YNeg = 3,
 				ZPos = 4,
 				ZNeg = 5,
-
 				Face_Count = 6
 			} const m_face;
 			static constexpr std::array<char const*, Face_Count> k_faceNames =
@@ -114,22 +108,12 @@ namespace gr
 			{
 				Perspective,
 				Orthographic,
-
 				PerspectiveCubemap
 
 			} m_projectionType = ProjectionType::Perspective;
-
-			// Ordered from largest to smallest to reduce padding:
-			
-			// 16-byte members
 			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
-			
-			// 8-byte members
 			glm::vec2 m_bloomRadius = glm::vec2(1.f, 1.f);
-			
-			// 4-byte members
 			float m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f; // In radians; 0 if orthographic
-
 			float m_near = 1.0f;
 			float m_far = 100.0f;
 			float m_aspectRatio = 1.0f; // == width / height
@@ -141,13 +125,9 @@ namespace gr
 			float m_sensitivity = 250.f; // ISO
 			float m_exposureCompensation = 0.f; // f/stops
 			// TODO: Add a lens size, and compute the aperture from that
-
 			float m_bloomStrength = 0.2f;
 			float m_bloomExposureCompensation = 0.f; // Overdrive bloom contribution
-			
-			// 1-byte members
 			bool m_deflickerEnabled = true;
-
 			bool operator==(Config const& rhs) const
 			{
 				return m_projectionType == rhs.m_projectionType &&
@@ -165,7 +145,6 @@ namespace gr
 					m_bloomExposureCompensation == rhs.m_bloomExposureCompensation &&
 					m_deflickerEnabled == rhs.m_deflickerEnabled;
 			}
-
 			bool operator!=(Config const& rhs) const
 			{
 				return !operator==(rhs);
@@ -177,54 +156,38 @@ namespace gr
 	public:
 		struct RenderData final
 		{
-			// Ordered from largest to smallest to reduce padding:
-			
-			// Largest members first
-			gr::Camera::Config m_cameraConfig;
+						gr::Camera::Config m_cameraConfig;
 			CameraData m_cameraParams; // We compute this once on the main thread, and then pass for reuse on the render thread
 			char m_cameraName[core::INamedObject::k_maxNameLength];
-			
-			// 8-byte members
-			gr::TransformID m_transformID;
-			
-			// 1-byte members
-			bool m_isActive;
+						gr::TransformID m_transformID;
+						bool m_isActive;
 		};
-
 		static uint8_t NumViews(gr::Camera::RenderData const& camData);
 
 
 	public:
 		static std::vector<glm::mat4> BuildAxisAlignedCubeViewMatrices(glm::vec3 const& centerPos);
-
 		static std::vector<glm::mat4> BuildCubeViewMatrices(
 			glm::vec3 const& centerPos, 
 			glm::vec3 const& right,		// X
 			glm::vec3 const& up,		// Y
 			glm::vec3 const& forward);	// Z
-
 		static std::vector<glm::mat4> BuildCubeInvViewMatrices(
 			glm::vec3 const& centerPos,
 			glm::vec3 const& right,		// X
 			glm::vec3 const& up,		// Y
 			glm::vec3 const& forward);	// Z
-		
-		static std::vector<glm::mat4> BuildCubeViewProjectionMatrices(
+				static std::vector<glm::mat4> BuildCubeViewProjectionMatrices(
 			std::vector<glm::mat4> const& viewMats, glm::mat4 const& projection);
-
 		static std::vector<glm::mat4> BuildCubeInvViewProjectionMatrices(
 			std::vector<glm::mat4> const& viewProjMats);
-
 		static glm::mat4 BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist);
-
 		static glm::mat4 BuildOrthographicProjectionMatrix(
 			float left, float right, float bottom, float top, float nearDist, float farDist);
 		static glm::mat4 BuildOrthographicProjectionMatrix(
 			glm::vec4 orthoLeftRightBotTop, float nearDist, float farDist);
-
 		static float ComputeEV100FromExposureSettings(
 			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);
-
 		static float ComputeExposure(float ev100);
 	};
 }

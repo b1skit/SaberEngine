@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
 
@@ -20,8 +20,7 @@ namespace fr
 		Rotation,
 		Scale,
 		Weights, // For morph targets
-		
-		AnimationPath_Invalid
+				AnimationPath_Invalid
 	};
 
 
@@ -31,7 +30,6 @@ namespace fr
 		SphericalLinearInterpolation,
 		Step,
 		CubicSpline,
-
 		InterpolationMode_Invalid
 	};
 
@@ -66,26 +64,22 @@ namespace fr
 		float requestedSec)
 	{
 		const float t = ComputeSegmentNormalizedInterpolationFactor(prevSec, nextSec, requestedSec);
-
 		switch (mode)
 		{
 		case fr::InterpolationMode::Linear:
 		{
 			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
 			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx];
-
 			if (prevSec == nextSec || prevValue == nextValue)
 			{
 				return prevValue;
 			}
-
 			return (1.f - t) * prevValue + t * nextValue;
 		}
 		break;
 		case fr::InterpolationMode::Step:
 		{
 			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
-
 			return prevValue;
 		}
 		break;
@@ -93,17 +87,14 @@ namespace fr
 		{
 			const bool isFirstKeyframeTangent = prevKeyframeIdx == 0;
 			const bool isLastKeyframeTangent = prevKeyframeIdx > nextKeyframeIdx;
-
 			const float deltaTime = nextSec - prevSec; // t_d
 
 			// Scale our indexes: Tangents are stored in the 3 elements of animation channel data
 			// {input tangent, keyframe value, output tangent}
 			prevKeyframeIdx *= 3;
 			nextKeyframeIdx *= 3;
-
 			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 1];
 			T prevOutputTangent = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx + 2] * deltaTime;
-
 			T nextInputTangent = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx] * deltaTime;
 			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx + 1];
 
@@ -116,12 +107,9 @@ namespace fr
 			{
 				nextInputTangent *= 0.f;
 			}
-
 			SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
-
 			const float t2 = t * t;
 			const float t3 = t2 * t;
-
 			return (2.f * t3 - 3.f * t2 + 1.f) * prevValue +
 				(t3 - 2.f * t2 + t) * prevOutputTangent +
 				(-2.f * t3 + 3.f * t2) * nextValue +
@@ -146,19 +134,14 @@ namespace fr
 		float requestedSec)
 	{
 		SEAssert(mode == fr::InterpolationMode::SphericalLinearInterpolation, "Invalid mode for this implementation");
-
 		glm::quat const& prevValue = reinterpret_cast<glm::quat const*>(channelData)[prevKeyframeIdx];
 		glm::quat const& nextValue = reinterpret_cast<glm::quat const*>(channelData)[nextKeyframeIdx];
-
 		SEAssert(prevValue != -nextValue, "Invalid quaternion (all zeros) will be produced by the interpolation");
-
 		if (prevSec == nextSec || prevValue == nextValue)
 		{
 			return prevValue;
 		}
-
 		const float t = ComputeSegmentNormalizedInterpolationFactor(prevSec, nextSec, requestedSec);
-
 		return glm::slerp(prevValue, nextValue, t);
 	}
 
@@ -183,49 +166,37 @@ namespace fr
 		static std::unique_ptr<AnimationController> CreateAnimationControllerObject();
 		static AnimationController* CreateAnimationController(
 			fr::EntityManager&, char const* name, std::unique_ptr<AnimationController>&&);
-
 		static void UpdateAnimationController(AnimationController&, double stepTimeMs);
 
 
 	public:
 		bool HasAnimations() const;
-
 		void UpdateCurrentAnimationTime(double timeStepMS);
 		float GetActiveClampedAnimationTimeSec() const;
-
 		void SetAnimationState(AnimationState);
 		AnimationState GetAnimationState() const;
-
 		void SetActiveAnimationIdx(size_t animationIdx);
 		size_t GetActiveAnimationIdx() const;
 		size_t GetAnimationCount() const;
-
 		float GetAnimationSpeed() const;
 		void SetAnimationSpeed(float);
-
 		float GetActiveLongestChannelTimeSec() const;
 
 
 	public:
 		void AddNewAnimation(char const* animName); // Called once per animation, during construction
-
 		size_t AddChannelKeyframeTimes(size_t animIdx, std::vector<float>&&); // Returns keyframeTimesIdx for channel
 		std::vector<float> const& GetKeyframeTimes(size_t keyframeTimesIdx) const;
 		size_t GetNumKeyframeTimes() const;
-
 		size_t AddChannelData(std::vector<float>&&); // Returns channelIdx
 		std::vector<float> const& GetChannelData(size_t channelIdx) const;
 		size_t GetNumChannels() const;
-
 	public:
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity);
 
 
 	private:
-		// Ordered from largest to smallest to reduce padding:
-		
-		// Largest containers first (each ~24-32 bytes)
-		std::vector<std::string> m_animationNames;
+				std::vector<std::string> m_animationNames;
 		std::vector<double> m_currentTimeSec;
 		std::vector<std::vector<std::vector<float>>> m_animChannelKeyframeTimesSec; // [animation][channel] == vector<float> keyframe times
 		std::vector<float> m_longestAnimChannelTimesSec; // Indexed per animation
@@ -265,7 +236,6 @@ namespace fr
 	inline float AnimationController::GetActiveClampedAnimationTimeSec() const
 	{
 		SEAssert(m_activeAnimationIdx < m_currentTimeSec.size(), "m_activeAnimationIdx is out of sync");
-
 		return glm::fmod(
 			static_cast<float>(m_currentTimeSec[m_activeAnimationIdx]),
 			m_longestAnimChannelTimesSec[m_activeAnimationIdx]);
@@ -350,19 +320,15 @@ namespace fr
 	{
 		static constexpr size_t k_invalidIdx = std::numeric_limits<size_t>::max();
 		static constexpr size_t k_invalidFloatsPerKeyframe = std::numeric_limits<uint8_t>::max();
-
 		size_t m_animationIdx;
-
 		struct Channel final
 		{
-			// Ordered from largest to smallest to reduce padding:
 			size_t m_keyframeTimesIdx				= k_invalidIdx;
 			size_t m_dataIdx						= k_invalidIdx;
 			InterpolationMode m_interpolationMode	= InterpolationMode::InterpolationMode_Invalid;
 			AnimationPath m_targetPath				= AnimationPath::AnimationPath_Invalid;
 			uint8_t m_dataFloatsPerKeyframe			= k_invalidFloatsPerKeyframe;
 		};
-
 		std::vector<Channel> m_channels;
 	};
 
@@ -374,7 +340,6 @@ namespace fr
 	{
 	public:
 		static AnimationComponent* AttachAnimationComponent(fr::EntityManager&, entt::entity, AnimationController const*);
-
 		static void ApplyAnimation(fr::AnimationComponent const&, fr::TransformComponent&);
 
 
@@ -392,25 +357,20 @@ namespace fr
 		AnimationComponent(AnimationController const*, PrivateCTORTag);
 
 		~AnimationComponent() = default;
-
 		AnimationComponent(AnimationComponent const&) = default;
 		AnimationComponent(AnimationComponent&&) noexcept = default;
-
 		AnimationComponent& operator=(AnimationComponent const&) = default;
 		AnimationComponent& operator=(AnimationComponent&&) noexcept = default;
 
 
 	public:
 		void SetAnimationData(AnimationData const&);
-
 		AnimationController const* GetAnimationController() const;
 		
 		// Returns null if node is not animated by the given keyframe times index
 		AnimationData const* GetAnimationData(size_t animationIdx) const; 
-
 		AnimationState GetAnimationState() const;
 		bool IsPlaying() const;
-
 	private:
 		AnimationController const* m_animationController;
 		std::vector<AnimationData> m_animationsData; // Maintained in sorted order, by animation index
@@ -425,7 +385,6 @@ namespace fr
 				return animData.m_animationIdx < animationIdx;
 
 			}
-
 			inline bool operator()(AnimationData const& a, AnimationData const& b)
 			{
 				return a.m_animationIdx < b.m_animationIdx;

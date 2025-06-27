@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "Effect.h"
@@ -24,7 +24,6 @@ namespace gr
 		{
 			GLTF_Unlit					= 0, // GLTF 2.0: KHR_materials_unlit
 			GLTF_PBRMetallicRoughness	= 1, // GLTF 2.0: PBR metallic-roughness material model
-
 			MaterialID_Count
 		};
 		SEStaticAssert(MaterialID_Count < std::numeric_limits<uint8_t>::max(), "Too many MaterialIDs");
@@ -36,9 +35,7 @@ namespace gr
 			ENUM_TO_STR(GLTF_PBRMetallicRoughness),
 		};
 		SEStaticAssert(_countof(k_materialNames) == MaterialID_Count, "Names and enum are out of sync");
-
 		static constexpr char const* MaterialIDToNameCStr(MaterialID);
-
 		static MaterialID EffectIDToMaterialID(EffectID);
 
 
@@ -63,7 +60,6 @@ namespace gr
 	public:
 		struct TextureSlotDesc final
 		{
-			// Ordered from largest to smallest to reduce padding:
 			std::string m_shaderSamplerName;
 			core::InvPtr<re::Texture> m_texture;
 			core::InvPtr<re::Sampler> m_samplerObject;
@@ -107,7 +103,6 @@ namespace gr
 			static void RegisterGeometryResources(
 				MaterialInstanceRenderData const&, re::AccelerationStructure::Geometry&);
 		};
-
 		template<typename T>
 		static T GetInstancedMaterialData(
 			gr::Material::MaterialInstanceRenderData const&, IDType, gr::RenderDataManager const&);
@@ -120,25 +115,18 @@ namespace gr
 	public:
 		template <typename T>
 		T GetAs(); // Get the Material as a dynamic cast to a derrived type
-
 		Material(Material&&) noexcept = default;
 		Material& operator=(Material&&) noexcept = default;
-
 		virtual ~Material() = default;
-
 		virtual void Destroy() = 0;
-
 		void SetTexture(uint32_t slotIndex, core::InvPtr<re::Texture> const&, uint8_t uvChannelIdx);
 		core::InvPtr<re::Texture> GetTexture(uint32_t slotIndex) const;
 		core::InvPtr<re::Texture> GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
-
 		void SetAlphaMode(AlphaMode);
 		void SetAlphaCutoff(float alphaCutoff);
 		void SetDoubleSidedMode(bool);
-
 		void SetShadowCastMode(bool);
-
 		MaterialID GetMaterialType() const;
 		EffectID GetEffectID() const;
 
@@ -149,8 +137,7 @@ namespace gr
 	private:
 		void PackMaterialInstanceTextureSlotDescs(
 			core::InvPtr<re::Texture>*, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
-		
-		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
+				virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
 
 
 	protected:
@@ -188,7 +175,6 @@ namespace gr
 	{
 		SEAssert(sizeof(T) <= gr::Material::k_paramDataBlockByteSize, "Requested type is too large");
 		// TODO: We should assert that T is indeed what is packed in m_materialParamData
-
 		return *reinterpret_cast<T const*>(materialInstanceData.m_materialParamData.data());
 	}
 
@@ -213,7 +199,6 @@ namespace gr
 		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
 		SEAssert(uvChannelIdx <= 1, 
 			"Only 2 UV channels are currently supported - Hitting this means shaders/effects must be updated");
-
 		m_texSlots[slotIndex].m_texture = texture;
 		m_texSlots[slotIndex].m_uvChannelIdx = uvChannelIdx;
 	}

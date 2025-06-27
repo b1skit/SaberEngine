@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "EnumTypes.h"
@@ -26,16 +26,13 @@ namespace re
 			Permanent,	// Mutable: Can be modified, and is re-buffered when modification is detected
 			Temporary,	// Immutable: Temporary staging memory for permanent/single frame buffers initialized once
 			None,		// GPU-only buffers
-
 			StagingPool_Invalid
 		};
-
 		enum Usage : uint8_t
 		{
 			Constant		= 1 << 0,
 			Structured		= 1 << 1,
 			Raw				= 1 << 2, // 16B aligned data (E.g. Vertex/index buffers, byte address buffers, etc)
-
 			Invalid			= 0
 		};
 		using UsageMask = uint8_t;
@@ -49,7 +46,6 @@ namespace re
 			DefaultHeap,	// Prefer L1/VRAM. No CPU access
 			UploadHeap,		// Prefor L0/SysMem. Intended for CPU -> GPU communication
 		};
-
 		enum Access : uint8_t
 		{
 			GPURead		= 1 << 0,	// Default
@@ -82,7 +78,6 @@ namespace re
 		{
 			virtual ~PlatObj() = default;
 			virtual void Destroy() override = 0;
-
 			bool m_isCommitted = false; // Has an initial data commitment been made?
 			bool m_isCreated = false; // Has the buffer been created at the API level?
 		};
@@ -99,7 +94,6 @@ namespace re
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> Create(
 			std::string const& bufferName, T const& data, BufferParams const&);
-
 		template<typename T>
 		[[nodiscard]] static std::shared_ptr<re::Buffer> CreateUncommitted(
 			std::string const& bufferName, BufferParams const&);
@@ -133,22 +127,17 @@ namespace re
 	public:
 		template <typename T>
 		void Commit(T const& data); // Commit *updated* data
-		
-		template <typename T>
+				template <typename T>
 		void Commit(T const* data, uint32_t baseIdx, uint32_t numElements); // Recommit mutable array data (only)
-	
-		void const* GetData() const;
+			void const* GetData() const;
 		void GetDataAndSize(void const** out_data, uint32_t* out_numBytes) const;
 		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
 		StagingPool GetStagingPool() const;
 		uint8_t GetUsageMask() const;
 		re::Lifetime GetLifetime() const;
-
 		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
-
 		BufferParams const& GetBufferParams() const;
-
 		inline PlatObj* GetPlatformObject() const { return m_platObj.get(); }
 		void SetPlatformObject(std::unique_ptr<PlatObj> platObj) { m_platObj = std::move(platObj); }
 
@@ -176,41 +165,26 @@ namespace re
 
 
 	private:		
-		// Ordered from largest to smallest to reduce padding:
-		
-		// Largest members first
-		const BufferParams m_bufferParams;		
+				const BufferParams m_bufferParams;		
 		std::unique_ptr<PlatObj> m_platObj;
-		
-		// 8-byte members
-		const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
+				const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
 		ResourceHandle m_cbvResourceHandle;
 		ResourceHandle m_srvResourceHandle;
-		
-		// 4-byte members
-		const uint32_t m_dataByteSize;
+				const uint32_t m_dataByteSize;
 
 #if defined(_DEBUG)
 		uint64_t m_creationFrameNum; // What frame was this buffer created on?
 #endif
-		
-		// 1-byte members (grouped together)
-		bool m_isCurrentlyMapped;
-
+				bool m_isCurrentlyMapped;
 	private:
 		// Use the factory Create() method instead
 		Buffer(size_t typeIDHashCode, std::string const& bufferName, BufferParams const&, uint32_t dataByteSize);
-
 		static void Register(
 			std::shared_ptr<re::Buffer> const& newBuffer, uint32_t numBytes, uint64_t typeIDHash);
-
 		static void RegisterAndCommit(
 			std::shared_ptr<re::Buffer> const& newBuffer, void const* data, uint32_t numBytes, uint64_t typeIDHash);
-		
-		void CommitInternal(void const* data, uint64_t typeIDHash);
-
+				void CommitInternal(void const* data, uint64_t typeIDHash);
 		void CommitMutableInternal(void const* data, uint32_t baseOffset, uint32_t numBytes, uint64_t typeIDHash); // Partial
-
 	protected:
 		friend class BufferAllocator;
 		static BufferAllocator* s_bufferAllocator;
@@ -265,12 +239,9 @@ namespace re
 		std::string const& bufferName, T const* dataArray, BufferParams const& bufferParams)
 	{
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
-
 		RegisterAndCommit(newBuffer, dataArray, dataByteSize, typeid(T).hash_code());
-
 		return newBuffer;
 	}
 
@@ -282,14 +253,10 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None, 
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
-
 		const uint32_t dataByteSize = sizeof(T);
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
-
 		RegisterAndCommit(newBuffer, &data, dataByteSize, typeid(T).hash_code());
-
 		return newBuffer;
 	}
 
@@ -300,14 +267,10 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
-
 		const uint32_t dataByteSize = sizeof(T);
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new re::Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
-
 		Register(newBuffer, dataByteSize, typeid(T).hash_code());
-
 		return newBuffer;
 	}
 
@@ -319,14 +282,10 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
-
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
-
 		RegisterAndCommit(newBuffer, dataArray, dataByteSize, typeid(T).hash_code());
-
 		return newBuffer;
 	}
 
@@ -337,15 +296,11 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool != re::Buffer::StagingPool::None,
 			"Buffer specifies no CPU-side staging, but staging data received. Is this the correct create function?");
-
 		const uint32_t dataByteSize = sizeof(T) * bufferParams.m_arraySize;
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(typeid(T).hash_code(), bufferName, bufferParams, dataByteSize));
-
 		Register(newBuffer, dataByteSize, typeid(T).hash_code());
-		
-		return newBuffer;
+				return newBuffer;
 	}
 
 
@@ -354,14 +309,10 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::Temporary,
 			"Invalid staging pool: It's (currently) not possible to Stage() via a nullptr");
-
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(voidHashCode, bufferName, bufferParams, numBytes));
-
 		RegisterAndCommit(newBuffer, data, numBytes, voidHashCode);
-
 		return newBuffer;
 	}
 
@@ -371,14 +322,10 @@ namespace re
 	{
 		SEAssert(bufferParams.m_stagingPool == re::Buffer::StagingPool::None,
 			"Invalid staging pool for a GPU-only buffer");
-
 		const uint64_t voidHashCode = typeid(void const*).hash_code();
-
 		std::shared_ptr<re::Buffer> newBuffer;
 		newBuffer.reset(new Buffer(voidHashCode, bufferName, bufferParams, numBytes));
-
 		RegisterAndCommit(newBuffer, nullptr, numBytes, voidHashCode);
-
 		return newBuffer;
 	}
 
@@ -394,10 +341,8 @@ namespace re
 	void Buffer::Commit(T const* data, uint32_t baseIdx, uint32_t numElements)
 	{
 		SEAssert(data && numElements > 0, "Cannot commit zero elements");
-
 		const uint32_t dstBaseByteOffset = baseIdx * sizeof(T);
 		const uint32_t numBytes = numElements * sizeof(T);
-
 		CommitMutableInternal(data, dstBaseByteOffset, numBytes, typeid(T).hash_code());
 	}
 

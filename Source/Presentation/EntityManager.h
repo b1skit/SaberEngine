@@ -23,7 +23,6 @@ namespace fr
 	public: // IEngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
-
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
@@ -43,14 +42,12 @@ namespace fr
 		void UpdateMaterials();
 		void UpdateLightsAndShadows();
 		void UpdateCameras();
-
 		void ExecuteDeferredDeletions();
 
 
 	private:
 		template<typename RenderDataType, typename CmptType, typename... OtherCmpts>
 		void EnqueueRenderUpdateHelper();
-
 	public: // Public interface:
 		void EnqueueRenderUpdates();
 
@@ -59,25 +56,19 @@ namespace fr
 	public:
 		template<typename T, typename... Args>
 		void EnqueueEntityCommand(Args&&... args);
-
 		void EnqueueEntityCommand(std::function<void(void)>&&);
 
 
 	private:
 		void SetMainCamera(entt::entity);
 		friend fr::SetMainCameraCommand;
-
 		void SetActiveAmbientLight(entt::entity);
 		friend fr::SetActiveAmbientLightCommand;
-
 		entt::entity GetActiveAmbientLight() const;
-
 		fr::BoundsComponent const* GetSceneBounds() const;
 		entt::entity GetMainCamera() const;
-
 		void Reset();
-		
-	private:
+			private:
 		void ProcessEntityCommands();
 		core::CommandManager m_entityCommands;
 
@@ -86,7 +77,6 @@ namespace fr
 		void ShowSceneObjectsImGuiWindow(bool* show);
 		void ShowSceneTransformImGuiWindow(bool* show);
 		void ShowImGuiEntityComponentDebug(bool* show);
-
 	private:
 		void ShowImGuiEntityComponentDebugHelper(
 			std::vector<entt::entity> rootEntities, bool expandAll, bool expandChangeTriggered);
@@ -101,55 +91,39 @@ namespace fr
 	private: // Configure event listeners etc
 		void ConfigureRegistry();
 		void OnBoundsDirty();
-
 		void RegisterEntityForDelete(entt::entity);
 
 
 	public: // EnTT wrappers:
 		entt::entity CreateEntity(std::string_view name);
-
 		template<typename T>
 		void EmplaceComponent(entt::entity);
-
 		template<typename T, typename... Args>
 		T* EmplaceComponent(entt::entity, Args &&...args);
-
 		template<typename T>
 		void EmplaceOrReplaceComponent(entt::entity);
-
 		template<typename T>
 		void TryEmplaceComponent(entt::entity); // Emplace a component IFF it doesn't already exist on the entity
-
 		template<typename T, typename... Args>
 		T* TryEmplaceComponent(entt::entity, Args &&...args);
-
 		template<typename T, typename... Args>
 		T* GetOrEmplaceComponent(entt::entity, Args &&...args);
-
 		template<typename T>
 		void RemoveComponent(entt::entity);
-
 		template<typename T>
 		T& GetComponent(entt::entity);
-
 		template<typename T>
 		T const& GetComponent(entt::entity) const;
-
 		template<typename T>
 		T* TryGetComponent(entt::entity);
-
 		template<typename T>
 		T const* TryGetComponent(entt::entity) const;
-
 		template<typename T>
 		bool HasComponent(entt::entity) const;
-
 		template<typename T, typename... Args>
 		bool HasComponents(entt::entity) const;
-
 		template<typename T, typename... Args>
 		std::vector<entt::entity> GetAllEntities() const;
-
 		template<typename T, typename... Args>
 		bool EntityExists() const;
 
@@ -160,7 +134,6 @@ namespace fr
 
 
 	private:
-		// Ordered from largest to smallest to reduce padding:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		mutable std::recursive_mutex m_registeryMutex;
@@ -192,7 +165,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			m_registry.emplace<T>(entity);
 		}
 	}
@@ -203,9 +175,7 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			T& result = m_registry.emplace<T>(entity, std::forward<Args>(args)...);
-
 			return &result;
 		}
 	}
@@ -216,7 +186,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			m_registry.emplace_or_replace<T>(entity);
 		}
 	}
@@ -264,7 +233,6 @@ namespace fr
 			// components of the same type. For now, we obtain an exclusive lock on the entire registry, but this could
 			// be more granular
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			m_registry.erase<T>(entity);
 		}
 	}
@@ -275,7 +243,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			return m_registry.try_get<T>(entity);
 		}
 	}
@@ -286,7 +253,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			return m_registry.try_get<T>(entity);
 		}
 	}
@@ -339,14 +305,12 @@ namespace fr
 
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			auto view = m_registry.view<T, Args...>();
 			for (auto entity : view)
 			{
 				result.emplace_back(entity);
 			}
 		}
-
 		return result;
 	}
 
@@ -356,7 +320,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			auto view = m_registry.view<T, Args...>();
 			for (auto entity : view)
 			{
@@ -372,7 +335,6 @@ namespace fr
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
-
 			auto view = m_registry.view<T, Args...>();
 			return std::forward<Callback>(callback)(view);
 		}

@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -72,15 +72,10 @@ namespace core
 
 
 	private:
-		// Ordered from largest to smallest to reduce padding:
-		
-		// Largest containers and synchronization objects
 		std::vector<std::thread> m_workerThreads;
 		std::queue<FunctionWrapper> m_jobQueue;
 		std::condition_variable m_jobQueueCV;
 		std::mutex m_jobQueueMutex;
-		
-		// Smallest types last
 		bool m_isRunning;
 
 

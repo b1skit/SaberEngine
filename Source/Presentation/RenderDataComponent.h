@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Renderer/RenderObjectIDs.h"
 #include "Renderer/RenderManager.h"
@@ -8,7 +8,6 @@ namespace fr
 {
 	class EntityManager;
 }
-
 namespace fr
 {
 	// Automatically assigns itself a unique RenderDataID
@@ -16,14 +15,11 @@ namespace fr
 	{
 	public:
 		struct NewRegistrationMarker {}; // Attached when a a new RenderDataID is allocated
-
 	public:
 		static RenderDataComponent* GetCreateRenderDataComponent(
 			fr::EntityManager&, entt::entity, gr::TransformID);
-
 		static RenderDataComponent& AttachSharedRenderDataComponent(
 			fr::EntityManager&, entt::entity, RenderDataComponent const&);
-
 	public:
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
 		static void ShowImGuiWindow(std::vector<fr::RenderDataComponent const*> const&);
@@ -38,14 +34,12 @@ namespace fr
 	public:
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
-
 		void SetFeatureBit(gr::RenderObjectFeature);
 		bool HasFeatureBit(gr::RenderObjectFeature) const;
 		gr::FeatureBitmask GetFeatureBits() const;
 
 
 	private:
-		// Ordered from largest to smallest to reduce padding:
 		std::atomic<gr::FeatureBitmask> m_featureBits; // RenderDataComponents are shared
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
@@ -63,8 +57,7 @@ namespace fr
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-		
-	public:
+			public:
 		RenderDataComponent(PrivateCTORTag, gr::TransformID); // Allocate a new RenderDataID
 		RenderDataComponent(PrivateCTORTag, gr::RenderDataID, gr::TransformID); // Allocate a new RenderDataID
 		RenderDataComponent(PrivateCTORTag, RenderDataComponent const&); // Shared RenderDataID
@@ -78,10 +71,8 @@ namespace fr
 	{
 	public:
 		RegisterRenderObjectCommand(RenderDataComponent const&);
-
 		static void Execute(void*);
 		static void Destroy(void*);
-
 	private:
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
@@ -96,10 +87,8 @@ namespace fr
 	{
 	public:
 		DestroyRenderObjectCommand(gr::RenderDataID);
-
 		static void Execute(void*);
 		static void Destroy(void*);
-
 	private:
 		const gr::RenderDataID m_renderDataID;
 	};
@@ -113,10 +102,8 @@ namespace fr
 	{
 	public:
 		UpdateRenderDataRenderCommand(gr::RenderDataID, T const&);
-
 		static void Execute(void*);
 		static void Destroy(void*);
-
 	private:
 		const gr::RenderDataID m_renderDataID;
 		const T m_data;
@@ -135,9 +122,7 @@ namespace fr
 	void UpdateRenderDataRenderCommand<T>::Execute(void* cmdData)
 	{
 		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
-		
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
-
+				gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
 		renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
 	}
 
@@ -158,10 +143,8 @@ namespace fr
 	{
 	public:
 		DestroyRenderDataRenderCommand(gr::RenderDataID);
-
 		static void Execute(void*);
 		static void Destroy(void*);
-
 	private:
 		const gr::RenderDataID m_renderDataID;
 	};
@@ -178,9 +161,7 @@ namespace fr
 	void DestroyRenderDataRenderCommand<T>::Execute(void* cmdData)
 	{
 		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
-
 		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
-
 		renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
 	}
 
@@ -200,10 +181,8 @@ namespace fr
 	{
 	public:
 		RenderDataFeatureBitsRenderCommand(gr::RenderDataID, gr::FeatureBitmask);
-
 		static void Execute(void*);
 		static void Destroy(void*);
-
 	private:
 		const gr::RenderDataID m_renderDataID;
 		const gr::FeatureBitmask m_featureBits;

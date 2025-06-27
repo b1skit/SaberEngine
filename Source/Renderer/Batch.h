@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "BufferView.h"
@@ -194,15 +194,11 @@ namespace re
 
 
 	private:
-		// Ordered from largest to smallest to reduce padding:
-		
-		// Largest containers first (each ~24-32 bytes)
 		std::vector<BufferInput> m_batchBuffers;
 		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
 		std::vector<RWTextureInput> m_batchRWTextureInputs;
 		RootConstants m_batchRootConstants;
 
-		// Union (size depends on largest member)
 		union
 		{
 			RasterParams m_rasterParams;
@@ -210,12 +206,9 @@ namespace re
 			RayTracingParams m_rayTracingParams;
 		};
 
-		// 4-byte members
 		EffectID m_effectID;
 		effect::drawstyle::Bitmask m_drawStyleBitmask;
 		FilterBitmask m_batchFilterBitmask;
-		
-		// 1-byte members (grouped together)
 		BatchType m_type;
 
 
