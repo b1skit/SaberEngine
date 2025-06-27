@@ -140,6 +140,8 @@
     <ClInclude Include="PerfLogger.h" />
     <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="ResourceSystem.h" />
+    <ClInclude Include="AccessKey.h" />
+    <ClInclude Include="SystemLocator.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Util\ByteVector.h" />
     <ClInclude Include="Util\CastUtils.h" />

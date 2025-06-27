@@ -2,10 +2,27 @@
 #pragma once
 #include "CameraRenderData.h"
 #include "GraphicsSystem.h"
+#include "RenderObjectIDs.h"
+
+#include "Core/AccessKey.h"
 
 
+namespace fr
+{
+	class CullingGraphicsService;
+}
 namespace gr
 {
+	struct CullingServiceData
+	{
+		gr::RenderDataID m_debugCameraOverrideID = gr::k_invalidRenderDataID;
+		bool m_cullingEnabled = true;
+	};
+
+
+	// ---
+
+
 	class CullingGraphicsSystem final
 		: public virtual GraphicsSystem
 		, public virtual IScriptableGraphicsSystem<CullingGraphicsSystem>
@@ -32,7 +49,7 @@ namespace gr
 
 	public:
 		CullingGraphicsSystem(gr::GraphicsSystemManager*);
-		~CullingGraphicsSystem() override = default;
+		~CullingGraphicsSystem() override;
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
@@ -59,6 +76,18 @@ namespace gr
 		std::vector<gr::RenderDataID> m_visibleSpotLightIDs;
 		std::mutex m_visibleLightsMutex;
 
-		bool m_cullingEnabled;
+
+	public: // Culling service interface:
+		using AccessKey = accesscontrol::AccessKey<CullingGraphicsSystem, fr::CullingGraphicsService>;
+
+		void EnableCulling(AccessKey, bool isEnabled);
+
+		// Enable culling debug override for a specific camera, rendered via the currently active camera.
+		// Disable by passing gr::k_invalidRenderDataID				
+		void SetDebugCameraOverride(AccessKey, gr::RenderDataID);
+
+
+	private:
+		CullingServiceData m_cullingServiceData;
 	};
 }

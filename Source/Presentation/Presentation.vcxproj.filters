@@ -33,6 +33,12 @@
     <Filter Include="Source Files\load">
       <UniqueIdentifier>{9a7edd0c-7efc-43b6-9fbf-d242c4f7868d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fr\Services">
+      <UniqueIdentifier>{ede5bb92-04ac-416e-a4c2-ecbcc3acded2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fr\Services">
+      <UniqueIdentifier>{72f8725a-bceb-4fea-a1b3-479336103943}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BoundsComponent.cpp">
@@ -115,6 +121,9 @@
     </ClCompile>
     <ClCompile Include="Load_Common.cpp">
       <Filter>Source Files\load</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsService_Culling.cpp">
+      <Filter>Source Files\fr\Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +210,12 @@
     </ClInclude>
     <ClInclude Include="Load_Common.h">
       <Filter>Header Files\load</Filter>
+    </ClInclude>
+    <ClInclude Include="IGraphicsService.h">
+      <Filter>Header Files\fr\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsService_Culling.h">
+      <Filter>Header Files\fr\Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

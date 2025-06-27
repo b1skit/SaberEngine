@@ -99,6 +99,8 @@
     <ClInclude Include="CameraControlComponent.h" />
     <ClInclude Include="EntityCommands.h" />
     <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="GraphicsService_Culling.h" />
+    <ClInclude Include="IGraphicsService.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightComponent.h" />
     <ClInclude Include="Load_Common.h" />
@@ -129,6 +131,7 @@
     <ClCompile Include="CameraControlComponent.cpp" />
     <ClCompile Include="EntityCommands.cpp" />
     <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="GraphicsService_Culling.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="Load_Common.cpp" />

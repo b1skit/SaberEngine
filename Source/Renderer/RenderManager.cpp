@@ -11,9 +11,11 @@
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
+#include "Core/AccessKey.h"
 #include "Core/Config.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
+#include "Core/SystemLocator.h"
 
 #include "Core/Definitions/EventKeys.h"
 
@@ -243,6 +245,10 @@ namespace re
 		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
+
+		// Process any render commands added so far (e.g. adding RenderSystems)
+		m_renderCommandManager.SwapBuffers();
+		m_renderCommandManager.Execute();
 
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 

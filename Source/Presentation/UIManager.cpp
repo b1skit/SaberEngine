@@ -15,8 +15,6 @@
 #include "Core/Host/Dialog.h"
 #include "Core/Host/Window.h"
 
-#include "Core/Util/FileIOUtils.h"
-
 #include "Renderer/GraphicsSystem_ImGui.h"
 #include "Renderer/RenderManager.h"
 
@@ -231,6 +229,9 @@ namespace fr
 			});
 
 		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
+
+		// Service initialization:
+		m_cullingGraphicsService.Initialize(re::RenderManager::Get());
 	}
 
 
@@ -579,12 +580,22 @@ namespace fr
 							ImGui::MenuItem("Light manager debug", "", &m_show[Show::LightMgrDbg]);
 							ImGui::EndMenu();
 						}
-						
 
 #if defined(SHOW_IMGUI_DEMO_WINDOW)
 						ImGui::Separator();
 						ImGui::MenuItem("Show ImGui demo", "", &m_show[Show::ImGuiDemo]);
 #endif
+
+						ImGui::EndMenu();
+					}
+
+					if (ImGui::BeginMenu("Debug"))
+					{
+						m_cullingGraphicsService.PopulateImGuiMenu();
+
+						ImGui::Separator();
+						
+						//
 
 						ImGui::EndMenu();
 					}

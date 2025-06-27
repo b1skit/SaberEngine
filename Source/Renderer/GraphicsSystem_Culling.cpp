@@ -7,7 +7,7 @@
 #include "RenderDataManager.h"
 #include "ShadowMapRenderData.h"
 
-#include "Core/Config.h"
+#include "Core/SystemLocator.h"
 #include "Core/ProfilingMarkers.h"
 #include "Core/ThreadPool.h"
 
@@ -271,15 +271,15 @@ namespace gr
 	CullingGraphicsSystem::CullingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
-		, m_cullingEnabled(true)
+		, m_cullingServiceData{}
 	{
-		// Optionally start with culling disabled by the command line
-		bool cullingDisabledCmdLineReceived = false;
-		core::Config::Get()->TryGetValue<bool>(core::configkeys::k_disableCullingCmdLineArg, cullingDisabledCmdLineReceived);
-		if (cullingDisabledCmdLineReceived)
-		{
-			m_cullingEnabled = false;
-		}
+		core::SystemLocator::Register<gr::CullingGraphicsSystem>(ACCESS_KEY(AccessKey), this);
+	}
+
+
+	CullingGraphicsSystem::~CullingGraphicsSystem()
+	{
+		core::SystemLocator::Unregister<gr::CullingGraphicsSystem>(ACCESS_KEY(AccessKey));
 	}
 
 
@@ -429,12 +429,15 @@ namespace gr
 			SEAssert(cameraIDs, "No cameras exist");
 			for (auto const& cameraItr : gr::IDAdapter(renderData, *cameraIDs))
 			{
-				// Skip culling for any inactive/unused cameras
+				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
+				gr::Camera::RenderData const* camData = &cameraItr->Get<gr::Camera::RenderData>();
+
+				// Skip culling for any inactive/unused cameras:
 				bool canSkipCamera = false;
 
 				// Is the camera active?
-				gr::Camera::RenderData const* camData = &cameraItr->Get<gr::Camera::RenderData>();
-				canSkipCamera = camData->m_isActive == false;
+				canSkipCamera = camData->m_isActive == false &&
+					cameraID != m_cullingServiceData.m_debugCameraOverrideID;
 
 				// Is this a shadow camera for an inactive light?
 				if (!canSkipCamera)
@@ -466,8 +469,6 @@ namespace gr
 					}
 				}
 
-				const gr::RenderDataID cameraID = cameraItr->GetRenderDataID();
-
 				// Can we early out?
 				if (canSkipCamera)
 				{
@@ -486,8 +487,6 @@ namespace gr
 				}
 
 				// Gather the data we'll pass by value:
-				
-
 				gr::Transform::RenderData const* camTransformData = &cameraItr->GetTransformData();
 
 				const bool cameraIsDirty = cameraItr->IsDirty<gr::Camera::RenderData>();
@@ -592,7 +591,7 @@ namespace gr
 								m_meshesToMeshPrimitiveBounds,
 								currentFrustum,
 								renderIDsOut,
-								m_cullingEnabled);
+								m_cullingServiceData.m_cullingEnabled);
 
 							// Finally, cache the results:
 							{
@@ -631,7 +630,7 @@ namespace gr
 									lightFrustum,
 									m_visiblePointLightIDs,
 									m_visibleSpotLightIDs,
-									m_cullingEnabled);
+									m_cullingServiceData.m_cullingEnabled);
 							}
 
 							SEEndCPUEvent(); // "Cull lights"
@@ -648,6 +647,46 @@ namespace gr
 			}
 		}
 		SEEndCPUEvent(); // "Do culling"
+
+
+		// Debug mode: View another camera's culling results in the active camera's view
+		if (m_cullingServiceData.m_debugCameraOverrideID != gr::k_invalidRenderDataID)
+		{
+			SEAssert(renderData.HasObjectData<gr::Camera::RenderData>(m_cullingServiceData.m_debugCameraOverrideID),
+				"Debug camera override ID is not associated with Camera render data");
+
+			const gr::RenderDataID activeCamRenderDataID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+			SEAssert(activeCamRenderDataID != gr::k_invalidRenderDataID,
+				"Invalid active camera RenderDataID. This is unexpected");
+
+			gr::Camera::View const& activeCameraView = gr::Camera::View(activeCamRenderDataID);
+
+			gr::Camera::RenderData const& overrideCamData = 
+				renderData.GetObjectData<gr::Camera::RenderData>(m_cullingServiceData.m_debugCameraOverrideID);
+
+			const uint8_t numViews = gr::Camera::NumViews(overrideCamData);
+
+			{
+				std::lock_guard<std::mutex> lock(m_viewToVisibleIDsMutex);
+
+				// Clear the culling results:
+				std::vector<gr::RenderDataID>& activeCamVisibleIDs = m_viewToVisibleIDs[activeCameraView];
+				activeCamVisibleIDs.clear();
+
+				// Append the override camera's results to the active camera's results:
+				for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+				{
+					std::vector<gr::RenderDataID> const& overrideVisibleIDs =
+						m_viewToVisibleIDs[gr::Camera::View(m_cullingServiceData.m_debugCameraOverrideID, faceIdx)];
+
+					activeCamVisibleIDs.insert(
+						activeCamVisibleIDs.end(), 
+						overrideVisibleIDs.begin(), 
+						overrideVisibleIDs.end());
+				}
+			}
+
+		}
 
 		SEEndCPUEvent(); // "CullingGraphicsSystem::PreRender"
 	}
@@ -672,11 +711,6 @@ namespace gr
 
 				return result;
 			};
-
-		if (ImGui::Button(std::format("{} culling", m_cullingEnabled ? "Disable" : "Enable").c_str()))
-		{
-			m_cullingEnabled = !m_cullingEnabled;
-		}
 
 		if (ImGui::CollapsingHeader("Visible Light IDs"))
 		{
@@ -705,7 +739,6 @@ namespace gr
 				ImGui::Separator();
 			}
 		}
-
 
 		if (ImGui::CollapsingHeader("Bounds RenderDataID tracking"))
 		{
@@ -784,5 +817,17 @@ namespace gr
 				ImGui::Separator();
 			}
 		}
+	}
+
+
+	void CullingGraphicsSystem::EnableCulling(AccessKey, bool isEnabled)
+	{
+		m_cullingServiceData.m_cullingEnabled = isEnabled;
+	}
+
+
+	void CullingGraphicsSystem::SetDebugCameraOverride(AccessKey, gr::RenderDataID debugCameraOverrideID)
+	{
+		m_cullingServiceData.m_debugCameraOverrideID = debugCameraOverrideID;
 	}
 }

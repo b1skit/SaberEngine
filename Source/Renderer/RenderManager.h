@@ -5,6 +5,7 @@
 #include "EffectDB.h"
 #include "RenderSystem.h"
 
+#include "Core/AccessKey.h"
 #include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
 
@@ -29,6 +30,11 @@ namespace core
 namespace dx12
 {
 	class RenderManager;
+}
+
+namespace fr
+{
+	class IGraphicsService;
 }
 
 namespace gr
@@ -122,6 +128,9 @@ namespace re
 		void EnqueueRenderCommand(Args&&... args);
 
 		void EnqueueRenderCommand(std::function<void(void)>&&);
+
+		using CommandManagerAccessKey = accesscontrol::AccessKey<fr::IGraphicsService>;
+		core::CommandManager* GetRenderCommandManager(CommandManagerAccessKey);
 
 
 	private:
@@ -317,6 +326,12 @@ namespace re
 	inline void RenderManager::EnqueueRenderCommand(std::function<void(void)>&& lambda)
 	{
 		m_renderCommandManager.Enqueue(std::move(lambda));
+	}
+
+
+	inline core::CommandManager* RenderManager::GetRenderCommandManager(CommandManagerAccessKey)
+	{
+		return &m_renderCommandManager;
 	}
 
 

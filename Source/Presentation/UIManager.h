@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "GraphicsService_Culling.h"
+
 #include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IEngineComponent.h"
-
-#include "Core/Util/ImGuiUtils.h"
 
 
 namespace host
@@ -55,19 +55,18 @@ namespace fr
 
 		enum Show : uint8_t
 		{
+			EntityComponentDbg,
+			EntityMgrDbg,
+			IndexedBufferMgrDbg,
+			GPUCaptures,
+			ImGuiDemo,
+			LightMgrDbg,
 			Logger,
 			PerfLogger,
-			SceneMgrDbg,
-			EntityMgrDbg,
-			TransformationHierarchyDbg,
-			EntityComponentDbg,
-			RenderMgrDbg,
 			RenderDataDbg,
-			IndexedBufferMgrDbg,
-			LightMgrDbg,
-			GPUCaptures,
-
-			ImGuiDemo,
+			RenderMgrDbg,
+			SceneMgrDbg,
+			TransformationHierarchyDbg,
 
 			Show_Count
 		};
@@ -79,5 +78,9 @@ namespace fr
 
 	private:
 		host::Window* m_window;
+
+
+	private: // Graphics services:
+		fr::CullingGraphicsService m_cullingGraphicsService;
 	};
 }
