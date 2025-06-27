@@ -75,7 +75,7 @@ namespace core
 						SEAssert(childRecord.m_hasParent, "Child not marked as having a parent. This should not be possible");
 
 						childRecord.m_hasParent = false;
-						childRecord.m_parentName = std::string(/*empty*/);
+						childRecord.m_parentName.clear();
 						childRecord.m_parentNameHash = util::HashKey();
 					}
 
@@ -114,7 +114,7 @@ namespace core
 				TimeRecord{
 					.m_name = name,
 					.m_nameHash = nameHash,
-					.m_parentName = hasParent ? parentName : std::string(/*empty*/),
+					.m_parentName = hasParent ? parentName : std::string{},
 					.m_parentNameHash = hasParent ? util::HashKey(parentName) : util::HashKey(),
 					.m_mostRecentTimeMs = 0.0,
 					.m_hasParent = hasParent,

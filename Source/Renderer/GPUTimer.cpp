@@ -374,7 +374,7 @@ namespace re
 					nameHash,
 					TimeRecord{
 						.m_name = name,
-						.m_parentName = parentName ? parentName : std::string(/*empty*/),
+						.m_parentName = parentName ? parentName : std::string{},
 						.m_numFramesSinceUpdated = 0,
 					});
 

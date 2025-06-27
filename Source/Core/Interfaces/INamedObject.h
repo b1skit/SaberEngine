@@ -56,7 +56,7 @@ namespace core
 			"Empty or excessively long name strings are not allowed");
 		SEAssert(name.data()[name.size()] == '\0', "std::string_view must be null-terminated for INamedObject usage");
 
-		SetName(std::string(name));
+		SetName(name);
 	}
 
 

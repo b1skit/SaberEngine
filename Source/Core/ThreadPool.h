@@ -8,7 +8,7 @@ namespace core
 	{
 	public:
 		template<typename Function>
-		FunctionWrapper(Function&& function) : m_impl(new ImplType<Function>(std::move(function))) {}
+		FunctionWrapper(Function&& function) : m_impl(new ImplType<Function>(std::forward<Function>(function)))  {}
 	
 		FunctionWrapper(FunctionWrapper&& other) noexcept : m_impl(std::move(other.m_impl)) {}
 
@@ -28,7 +28,7 @@ namespace core
 		template<typename Function>
 		struct ImplType : ImplBase
 		{
-			ImplType(Function&& function) noexcept : m_function(std::move(function)) {}
+			ImplType(Function&& function) noexcept : m_function(std::forward<Function>(function)) {}
 
 			inline void Call() override { m_function(); }
 
