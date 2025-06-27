@@ -1,4 +1,4 @@
-// ï¿½ 2023 Adam Badke. All rights reserved.
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
 
@@ -129,6 +129,7 @@ namespace gr
 			
 			// 4-byte members
 			float m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f; // In radians; 0 if orthographic
+
 			float m_near = 1.0f;
 			float m_far = 100.0f;
 			float m_aspectRatio = 1.0f; // == width / height
