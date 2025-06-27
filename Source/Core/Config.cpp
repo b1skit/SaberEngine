@@ -1,4 +1,4 @@
-// ï¿½ 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
 #include "EventManager.h"
