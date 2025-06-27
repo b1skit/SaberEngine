@@ -28,7 +28,7 @@ namespace core
 		template<typename Function>
 		struct ImplType : ImplBase
 		{
-			ImplType(Function&& function) : m_function(std::move(function)) {}
+			ImplType(Function&& function) noexcept : m_function(std::move(function)) {}
 
 			inline void Call() override { m_function(); }
 

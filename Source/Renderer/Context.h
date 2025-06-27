@@ -52,10 +52,10 @@ namespace re
 
 
 	public:
-		host::Window* GetWindow() const;
+		host::Window* GetWindow() const noexcept;
 
 		re::SwapChain& GetSwapChain();
-		re::SwapChain const& GetSwapChain() const;
+		re::SwapChain const& GetSwapChain() const noexcept;
 
 		re::BufferAllocator* GetBufferAllocator();
 		re::BufferAllocator const* GetBufferAllocator() const;
@@ -93,7 +93,7 @@ namespace re
 	};
 
 
-	inline host::Window* Context::GetWindow() const
+	inline host::Window* Context::GetWindow() const noexcept
 	{
 		return m_window;
 	}
@@ -105,7 +105,7 @@ namespace re
 	}
 
 
-	inline re::SwapChain const& Context::GetSwapChain() const
+	inline re::SwapChain const& Context::GetSwapChain() const noexcept
 	{
 		return m_swapChain;
 	}

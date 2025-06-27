@@ -29,7 +29,7 @@ namespace re
 
 		virtual void Destroy();
 
-		bool IsValid() const; // Has Destroy() been called?
+		bool IsValid() const noexcept; // Has Destroy() been called?
 
 
 	public:
@@ -68,7 +68,7 @@ namespace re
 
 	protected:
 		uint32_t AdvanceBaseIdx(AllocationPool, uint32_t alignedSize);
-		uint8_t GetSingleFrameGPUWriteIndex() const;
+		uint8_t GetSingleFrameGPUWriteIndex() const noexcept;
 
 
 	private:
@@ -156,7 +156,7 @@ namespace re
 	private:
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
-		uint8_t GetFrameOffsetIndex() const;
+		uint8_t GetFrameOffsetIndex() const noexcept;
 
 
 	private:
@@ -188,7 +188,7 @@ namespace re
 	};
 
 
-	inline uint8_t BufferAllocator::GetSingleFrameGPUWriteIndex() const
+	inline uint8_t BufferAllocator::GetSingleFrameGPUWriteIndex() const noexcept
 	{
 		return m_singleFrameGPUWriteIdx;
 	}
@@ -213,7 +213,7 @@ namespace re
 	}
 
 
-	inline bool BufferAllocator::IsValid() const
+	inline bool BufferAllocator::IsValid() const noexcept
 	{
 		return m_isValid;
 	}

@@ -30,10 +30,10 @@ namespace core
 
 	public:
 		// m_name as supplied at construction
-		std::string const& GetName() const;
-		std::wstring const& GetWName() const;
+		std::string const& GetName() const noexcept;
+		std::wstring const& GetWName() const noexcept;
 
-		util::HashKey GetNameHash() const;
+		util::HashKey GetNameHash() const noexcept;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
 		void SetName(std::string_view name);
@@ -60,19 +60,19 @@ namespace core
 	}
 
 
-	inline std::string const& INamedObject::GetName() const
+	inline std::string const& INamedObject::GetName() const noexcept
 	{
 		return m_name;
 	}
 
 
-	inline std::wstring const& INamedObject::GetWName() const
+	inline std::wstring const& INamedObject::GetWName() const noexcept
 	{
 		return m_wName;
 	}
 
 
-	inline util::HashKey INamedObject::GetNameHash() const
+	inline util::HashKey INamedObject::GetNameHash() const noexcept
 	{
 		return m_nameHash;
 	}

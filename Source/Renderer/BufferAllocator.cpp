@@ -875,7 +875,7 @@ namespace re
 	}
 
 
-	uint8_t BufferAllocator::GetFrameOffsetIndex() const
+	uint8_t BufferAllocator::GetFrameOffsetIndex() const noexcept
 	{
 		return m_currentFrameNum % m_numFramesInFlight;
 	}

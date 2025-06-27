@@ -134,7 +134,7 @@ namespace gr
 				RenderObjectFeature featureBits = RenderObjectFeature::None);
 
 			TypedIndexedBuffer(TypedIndexedBuffer&&) noexcept = default;
-			TypedIndexedBuffer& operator=(TypedIndexedBuffer&&) = default;
+			TypedIndexedBuffer& operator=(TypedIndexedBuffer&&) noexcept = default;
 
 			~TypedIndexedBuffer() = default;
 
@@ -198,8 +198,8 @@ namespace gr
 		IndexedBufferManager(gr::RenderDataManager const& renderData);
 		~IndexedBufferManager();
 
-		IndexedBufferManager(IndexedBufferManager&&) = default;
-		IndexedBufferManager& operator=(IndexedBufferManager&&) = default;
+		IndexedBufferManager(IndexedBufferManager&&) noexcept = default;
+		IndexedBufferManager& operator=(IndexedBufferManager&&) noexcept = default;
 
 		void Destroy();
 

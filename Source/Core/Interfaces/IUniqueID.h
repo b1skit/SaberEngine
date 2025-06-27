@@ -22,7 +22,7 @@ namespace core
 
 
 	public:
-		UniqueID GetUniqueID() const; // Unique integer identifier
+		UniqueID GetUniqueID() const noexcept; // Unique integer identifier
 
 
 	private:
@@ -40,7 +40,7 @@ namespace core
 	}
 
 
-	inline UniqueID IUniqueID::GetUniqueID() const
+	inline UniqueID IUniqueID::GetUniqueID() const noexcept
 	{
 		return m_uniqueID;
 	}

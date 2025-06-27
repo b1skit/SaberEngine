@@ -42,13 +42,13 @@ namespace fr
 
 		bool Update();
 
-		bool IsDirty() const;
+		bool IsDirty() const noexcept;
 		void MarkClean();
 
 		glm::vec4 const& GetColorIntensity() const;
 		void SetColorIntensity(glm::vec4 const&);
 	 
-		Type GetType() const;
+		Type GetType() const noexcept;
 		
 		void ShowImGuiWindow(uint64_t uniqueID);
 
@@ -140,13 +140,13 @@ namespace fr
 	}
 
 
-	inline Light::Type Light::GetType() const
+	inline Light::Type Light::GetType() const noexcept
 	{
 		return m_typeProperties.m_type;
 	}
 
 
-	inline bool Light::IsDirty() const
+	inline bool Light::IsDirty() const noexcept
 	{
 		return m_isDirty;
 	}

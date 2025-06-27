@@ -98,8 +98,8 @@ namespace gr
 	public:
 		BatchPool(uint8_t numFramesInFlight);
 
-		BatchPool(BatchPool&&) = default;
-		BatchPool& operator=(BatchPool&&) = default;
+		BatchPool(BatchPool&&) noexcept = default;
+		BatchPool& operator=(BatchPool&&) noexcept = default;
 		~BatchPool() = default;
 
 		void Destroy();

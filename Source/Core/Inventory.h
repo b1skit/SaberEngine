@@ -12,10 +12,10 @@ namespace core
 		Inventory() = default;
 
 		Inventory(Inventory const&) = default;
-		Inventory(Inventory&&) = default;
+		Inventory(Inventory&&) noexcept = default;
 
 		Inventory& operator=(Inventory const&) = default;
-		Inventory& operator=(Inventory&&) = default;
+		Inventory& operator=(Inventory&&) noexcept = default;
 
 		~Inventory() = default;
 
