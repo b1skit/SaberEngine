@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Renderer/RenderObjectIDs.h"
 
@@ -129,22 +129,29 @@ namespace fr
 
 
 	private:
-		Transform* m_parent;
-
-		std::vector<Transform*> m_children; 
-
-		// Transform's local orientation, *before* any parent transforms are applied:
-		glm::vec3 m_localTranslation;
-		glm::quat m_localRotationQuat;	// Rotation as a quaternion
-		glm::vec3 m_localScale;
+		// Ordered from largest to smallest to reduce padding:
 		
+		// 64-byte aligned matrices (largest)
 		glm::mat4 m_localMat; // == T*R*S
 		glm::mat4 m_globalMat;
 
+		// 32-byte containers
+		std::vector<Transform*> m_children; 
+
+		// 16-byte vec4/quat types
+		glm::quat m_localRotationQuat;	// Rotation as a quaternion
+
+		// 12-byte vec3 types
+		glm::vec3 m_localTranslation;
+		glm::vec3 m_localScale;
+
+		// 8-byte pointers and IDs
+		Transform* m_parent;
+		const gr::TransformID m_transformID;
+
+		// 1-byte bools (grouped together to minimize padding)
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
 		bool m_hasChanged; // Has the transform (or its parental heirarchy) changed since the last time this was false?
-
-		const gr::TransformID m_transformID;
 
 
 	private:

@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
 
@@ -222,19 +222,19 @@ namespace fr
 
 
 	private:
-		AnimationState m_animationState;
-
-		size_t m_activeAnimationIdx;
-		float m_animationSpeed;
-
+		// Ordered from largest to smallest to reduce padding:
+		
+		// Largest containers first (each ~24-32 bytes)
 		std::vector<std::string> m_animationNames;
 		std::vector<double> m_currentTimeSec;
-
 		std::vector<std::vector<std::vector<float>>> m_animChannelKeyframeTimesSec; // [animation][channel] == vector<float> keyframe times
-
 		std::vector<float> m_longestAnimChannelTimesSec; // Indexed per animation
-
 		std::vector<std::vector<float>> m_channelData; // ALL data for all animations
+
+		// Smaller types
+		size_t m_activeAnimationIdx;
+		float m_animationSpeed;
+		AnimationState m_animationState;
 
 
 	private: // Use the static creation factories
@@ -355,10 +355,11 @@ namespace fr
 
 		struct Channel final
 		{
-			InterpolationMode m_interpolationMode	= InterpolationMode::InterpolationMode_Invalid;
-			AnimationPath m_targetPath				= AnimationPath::AnimationPath_Invalid;
+			// Ordered from largest to smallest to reduce padding:
 			size_t m_keyframeTimesIdx				= k_invalidIdx;
 			size_t m_dataIdx						= k_invalidIdx;
+			InterpolationMode m_interpolationMode	= InterpolationMode::InterpolationMode_Invalid;
+			AnimationPath m_targetPath				= AnimationPath::AnimationPath_Invalid;
 			uint8_t m_dataFloatsPerKeyframe			= k_invalidFloatsPerKeyframe;
 		};
 

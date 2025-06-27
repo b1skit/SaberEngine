@@ -160,10 +160,10 @@ namespace fr
 
 
 	private:
+		// Ordered from largest to smallest to reduce padding:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
-		mutable std::recursive_mutex m_registeryMutex;
-
 		std::vector<entt::entity> m_deferredDeleteQueue;
+		mutable std::recursive_mutex m_registeryMutex;
 		std::mutex m_deferredDeleteQueueMutex;
 
 

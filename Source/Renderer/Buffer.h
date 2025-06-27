@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "EnumTypes.h"
@@ -176,21 +176,26 @@ namespace re
 
 
 	private:		
-		const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
-		const uint32_t m_dataByteSize;
-
+		// Ordered from largest to smallest to reduce padding:
+		
+		// Largest members first
 		const BufferParams m_bufferParams;		
-
 		std::unique_ptr<PlatObj> m_platObj;
 		
+		// 8-byte members
+		const uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
 		ResourceHandle m_cbvResourceHandle;
 		ResourceHandle m_srvResourceHandle;
-
-		bool m_isCurrentlyMapped;
+		
+		// 4-byte members
+		const uint32_t m_dataByteSize;
 
 #if defined(_DEBUG)
 		uint64_t m_creationFrameNum; // What frame was this buffer created on?
 #endif
+		
+		// 1-byte members (grouped together)
+		bool m_isCurrentlyMapped;
 
 	private:
 		// Use the factory Create() method instead

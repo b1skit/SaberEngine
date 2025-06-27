@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "Effect.h"
@@ -63,9 +63,10 @@ namespace gr
 	public:
 		struct TextureSlotDesc final
 		{
+			// Ordered from largest to smallest to reduce padding:
+			std::string m_shaderSamplerName;
 			core::InvPtr<re::Texture> m_texture;
 			core::InvPtr<re::Sampler> m_samplerObject;
-			std::string m_shaderSamplerName;
 			uint8_t m_uvChannelIdx = 0;
 		};
 
