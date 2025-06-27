@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "Material_GLTF_Unlit.h"
 #include "EnumTypes.h"
 
