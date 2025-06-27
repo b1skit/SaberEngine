@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BufferAllocator.h"
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
@@ -369,7 +369,7 @@ namespace re
 		{
 		case Buffer::StagingPool::Permanent:
 		{
-			StageMutable(uniqueID, data, totalBytes, 0); // Internally adds the buffer to m_dirtyBuffers
+			StageMutable(uniqueID, std::span<const std::byte>{static_cast<const std::byte*>(data), totalBytes}, 0); // Internally adds the buffer to m_dirtyBuffers
 		}
 		break;
 		case Buffer::StagingPool::Temporary:
@@ -419,11 +419,11 @@ namespace re
 	}
 
 
-	void BufferAllocator::StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	void BufferAllocator::StageMutable(Handle uniqueID, std::span<const std::byte> data, uint32_t dstBaseByteOffset)
 	{
 		SEBeginCPUEvent("BufferAllocator::StageMutable");
 
-		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
+		SEAssert(!data.empty(), "0 bytes is only valid for signalling the Buffer::Update to update all bytes");
 
 		uint32_t startIdx;
 		uint32_t totalBytes;
@@ -440,7 +440,7 @@ namespace re
 			startIdx = result->second.m_startIndex;
 			totalBytes = result->second.m_totalBytes;
 
-			SEAssert(numBytes <= totalBytes, "Trying to commit more data than is allocated");
+			SEAssert(data.size() <= totalBytes, "Trying to commit more data than is allocated");
 		}
 
 		// If it's our first commit, allocate first:
@@ -456,22 +456,22 @@ namespace re
 				totalBytes == util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[startIdx].size()),
 				"CommitMetadata and physical allocation out of sync");
 
-			SEAssert(dstBaseByteOffset + numBytes <= totalBytes, "Number of bytes is too large for the given offset");
+			SEAssert(dstBaseByteOffset + data.size() <= totalBytes, "Number of bytes is too large for the given offset");
 
 			// Copy the data into our CPU-side allocation:
 			void* dest = &m_mutableAllocations.m_committed[startIdx][dstBaseByteOffset]; // Byte address of base offset
-			memcpy(dest, data, numBytes);
+			memcpy(dest, data.data(), data.size());
 
 			// Find or insert a commit record for the given base offset:
 			MutableAllocation::CommitRecord& commitRecord = m_mutableAllocations.m_partialCommits[uniqueID];
 
-			if (numBytes == totalBytes)
+			if (data.size() == totalBytes)
 			{
 				// If we're committing all bytes, remove any other commits as we're guaranteed to write the data anyway
 				commitRecord.clear();
 				commitRecord.push_back(MutableAllocation::PartialCommit{
 					.m_baseOffset = 0,
-					.m_numBytes = numBytes,
+					.m_numBytes = static_cast<uint32_t>(data.size()),
 					.m_numRemainingUpdates = m_numFramesInFlight });
 			}
 			else
@@ -495,7 +495,7 @@ namespace re
 
 				const MutableAllocation::PartialCommit newCommit{
 					.m_baseOffset = dstBaseByteOffset,
-					.m_numBytes = numBytes,
+					.m_numBytes = static_cast<uint32_t>(data.size()),
 					.m_numRemainingUpdates = m_numFramesInFlight };
 
 				auto prev = commitRecord.insert(GetSortedInsertionPointItr(newCommit), newCommit);

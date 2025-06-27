@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BufferAllocator.h"
 #include "BindlessResource.h"
 #include "Buffer.h"
@@ -167,7 +167,9 @@ namespace re
 			re::Buffer::HasUsageBit(re::Buffer::Raw, m_bufferParams),
 			"Invalid buffer usage for partial updates");
 
-		s_bufferAllocator->StageMutable(GetUniqueID(), data, numBytes, dstBaseOffset);
+		s_bufferAllocator->StageMutable(GetUniqueID(), 
+			std::span<const std::byte>{static_cast<const std::byte*>(data), numBytes}, 
+			dstBaseOffset);
 
 		m_platObj->m_isCommitted = true;
 	}

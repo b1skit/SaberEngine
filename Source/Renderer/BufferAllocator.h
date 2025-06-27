@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Buffer.h"
 
@@ -173,7 +173,7 @@ namespace re
 
 	protected:
 		void Stage(Handle uniqueID, void const* data);	// Update the buffer data
-		void StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
+		void StageMutable(Handle uniqueID, std::span<const std::byte> data, uint32_t dstBaseByteOffset);
 		
 		void GetData(Handle uniqueID, void const** out_data) const;
 

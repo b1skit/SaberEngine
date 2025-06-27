@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
 
@@ -23,25 +23,25 @@ namespace gr
 		};
 
 
-		static void ComputeMinMaxPosition(glm::vec3 const* positions, size_t numPositions, glm::vec3* minXYZ, glm::vec3* maxXYZ)
+		static void ComputeMinMaxPosition(std::span<const glm::vec3> positions, glm::vec3* minXYZ, glm::vec3* maxXYZ)
 		{
 			if (!minXYZ && !maxXYZ)
 			{
 				return;
 			}
-			SEAssert(positions && numPositions > 0, "Cannot compute min/max from an empty positions vector");
+			SEAssert(!positions.empty(), "Cannot compute min/max from an empty positions vector");
 
 			glm::vec3 minResult(std::numeric_limits<float>::max());
 			glm::vec3 maxResult(std::numeric_limits<float>::min());
-			for (size_t i = 0; i < numPositions; ++i)
+			for (const auto& position : positions)
 			{
-				minResult.x = std::min(positions[i].x, minResult.x);
-				minResult.y = std::min(positions[i].y, minResult.y);
-				minResult.z = std::min(positions[i].z, minResult.z);
+				minResult.x = std::min(position.x, minResult.x);
+				minResult.y = std::min(position.y, minResult.y);
+				minResult.z = std::min(position.z, minResult.z);
 
-				maxResult.x = std::max(positions[i].x, maxResult.x);
-				maxResult.y = std::max(positions[i].y, maxResult.y);
-				maxResult.z = std::max(positions[i].z, maxResult.z);
+				maxResult.x = std::max(position.x, maxResult.x);
+				maxResult.y = std::max(position.y, maxResult.y);
+				maxResult.z = std::max(position.z, maxResult.z);
 			}
 
 			if (minXYZ)
@@ -52,6 +52,12 @@ namespace gr
 			{
 				*maxXYZ = maxResult;
 			}
+		}
+
+		// Legacy overload for compatibility
+		static void ComputeMinMaxPosition(glm::vec3 const* positions, size_t numPositions, glm::vec3* minXYZ, glm::vec3* maxXYZ)
+		{
+			ComputeMinMaxPosition(std::span<const glm::vec3>{positions, numPositions}, minXYZ, maxXYZ);
 		}
 	};
 }
