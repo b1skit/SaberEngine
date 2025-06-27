@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #include "TextUtils.h"
 
 
