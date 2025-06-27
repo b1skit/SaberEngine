@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "EnumTypes.h"
 #include "Material_GLTF_PBRMetallicRoughness.h"
 #include "Sampler.h"
@@ -101,11 +101,11 @@ namespace gr
 	}
 
 
-	void Material_GLTF_PBRMetallicRoughness::PackMaterialParamsData(void* dst, size_t maxSize) const
+	void Material_GLTF_PBRMetallicRoughness::PackMaterialParamsData(std::span<std::byte> data) const
 	{
-		SEAssert(sizeof(PBRMetallicRoughnessData) <= maxSize, "Not enough space to pack material instance data");
+		SEAssert(sizeof(PBRMetallicRoughnessData) <= data.size(), "Not enough space to pack material instance data");
 
-		PBRMetallicRoughnessData* typedDst = static_cast<PBRMetallicRoughnessData*>(dst);
+		PBRMetallicRoughnessData* typedDst = reinterpret_cast<PBRMetallicRoughnessData*>(data.data());
 		*typedDst = GetPBRMetallicRoughnessParamsData();
 	}
 

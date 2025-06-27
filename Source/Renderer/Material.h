@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "Effect.h"
@@ -149,7 +149,7 @@ namespace gr
 		void PackMaterialInstanceTextureSlotDescs(
 			core::InvPtr<re::Texture>*, core::InvPtr<re::Sampler>*, char[][k_shaderSamplerNameLength]) const;
 		
-		virtual void PackMaterialParamsData(void*, size_t maxSize) const = 0;
+		virtual void PackMaterialParamsData(std::span<std::byte> data) const = 0;
 
 
 	protected:

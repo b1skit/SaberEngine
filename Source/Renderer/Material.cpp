@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "Material.h"
@@ -96,7 +96,10 @@ namespace gr
 		instanceData.m_isShadowCaster = m_isShadowCaster;
 
 		// GPU data:
-		PackMaterialParamsData(instanceData.m_materialParamData.data(), instanceData.m_materialParamData.size());
+		PackMaterialParamsData(std::span<std::byte>{
+			reinterpret_cast<std::byte*>(instanceData.m_materialParamData.data()), 
+			instanceData.m_materialParamData.size()
+		});
 
 		// Metadata:
 		instanceData.m_effectID = m_effectID;

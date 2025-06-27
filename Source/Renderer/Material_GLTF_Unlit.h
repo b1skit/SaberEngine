@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Material.h"
 
@@ -36,7 +36,7 @@ namespace gr
 
 
 	private:
-		void PackMaterialParamsData(void*, size_t maxSize) const override;
+		void PackMaterialParamsData(std::span<std::byte> data) const override;
 
 
 	private:

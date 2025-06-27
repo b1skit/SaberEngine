@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "Material_GLTF_Unlit.h"
 #include "EnumTypes.h"
 
@@ -32,11 +32,11 @@ namespace gr
 	}
 
 
-	void Material_GLTF_Unlit::PackMaterialParamsData(void* dst, size_t maxSize) const
+	void Material_GLTF_Unlit::PackMaterialParamsData(std::span<std::byte> data) const
 	{
-		SEAssert(sizeof(UnlitData) <= maxSize, "Not enough space to pack material instance data");
+		SEAssert(sizeof(UnlitData) <= data.size(), "Not enough space to pack material instance data");
 
-		UnlitData* typedDst = static_cast<UnlitData*>(dst);
+		UnlitData* typedDst = reinterpret_cast<UnlitData*>(data.data());
 		*typedDst = GetUnlitData();
 	}
 

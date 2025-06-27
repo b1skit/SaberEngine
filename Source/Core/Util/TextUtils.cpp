@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "TextUtils.h"
 
 
@@ -37,13 +37,19 @@ namespace util
 	}
 
 
-	std::string FromWideCString(wchar_t const* wstr, size_t wstrLen)
+	std::string FromWideCString(std::span<const wchar_t> wstr)
 	{
 		std::string result;
-		result.resize(wstrLen);
-		std::wcstombs(result.data(), wstr, wstrLen);
+		result.resize(wstr.size());
+		std::wcstombs(result.data(), wstr.data(), wstr.size());
 
 		return result;
+	}
+
+
+	std::string FromWideCString(wchar_t const* wstr, size_t wstrLen)
+	{
+		return FromWideCString(std::span<const wchar_t>{wstr, wstrLen});
 	}
 
 

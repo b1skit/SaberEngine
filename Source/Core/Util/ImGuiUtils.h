@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -59,16 +59,18 @@ namespace util
 
 
 	template<typename T>
-	bool ShowBasicComboBox(char const* title, char const* const* options, size_t numOptions, T& curSelection)
+	bool ShowBasicComboBox(char const* title, std::span<const char* const> options, T& curSelection)
 	{
 		constexpr ImGuiComboFlags k_comboFlags = 0;
 
 		size_t curSelectionIdx = static_cast<size_t>(curSelection);
 		bool didSelect = false;
 
+		SEAssert(curSelectionIdx < options.size(), "Current selection index out of bounds");
+
 		if (ImGui::BeginCombo(title, options[curSelectionIdx], k_comboFlags))
 		{
-			for (size_t comboIdx = 0; comboIdx < numOptions; comboIdx++)
+			for (size_t comboIdx = 0; comboIdx < options.size(); comboIdx++)
 			{
 				const bool isSelected = comboIdx == curSelectionIdx;
 				if (ImGui::Selectable(options[comboIdx], isSelected))
@@ -89,18 +91,27 @@ namespace util
 		return didSelect;
 	}
 
+	// Legacy overload for compatibility
+	template<typename T>
+	bool ShowBasicComboBox(char const* title, char const* const* options, size_t numOptions, T& curSelection)
+	{
+		return ShowBasicComboBox(title, std::span<const char* const>{options, numOptions}, curSelection);
+	}
+
 
 	template<typename T>
-	bool ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
+	bool ShowBasicComboBox(char const* title, std::span<const std::string> options, T& curSelection)
 	{
 		constexpr ImGuiComboFlags k_comboFlags = 0;
 
 		size_t curSelectionIdx = static_cast<size_t>(curSelection);
 		bool didSelect = false;
 
+		SEAssert(curSelectionIdx < options.size(), "Current selection index out of bounds");
+
 		if (ImGui::BeginCombo(title, options[curSelectionIdx].c_str(), k_comboFlags))
 		{
-			for (size_t comboIdx = 0; comboIdx < numOptions; comboIdx++)
+			for (size_t comboIdx = 0; comboIdx < options.size(); comboIdx++)
 			{
 				const bool isSelected = comboIdx == curSelectionIdx;
 				if (ImGui::Selectable(options[comboIdx].c_str(), isSelected))
@@ -119,5 +130,12 @@ namespace util
 
 		curSelection = static_cast<T>(curSelectionIdx);
 		return didSelect;
+	}
+
+	// Legacy overload for compatibility
+	template<typename T>
+	bool ShowBasicComboBox(char const* title, std::string const* options, size_t numOptions, T& curSelection)
+	{
+		return ShowBasicComboBox(title, std::span<const std::string>{options, numOptions}, curSelection);
 	}
 }
