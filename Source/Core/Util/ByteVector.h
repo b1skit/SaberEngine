@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "../Assert.h"
 
@@ -89,7 +89,8 @@ namespace util
 
 
 	public: // Helpers:
-		void Rearrange(std::vector<size_t> const& indexMap); // Shuffle elements according to the index map
+		void Rearrange(std::span<const size_t> indexMap); // Shuffle elements according to the index map
+		void Rearrange(std::vector<size_t> const& indexMap); // Legacy overload for compatibility
 
 		// Template/typeless updaters:
 		static void CopyElement(ByteVector& dst, size_t dstElemIdx, ByteVector const& src, size_t srcElemIdx); // Element copy/overwrite
@@ -400,7 +401,7 @@ namespace util
 	}
 
 
-	inline void ByteVector::Rearrange(std::vector<size_t> const& indexMap)
+	inline void ByteVector::Rearrange(std::span<const size_t> indexMap)
 	{
 		std::vector<uint8_t> newData;
 		newData.resize(indexMap.size() * m_elementByteSize);
@@ -413,6 +414,12 @@ namespace util
 		}
 
 		m_data = std::move(newData);
+	}
+
+	// Legacy overload for compatibility  
+	inline void ByteVector::Rearrange(std::vector<size_t> const& indexMap)
+	{
+		Rearrange(std::span<const size_t>{indexMap});
 	}
 
 
