@@ -125,6 +125,9 @@
     <ClCompile Include="GraphicsService_Culling.cpp">
       <Filter>Source Files\fr\Services</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsService_Debug.cpp">
+      <Filter>Source Files\fr\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundsComponent.h">
@@ -215,6 +218,9 @@
       <Filter>Header Files\fr\Services</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsService_Culling.h">
+      <Filter>Header Files\fr\Services</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsService_Debug.h">
       <Filter>Header Files\fr\Services</Filter>
     </ClInclude>
   </ItemGroup>

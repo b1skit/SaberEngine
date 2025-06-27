@@ -4,11 +4,33 @@
 #include "GraphicsSystem.h"
 #include "TransformRenderData.h"
 
+#include "Core/AccessKey.h"
+
 
 struct DebugData;
 
+namespace fr
+{
+	class GraphicsService_Debug;
+}
+
 namespace gr
 {
+	struct DebugServiceData
+	{
+		// Colors for any/all coordinate axes
+		glm::vec3 m_xAxisColor = glm::vec3(1.f, 0.f, 0.f);
+		glm::vec3 m_yAxisColor = glm::vec3(0.f, 1.f, 0.f);
+		glm::vec3 m_zAxisColor = glm::vec3(0.f, 0.f, 1.f);
+		float m_axisOpacity = 0.5f;
+		float m_axisScale = 0.2f;
+
+		bool m_showWorldCoordinateAxis = false;
+
+		// TODO: Move more features into here
+	};
+
+
 	class DebugGraphicsSystem final
 		: public virtual GraphicsSystem
 		, public virtual IScriptableGraphicsSystem<DebugGraphicsSystem>
@@ -33,6 +55,7 @@ namespace gr
 
 	public:
 		DebugGraphicsSystem(gr::GraphicsSystemManager*);
+		~DebugGraphicsSystem();
 
 		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
@@ -55,18 +78,11 @@ namespace gr
 		std::shared_ptr<re::Stage> m_debugStage;
 		std::shared_ptr<re::Stage> m_wireframeStage;
 
-
 		re::BufferInput m_debugParams;
 		bool m_isDirty; // Triggers m_debugParams recommit
 
-		// Colors for any/all coordinate axes
-		glm::vec3 m_xAxisColor = glm::vec3(1.f, 0.f, 0.f);
-		glm::vec3 m_yAxisColor = glm::vec3(0.f, 1.f, 0.f);
-		glm::vec3 m_zAxisColor = glm::vec3(0.f, 0.f, 1.f);
-		float m_axisOpacity = 0.5f;
-		float m_axisScale = 0.2f;
+		DebugServiceData m_serviceData;
 
-		bool m_showWorldCoordinateAxis = false;
 		gr::BatchHandle m_worldCoordinateAxisBatch;
 
 		bool m_showMeshCoordinateAxis = false;
@@ -121,6 +137,12 @@ namespace gr
 	private:
 		std::unordered_set<gr::RenderDataID> m_selectedRenderDataIDs; // If emtpy, render all IDs
 		std::unordered_set<gr::TransformID> m_selectedTransformIDs;
+
+
+	public: // Debug service interface:
+		using AccessKey = accesscontrol::AccessKey<DebugGraphicsSystem, fr::GraphicsService_Debug>;
+
+		void EnableWorldCoordinateAxis(AccessKey, bool show);
 	};
 }
 

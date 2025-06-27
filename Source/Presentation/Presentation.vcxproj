@@ -100,6 +100,7 @@
     <ClInclude Include="EntityCommands.h" />
     <ClInclude Include="EntityManager.h" />
     <ClInclude Include="GraphicsService_Culling.h" />
+    <ClInclude Include="GraphicsService_Debug.h" />
     <ClInclude Include="IGraphicsService.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightComponent.h" />
@@ -132,6 +133,7 @@
     <ClCompile Include="EntityCommands.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="GraphicsService_Culling.cpp" />
+    <ClCompile Include="GraphicsService_Debug.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="Load_Common.cpp" />

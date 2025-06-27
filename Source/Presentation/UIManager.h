@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsService_Culling.h"
+#include "GraphicsService_Debug.h"
 
 #include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IEngineComponent.h"
@@ -82,5 +83,6 @@ namespace fr
 
 	private: // Graphics services:
 		fr::CullingGraphicsService m_cullingGraphicsService;
+		fr::GraphicsService_Debug m_debugGraphicsService;
 	};
 }

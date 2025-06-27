@@ -8,7 +8,7 @@
 
 namespace fr
 {
-	class CullingGraphicsService : public virtual IGraphicsService
+	class CullingGraphicsService final : public virtual IGraphicsService
 	{
 	public:
 		CullingGraphicsService() = default;

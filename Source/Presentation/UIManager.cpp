@@ -232,6 +232,7 @@ namespace fr
 
 		// Service initialization:
 		m_cullingGraphicsService.Initialize(re::RenderManager::Get());
+		m_debugGraphicsService.Initialize(re::RenderManager::Get());
 	}
 
 
@@ -591,11 +592,11 @@ namespace fr
 
 					if (ImGui::BeginMenu("Debug"))
 					{
-						m_cullingGraphicsService.PopulateImGuiMenu();
+						m_debugGraphicsService.PopulateImGuiMenu();
 
 						ImGui::Separator();
 						
-						//
+						m_cullingGraphicsService.PopulateImGuiMenu();
 
 						ImGui::EndMenu();
 					}

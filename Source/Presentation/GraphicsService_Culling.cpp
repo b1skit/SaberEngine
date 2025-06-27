@@ -62,18 +62,19 @@ namespace fr
 
 	void CullingGraphicsService::EnableCulling(bool isEnabled)
 	{
-		if (s_cullingGraphicsSystem)
 		{
 			std::unique_lock<std::shared_mutex> lock(s_cullingDataMutex);
+			s_cullingData.m_cullingEnabled = isEnabled;
+		}
 
+		if (s_cullingGraphicsSystem)
+		{
 			EnqueueServiceCommand([this, isEnabled]()
 				{
 					s_cullingGraphicsSystem->EnableCulling(
 						ACCESS_KEY(gr::CullingGraphicsSystem::AccessKey),
 						s_cullingData.m_cullingEnabled);
-				});
-
-			s_cullingData.m_cullingEnabled = isEnabled;
+				});			
 		}
 		else
 		{

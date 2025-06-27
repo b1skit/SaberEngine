@@ -10,6 +10,7 @@
 #include "TransformRenderData.h"
 
 #include "Core/InvPtr.h"
+#include "Core/SystemLocator.h"
 
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/ImGuiUtils.h"
@@ -333,6 +334,13 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_isDirty(true)
 	{
+		core::SystemLocator::Register<gr::DebugGraphicsSystem>(ACCESS_KEY(AccessKey), this);
+	}
+
+
+	DebugGraphicsSystem::~DebugGraphicsSystem()
+	{
+		core::SystemLocator::Unregister<gr::DebugGraphicsSystem>(ACCESS_KEY(AccessKey));
 	}
 
 
@@ -406,7 +414,7 @@ namespace gr
 			m_viewBatches->contains(mainCamID),
 			"Cannot find main camera ID in view batches");
 
-		if (m_showWorldCoordinateAxis)
+		if (m_serviceData.m_showWorldCoordinateAxis)
 		{
 			// Use the 1st RenderDataID that references the identity transform to obtain a view
 			std::vector<gr::RenderDataID> const& identityObjects =
@@ -864,13 +872,13 @@ namespace gr
 		return DebugData{
 				.g_scales = glm::vec4(
 					m_vertexNormalsScale,
-					m_axisScale,
+					m_serviceData.m_axisScale,
 					0.f,
 					0.f),
 				.g_colors = {
-					glm::vec4(m_xAxisColor, m_axisOpacity),	// X: Red
-					glm::vec4(m_yAxisColor, m_axisOpacity),	// Y: Green
-					glm::vec4(m_zAxisColor, m_axisOpacity),	// Z: Blue
+					glm::vec4(m_serviceData.m_xAxisColor, m_serviceData.m_axisOpacity),	// X: Red
+					glm::vec4(m_serviceData.m_yAxisColor, m_serviceData.m_axisOpacity),	// Y: Green
+					glm::vec4(m_serviceData.m_zAxisColor, m_serviceData.m_axisOpacity),	// Z: Blue
 					m_normalsColor,
 					m_wireframeColor},
 		};
@@ -998,7 +1006,6 @@ namespace gr
 			m_camerasToDebug.clear();
 		}
 
-		m_isDirty |= ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
 		m_isDirty |= ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
 
@@ -1052,20 +1059,27 @@ namespace gr
 			ImGui::Unindent();
 		}
 
-		if (m_showWorldCoordinateAxis || 
+		if (m_serviceData.m_showWorldCoordinateAxis ||
 			m_showMeshCoordinateAxis || 
 			m_showLightCoordinateAxis || 
 			m_showCameraFrustums || 
 			m_showAllTransforms)
 		{
 			ImGui::Indent();
-			m_isDirty |= ImGui::SliderFloat("Axis scale", &m_axisScale, 0.f, 1.f);
-			m_isDirty |= ImGui::SliderFloat("Axis opacity", &m_axisOpacity, 0.f, 1.f);
+			m_isDirty |= ImGui::SliderFloat("Axis scale", &m_serviceData.m_axisScale, 0.f, 1.f);
+			m_isDirty |= ImGui::SliderFloat("Axis opacity", &m_serviceData.m_axisOpacity, 0.f, 1.f);
 			ImGui::Unindent();
 		}
 
 		m_isDirty |= ImGui::Checkbox(std::format("Show mesh wireframes").c_str(), &m_showAllWireframe);
 		m_isDirty |= ImGui::Checkbox(std::format("Show deferred light mesh wireframes").c_str(), &m_showDeferredLightWireframe);
 		m_isDirty |= ShowColorPicker(m_showAllWireframe || m_showDeferredLightWireframe, m_wireframeColor);
+	}
+
+
+	void DebugGraphicsSystem::EnableWorldCoordinateAxis(AccessKey, bool show)
+	{
+		m_isDirty |= (show != m_serviceData.m_showWorldCoordinateAxis);
+		m_serviceData.m_showWorldCoordinateAxis = show;
 	}
 }
