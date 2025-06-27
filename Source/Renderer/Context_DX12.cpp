@@ -18,7 +18,7 @@ using Microsoft::WRL::ComPtr;
 // https://devblogs.microsoft.com/directx/gettingstarted-dx12agility/#2-set-agility-sdk-parameters
 // Note: The D3D12SDKVersion can be found on the SDK downloads page: https://devblogs.microsoft.com/directx/directx12agility/
 // Update the installed package via Project-> Manage NuGet Packages
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 611; }
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 616; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12\\"; }
 
 

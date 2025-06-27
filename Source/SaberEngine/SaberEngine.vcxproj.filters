@@ -78,9 +78,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Dependencies\Icon\SaberEngineApplicationIcon.ico">
-      <Filter>Dependencies\Resources</Filter>
-    </Image>
+    <Image Include="..\..\Dependencies\Icon\SaberEngineApplicationIcon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SaberEngine.rc">

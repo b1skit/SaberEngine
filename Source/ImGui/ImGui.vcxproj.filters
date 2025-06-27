@@ -71,4 +71,7 @@
       <Filter>Source Files\backends</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
