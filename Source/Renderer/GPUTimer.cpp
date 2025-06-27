@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "GPUTimer.h"
 #include "GPUTimer_Platform.h"
 #include "RenderManager.h"
@@ -374,7 +374,7 @@ namespace re
 					nameHash,
 					TimeRecord{
 						.m_name = name,
-						.m_parentName = parentName ? parentName : std::string(/*empty*/),
+						.m_parentName = parentName ? parentName : std::string{},
 						.m_numFramesSinceUpdated = 0,
 					});
 
