@@ -333,11 +333,6 @@ namespace
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
 		}
 
-		// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
-		// being accessed on a copy queue. For now, we (typically) set the initial state as COMMON for everything until
-		// more complex cases arise
-		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
-
 		// Note: optimizedClearValuePtr is ignored unless:
 		// - D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER,
 		// - D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are set in flags
@@ -360,11 +355,6 @@ namespace
 
 			optimizedClearValue.DepthStencil.Depth = texParams.m_optimizedClear.m_depthStencil.m_depth;
 			optimizedClearValue.DepthStencil.Stencil = texParams.m_optimizedClear.m_depthStencil.m_stencil;
-
-			if (texture->HasInitialData())
-			{
-				initialState = D3D12_RESOURCE_STATE_COPY_DEST;
-			}
 		}
 
 		const uint32_t numMips = texture->GetNumMips();
@@ -436,6 +426,9 @@ namespace
 			SEAssertF("Invalid texture dimension");
 		}
 
+		// Note: The copy queue requires resources in the COMMON state; this is mandatory if we're copying initial data
+		constexpr D3D12_RESOURCE_STATES k_initialState = D3D12_RESOURCE_STATE_COMMON;
+
 		dx12::HeapManager& heapMgr =
 			re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
@@ -443,11 +436,11 @@ namespace
 				.m_resourceDesc = resourceDesc,
 				.m_optimizedClearValue = optimizedClearValue,
 				.m_heapType = D3D12_HEAP_TYPE_DEFAULT,
-				.m_initialState = initialState,
+				.m_initialState = k_initialState,
 				.m_isMSAATexture = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Enabled)},
 			texture->GetWName().c_str());
 
-		return initialState;
+		return k_initialState;
 	}
 
 

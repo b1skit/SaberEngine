@@ -50,7 +50,7 @@ namespace
 			return;
 		}
 
-		std::string const& debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
+		std::string const& debugStr = std::format("{}: Resource \"{}\", mip {}\n{}{} -> {}",
 			dx12::GetDebugName(cmdList.GetD3DCommandList().Get()).c_str(),
 			resourceName,
 			subresourceIdx,
@@ -1230,8 +1230,12 @@ namespace dx12
 		// Transition to the copy destination state:
 		const uint32_t subresourceIdx = texture->GetSubresourceIndex(arrayIdx, faceIdx, mipLevel);
 		
+		// Legacy D3D12 barriers: Copy queue subresources used MUST be in COMMON state
+		const D3D12_RESOURCE_STATES toState = m_type == dx12::CommandListType::Copy ? 
+			D3D12_RESOURCE_STATE_COMMON : D3D12_RESOURCE_STATE_COPY_DEST;
+
 		TransitionResourceInternal(
-			texPlatObj->m_gpuResource->Get(), D3D12_RESOURCE_STATE_COPY_DEST, {subresourceIdx});
+			texPlatObj->m_gpuResource->Get(), toState, {subresourceIdx});
 
 		// Record the update:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/updatesubresources2
@@ -1262,7 +1266,7 @@ namespace dx12
 
 		TransitionResourceInternal(
 			bufferPlatformParams->GetGPUResource(),
-			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_COMMON, // Legacy D3D12 barriers: Copy queue subresources used MUST be in COMMON
 			{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 
 		m_commandList->CopyBufferRegion(
@@ -1276,8 +1280,15 @@ namespace dx12
 
 	void CommandList::CopyResource(ID3D12Resource* srcResource, ID3D12Resource* dstResource)
 	{
-		TransitionResourceInternal(srcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, {D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES});
-		TransitionResourceInternal(dstResource, D3D12_RESOURCE_STATE_COPY_DEST, {D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES});
+		// Legacy D3D12 barriers: Copy queue subresources used MUST be in COMMON
+		const D3D12_RESOURCE_STATES srcState = 
+			m_type == dx12::CommandListType::Copy ? D3D12_RESOURCE_STATE_COMMON : D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+		const D3D12_RESOURCE_STATES dstState =
+			m_type == dx12::CommandListType::Copy ? D3D12_RESOURCE_STATE_COMMON : D3D12_RESOURCE_STATE_COPY_DEST;
+
+		TransitionResourceInternal(srcResource, srcState, { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
+		TransitionResourceInternal(dstResource, dstState, { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 
 		m_commandList->CopyResource(dstResource, srcResource);
 	}
@@ -1437,6 +1448,10 @@ namespace dx12
 
 			auto AddBarrier = [this, &transition, &barriers](uint32_t subresourceIdx, D3D12_RESOURCE_STATES toState)
 				{
+					SEAssert(m_type != dx12::CommandListType::Copy ||
+						toState == D3D12_RESOURCE_STATE_COMMON, 
+						"D3D12 Legacy barriers require subresources ued in copy queues to be in D3D12_RESOURCE_STATE_COMMON only");
+
 					// If we've already seen this resource before, we can record the transition now (as we prepend any
 					// initial transitions when submitting the command list)	
 					if (m_resourceStates.HasResourceState(transition.m_resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?

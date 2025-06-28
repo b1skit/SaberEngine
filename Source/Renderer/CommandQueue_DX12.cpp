@@ -46,7 +46,7 @@ namespace
 
 	constexpr bool CommandListTypeSupportsState(dx12::CommandListType cmdListType, D3D12_RESOURCE_STATES state)
 	{
-		if (state == D3D12_RESOURCE_STATE_COMMON)
+		if (state == D3D12_RESOURCE_STATE_COMMON) // Everything supports COMMON
 		{
 			return true;
 		}
@@ -88,13 +88,10 @@ namespace
 		break;
 		case dx12::CommandListType::Copy:
 		{
-			// Note: The copy queue only supports the COPY_SOURCE and COPY_DEST states, but they're considered different
-			// to the COPY_SOURCE/COPY_DEST states on direct and compute queues
-			constexpr uint32_t k_allSupportedCopyStates = 
-				D3D12_RESOURCE_STATE_COPY_DEST |
-				D3D12_RESOURCE_STATE_COPY_SOURCE;
-
-			return state & k_allSupportedCopyStates;
+			// According to legacy D3D12 Resource Barriers requirements, subresources used in Copy queues MUST be in the
+			// state D3D12_RESOURCE_STATE_COMMON
+			// https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html#copy-queues
+			return false;
 		}
 		break;
 		case dx12::CommandListType::Bundle:
@@ -138,9 +135,9 @@ namespace
 		break;
 		case dx12::CommandListType::Copy:
 		{
-			// The copy queue only supports the COPY_SOURCE and COPY_DEST states, and they're considered different to
-			// the COPY_SOURCE/COPY_DEST states on direct and compute queues. Thus, always require a resource is in the
-			// COMMON state before it's used on a copy queue for the first time
+			// According to legacy D3D12 Resource Barriers requirements, subresources used in Copy queues MUST be in the
+			// state D3D12_RESOURCE_STATE_COMMON
+			// https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html#copy-queues
 			return true;
 		}
 		break;
@@ -173,7 +170,10 @@ namespace
 #else
 		SEAssert(CommandListTypeSupportsState(cmdListType, beforeState) &&
 			CommandListTypeSupportsState(cmdListType, afterState),
-			"Invalid before state for the current command list type");
+			"Invalid transition \"%s -> %s\" for the current command list type for resource \"%s\"",
+				dx12::GetResourceStateAsCStr(beforeState),
+				dx12::GetResourceStateAsCStr(afterState),
+				dx12::GetDebugName(resource).c_str());
 #endif
 
 		// TODO: This check is duplicated in CommandList::TransitionResource

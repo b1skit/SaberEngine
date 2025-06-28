@@ -12,6 +12,9 @@ namespace
 {
 	constexpr bool IsWriteableState(D3D12_RESOURCE_STATES state)
 	{
+		// Note: This function is not correct for copy command lists. The copy queue is a special case: It can only deal
+		// with resources in the COMMON state, and thus this means they're writeable if they're being copied to
+
 		switch (state)
 		{
 		case D3D12_RESOURCE_STATE_RENDER_TARGET:
@@ -55,7 +58,7 @@ namespace dx12
 	void GlobalResourceState::SetState(
 		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t fenceVal)
 	{
-		const D3D12_RESOURCE_STATES currentState = GetState(subresourceIdx);
+		const D3D12_RESOURCE_STATES prevState = GetState(subresourceIdx);
 
 		const bool hasOnlyOneSubresource = m_numSubresources == 1;
 		IResourceState::SetState(afterState, subresourceIdx, false, hasOnlyOneSubresource);
@@ -63,19 +66,24 @@ namespace dx12
 		// Resources not created with the D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS flag cannot be written to from
 		// multiple queues simultaneously. A queue that transitions a resource to a writeable state is considered to
 		// exclusively own a resource. 
-		// We don't (currently) use the simultaneous access flag due to some of its drawbacks, but still handle it here
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/executing-and-synchronizing-command-lists#accessing-resources-from-multiple-command-queues
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
+
+		const dx12::CommandListType prevCmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence);
+		const dx12::CommandListType afterCmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(fenceVal);
+		
+		const bool afterStateIsWriteable = 
+			afterCmdListType == dx12::CommandListType::Copy ||
+			IsWriteableState(afterState);
 
 		// Note: If we're changing command lists, we count a state transition barrier as a "modification" here as
 		// non-simultaneous-access resources cannot be referenced by transition barriers on multiple in-flight GPU
 		// operations.
-		const bool transitionModification = (currentState != afterState) &&
-			(dx12::Fence::GetCommandListTypeFromFenceValue(fenceVal) !=
-				dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence)) &&
-			(!m_allowSimultaneousAccess || IsWriteableState(afterState));
+		const bool transitionModification = (prevState != afterState) &&
+			(prevCmdListType != afterCmdListType) &&
+			(!m_allowSimultaneousAccess || afterStateIsWriteable);
 
-		if (IsWriteableState(afterState) || transitionModification)
+		if (afterStateIsWriteable || transitionModification)
 		{
 			m_lastModificationFence = fenceVal;
 		}

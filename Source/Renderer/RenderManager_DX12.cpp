@@ -391,7 +391,15 @@ namespace dx12
 				return StageTypeToCommandListType(stageType) == dx12::CommandListType::Direct;
 			};
 
-		auto CmdListTypeChanged = [&IsGraphicsQueueStageType](
+		// A command list can't set a different CBV/SRV/UAV descriptor heap after setting a root signature with the 
+		// D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED flag set. Currently, we only set
+		// externally-managed descriptor heaps when using bindless resources, which is only used when ray-tracing
+		auto StageUsesCustomHeap = [](const re::Stage::Type stageType) -> bool
+			{
+				return stageType == re::Stage::Type::RayTracing;
+			};
+
+		auto CmdListTypeChanged = [&IsGraphicsQueueStageType, &StageUsesCustomHeap](
 			const re::Stage::Type prev, const re::Stage::Type current) -> bool
 			{
 				SEAssert(prev != re::Stage::Type::Parent &&
@@ -399,7 +407,8 @@ namespace dx12
 					"Previous type should always represent the last command list executed");
 
 				return current != re::Stage::Type::Parent &&
-					IsGraphicsQueueStageType(prev) != IsGraphicsQueueStageType(current);
+					(IsGraphicsQueueStageType(prev) != IsGraphicsQueueStageType(current) ||
+						StageUsesCustomHeap(prev) != StageUsesCustomHeap(current));
 			};
 
 		// A WorkRange spans a contiguous subset of the Stages within a single StagePipeline

@@ -214,7 +214,9 @@ namespace
 
 		// Allow direct indexing by default:
 		flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
-		flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+		
+		// TODO: Use this flag once we support sampler heaps
+		//flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
 
 		for (uint8_t shaderIdx = 0; shaderIdx < re::Shader::ShaderType_Count; shaderIdx++)
 		{
