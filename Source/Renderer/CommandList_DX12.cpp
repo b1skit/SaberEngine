@@ -1446,7 +1446,11 @@ namespace dx12
 
 #if defined(DEBUG_CMD_LIST_RESOURCE_TRANSITIONS)
 						DebugResourceTransitions(
-							*this, dx12::GetDebugName(resource).c_str(), currentKnownState, toState, subresourceIdx);
+							*this,
+							dx12::GetDebugName(transition.m_resource).c_str(),
+							currentKnownState,
+							toState,
+							subresourceIdx);
 #endif
 
 						if (currentKnownState == toState)
@@ -1468,7 +1472,12 @@ namespace dx12
 					else
 					{
 						DebugResourceTransitions(
-							*this, dx12::GetDebugName(resource).c_str(), toState, toState, subresourceIdx, true); // PENDING
+							*this,
+							dx12::GetDebugName(transition.m_resource).c_str(),
+							toState,
+							toState,
+							subresourceIdx,
+							true); // PENDING
 					}
 #endif
 

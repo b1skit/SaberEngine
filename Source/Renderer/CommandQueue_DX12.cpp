@@ -13,6 +13,10 @@ using Microsoft::WRL::ComPtr;
 //#define CHECK_TRANSITION_BARRIER_COMMAND_LIST_COMPATIBILITY
 //#define DEBUG_FENCES
 
+#if defined(DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS)
+#include "Core/Logger.h"
+#endif
+
 
 namespace
 {
