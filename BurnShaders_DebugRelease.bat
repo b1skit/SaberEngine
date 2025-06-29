@@ -1,2 +1,14 @@
-Build\x64\DebugRelease\DroidShaderBurner\DroidShaderBurner.exe -buildconfig DebugRelease -projectRoot D:\Projects\Development\SaberEngine\ -DX12ShaderCompiler "C:\Program Files (x86)\Windows Kits\10\Redist\D3D\x64\dxc.exe" -cleanandrebuild -shadersOnly
+@echo off
+REM Change working directory to \SaberEngine\SaberEngine\DroidShaderBurner\
+cd /d "%~dp0SaberEngine\DroidShaderBurner"
+
+REM Execute:
+@echo on
+..\..\Build\x64\DebugRelease\DroidShaderBurner\DroidShaderBurner.exe -buildconfig DebugRelease -projectRoot D:\Projects\Development\SaberEngine\ -cleanandrebuild -shadersOnly
+
+@echo off
+REM Move back to the script directory
+cd ..\..\
+
+REM Pause to see the output
 timeout /t 7
