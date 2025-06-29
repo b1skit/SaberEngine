@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
 #include "ThreadPool.h"
@@ -88,7 +88,15 @@ namespace core
 
 			waitingLock.unlock();
 
-			currentJob(); // Do the work
+			// Execute the job with exception handling
+			try
+			{
+				currentJob(); // Do the work
+			}
+			catch (...)
+			{
+				SEAssert(false, "ThreadPool job threw an exception");
+			}
 		}
 	}
 
