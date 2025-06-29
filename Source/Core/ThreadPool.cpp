@@ -1,9 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
+#include "Logger.h"
 #include "ThreadPool.h"
 
 #include "Util/CastUtils.h"
+
+#ifdef _WIN32
+#include <eh.h>
+#endif
 
 
 namespace core
@@ -88,15 +93,31 @@ namespace core
 
 			waitingLock.unlock();
 
-			// Execute the job with exception handling
-			try
+			// Execute the job with comprehensive exception handling
+#ifdef _WIN32
+			__try
 			{
-				currentJob(); // Do the work
+#endif
+				try
+				{
+					currentJob(); // Do the work
+				}
+				catch (const std::exception& e)
+				{
+					LOG_ERROR("ThreadPool job threw std::exception: %s", e.what());
+				}
+				catch (...)
+				{
+					LOG_ERROR("ThreadPool job threw unknown exception");
+				}
+#ifdef _WIN32
 			}
-			catch (...)
+			__except (EXCEPTION_EXECUTE_HANDLER)
 			{
-				SEAssert(false, "ThreadPool job threw an exception");
+				DWORD exceptionCode = GetExceptionCode();
+				LOG_ERROR("ThreadPool job caused system exception: 0x%08X", exceptionCode);
 			}
+#endif
 		}
 	}
 
