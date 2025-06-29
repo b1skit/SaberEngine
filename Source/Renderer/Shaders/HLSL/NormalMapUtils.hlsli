@@ -45,7 +45,7 @@ float3x3 BuildTBN(float3 inFaceNormal, float4 inLocalTangent, float4x4 transpose
 // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
 float2 OctWrap(float2 v)
 {
-	return (1.f - abs(v.yx)) * (v.xy >= 0.f ? 1.f : -1.f);
+	return 1.f - abs(v.yx) * select(v.xy >= 0.f, 1.f, -1.f);
 }
 
 
@@ -65,7 +65,7 @@ float3 DecodeOctohedralNormal(float2 f)
 	// https://twitter.com/Stubbesaurus/status/937994790553227264
 	float3 n = float3(f.x, f.y, 1.f - abs(f.x) - abs(f.y));
 	float t = saturate(-n.z);
-	n.xy += n.xy >= 0.f ? -t : t;
+	n.xy += select(n.xy >= 0.f, -t, t);
 	return normalize(n);
 }
 

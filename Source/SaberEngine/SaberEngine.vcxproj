@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.props" Condition="Exists('..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.props')" />
   <Import Project="..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.props')" />
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -93,7 +94,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
@@ -117,8 +119,10 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
+</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -141,7 +145,8 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
@@ -169,7 +174,8 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
 xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
 xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
-xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y</Command>
+xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -218,6 +224,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
     <Import Project="..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.targets" Condition="Exists('..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -226,5 +233,7 @@ xcopy "$(UCRTContentRoot)\Redist\D3D\x64\dxcompiler.dll" "$(SolutionDir)SaberEng
     <Error Condition="!Exists('..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.props'))" />
     <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.D3D12.1.616.1\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.props'))" />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.Direct3D.DXC.1.8.2505.28\build\native\Microsoft.Direct3D.DXC.targets'))" />
   </Target>
 </Project>
