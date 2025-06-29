@@ -512,10 +512,10 @@ namespace opengl
 		// Figure out what type of shader(s) we're loading:
 		std::array<uint32_t, re::Shader::ShaderType_Count> foundShaderTypeFlags{0};
 
-		// Make sure we're done loading the shader texts before we continue:
+		// Make sure we're done loading the shader texts before we continue and handle any exceptions:
 		for (auto const& loadFuture : loadShaderTextsTaskFutures)
 		{
-			loadFuture.wait();
+			loadFuture.get(); // This will rethrow any exceptions from the job
 		}
 
 		// Determine which shaders we've loaded:

@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
 #include "BoundsComponent.h"
 #include "Camera.h"
@@ -2681,10 +2681,10 @@ namespace
 					PreLoadGLTFAnimationData(m_sceneData, m_sceneMetadata); // Single-threaded while everything else loads
 				}
 
-				// Wait for the async creation tasks to be done:
+				// Wait for the async creation tasks to be done and handle any exceptions:
 				for (auto const& loadFuture : loadFutures)
 				{
-					loadFuture.wait();
+					loadFuture.get(); // This will rethrow any exceptions from the job
 				}
 				loadFutures.clear();
 			}

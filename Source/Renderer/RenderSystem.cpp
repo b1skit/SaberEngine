@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
@@ -560,10 +560,10 @@ namespace gr
 				}
 			}
 
-			// Wait for all tasks within the current execution group to complete
+			// Wait for all tasks within the current execution group to complete and handle any exceptions
 			for (auto const& updateFuture : updateStepFutures)
 			{
-				updateFuture.wait();
+				updateFuture.get(); // This will rethrow any exceptions from the job
 			}
 		}
 

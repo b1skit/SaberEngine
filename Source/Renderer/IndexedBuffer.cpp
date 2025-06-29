@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "IndexedBuffer.h"
 
 #include "Core/Config.h"
@@ -76,10 +76,10 @@ namespace gr
 			entry.second.Update();
 		}
 
-		// Wait for the updates to complete
+		// Wait for the updates to complete and handle any exceptions
 		for (size_t i = 0; i < m_indexedBuffers.size(); ++i)
 		{
-			bufferUpdateFutures[i].wait();
+			bufferUpdateFutures[i].get(); // This will rethrow any exceptions from the job
 		}
 
 		SEEndCPUEvent();

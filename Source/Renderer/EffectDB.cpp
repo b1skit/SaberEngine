@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
@@ -605,12 +605,12 @@ namespace effect
 				}
 			}
 
-			// Wait for loading to complete:
+			// Wait for loading to complete and handle any exceptions:
 			if (s_threadedEffectLoading)
 			{
 				for (auto const& taskFuture : taskFutures)
 				{
-					taskFuture.wait();
+					taskFuture.get(); // This will rethrow any exceptions from the job
 				}
 			}
 		}
