@@ -148,11 +148,334 @@ namespace
 		}
 		return "DROID_ERROR_FAILED_TO_ASSEMBLE_SHADER_INPUT_PATH";
 	}
+
+
+	// Helper function to perform the actual compilation work
+	static droid::ErrorCode CompileShader_HLSL_DXC_API_Internal(
+		droid::HLSLCompileOptions const& compileOptions,
+		std::vector<std::string> const& includeDirectories,
+		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
+		std::string const& entryPointName,
+		re::Shader::ShaderType shaderType,
+		std::vector<std::string> const& defines,
+		std::string const& outputDir)
+	{
+		std::string const& outputFileName = std::format("{}.cso",
+			droid::BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
+
+		std::string concatenatedDefines;
+		for (auto const& define : defines)
+		{
+			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
+		}
+
+		std::string const& outputMsg = std::format("Compiling HLSL {} shader \"{}\" (DXC API){}{}\n",
+			re::Shader::ShaderTypeToCStr(shaderType),
+			outputFileName,
+			concatenatedDefines.empty() ? "" : ", Defines =",
+			concatenatedDefines);
+		std::cout << outputMsg.c_str();
+
+		// Initialize COM if not already done
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+		const bool comInitialized = SUCCEEDED(hr);
+
+		// Create DXC instances
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
+
+		hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+		if (FAILED(hr))
+		{
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ComError;
+		}
+
+		hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+		if (FAILED(hr))
+		{
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ComError;
+		}
+
+		// Load source file
+		std::string inputPath = BuildInputPath(includeDirectories, extensionlessSrcFilename);
+		if (inputPath.find("DROID_ERROR") != std::string::npos)
+		{
+			std::cout << "Failed to find shader source file: " << extensionlessSrcFilename << ".hlsl\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::FileError;
+		}
+
+		Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
+		std::wstring inputPathW = util::ToWideString(inputPath);
+		hr = utils->LoadFile(inputPathW.c_str(), nullptr, &sourceBlob);
+		if (FAILED(hr))
+		{
+			std::cout << "Failed to load shader source file: " << inputPath << "\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::FileError;
+		}
+
+		// Build arguments vector
+		std::vector<std::wstring> argStrings;
+
+		// Add nologo
+		argStrings.push_back(L"nologo");
+
+		// Handle HLSLCompileOptions:
+		if (compileOptions.m_disableOptimizations)
+		{
+			argStrings.push_back(L"-Od");
+		}
+		if (compileOptions.m_enableDebuggingInfo)
+		{
+			argStrings.push_back(L"-Zi");
+			argStrings.push_back(L"-Qembed_debug");
+		}
+		if (compileOptions.m_allResourcesBound)
+		{
+			argStrings.push_back(L"-all-resources-bound");
+		}
+		if (compileOptions.m_treatWarningsAsErrors)
+		{
+			argStrings.push_back(L"-WX");
+		}
+		if (compileOptions.m_enable16BitTypes)
+		{
+			argStrings.push_back(L"-enable-16bit-types");
+		}
+
+		// Extra commands
+		argStrings.push_back(L"-auto-binding-space");
+		argStrings.push_back(L"0");
+
+		if (compileOptions.m_targetProfile == "6_6")
+		{
+			argStrings.push_back(L"-enable-payload-qualifiers");
+		}
+
+		// Defines
+		argStrings.push_back(L"-D");
+		argStrings.push_back(util::ToWideString(k_dx12Flag));
+
+		argStrings.push_back(L"-D");
+		argStrings.push_back(util::ToWideString(k_shaderTypeDefines[shaderType]));
+
+		for (auto const& define : defines)
+		{
+			std::string formattedDefine = define;
+			const size_t spaceCharIdx = formattedDefine.find_first_of(' ');
+			if (spaceCharIdx != std::string::npos)
+			{
+				formattedDefine[spaceCharIdx] = '=';
+			}
+
+			argStrings.push_back(L"-D");
+			argStrings.push_back(util::ToWideString(formattedDefine));
+		}
+
+		// Include directories
+		for (auto const& include : includeDirectories)
+		{
+			argStrings.push_back(L"-I");
+			argStrings.push_back(util::ToWideString(include));
+		}
+
+		// Target profile
+		argStrings.push_back(L"-T");
+		argStrings.push_back(util::ToWideString(BuildTargetProfileArg(shaderType, compileOptions.m_targetProfile)));
+
+		// Optimization level
+		argStrings.push_back(GetOptimizationLevelCStr(compileOptions.m_optimizationLevel));
+
+		// Entry point
+		argStrings.push_back(L"-E");
+		argStrings.push_back(util::ToWideString(entryPointName));
+
+		// Finally, pack our arguments into a LPCWSTR array:
+		std::vector<LPCWSTR> arguments;
+		arguments.reserve(argStrings.size());
+		for (auto const& argString : argStrings)
+		{
+			arguments.emplace_back(argString.c_str());
+		}
+
+		// Create a DxC instance:
+		Microsoft::WRL::ComPtr<IDxcUtils> dxcUtils;
+		hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+		if (FAILED(hr))
+		{
+			std::cout << "Failed to create IDxcUtils instance with HRESULT: 0x" << std::hex << hr << "\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ComError;
+		}
+
+		// Create include handler
+		Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+		hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
+		if (FAILED(hr))
+		{
+			std::cout << "Failed to create IDxcIncludeHandler with HRESULT: 0x" << std::hex << hr << "\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ComError;
+		}
+
+		// Compile:
+		const DxcBuffer sourceBuffer{
+			.Ptr = sourceBlob->GetBufferPointer(),
+			.Size = sourceBlob->GetBufferSize(),
+			.Encoding = 0, };
+
+		Microsoft::WRL::ComPtr<IDxcResult> compileResult;
+		hr = compiler->Compile(
+			&sourceBuffer,
+			arguments.data(),
+			static_cast<UINT32>(arguments.size()),
+			includeHandler.Get(),
+			IID_PPV_ARGS(&compileResult));
+
+		if (FAILED(hr))
+		{
+			std::cout << "DXC compilation failed with HRESULT: 0x" << std::hex << hr << "\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ShaderError;
+		}
+
+		// Check compilation status
+		HRESULT compilationStatus;
+		compileResult->GetStatus(&compilationStatus);
+		if (FAILED(compilationStatus))
+		{
+			if (compileResult->HasOutput(DXC_OUT_ERRORS))
+			{
+				Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+				HRESULT outputResult = compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+				if (errors && errors->GetStringLength() > 0)
+				{
+					std::wcout << "Shader compilation errors:\n" << errors->GetStringPointer() << "\n";
+				}
+			}
+
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ShaderError;
+		}
+
+		// Get compiled shader blob
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
+		compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
+		if (!shaderBlob)
+		{
+			std::cout << "Failed to get compiled shader blob\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::ShaderError;
+		}
+
+		// Write output file
+		std::string const& combinedFilePath = std::format("{}{}", outputDir, outputFileName);
+
+		// Ensure output directory exists
+		std::filesystem::path outputPath(combinedFilePath);
+		std::filesystem::create_directories(outputPath.parent_path());
+
+		std::ofstream outFile(combinedFilePath, std::ios::binary);
+		if (!outFile.is_open())
+		{
+			std::cout << "Failed to create output file: " << combinedFilePath << "\n";
+			if (comInitialized)
+			{
+				CoUninitialize();
+			}
+			return droid::ErrorCode::FileError;
+		}
+
+		outFile.write(static_cast<const char*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize());
+		outFile.close();
+
+		if (comInitialized)
+		{
+			CoUninitialize();
+		}
+		return droid::ErrorCode::Success;
+	}
 }
 
 namespace droid
 {
-	droid::ErrorCode CompileShader_HLSL(
+	droid::ErrorCode CompileShader_HLSL_DXC_API(
+		HLSLCompileOptions const& compileOptions,
+		std::vector<std::string> const& includeDirectories,
+		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
+		std::string const& entryPointName,
+		re::Shader::ShaderType shaderType,
+		std::vector<std::string> const& defines,
+		std::string const& outputDir,
+		AsyncCompilationTask* pAsyncTask)
+	{
+		if (compileOptions.m_multithreadedCompilation && pAsyncTask != nullptr)
+		{
+			// Multithreaded compilation:		
+			pAsyncTask->shaderName = extensionlessSrcFilename; // For debuggin
+
+			pAsyncTask->future = std::async(std::launch::async, 
+				CompileShader_HLSL_DXC_API_Internal,
+				compileOptions,
+				includeDirectories,
+				extensionlessSrcFilename,
+				variantID,
+				entryPointName,
+				shaderType,
+				defines,
+				outputDir);
+			
+			return droid::ErrorCode::Success;
+		}
+		else
+		{
+			// Singlethreaded compilation:
+			return CompileShader_HLSL_DXC_API_Internal(
+				compileOptions,
+				includeDirectories,
+				extensionlessSrcFilename,
+				variantID,
+				entryPointName,
+				shaderType,
+				defines,
+				outputDir);
+		}
+	}
+
+
+	droid::ErrorCode CompileShader_HLSL_DXC_CMDLINE(
 		std::string const& directXCompilerExePath,
 		PROCESS_INFORMATION& processInfo,
 		HLSLCompileOptions const& compileOptions,
@@ -173,7 +496,7 @@ namespace droid
 			concatenatedDefines = std::format("{} {}", concatenatedDefines, define);
 		}
 
-		std::string const& outputMsg = std::format("Compiling HLSL {} shader \"{}\"{}{}\n",
+		std::string const& outputMsg = std::format("Compiling HLSL {} shader \"{}\" (DXC.exe){}{}\n",
 			re::Shader::ShaderTypeToCStr(shaderType),
 			outputFileName,
 			concatenatedDefines.empty() ? "" : ", Defines =",

@@ -22,7 +22,29 @@ namespace droid
 		bool m_multithreadedCompilation = true;
 	};
 
-	droid::ErrorCode CompileShader_HLSL(
+	// Add new struct to hold async compilation task
+	struct AsyncCompilationTask
+	{
+		std::future<droid::ErrorCode> future;
+		std::string shaderName;
+	};
+
+
+	// Compile HLSL shaders using the DXC C++ API
+	droid::ErrorCode CompileShader_HLSL_DXC_API(
+		HLSLCompileOptions const& compileOptions,
+		std::vector<std::string> const& includeDirectories,
+		std::string const& extensionlessSrcFilename,
+		uint64_t variantID,
+		std::string const& entryPointName,
+		re::Shader::ShaderType shaderType,
+		std::vector<std::string> const& defines,
+		std::string const& outputDir,
+		AsyncCompilationTask* pAsyncTask = nullptr);
+
+
+	// Compile HLSL shaders using the DXC command line tool
+	droid::ErrorCode CompileShader_HLSL_DXC_CMDLINE(
 		std::string const& directXCompilerExePath,
 		PROCESS_INFORMATION&,
 		HLSLCompileOptions const&,

@@ -2,8 +2,6 @@
 #pragma once
 #include "ParseHelpers.h"
 
-#include "Renderer/Shader.h"
-
 #include "Core/Util/FileIOUtils.h"
 
 
@@ -51,6 +49,7 @@ namespace droid
 
 		bool m_doCppCodeGen = true;
 		bool m_compileShaders = true;
+		bool m_useDXCApi = true; // Use the C++ DXC API by default, unless a dxc.exe path is provided
 	};
 
 

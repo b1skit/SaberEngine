@@ -531,17 +531,27 @@ namespace droid
 		{
 			std::cout << "Compiling HLSL shaders...\n";
 
-			result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
-			if (result != droid::ErrorCode::Success)
+			if (m_parseParams.m_useDXCApi == false)
 			{
-				return result;
+				if (m_parseParams.m_directXCompilerExePath.empty())
+				{
+					std::cout << "DXC C++ API is disabled, but no DXC.exe compiler path received" << "\n";
+					result = droid::ErrorCode::ConfigurationError;
+				}
+
+				result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
+				if (result != droid::ErrorCode::Success)
+				{
+					return result;
+				}
 			}
 
 			// Start by clearing out any previously generated code:
 			droid::CleanDirectory(m_parseParams.m_hlslShaderOutputDir.c_str());
 
 			// Populate the compile options based on the build configuration:
-			HLSLCompileOptions compileOptions;
+			HLSLCompileOptions compileOptions{};			
+
 			switch (m_parseParams.m_buildConfiguration)
 			{
 			case util::BuildConfiguration::Debug:
@@ -633,7 +643,8 @@ namespace droid
 					return result;
 				};
 
-			std::vector<PROCESS_INFORMATION> processInfos; // The HLSL shader is invoked as a seperate process
+			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
+			std::vector<droid::AsyncCompilationTask> asyncTasks; // For API-based async compilation
 
 			std::map<std::string, std::set<uint64_t>> seenShaderNamesAndVariants;
 
@@ -658,24 +669,65 @@ namespace droid
 
 						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
-							PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
+							std::string const& extensionlessShaderName = technique.second._Shader[shaderTypeIdx];
+							const uint64_t variantID = technique.second.m_shaderVariantIDs[shaderTypeIdx];
+							std::string const& entryPointName = technique.second._ShaderEntryPoint[shaderTypeIdx];
+							const re::Shader::ShaderType shaderType = static_cast<re::Shader::ShaderType>(shaderTypeIdx);
+							std::vector<std::string> const& defines = technique.second._Defines[shaderTypeIdx];
+							std::string const& outputDir = m_parseParams.m_hlslShaderOutputDir;
 
-							result = CompileShader_HLSL(
-								m_parseParams.m_directXCompilerExePath,
-								processInfo,
-								compileOptions,
-								hlslIncludeDirectories,
-								technique.second._Shader[shaderTypeIdx],
-								technique.second.m_shaderVariantIDs[shaderTypeIdx],
-								technique.second._ShaderEntryPoint[shaderTypeIdx],
-								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
-								technique.second._Defines[shaderTypeIdx],
-								m_parseParams.m_hlslShaderOutputDir);
-
-							if (compileOptions.m_multithreadedCompilation == false)
+							if (m_parseParams.m_useDXCApi)
 							{
-								result = CloseProcess(processInfo);
-								processInfos.pop_back();
+								if (compileOptions.m_multithreadedCompilation)
+								{
+									// Async API compilation
+									droid::AsyncCompilationTask& asyncTask = asyncTasks.emplace_back();
+									result = CompileShader_HLSL_DXC_API(
+										compileOptions,
+										hlslIncludeDirectories,
+										extensionlessShaderName,
+										variantID,
+										entryPointName,
+										shaderType,
+										defines,
+										outputDir,
+										&asyncTask);
+								}
+								else
+								{
+									// Sync API compilation
+									result = CompileShader_HLSL_DXC_API(
+										compileOptions,
+										hlslIncludeDirectories,
+										extensionlessShaderName,
+										variantID,
+										entryPointName,
+										shaderType,
+										defines,
+										outputDir);
+								}
+							}
+							else
+							{
+								PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
+
+								result = CompileShader_HLSL_DXC_CMDLINE(
+									m_parseParams.m_directXCompilerExePath,
+									processInfo,
+									compileOptions,
+									hlslIncludeDirectories,
+									extensionlessShaderName,
+									variantID,
+									entryPointName,
+									shaderType,
+									defines,
+									outputDir);
+
+								if (compileOptions.m_multithreadedCompilation == false)
+								{
+									result = CloseProcess(processInfo);
+									processInfos.pop_back();
+								}
 							}
 
 							if (result != droid::ErrorCode::Success)
@@ -694,8 +746,20 @@ namespace droid
 				}
 			}
 
-			// Check our exit codes:
-			for (auto const& processInfo : processInfos) // Will be empty if threading is disabled
+			 // Wait for async API compilation tasks to complete
+			for (auto& asyncTask : asyncTasks)
+			{
+				const droid::ErrorCode taskResult = asyncTask.future.get();
+
+				if (taskResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
+				{
+					result = taskResult;
+				}
+			}
+
+			// Check our exit codes for command line processes:
+			// Will be empty if the C++ DXC API is used, or if using the command line compiler with threading disabled
+			for (auto const& processInfo : processInfos) 
 			{
 				const droid::ErrorCode processCloseResult = CloseProcess(processInfo);
 				if (processCloseResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)

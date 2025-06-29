@@ -14,7 +14,9 @@ namespace
 	constexpr char const* k_delimiterChar = "-";
 	constexpr char const* k_projectRootCmdLineArg = "-projectroot";
 	
+	// DXC: Override use of C++ DXC API by providing a path to an external dxc.exe
 	constexpr char const* k_dx12ShaderCompilerCmdLineArg = "-dx12shadercompiler";
+
 	constexpr char const* k_dx12TargetProfileArg = "-dx12targetprofile";
 
 	constexpr char const* k_buildConfigCmdLineArg = "-buildconfig";
@@ -75,7 +77,6 @@ int main(int argc, char* argv[])
 	bool doBuild = true;
 	bool shadersOnly = false;
 	bool projectRootDirReceived = false;
-	bool dx12ShaderCompilerArgReceived = false;
 	bool buildConfigArgReceived = false;
 	if (argc > 0)
 	{
@@ -143,10 +144,11 @@ int main(int argc, char* argv[])
 			{
 				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
 				{
-					dx12ShaderCompilerArgReceived = true;
 					parseParams.m_directXCompilerExePath = argv[i + 1];
 					AppendArg(argv[i + 1]);
 					++i;
+
+					parseParams.m_useDXCApi = false; // Disable the DXC C++ API
 				}
 				else
 				{
@@ -200,7 +202,7 @@ int main(int argc, char* argv[])
 				" X:\\Path\\To\\SaberEngine\\\" and relaunch.\n";
 			result = droid::ErrorCode::ConfigurationError;
 		}
-		if (!dx12ShaderCompilerArgReceived)
+		if (parseParams.m_directXCompilerExePath.empty() && parseParams.m_useDXCApi == false)
 		{
 			std::cout << "DX12 shader compiler path not received. Supply \"" << k_dx12ShaderCompilerCmdLineArg <<
 				" X:\\Path\\To\\dxc.exe\" and relaunch.\n";

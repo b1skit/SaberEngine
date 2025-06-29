@@ -15,6 +15,7 @@ namespace droid
 		GenerationError		= -4,	// E.g. Bitmask overflow: Generated data is bad
 		ConfigurationError	= -5,	// E.g. Bad command line arg
 		DependencyError		= -6,	// E.g. Error invoking an external process, or the process returned an error
+		ComError			= -7,	// E.g. COM interface error when using DXC API
 	};
 	extern constexpr char const* ErrorCodeToCStr(ErrorCode);
 

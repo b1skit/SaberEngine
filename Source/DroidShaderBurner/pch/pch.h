@@ -31,7 +31,13 @@
 // Win32 API:
 #if defined(_WIN32) || defined(_WIN64)
 #include <Windows.h>
+#include <comdef.h> // HRESULTs to error messages
 #include <processthreadsapi.h>
+#include <wrl/client.h> // Windows Runtime Library: Microsoft WRL ComPtr
+
+// D3D12:
+#include <dxcapi.h>
+
 #endif // defined(_WIN32) || defined(_WIN64)
 
 // nlohmann-json:
