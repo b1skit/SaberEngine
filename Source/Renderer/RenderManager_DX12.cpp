@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "AccelerationStructure_Platform.h"
 #include "Batch.h"
@@ -282,7 +282,7 @@ namespace dx12
 					if (!singleThreaded &&
 						shaderTasksIdx != k_invalidCreateTaskIdx)
 					{
-						createTasks[shaderTasksIdx].wait();
+						createTasks[shaderTasksIdx].get(); // This will rethrow any exceptions from the job
 					}
 
 					if (!singleThreaded)
@@ -320,7 +320,7 @@ namespace dx12
 		{
 			for (auto& createTask : createTasks)
 			{
-				createTask.wait();
+				createTask.get(); // This will rethrow any exceptions from the job
 			}
 		}
 		SEEndCPUEvent(); // "Wait on task threads"

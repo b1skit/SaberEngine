@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "BoundsRenderData.h"
 #include "CameraRenderData.h"
 #include "GraphicsSystem_Culling.h"
@@ -640,10 +640,10 @@ namespace gr
 					}));
 			}
 
-			// Wait for our jobs to complete
+			// Wait for our jobs to complete and handle any exceptions
 			for (size_t cullingFutureIdx = 0; cullingFutureIdx < cullingFutures.size(); cullingFutureIdx++)
 			{
-				cullingFutures[cullingFutureIdx].wait();
+				cullingFutures[cullingFutureIdx].get(); // This will rethrow any exceptions from the job
 			}
 		}
 		SEEndCPUEvent(); // "Do culling"
