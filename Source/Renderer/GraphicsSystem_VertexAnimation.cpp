@@ -486,20 +486,6 @@ namespace gr
 							++bufferShaderIdx;
 						}
 
-						// Set the dispatch metadata:
-						std::move(morphBatchBuilder).SetBuffer(
-							MorphDispatchMetadata::s_shaderName,
-							re::Buffer::Create(
-								MorphDispatchMetadata::s_shaderName,
-								GetMorphDispatchMetadataData(bufferShaderIdx),
-								re::Buffer::BufferParams{
-									.m_lifetime = re::Lifetime::SingleFrame,
-									.m_stagingPool = re::Buffer::StagingPool::Temporary,
-									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap,
-									.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
-									.m_usageMask = re::Buffer::Usage::Constant
-								}));
-
 						// Set the vertex stream metadata:
 						std::move(morphBatchBuilder).SetBuffer(
 							"MorphMetadataParams",
@@ -510,7 +496,21 @@ namespace gr
 							"MorphData",
 							meshPrimRenderData.m_interleavedMorphData);
 
-						m_morphAnimationStage->AddBatch(std::move(morphBatchBuilder).Build());
+						gr::StageBatchHandle* morphBatch = 
+							m_morphAnimationStage->AddBatch(std::move(morphBatchBuilder).Build());
+
+						// Set the dispatch metadata:
+						morphBatch->SetSingleFrameBuffer(MorphDispatchMetadata::s_shaderName,
+							re::Buffer::Create(
+								MorphDispatchMetadata::s_shaderName,
+								GetMorphDispatchMetadataData(bufferShaderIdx),
+								re::Buffer::BufferParams{
+									.m_lifetime = re::Lifetime::SingleFrame,
+									.m_stagingPool = re::Buffer::StagingPool::Temporary,
+									.m_memPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap,
+									.m_accessMask = re::Buffer::Access::GPURead | re::Buffer::Access::CPUWrite,
+									.m_usageMask = re::Buffer::Usage::Constant
+								}));
 					}
 				}
 			}
