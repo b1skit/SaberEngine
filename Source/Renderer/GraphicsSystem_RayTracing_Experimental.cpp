@@ -210,7 +210,7 @@ namespace gr
 
 			gr::StageBatchHandle& rtBatch = *m_rtStage->AddBatch(gr::RayTraceBatchBuilder()
 				.SetOperation(re::Batch::RayTracingParams::Operation::DispatchRays)
-				.SetASInput(re::ASInput("SceneBVH", *m_sceneTLAS))
+				.SetASInput(gr::ASInput("SceneBVH", *m_sceneTLAS))
 				.SetDispatchDimensions(glm::uvec3(
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
 					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),

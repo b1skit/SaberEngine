@@ -172,8 +172,8 @@ namespace gr
 
 	public:
 		RayTraceBatchBuilder&& SetOperation(re::Batch::RayTracingParams::Operation)&& noexcept;
-		RayTraceBatchBuilder&& SetASInput(re::ASInput&&)&& noexcept;
-		RayTraceBatchBuilder&& SetASInput(re::ASInput const&)&& noexcept;
+		RayTraceBatchBuilder&& SetASInput(gr::ASInput&&)&& noexcept;
+		RayTraceBatchBuilder&& SetASInput(gr::ASInput const&)&& noexcept;
 		RayTraceBatchBuilder&& SetDispatchDimensions(glm::uvec3&& dispatchDimensions)&& noexcept;
 		RayTraceBatchBuilder&& SetDispatchDimensions(glm::uvec3 const& dispatchDimensions)&& noexcept;
 		RayTraceBatchBuilder&& SetRayGenShaderIdx(uint32_t rayGenShaderIdx)&& noexcept;
@@ -452,14 +452,14 @@ namespace gr
 	}
 
 
-	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetASInput(re::ASInput&& asInput) && noexcept
+	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetASInput(gr::ASInput&& asInput) && noexcept
 	{
 		m_batch.m_rayTracingParams.m_ASInput = std::move(asInput);
 		return std::move(*this);
 	}
 
 
-	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetASInput(re::ASInput const& asInput) && noexcept
+	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetASInput(gr::ASInput const& asInput) && noexcept
 	{
 		m_batch.m_rayTracingParams.m_ASInput = asInput;
 		return std::move(*this);

@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "BufferView.h"
@@ -118,7 +118,7 @@ namespace re
 				Invalid
 			} m_operation = Operation::Invalid;
 
-			re::ASInput m_ASInput; // BLAS or TLAS, depending on the operation
+			gr::ASInput m_ASInput; // BLAS or TLAS, depending on the operation
 
 			glm::uvec3 m_dispatchDimensions = glm::uvec3(0); // .xyz = DispatchRays() width/height/depth
 			uint32_t m_rayGenShaderIdx = 0;

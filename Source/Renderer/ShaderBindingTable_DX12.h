@@ -65,7 +65,7 @@ namespace dx12
 	public: // DX12-specific functionality (to be called from dx12::CommandList)
 		static void SetTLASOnLocalRoots(
 			re::ShaderBindingTable const&,
-			re::ASInput const&,
+			gr::ASInput const&,
 			dx12::GPUDescriptorHeap*,
 			uint64_t currentFrameNum);
 

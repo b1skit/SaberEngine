@@ -437,7 +437,7 @@ namespace gr
 				// Add a single-frame stage to create/update the BLAS on the GPU:
 				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
 					.SetOperation(batchOperation)
-					.SetASInput(re::ASInput(blas))
+					.SetASInput(gr::ASInput(blas))
 					.Build());
 			}
 		}
@@ -505,7 +505,7 @@ namespace gr
 			{
 				re::Batch::RayTracingParams tlasBatchParams;
 				tlasBatchParams.m_operation = tlasOperation,
-					tlasBatchParams.m_ASInput = re::ASInput(m_sceneTLAS);
+					tlasBatchParams.m_ASInput = gr::ASInput(m_sceneTLAS);
 
 				(*singleFrameBlasCreateStageItr)->AddBatch(gr::RayTraceBatchBuilder()
 					.SetOperation(tlasOperation)

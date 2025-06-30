@@ -828,7 +828,7 @@ namespace dx12
 
 	void ShaderBindingTable::SetTLASOnLocalRoots(
 		re::ShaderBindingTable const& sbt,
-		re::ASInput const& tlasInput,
+		gr::ASInput const& tlasInput,
 		dx12::GPUDescriptorHeap* gpuDescHeap,
 		uint64_t currentFrameNum)
 	{
