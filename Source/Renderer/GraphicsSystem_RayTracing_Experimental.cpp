@@ -164,7 +164,7 @@ namespace gr
 
 
 	void RayTracing_ExperimentalGraphicsSystem::InitPipeline(
-		gr::StagePipeline& pipeline,
+		re::StagePipeline& pipeline,
 		TextureDependencies const&, 
 		BufferDependencies const&, 
 		DataDependencies const& dataDependencies)

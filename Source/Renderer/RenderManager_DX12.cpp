@@ -415,7 +415,7 @@ namespace dx12
 		struct WorkRange
 		{
 			re::RenderPipeline const* m_renderPipeline;
-			std::vector<gr::StagePipeline>::const_iterator m_stagePipelineItr;
+			std::vector<re::StagePipeline>::const_iterator m_stagePipelineItr;
 			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageBeginItr;
 			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageEndItr;
 		};
@@ -530,7 +530,7 @@ namespace dx12
 				}
 
 				re::RenderPipeline const* lastSeenRenderPipeline = nullptr;
-				gr::StagePipeline const* lastSeenStagePipeline = nullptr;
+				re::StagePipeline const* lastSeenStagePipeline = nullptr;
 
 				re::GPUTimer& gpuTimer = context->GetGPUTimer();
 				re::GPUTimer::Handle renderPipelineTimer;
@@ -561,7 +561,7 @@ namespace dx12
 					const bool isLastOfRenderSystem = isLastWorkEntry ||
 						lastSeenRenderPipeline != std::next(workRangeItr)->m_renderPipeline;
 
-					gr::StagePipeline const& stagePipeline = (*workRangeItr->m_stagePipelineItr);
+					re::StagePipeline const& stagePipeline = (*workRangeItr->m_stagePipelineItr);
 
 					const bool isNewStagePipeline = lastSeenStagePipeline != &(*workRangeItr->m_stagePipelineItr);
 					if (isNewStagePipeline)

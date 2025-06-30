@@ -31,13 +31,13 @@ namespace gr
 		~ComputeMipsGraphicsSystem() override {}
 
 		void InitPipeline(
-			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+			re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 
 
 	private:
-		gr::StagePipeline::StagePipelineItr m_parentStageItr;
-		gr::StagePipeline* m_stagePipeline;
+		re::StagePipeline::StagePipelineItr m_parentStageItr;
+		re::StagePipeline* m_stagePipeline;
 	};
 }

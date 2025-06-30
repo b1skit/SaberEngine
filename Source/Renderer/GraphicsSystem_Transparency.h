@@ -54,7 +54,7 @@ namespace gr
 
 		~TransparencyGraphicsSystem() override = default;
 
-		void InitPipeline(gr::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 

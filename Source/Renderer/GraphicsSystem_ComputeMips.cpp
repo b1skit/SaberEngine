@@ -52,7 +52,7 @@ namespace gr
 
 
 	void ComputeMipsGraphicsSystem::InitPipeline(
-		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_stagePipeline = &pipeline;
 
@@ -71,7 +71,7 @@ namespace gr
 
 		core::InvPtr<re::Sampler> const& mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
 
-		gr::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
+		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
 		for (core::InvPtr<re::Texture> const& newTexture : newTextures)
 		{

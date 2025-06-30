@@ -33,7 +33,7 @@ namespace gr
 
 		~TonemappingGraphicsSystem() = default;
 
-		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 

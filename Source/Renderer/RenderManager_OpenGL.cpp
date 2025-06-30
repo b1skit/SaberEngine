@@ -196,7 +196,7 @@ namespace opengl
 				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), k_GPUFrameTimerName);
 
 			// Render each stage in the RenderSystem's RenderPipeline:			
-			for (gr::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
+			for (re::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				re::GPUTimer::Handle stagePipelineTimer;
 				bool isNewStagePipeline = true;			

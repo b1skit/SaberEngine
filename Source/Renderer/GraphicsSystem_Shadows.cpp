@@ -242,7 +242,7 @@ namespace gr
 
 
 	void ShadowsGraphicsSystem::InitPipeline(
-		gr::StagePipeline& pipeline,
+		re::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
@@ -399,7 +399,7 @@ namespace gr
 				*shadowRecord.m_shadowTex,
 				CreateShadowWriteView(itr.second.m_lightType, shadowRecord.m_shadowTexArrayIdx));
 
-			gr::StagePipeline::StagePipelineItr clearItr;
+			re::StagePipeline::StagePipelineItr clearItr;
 			switch (itr.second.m_lightType)
 			{
 			case gr::Light::Directional:

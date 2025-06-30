@@ -345,7 +345,7 @@ namespace gr
 
 
 	void DebugGraphicsSystem::InitPipeline(
-		gr::StagePipeline& stagePipeline,
+		re::StagePipeline& stagePipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
