@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
 #include "BatchHandle.h"
@@ -26,12 +26,15 @@ namespace gr
 
 namespace re
 {
-	class ComputeStage;
 	class Buffer;
 	class BufferInput;
 	class Shader;
 	class Texture;
+}
 
+namespace gr
+{
+	class ComputeStage;
 	class ClearTargetSetStage;
 	class ClearRWTexturesStage;
 	class CopyStage;
@@ -284,7 +287,7 @@ namespace re
 
 	inline void Stage::SetInstancingEnabled(bool instancingEnabled)
 	{
-		SEAssert(m_type == re::Stage::Type::Raster || m_type == re::Stage::Type::LibraryRaster,
+		SEAssert(m_type == gr::Stage::Type::Raster || m_type == gr::Stage::Type::LibraryRaster,
 			"Invalid stage type for instancing");
 		m_instancingEnabled = instancingEnabled;
 	}
@@ -686,7 +689,7 @@ namespace re
 
 	inline void Stage::AddDrawStyleBits(effect::drawstyle::Bitmask drawStyleBits)
 	{
-		SEAssert(m_type == re::Stage::Type::Raster || m_type == re::Stage::Type::Compute,
+		SEAssert(m_type == gr::Stage::Type::Raster || m_type == gr::Stage::Type::Compute,
 			"Unexpected stage type for setting a drawstyle on");
 		m_drawStyleBits |= drawStyleBits;
 	}
