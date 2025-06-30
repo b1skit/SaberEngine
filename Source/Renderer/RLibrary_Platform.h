@@ -1,8 +1,8 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 
-namespace re
+namespace gr
 {
 	class Stage;
 }

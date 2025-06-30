@@ -220,7 +220,7 @@ namespace gr
 
 		void SetRootConstant(char const* shaderName, void const* src, re::DataType);
 		void SetRootConstant(std::string const& shaderName, void const* src, re::DataType);
-		RootConstants const& GetRootConstants() const;
+		re::RootConstants const& GetRootConstants() const;
 
 		// Stage Batches:
 		std::vector<gr::StageBatchHandle> const& GetStageBatches() const;
@@ -267,7 +267,7 @@ namespace gr
 
 		std::vector<re::BufferInput> m_permanentBuffers;
 
-		RootConstants m_stageRootConstants;
+		re::RootConstants m_stageRootConstants;
 
 		std::vector<gr::StageBatchHandle> m_resolvedBatches;
 
@@ -777,7 +777,7 @@ namespace gr
 		m_stageRootConstants.SetRootConstant(shaderName, src, dataType);
 	}
 
-	inline RootConstants const& Stage::GetRootConstants() const
+	inline re::RootConstants const& Stage::GetRootConstants() const
 	{
 		return m_stageRootConstants;
 	}

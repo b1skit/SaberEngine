@@ -1,9 +1,9 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "RLibrary_ImGui_Platform.h"
 
 
-namespace re
+namespace gr
 {
 	class Stage;
 }
