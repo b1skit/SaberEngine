@@ -287,7 +287,7 @@ namespace dx12
 	}
 
 
-	void RLibraryImGui::Execute(re::Stage* stage, void* platformObject)
+	void RLibraryImGui::Execute(gr::Stage* stage, void* platformObject)
 	{
 		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(stage);
 

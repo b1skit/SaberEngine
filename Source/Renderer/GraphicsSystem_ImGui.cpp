@@ -15,13 +15,13 @@ namespace gr
 
 
 	void ImGuiGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		// Create a library stage:
-		re::Stage::LibraryStageParams imGuiLibraryParams(
-			re::Stage::Type::LibraryRaster,
-			re::Stage::LibraryStageParams::LibraryType::ImGui);
-		m_imguiLibraryStage = re::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
+		gr::Stage::LibraryStageParams imGuiLibraryParams(
+			gr::Stage::Type::LibraryRaster,
+			gr::Stage::LibraryStageParams::LibraryType::ImGui);
+		m_imguiLibraryStage = gr::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 
 		// Append the library stage
 		pipeline.AppendStage(m_imguiLibraryStage);

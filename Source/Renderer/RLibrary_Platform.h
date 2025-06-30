@@ -27,7 +27,7 @@ namespace platform
 	public:
 		static std::unique_ptr<RLibrary> Create(Type);
 
-		static void Execute(re::Stage*, void* platformObject);
+		static void Execute(gr::Stage*, void* platformObject);
 
 
 	public:

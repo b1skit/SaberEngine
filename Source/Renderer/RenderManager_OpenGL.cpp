@@ -142,14 +142,14 @@ namespace opengl
 
 
 		auto SetDrawState = [&context](
-			re::Stage const* stage,
+			gr::Stage const* stage,
 			core::InvPtr<re::Shader> const& shader, 
 			bool doSetStageInputs)
 			{
 				opengl::Shader::Bind(*shader);
 
 				SEAssert(shader->GetRasterizationState() ||
-					stage->GetStageType() == re::Stage::Type::Compute,
+					stage->GetStageType() == gr::Stage::Type::Compute,
 					"Pipeline state is null. This is unexpected");
 
 				context->SetRasterizationState(shader->GetRasterizationState());
@@ -196,14 +196,14 @@ namespace opengl
 				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), k_GPUFrameTimerName);
 
 			// Render each stage in the RenderSystem's RenderPipeline:			
-			for (re::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
+			for (gr::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				re::GPUTimer::Handle stagePipelineTimer;
 				bool isNewStagePipeline = true;			
 
 				// Process Stages:
-				std::list<std::shared_ptr<re::Stage>> const& stages = stagePipeline.GetStages();
-				for (std::shared_ptr<re::Stage> const& stage : stages)
+				std::list<std::shared_ptr<gr::Stage>> const& stages = stagePipeline.GetStages();
+				for (std::shared_ptr<gr::Stage> const& stage : stages)
 				{
 					// Skip empty stages:
 					if (stage->IsSkippable())
@@ -225,11 +225,11 @@ namespace opengl
 					re::GPUTimer::Handle stageTimer =
 						gpuTimer.StartTimer(nullptr, stage->GetName().c_str(), stagePipeline.GetName().c_str());
 
-					const re::Stage::Type curStageType = stage->GetStageType();
+					const gr::Stage::Type curStageType = stage->GetStageType();
 					switch (curStageType)
 					{
-					case re::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
-					case re::Stage::Type::LibraryCompute:
+					case gr::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
+					case gr::Stage::Type::LibraryCompute:
 					{
 						SEAssert(stage->GetRootConstants().GetRootConstantCount() == 0,
 							"TODO: Handle setting root constants for library stages");
@@ -237,7 +237,7 @@ namespace opengl
 						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
 					}
 					break;
-					case re::Stage::Type::ClearTargetSet:
+					case gr::Stage::Type::ClearTargetSet:
 					{
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
 
@@ -258,7 +258,7 @@ namespace opengl
 							*stageTargets);
 					}
 					break;
-					case re::Stage::Type::ClearRWTextures:
+					case gr::Stage::Type::ClearRWTextures:
 					{
 						re::ClearRWTexturesStage const* clearStage =
 							dynamic_cast<re::ClearRWTexturesStage const*>(stage.get());
@@ -287,7 +287,7 @@ namespace opengl
 						}
 					}
 					break;
-					case re::Stage::Type::Copy:
+					case gr::Stage::Type::Copy:
 					{
 						re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>(stage.get());
 						SEAssert(copyStage, "Failed to get clear stage");
@@ -295,29 +295,29 @@ namespace opengl
 						opengl::TextureTargetSet::CopyTexture(copyStage->GetSrcTexture(), copyStage->GetDstTexture());
 					}
 					break;
-					case re::Stage::Type::Raster:
-					case re::Stage::Type::FullscreenQuad:
-					case re::Stage::Type::Compute:
+					case gr::Stage::Type::Raster:
+					case gr::Stage::Type::FullscreenQuad:
+					case gr::Stage::Type::Compute:
 					{
 						// Get the stage targets:
 						re::TextureTargetSet const* stageTargets = stage->GetTextureTargetSet();
-						if (!stageTargets && curStageType != re::Stage::Type::Compute)
+						if (!stageTargets && curStageType != gr::Stage::Type::Compute)
 						{
 							// Draw to the swapchain backbuffer
 							stageTargets = opengl::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 						}
-						SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
+						SEAssert(stageTargets || curStageType == gr::Stage::Type::Compute,
 							"The current stage does not have targets set. This is unexpected");
 
 						switch (curStageType)
 						{
-						case re::Stage::Type::Compute:
+						case gr::Stage::Type::Compute:
 						{
 							//
 						}
 						break;
-						case re::Stage::Type::Raster:
-						case re::Stage::Type::FullscreenQuad:
+						case gr::Stage::Type::Raster:
+						case gr::Stage::Type::FullscreenQuad:
 						{
 							opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 							opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
@@ -378,8 +378,8 @@ namespace opengl
 							// Draw!
 							switch (curStageType)
 							{
-							case re::Stage::Type::Raster:
-							case re::Stage::Type::FullscreenQuad:
+							case gr::Stage::Type::Raster:
+							case gr::Stage::Type::FullscreenQuad:
 							{
 								re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
 								
@@ -452,7 +452,7 @@ namespace opengl
 								}
 							}
 							break;
-							case re::Stage::Type::Compute:
+							case gr::Stage::Type::Compute:
 							{
 								glm::uvec3 const& threadGroupCount = (*batch)->GetComputeParams().m_threadGroupCount;
 								glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);

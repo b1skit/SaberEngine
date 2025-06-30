@@ -52,12 +52,12 @@ namespace gr
 
 
 	void ComputeMipsGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_stagePipeline = &pipeline;
 
 		m_parentStageItr = m_stagePipeline->AppendStage(
-			re::Stage::CreateParentStage("MIP Generation Parent stage"));
+			gr::Stage::CreateParentStage("MIP Generation Parent stage"));
 	}
 
 
@@ -71,7 +71,7 @@ namespace gr
 
 		core::InvPtr<re::Sampler> const& mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
 
-		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
+		gr::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
 		for (core::InvPtr<re::Texture> const& newTexture : newTextures)
 		{
@@ -111,10 +111,10 @@ namespace gr
 							firstTargetMipIdx,
 							firstTargetMipIdx + numMipStages - 1);
 
-						std::shared_ptr<re::Stage> mipGenerationStage = 
-							re::Stage::CreateSingleFrameComputeStage(
+						std::shared_ptr<gr::Stage> mipGenerationStage = 
+							gr::Stage::CreateSingleFrameComputeStage(
 								stageName.c_str(),
-								re::Stage::ComputeStageParams{});
+								gr::Stage::ComputeStageParams{});
 
 						re::TextureView inputView;
 

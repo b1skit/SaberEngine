@@ -44,7 +44,7 @@ namespace gr
 		SceneAccelerationStructureGraphicsSystem(gr::GraphicsSystemManager*);
 		~SceneAccelerationStructureGraphicsSystem();
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 		void ShowImGuiWindow() override;
@@ -63,8 +63,8 @@ namespace gr
 
 		std::unordered_map<gr::RenderDataID, util::HashKey> m_meshPrimToBLASKey;
 
-		re::StagePipeline* m_stagePipeline;
-		re::StagePipeline::StagePipelineItr m_rtParentStageItr;
+		gr::StagePipeline* m_stagePipeline;
+		gr::StagePipeline::StagePipelineItr m_rtParentStageItr;
 
 		AnimatedVertexStreams const* m_animatedVertexStreams; // From the vertex animation GS
 	};

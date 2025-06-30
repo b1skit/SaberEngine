@@ -103,7 +103,7 @@ namespace gr
 
 
 	void TransparencyGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies,
 		DataDependencies const& dataDependencies)
@@ -138,10 +138,10 @@ namespace gr
 
 
 		// Stage setup:
-		m_transparencyStage = re::Stage::CreateGraphicsStage("Transparency Stage", {});
+		m_transparencyStage = gr::Stage::CreateGraphicsStage("Transparency Stage", {});
 
 		m_transparencyStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Require, true);
+			re::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Require, true);
 
 		m_transparencyStage->AddDrawStyleBits(effect::drawstyle::RenderPath_Forward);
 

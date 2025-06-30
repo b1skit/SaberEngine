@@ -292,7 +292,7 @@ namespace gr
 
 
 	void CullingGraphicsSystem::InitPipeline(
-		re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&)
 	{
 		//
 	}

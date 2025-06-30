@@ -159,11 +159,11 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(gr::StagePipeline& pipeline)
 	{
-		re::Stage::ComputeStageParams computeStageParams;
-		std::shared_ptr<re::Stage> brdfStage =
-			re::Stage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
+		gr::Stage::ComputeStageParams computeStageParams;
+		std::shared_ptr<gr::Stage> brdfStage =
+			gr::Stage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
 
 		brdfStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_BRDFIntegration);
 
@@ -214,7 +214,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulateIEMTex(
-		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
+		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
 	{
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
@@ -235,8 +235,8 @@ namespace gr
 
 		for (uint32_t face = 0; face < 6; face++)
 		{
-			re::Stage::GraphicsStageParams gfxStageParams;
-			std::shared_ptr<re::Stage> iemStage = re::Stage::CreateSingleFrameGraphicsStage(
+			gr::Stage::GraphicsStageParams gfxStageParams;
+			std::shared_ptr<gr::Stage> iemStage = gr::Stage::CreateSingleFrameGraphicsStage(
 				std::format("IEM generation: Face {}/6", face + 1).c_str(), gfxStageParams);
 
 			iemStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_IEMGeneration);
@@ -283,7 +283,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulatePMREMTex(
-		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
+		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
 	{
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
@@ -312,8 +312,8 @@ namespace gr
 				std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
 				std::string const& stageName = std::format("PMREM generation: {}", postFix);
 
-				re::Stage::GraphicsStageParams gfxStageParams;
-				std::shared_ptr<re::Stage> pmremStage = re::Stage::CreateSingleFrameGraphicsStage(
+				gr::Stage::GraphicsStageParams gfxStageParams;
+				std::shared_ptr<gr::Stage> pmremStage = gr::Stage::CreateSingleFrameGraphicsStage(
 					stageName.c_str(), gfxStageParams);
 
 				pmremStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_PMREMGeneration);
@@ -369,12 +369,12 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitializeResourceGenerationStages(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
 		m_resourceCreationStageParentItr = pipeline.AppendStage(
-			re::Stage::CreateParentStage("Resource creation stages parent"));
+			gr::Stage::CreateParentStage("Resource creation stages parent"));
 
 
 		// Cube mesh, for rendering of IBL cubemaps
@@ -433,7 +433,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies,
 		DataDependencies const& dataDependencies)
@@ -468,12 +468,12 @@ namespace gr
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-		re::Stage::GraphicsStageParams gfxStageParams;
-		m_ambientStage = re::Stage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
+		gr::Stage::GraphicsStageParams gfxStageParams;
+		m_ambientStage = gr::Stage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
 
-		m_directionalStage = re::Stage::CreateGraphicsStage("Directional light stage", gfxStageParams);
-		m_pointStage = re::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
-		m_spotStage = re::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
+		m_directionalStage = gr::Stage::CreateGraphicsStage("Directional light stage", gfxStageParams);
+		m_pointStage = gr::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
+		m_spotStage = gr::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
 
 
 		// TODO: Enable instancing for deferred light mesh batches
@@ -481,7 +481,7 @@ namespace gr
 		m_pointStage->SetInstancingEnabled(false);
 		m_spotStage->SetInstancingEnabled(false);
 
-		m_fullscreenStage = re::Stage::CreateComputeStage("Deferred Fullscreen stage", re::Stage::ComputeStageParams{});
+		m_fullscreenStage = gr::Stage::CreateComputeStage("Deferred Fullscreen stage", gr::Stage::ComputeStageParams{});
 
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
@@ -512,7 +512,7 @@ namespace gr
 
 		// Append a color-only clear stage to clear the lighting target:
 		std::shared_ptr<re::ClearTargetSetStage> clearStage = 
-			re::Stage::CreateTargetSetClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
+			gr::Stage::CreateTargetSetClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
 		clearStage->EnableAllColorClear();
 
 		pipeline.AppendStage(clearStage);
@@ -1084,7 +1084,7 @@ namespace gr
 				(light.second.m_type == gr::Light::Type::Directional || 
 					visibleLightIDs.contains(lightID)))
 			{
-				auto AddDuplicatedBatch = [&light, &lightID, &ibm, this](re::Stage* stage)
+				auto AddDuplicatedBatch = [&light, &lightID, &ibm, this](gr::Stage* stage)
 					{
 						gr::StageBatchHandle& duplicatedBatch = *stage->AddBatch(light.second.m_batch);
 

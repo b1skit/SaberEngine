@@ -35,7 +35,7 @@ namespace gr
 		~BloomGraphicsSystem() override = default;
 
 		void InitPipeline(
-			re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+			gr::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 	
@@ -45,13 +45,13 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::Stage> m_emissiveBlitStage;
+		std::shared_ptr<gr::Stage> m_emissiveBlitStage;
 
 		// Bloom compute:
-		std::vector<std::shared_ptr<re::Stage>> m_bloomDownStages;
+		std::vector<std::shared_ptr<gr::Stage>> m_bloomDownStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomDownBuffers;
 
-		std::vector<std::shared_ptr<re::Stage>> m_bloomUpStages;
+		std::vector<std::shared_ptr<gr::Stage>> m_bloomUpStages;
 		std::vector<std::shared_ptr<re::Buffer>> m_bloomUpBuffers;
 
 		core::InvPtr<re::Texture> m_bloomTargetTex;

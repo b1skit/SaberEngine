@@ -108,11 +108,11 @@ namespace gr
 		char const* lightName = shadowData.m_owningLightName;
 		std::string const& stageName = std::format("{}_CubeShadow", lightName);
 
-		std::shared_ptr<re::Stage> shadowStage =
-			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
+		std::shared_ptr<gr::Stage> shadowStage =
+			gr::Stage::CreateGraphicsStage(stageName.c_str(), gr::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, re::Stage::FilterMode::Require, true);
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, re::Stage::FilterMode::Exclude, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, gr::Stage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Exclude, true);
 
 		shadowStage->AddDrawStyleBits(effect::drawstyle::Shadow_Cube);
 		
@@ -158,7 +158,7 @@ namespace gr
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
 		
 		std::shared_ptr<re::ClearTargetSetStage> shadowClearStage =
-			re::Stage::CreateTargetSetClearStage("Shadows: Cube shadow clear stage", pointShadowTargetSet);
+			gr::Stage::CreateTargetSetClearStage("Shadows: Cube shadow clear stage", pointShadowTargetSet);
 		shadowClearStage->EnableDepthClear(1.f);
 
 		dstStageData.emplace(
@@ -182,10 +182,10 @@ namespace gr
 		char const* lightName = shadowData.m_owningLightName;
 		std::string const& stageName = std::format("{}_2DShadow", lightName);
 
-		std::shared_ptr<re::Stage> shadowStage =
-			re::Stage::CreateGraphicsStage(stageName.c_str(), re::Stage::GraphicsStageParams{});
+		std::shared_ptr<gr::Stage> shadowStage =
+			gr::Stage::CreateGraphicsStage(stageName.c_str(), gr::Stage::GraphicsStageParams{});
 
-		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, re::Stage::FilterMode::Require, true);
+		shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::ShadowCaster, gr::Stage::FilterMode::Require, true);
 
 		// Shadow camera buffer:
 		re::BufferInput shadowCamParams(
@@ -227,7 +227,7 @@ namespace gr
 		shadowStage->SetTextureTargetSet(shadowTargetSet);
 
 		std::shared_ptr<re::ClearTargetSetStage> shadowClearStage =
-			re::Stage::CreateTargetSetClearStage("Shadows: 2D shadow clear stage", shadowTargetSet);
+			gr::Stage::CreateTargetSetClearStage("Shadows: 2D shadow clear stage", shadowTargetSet);
 		shadowClearStage->EnableDepthClear(1.f);
 
 		dstStageData.emplace(
@@ -242,21 +242,21 @@ namespace gr
 
 
 	void ShadowsGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
 	{
 		m_stagePipeline = &pipeline;
 
-		std::shared_ptr<re::Stage> directionalParentStage = 
-			re::Stage::CreateParentStage("Directional shadow stages");
+		std::shared_ptr<gr::Stage> directionalParentStage = 
+			gr::Stage::CreateParentStage("Directional shadow stages");
 		m_directionalParentStageItr = pipeline.AppendStage(directionalParentStage);
 
-		std::shared_ptr<re::Stage> pointParentStage = re::Stage::CreateParentStage("Point shadow stages");
+		std::shared_ptr<gr::Stage> pointParentStage = gr::Stage::CreateParentStage("Point shadow stages");
 		m_pointParentStageItr = pipeline.AppendStage(pointParentStage);
 
-		std::shared_ptr<re::Stage> spotParentStage = re::Stage::CreateParentStage("Spot shadow stages");
+		std::shared_ptr<gr::Stage> spotParentStage = gr::Stage::CreateParentStage("Spot shadow stages");
 		m_spotParentStageItr = pipeline.AppendStage(spotParentStage);
 
 		// Cache our dependencies:
@@ -399,7 +399,7 @@ namespace gr
 				*shadowRecord.m_shadowTex,
 				CreateShadowWriteView(itr.second.m_lightType, shadowRecord.m_shadowTexArrayIdx));
 
-			re::StagePipeline::StagePipelineItr clearItr;
+			gr::StagePipeline::StagePipelineItr clearItr;
 			switch (itr.second.m_lightType)
 			{
 			case gr::Light::Directional:

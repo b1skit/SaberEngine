@@ -55,7 +55,7 @@ namespace gr
 		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
 		~ShadowsGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 
@@ -70,8 +70,8 @@ namespace gr
 	private:
 		struct ShadowStageData
 		{
-			std::shared_ptr<re::Stage> m_clearStage;
-			std::shared_ptr<re::Stage> m_stage;
+			std::shared_ptr<gr::Stage> m_clearStage;
+			std::shared_ptr<gr::Stage> m_stage;
 			std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 			re::BufferInput m_shadowRenderCameraParams;
 
@@ -103,10 +103,10 @@ namespace gr
 
 	private:
 		// Pipeline:
-		re::StagePipeline* m_stagePipeline;
-		re::StagePipeline::StagePipelineItr m_directionalParentStageItr;
-		re::StagePipeline::StagePipelineItr m_pointParentStageItr;
-		re::StagePipeline::StagePipelineItr m_spotParentStageItr;
+		gr::StagePipeline* m_stagePipeline;
+		gr::StagePipeline::StagePipelineItr m_directionalParentStageItr;
+		gr::StagePipeline::StagePipelineItr m_pointParentStageItr;
+		gr::StagePipeline::StagePipelineItr m_spotParentStageItr;
 
 
 	private: // Dependency inputs:

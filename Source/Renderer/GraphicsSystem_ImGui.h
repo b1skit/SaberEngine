@@ -31,7 +31,7 @@ namespace gr
 
 		~ImGuiGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 
@@ -50,7 +50,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::Stage> m_imguiLibraryStage;
+		std::shared_ptr<gr::Stage> m_imguiLibraryStage;
 	};
 
 

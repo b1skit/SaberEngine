@@ -33,7 +33,7 @@ namespace gr
 
 		~TonemappingGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 
@@ -42,11 +42,11 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::Stage> m_tonemappingStage;
+		std::shared_ptr<gr::Stage> m_tonemappingStage;
 		gr::BatchHandle m_tonemappingComputeBatch;
 		static constexpr uint32_t k_dispatchXYThreadDims = 8;
 
-		std::shared_ptr<re::Stage> m_swapchainBlitStage; // Fullscreen quad stage
+		std::shared_ptr<gr::Stage> m_swapchainBlitStage; // Fullscreen quad stage
 
 
 	private:

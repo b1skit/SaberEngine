@@ -101,13 +101,13 @@ namespace gr
 
 
 	void SceneAccelerationStructureGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const&, 
 		BufferDependencies const&, 
 		DataDependencies const& dataDependencies)
 	{
 		m_stagePipeline = &pipeline;
-		m_rtParentStageItr = pipeline.AppendStage(re::Stage::CreateParentStage("Ray Tracing parent stage"));
+		m_rtParentStageItr = pipeline.AppendStage(gr::Stage::CreateParentStage("Ray Tracing parent stage"));
 
 		m_animatedVertexStreams =
 			GetDataDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
@@ -310,13 +310,13 @@ namespace gr
 		}
 
 		// If we're about to build or update an AS, add a single-frame stage to hold the work:
-		re::StagePipeline::StagePipelineItr singleFrameBlasCreateStageItr;
+		gr::StagePipeline::StagePipelineItr singleFrameBlasCreateStageItr;
 		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			singleFrameBlasCreateStageItr = m_stagePipeline->AppendSingleFrameStage(m_rtParentStageItr,
-				re::Stage::CreateSingleFrameRayTracingStage(
+				gr::Stage::CreateSingleFrameRayTracingStage(
 					"Acceleration structure build/update stages",
-					re::Stage::RayTracingStageParams{}));
+					gr::Stage::RayTracingStageParams{}));
 		}
 
 		// Create BLAS work:

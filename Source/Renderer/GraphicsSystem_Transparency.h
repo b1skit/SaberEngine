@@ -54,13 +54,13 @@ namespace gr
 
 		~TransparencyGraphicsSystem() override = default;
 
-		void InitPipeline(re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 
 
 	private:
-		std::shared_ptr<re::Stage> m_transparencyStage;
+		std::shared_ptr<gr::Stage> m_transparencyStage;
 
 	private: // Cached dependencies:
 		core::InvPtr<re::Texture> const* m_ambientIEMTex;

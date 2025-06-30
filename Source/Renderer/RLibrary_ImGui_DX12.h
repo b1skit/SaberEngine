@@ -75,7 +75,7 @@ namespace dx12
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::Stage*, void* platformObject) override;
+		void Execute(gr::Stage*, void* platformObject) override;
 
 		void Destroy() override;
 

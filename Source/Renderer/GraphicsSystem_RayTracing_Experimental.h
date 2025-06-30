@@ -38,7 +38,7 @@ namespace gr
 		RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager*);
 		~RayTracing_ExperimentalGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 
@@ -49,9 +49,9 @@ namespace gr
 	private:
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
 
-		re::StagePipeline* m_stagePipeline;
+		gr::StagePipeline* m_stagePipeline;
 
-		std::shared_ptr<re::Stage> m_rtStage;
+		std::shared_ptr<gr::Stage> m_rtStage;
 		core::InvPtr<re::Texture> m_rtTarget;
 
 		uint32_t m_rayGenIdx;
