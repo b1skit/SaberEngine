@@ -800,7 +800,7 @@ namespace dx12
 		const uint8_t rootIdx = util::CheckedCast<uint8_t>(rootParameters.size());
 		CD3DX12_ROOT_PARAMETER1& tableRootParam = rootParameters.emplace_back();
 		
-		uint32_t totalRangeDescriptors = 0; // How many descriptors in all ranges
+		uint32_t totalTableDescriptors = 0; // How many descriptors in all ranges
 
 		// Record the index of the element we're about to append:
 		const size_t tableRangesBaseOffset = tableRanges.size();
@@ -810,8 +810,6 @@ namespace dx12
 		// TODO: Seperate ranges with different visibilities into different descriptor tables 
 		bool seenFirstRangeVisibility = false;
 		D3D12_SHADER_VISIBILITY tableVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-		uint32_t descriptorOffset = 0;
 
 		// Create a new DescriptorTable metadata entry:
 		DescriptorTable* newDescriptorTable = &newRootSig->m_descriptorTables.emplace_back();;
@@ -843,17 +841,21 @@ namespace dx12
 				tableVisibility = D3D12_SHADER_VISIBILITY_ALL;
 			}
 
+			uint32_t maxRangeSize = 0;
+			switch (rangeType)
+			{
+			case DescriptorType::CBV: maxRangeSize = SysInfo::GetMaxDescriptorTableCBVs(); break;
+			case DescriptorType::SRV: maxRangeSize = SysInfo::GetMaxDescriptorTableSRVs(); break;
+			case DescriptorType::UAV: maxRangeSize = SysInfo::GetMaxDescriptorTableUAVs(); break;
+			default: SEAssertF("Invalid range type");
+			}
+
+			
+			uint32_t totalDescriptorsInCurrentRange = 0; // Total descriptors in the current range
+			uint32_t descriptorOffset = 0; // Base offset within the current range
+
 			while (rangeStart < rangeInputs[rangeType].size())
 			{
-				uint32_t maxRangeSize = 0;
-				switch (rangeType)
-				{
-				case DescriptorType::CBV: maxRangeSize = SysInfo::GetMaxDescriptorTableCBVs(); break;
-				case DescriptorType::SRV: maxRangeSize = SysInfo::GetMaxDescriptorTableSRVs(); break;
-				case DescriptorType::UAV: maxRangeSize = SysInfo::GetMaxDescriptorTableUAVs(); break;
-				default: SEAssertF("Invalid range type");
-				}
-
 				SEAssert(rangeInputs[rangeType][rangeStart].BindPoint == 0 ||
 					rangeInputs[rangeType][rangeStart].BindCount != maxRangeSize,
 					"Unbounded descriptor range doesn't begin at bind point 0. Indexing is about to overflow");
@@ -861,8 +863,8 @@ namespace dx12
 				// Store the names in order so we can update the binding metadata later:
 				namesInRange.emplace_back(rangeInputs[rangeType][rangeStart].m_name);
 
-				uint32_t numDescriptors = rangeInputs[rangeType][rangeStart].BindCount;
-				uint32_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptors;
+				uint32_t numDescriptorsInSubRange = rangeInputs[rangeType][rangeStart].BindCount;
+				uint32_t expectedNextRegister = rangeInputs[rangeType][rangeStart].BindPoint + numDescriptorsInSubRange;
 
 				// Find the end of the current contiguous range:
 				while (rangeEnd < rangeInputs[rangeType].size() &&
@@ -876,19 +878,10 @@ namespace dx12
 						tableVisibility = D3D12_SHADER_VISIBILITY_ALL;
 					}
 
-					numDescriptors += rangeInputs[rangeType][rangeEnd].BindCount;
+					numDescriptorsInSubRange += rangeInputs[rangeType][rangeEnd].BindCount;
 					expectedNextRegister += rangeInputs[rangeType][rangeEnd].BindCount;
 
 					rangeEnd++;
-				}
-
-				SEAssert(maxRangeSize - totalRangeDescriptors >= numDescriptors ||
-					(totalRangeDescriptors == maxRangeSize && numDescriptors == maxRangeSize),
-					"totalRangeDescriptors is about to overflow");
-
-				if (totalRangeDescriptors != maxRangeSize)
-				{
-					totalRangeDescriptors += numDescriptors;
 				}
 
 				const uint32_t bindPoint = rangeInputs[rangeType][rangeStart].BindPoint;
@@ -897,16 +890,25 @@ namespace dx12
 				constexpr D3D12_DESCRIPTOR_RANGE_FLAGS k_defaultRangeFlag =
 					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE; // Volatile = root sig 1.0 default
 
-				const bool isUnbounded = IsUnboundedRange(rangeType, bindPoint, numDescriptors);
+				const bool isUnbounded = IsUnboundedRange(rangeType, bindPoint, numDescriptorsInSubRange);
 
 				seenBounded |= !isUnbounded;
-				SEAssert(!seenBounded || !isUnbounded, 
-					"Found bounded and unbounded descriptors in the same range inputs. These should have been seperated")
+				SEAssert(!seenBounded || !isUnbounded,
+					"Found bounded and unbounded descriptors in the same range inputs. These should have been seperated");
+
+				// Add the number of descriptors in the current subrange to the descriptor count:
+				if (!isUnbounded)
+				{
+					SEAssert(maxRangeSize - totalDescriptorsInCurrentRange >= numDescriptorsInSubRange,
+						"totalDescriptorsInCurrentRange is about to overflow");
+
+					totalDescriptorsInCurrentRange += numDescriptorsInSubRange;
+				}
 
 				// Create and initialize a CD3DX12_DESCRIPTOR_RANGE1:
 				tableRanges.emplace_back().Init(
 					GetD3DRangeType(rangeType),
-					numDescriptors,
+					numDescriptorsInSubRange,
 					bindPoint,
 					registerSpace,
 					k_defaultRangeFlag,
@@ -927,7 +929,7 @@ namespace dx12
 						.m_visibility = tableVisibility,
 						.m_tableEntry = RootSignature::TableEntry{
 							.m_type = rangeType,
-							.m_offset = isUnbounded ? 0 : descriptorOffset, // Descriptor offset into the table at the root index
+							.m_offset = isUnbounded ? 0 : totalTableDescriptors + descriptorOffset, // Final offset into the table at the root index
 							//.m_srv/uavViewDimension populated below
 						}
 					};
@@ -1021,12 +1023,21 @@ namespace dx12
 
 					newRootSig->InsertNewRootParamMetadata(namesInRange[rangeIdx].c_str(), std::move(rootParameter));
 				} // end rangeIdx loop
-				
-				// Prepare for the next iteration:
+				  
+				 // Prepare for the next iteration:
 				rangeStart = rangeEnd;
 				rangeEnd++;
 
 			} // rangeInputs loop
+
+			// If we have a bounded range, update the total number of descriptors:
+			if (totalTableDescriptors != maxRangeSize)
+			{
+				SEAssert(maxRangeSize - totalTableDescriptors >= totalDescriptorsInCurrentRange,
+					"totalTableDescriptors is about to overflow");
+
+				totalTableDescriptors += totalDescriptorsInCurrentRange;
+			}
 		} // End descriptor table DescriptorType loop
 
 
@@ -1043,7 +1054,7 @@ namespace dx12
 			tableVisibility);
 
 		// How many descriptors are in the table stored at the given root sig index:
-		newRootSig->m_numDescriptorsPerTable[rootIdx] = totalRangeDescriptors;
+		newRootSig->m_numDescriptorsPerTable[rootIdx] = totalTableDescriptors;
 
 		const uint64_t descriptorTableBitmask = (1llu << rootIdx);
 		newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;

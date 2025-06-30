@@ -1,6 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "Batch.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
 
