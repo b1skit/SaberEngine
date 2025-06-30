@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "AccelerationStructure_Platform.h"
 #include "RenderManager.h"
@@ -6,7 +6,7 @@
 
 namespace platform
 {
-	std::unique_ptr<re::AccelerationStructure::PlatObj> platform::AccelerationStructure::CreatePlatformObject()
+	std::unique_ptr<gr::AccelerationStructure::PlatObj> platform::AccelerationStructure::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
 
@@ -29,6 +29,6 @@ namespace platform
 	}
 
 
-	void (*AccelerationStructure::Create)(re::AccelerationStructure&) = nullptr;
-	void (*AccelerationStructure::Destroy)(re::AccelerationStructure&) = nullptr;
+	void (*AccelerationStructure::Create)(gr::AccelerationStructure&) = nullptr;
+	void (*AccelerationStructure::Destroy)(gr::AccelerationStructure&) = nullptr;
 }

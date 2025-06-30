@@ -84,12 +84,12 @@ namespace
 	}
 
 
-	re::BufferInput GetInstancedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
+	re::BufferInput GetInstancedBufferLUTBufferInput(gr::AccelerationStructure* tlas, gr::IndexedBufferManager& ibm)
 	{
 		SEAssert(tlas, "Pointer is null");
 
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
+		gr::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
 
 		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
 
@@ -106,8 +106,8 @@ namespace
 		std::vector<InstancedBufferLUTData> initialLUTData;
 		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 
 			for (auto const& geometry : blasParams->m_geometry)
 			{
@@ -146,7 +146,7 @@ namespace gr
 		, INamedObject(GetScriptName())
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
-		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_geometryInstanceMask(gr::AccelerationStructure::InstanceInclusionMask_Always)
 	{
 	}
 
@@ -267,8 +267,8 @@ namespace gr
 
 	void RayTracing_ExperimentalGraphicsSystem::ShowImGuiWindow()
 	{
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
+		gr::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 
 		// Ray gen shader:
@@ -301,7 +301,7 @@ namespace gr
 		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
 
 		// Geometry inclusion masks:
-		auto SetInclusionMaskBits = [this](re::AccelerationStructure::InclusionMask flag, bool enabled)
+		auto SetInclusionMaskBits = [this](gr::AccelerationStructure::InclusionMask flag, bool enabled)
 			{
 				if (enabled)
 				{
@@ -309,50 +309,50 @@ namespace gr
 				}
 				else
 				{
-					m_geometryInstanceMask &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
+					m_geometryInstanceMask &= (gr::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
 				}
 			};
 
-		static bool s_alphaMode_Opaque = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Opaque;
+		static bool s_alphaMode_Opaque = m_geometryInstanceMask & gr::AccelerationStructure::AlphaMode_Opaque;
 		if (ImGui::Checkbox("AlphaMode_Opaque", &s_alphaMode_Opaque))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Opaque, s_alphaMode_Opaque);
+			SetInclusionMaskBits(gr::AccelerationStructure::AlphaMode_Opaque, s_alphaMode_Opaque);
 		}
 
-		static bool s_alphaMode_Mask = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Mask;
+		static bool s_alphaMode_Mask = m_geometryInstanceMask & gr::AccelerationStructure::AlphaMode_Mask;
 		if (ImGui::Checkbox("AlphaMode_Mask", &s_alphaMode_Mask))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Mask, s_alphaMode_Mask);
+			SetInclusionMaskBits(gr::AccelerationStructure::AlphaMode_Mask, s_alphaMode_Mask);
 		}
 
-		static bool s_alphaMode_Blend = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Blend;
+		static bool s_alphaMode_Blend = m_geometryInstanceMask & gr::AccelerationStructure::AlphaMode_Blend;
 		if (ImGui::Checkbox("AlphaMode_Blend", &s_alphaMode_Blend))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Blend, s_alphaMode_Blend);
+			SetInclusionMaskBits(gr::AccelerationStructure::AlphaMode_Blend, s_alphaMode_Blend);
 		}
 
-		static bool s_singleSided = m_geometryInstanceMask & re::AccelerationStructure::SingleSided;
+		static bool s_singleSided = m_geometryInstanceMask & gr::AccelerationStructure::SingleSided;
 		if (ImGui::Checkbox("SingleSided", &s_singleSided))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::SingleSided, s_singleSided);
+			SetInclusionMaskBits(gr::AccelerationStructure::SingleSided, s_singleSided);
 		}
 
-		static bool s_doubleSided = m_geometryInstanceMask & re::AccelerationStructure::DoubleSided;
+		static bool s_doubleSided = m_geometryInstanceMask & gr::AccelerationStructure::DoubleSided;
 		if (ImGui::Checkbox("DoubleSided", &s_doubleSided))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::DoubleSided, s_doubleSided);
+			SetInclusionMaskBits(gr::AccelerationStructure::DoubleSided, s_doubleSided);
 		}
 
-		static bool s_noShadow = m_geometryInstanceMask & re::AccelerationStructure::NoShadow;
+		static bool s_noShadow = m_geometryInstanceMask & gr::AccelerationStructure::NoShadow;
 		if (ImGui::Checkbox("NoShadow", &s_noShadow))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::NoShadow, s_noShadow);
+			SetInclusionMaskBits(gr::AccelerationStructure::NoShadow, s_noShadow);
 		}
 
-		static bool s_shadowCaster = m_geometryInstanceMask & re::AccelerationStructure::ShadowCaster;
+		static bool s_shadowCaster = m_geometryInstanceMask & gr::AccelerationStructure::ShadowCaster;
 		if (ImGui::Checkbox("ShadowCaster", &s_shadowCaster))
 		{
-			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, s_shadowCaster);
+			SetInclusionMaskBits(gr::AccelerationStructure::ShadowCaster, s_shadowCaster);
 		}
 
 		// LUT buffer debugging:
@@ -360,8 +360,8 @@ namespace gr
 		{
 			ImGui::Indent();
 
-			re::AccelerationStructure::TLASParams const* tlasParams =
-				dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
+			gr::AccelerationStructure::TLASParams const* tlasParams =
+				dynamic_cast<gr::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 
 			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
 

@@ -106,11 +106,11 @@ namespace gr
 
 
 	void Material::MaterialInstanceRenderData::RegisterGeometryResources(
-		MaterialInstanceRenderData const& materialInstanceRenderData, re::AccelerationStructure::Geometry& geometry)
+		MaterialInstanceRenderData const& materialInstanceRenderData, gr::AccelerationStructure::Geometry& geometry)
 	{
 		geometry.SetGeometryFlags(materialInstanceRenderData.m_alphaMode == gr::Material::AlphaMode::Opaque ?
-			re::AccelerationStructure::GeometryFlags::Opaque :
-			re::AccelerationStructure::GeometryFlags::GeometryFlags_None);
+			gr::AccelerationStructure::GeometryFlags::Opaque :
+			gr::AccelerationStructure::GeometryFlags::GeometryFlags_None);
 
 		geometry.SetEffectID(materialInstanceRenderData.m_effectID);
 		geometry.SetDrawstyleBits(
@@ -168,17 +168,17 @@ namespace gr
 			{
 			case gr::Material::AlphaMode::Opaque:
 			{
-				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Opaque;
+				geoInstanceInclusionMask |= gr::AccelerationStructure::AlphaMode_Opaque;
 			}
 			break;
 			case gr::Material::AlphaMode::Mask:
 			{
-				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Mask;
+				geoInstanceInclusionMask |= gr::AccelerationStructure::AlphaMode_Mask;
 			}
 			break;
 			case gr::Material::AlphaMode::Blend:
 			{
-				geoInstanceInclusionMask |= re::AccelerationStructure::AlphaMode_Blend;
+				geoInstanceInclusionMask |= gr::AccelerationStructure::AlphaMode_Blend;
 			}
 			break;
 			default:
@@ -187,11 +187,11 @@ namespace gr
 
 			// Material sidedness:
 			geoInstanceInclusionMask |= materialInstanceData->m_isDoubleSided ?
-				re::AccelerationStructure::DoubleSided : re::AccelerationStructure::SingleSided;
+				gr::AccelerationStructure::DoubleSided : gr::AccelerationStructure::SingleSided;
 
 			// Shadow casting:
 			geoInstanceInclusionMask |= materialInstanceData->m_isShadowCaster ?
-				re::AccelerationStructure::ShadowCaster : re::AccelerationStructure::NoShadow;
+				gr::AccelerationStructure::ShadowCaster : gr::AccelerationStructure::NoShadow;
 		}
 
 		return geoInstanceInclusionMask;

@@ -66,7 +66,7 @@ namespace
 
 
 	util::HashKey CreateBLASKey(
-		gr::RenderDataID owningMeshConceptID, re::AccelerationStructure::InclusionMask inclusionMask)
+		gr::RenderDataID owningMeshConceptID, gr::AccelerationStructure::InclusionMask inclusionMask)
 	{
 		util::HashKey result;
 		util::AddDataToHash(result, owningMeshConceptID);
@@ -232,7 +232,7 @@ namespace gr
 			// properties that affect the BLAS behavior
 			const util::HashKey blasKey = CreateBLASKey(
 				owningMeshConceptID, 
-				static_cast<re::AccelerationStructure::InclusionMask>(
+				static_cast<gr::AccelerationStructure::InclusionMask>(
 					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
 						&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
 
@@ -330,15 +330,15 @@ namespace gr
 
 			// Create a BLAS for each group of geometry with the same material properties, to allow accurate filtering
 			std::unordered_map<
-				re::AccelerationStructure::InclusionMask, 
+				gr::AccelerationStructure::InclusionMask, 
 				std::vector<gr::RenderDataID>> inclusionMaskToRenderDataIDs;
 			for (gr::RenderDataID meshPrimID : m_meshConceptToPrimitiveIDs.at(meshConceptID))
 			{
 				gr::Material::MaterialInstanceRenderData const& materialRenderData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-				const re::AccelerationStructure::InclusionMask inclusionMask = 
-					static_cast<re::AccelerationStructure::InclusionMask>(
+				const gr::AccelerationStructure::InclusionMask inclusionMask = 
+					static_cast<gr::AccelerationStructure::InclusionMask>(
 						gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(&materialRenderData));
 
 				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
@@ -348,7 +348,7 @@ namespace gr
 			for (auto const& entry : inclusionMaskToRenderDataIDs)
 			{
 				std::vector<glm::mat4 const*> blasMatrices;
-				auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
+				auto blasParams = std::make_unique<gr::AccelerationStructure::BLASParams>();
 
 				util::HashKey const& blasKey = CreateBLASKey(meshConceptID, entry.first);
 
@@ -358,7 +358,7 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back(meshPrimID);
+					gr::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back(meshPrimID);
 
 					gr::MeshPrimitive::RenderData::RegisterGeometryResources(meshPrimRenderData, instance);
 
@@ -397,24 +397,24 @@ namespace gr
 					renderData.GetTransformDataFromTransformID(parentTransformID).g_model);
 
 				// Assume we'll always update and compact for now
-				blasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>
-					(re::AccelerationStructure::BuildFlags::AllowUpdate |
-						re::AccelerationStructure::BuildFlags::AllowCompaction);
+				blasParams->m_buildFlags = static_cast<gr::AccelerationStructure::BuildFlags>
+					(gr::AccelerationStructure::BuildFlags::AllowUpdate |
+						gr::AccelerationStructure::BuildFlags::AllowCompaction);
 
 				blasParams->m_instanceMask = entry.first; // Visiblity mask
-				blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags_None;
+				blasParams->m_instanceFlags = gr::AccelerationStructure::InstanceFlags_None;
 
 				SEAssert(m_meshConceptToBLASAndCount.contains(meshConceptID) &&
 					m_meshConceptToBLASAndCount.at(meshConceptID).contains(blasKey),
 					"Could not find an existing BLAS record");
 
-				std::shared_ptr<re::AccelerationStructure> blas;
+				std::shared_ptr<gr::AccelerationStructure> blas;
 				if (batchOperation == re::Batch::RayTracingParams::Operation::BuildAS)
 				{
 					// Create a Transform buffer:
 					CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
 
-					blas = re::AccelerationStructure::CreateBLAS(
+					blas = gr::AccelerationStructure::CreateBLAS(
 						std::format("Mesh RenderDataID {} BLAS", meshConceptID).c_str(),
 						std::move(blasParams));
 
@@ -425,8 +425,8 @@ namespace gr
 					blas = m_meshConceptToBLASAndCount.at(meshConceptID).at(blasKey).first;
 
 					// Update the existing Transform buffer
-					re::AccelerationStructure::BLASParams const* existingBLASParams =
-						dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+					gr::AccelerationStructure::BLASParams const* existingBLASParams =
+						dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 
 					blasParams->m_transform = existingBLASParams->m_transform;
 					CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
@@ -452,12 +452,12 @@ namespace gr
 			{
 				tlasOperation = re::Batch::RayTracingParams::Operation::BuildAS;
 
-				auto tlasParams = std::make_unique<re::AccelerationStructure::TLASParams>();
+				auto tlasParams = std::make_unique<gr::AccelerationStructure::TLASParams>();
 
 				// Assume we'll always update and compact for now
-				tlasParams->m_buildFlags = static_cast<re::AccelerationStructure::BuildFlags>
-					(re::AccelerationStructure::BuildFlags::AllowUpdate |
-						re::AccelerationStructure::BuildFlags::AllowCompaction);
+				tlasParams->m_buildFlags = static_cast<gr::AccelerationStructure::BuildFlags>
+					(gr::AccelerationStructure::BuildFlags::AllowUpdate |
+						gr::AccelerationStructure::BuildFlags::AllowCompaction);
 
 				// Pack the scene BLAS instances:
 				for (auto const& entry : m_meshConceptToBLASAndCount)
@@ -489,7 +489,7 @@ namespace gr
 					};
 
 					// Create a new AccelerationStructure:
-					m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams), sbtParams);
+					m_sceneTLAS = gr::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams), sbtParams);
 				}
 				else
 				{

@@ -47,7 +47,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
+		std::shared_ptr<gr::AccelerationStructure> const* m_sceneTLAS;
 
 		re::StagePipeline* m_stagePipeline;
 

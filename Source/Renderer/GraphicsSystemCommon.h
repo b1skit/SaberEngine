@@ -33,7 +33,7 @@ namespace gr
 	using AnimatedVertexStreams = std::unordered_map<
 		gr::RenderDataID, std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>>;
 
-	using TLAS = std::shared_ptr<re::AccelerationStructure>;
+	using TLAS = std::shared_ptr<gr::AccelerationStructure>;
 
 	using ViewBatches = std::unordered_map<gr::Camera::View const, std::vector<gr::BatchHandle>>;
 	using AllBatches = std::vector<gr::BatchHandle>;

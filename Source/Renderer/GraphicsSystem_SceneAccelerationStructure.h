@@ -51,7 +51,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::AccelerationStructure> m_sceneTLAS;
+		std::shared_ptr<gr::AccelerationStructure> m_sceneTLAS;
 
 		// BLAS tracking:
 		std::unordered_map<gr::RenderDataID, std::unordered_set<gr::RenderDataID>> m_meshConceptToPrimitiveIDs;
@@ -59,7 +59,7 @@ namespace gr
 		
 		std::unordered_map<gr::RenderDataID, // MeshConcept RenderDataID
 			std::map<util::HashKey, // BLAS key
-				std::pair<std::shared_ptr<re::AccelerationStructure>, uint32_t>>> m_meshConceptToBLASAndCount;
+				std::pair<std::shared_ptr<gr::AccelerationStructure>, uint32_t>>> m_meshConceptToBLASAndCount;
 
 		std::unordered_map<gr::RenderDataID, util::HashKey> m_meshPrimToBLASKey;
 

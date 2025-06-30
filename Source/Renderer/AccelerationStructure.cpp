@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "AccelerationStructure_Platform.h"
 #include "BindlessResource.h"
@@ -17,13 +17,13 @@
 
 namespace
 {
-	uint32_t GetTotalGeometryCount(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances)
+	uint32_t GetTotalGeometryCount(std::vector<std::shared_ptr<gr::AccelerationStructure>> const& blasInstances)
 	{
 		uint32_t result = 0;
 		for (auto const& instance : blasInstances)
 		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(instance->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(instance->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
 			result += util::CheckedCast<uint32_t>(blasParams->m_geometry.size());
@@ -32,7 +32,7 @@ namespace
 	}
 
 
-	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances,
+	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<gr::AccelerationStructure>> const& blasInstances,
 		std::vector<gr::RenderDataID>& blasGeoRenderDataIDsOut)
 	{
 		const uint32_t geoCount = GetTotalGeometryCount(blasInstances);
@@ -45,8 +45,8 @@ namespace
 
 		for (auto const& instance : blasInstances)
 		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(instance->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(instance->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
 			for (auto const& geometry : blasParams->m_geometry)
@@ -90,7 +90,7 @@ namespace
 	}
 }
 
-namespace re
+namespace gr
 {
 	void AccelerationStructure::Geometry::RegisterResource(
 		core::InvPtr<re::VertexStream> const& vertexStream, bool forceReplace /*= false*/)
@@ -278,11 +278,11 @@ namespace re
 		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		SEAssert(brm, "Failed to get BindlessResourceManager");
 		
-		re::AccelerationStructure::TLASParams* newTLASParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams*>(newAccelerationStructure->m_asParams.get());
+		gr::AccelerationStructure::TLASParams* newTLASParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams*>(newAccelerationStructure->m_asParams.get());
 
 		newTLASParams->m_srvTLASResourceHandle = brm->RegisterResource(
-			std::make_unique<re::AccelerationStructureResource>(newAccelerationStructure));
+			std::make_unique<gr::AccelerationStructureResource>(newAccelerationStructure));
 
 		// Create the bindless LUT buffer:
 		newTLASParams->m_bindlessResourceLUT =
@@ -323,14 +323,14 @@ namespace re
 			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
-		if (m_type == re::AccelerationStructure::Type::TLAS &&
+		if (m_type == gr::AccelerationStructure::Type::TLAS &&
 			GetResourceHandle() != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			re::AccelerationStructure::TLASParams* tlasParams =
-				dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+			gr::AccelerationStructure::TLASParams* tlasParams =
+				dynamic_cast<gr::AccelerationStructure::TLASParams*>(m_asParams.get());
 			SEAssert(tlasParams, "Failed to cast to TLASParams");
 
 			brm->UnregisterResource(

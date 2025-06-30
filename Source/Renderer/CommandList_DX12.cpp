@@ -1085,19 +1085,19 @@ namespace dx12
 	}
 
 
-	void CommandList::BuildRaytracingAccelerationStructure(re::AccelerationStructure& as, bool doUpdate)
+	void CommandList::BuildRaytracingAccelerationStructure(gr::AccelerationStructure& as, bool doUpdate)
 	{
 		switch (as.GetType())
 		{
-		case re::AccelerationStructure::Type::TLAS:
+		case gr::AccelerationStructure::Type::TLAS:
 		{
 			//
 		}
 		break;
-		case re::AccelerationStructure::Type::BLAS:
+		case gr::AccelerationStructure::Type::BLAS:
 		{
-			re::AccelerationStructure::BLASParams const* createParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(as.GetASParams());
+			gr::AccelerationStructure::BLASParams const* createParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(as.GetASParams());
 			SEAssert(createParams, "Failed to get AS create params");
 
 			// Batch resource transitions together in advance:

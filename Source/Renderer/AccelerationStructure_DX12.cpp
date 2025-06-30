@@ -65,16 +65,16 @@ namespace
 #endif
 
 	constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS BuildFlagsToD3DBuildFlags(
-		re::AccelerationStructure::BuildFlags flags)
+		gr::AccelerationStructure::BuildFlags flags)
 	{
 		SEStaticAssert(
-			re::AccelerationStructure::BuildFlags::BuildFlags_None == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE &&
-			re::AccelerationStructure::BuildFlags::AllowUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE &&
-			re::AccelerationStructure::BuildFlags::AllowCompaction == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION &&
-			re::AccelerationStructure::BuildFlags::PreferFastTrace == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE &&
-			re::AccelerationStructure::BuildFlags::PreferFastBuild == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD &&
-			re::AccelerationStructure::BuildFlags::MinimizeMemory == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY/* &&
-			re::AccelerationStructure::BuildFlags::PerformUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE*/,
+			gr::AccelerationStructure::BuildFlags::BuildFlags_None == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE &&
+			gr::AccelerationStructure::BuildFlags::AllowUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE &&
+			gr::AccelerationStructure::BuildFlags::AllowCompaction == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION &&
+			gr::AccelerationStructure::BuildFlags::PreferFastTrace == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE &&
+			gr::AccelerationStructure::BuildFlags::PreferFastBuild == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD &&
+			gr::AccelerationStructure::BuildFlags::MinimizeMemory == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY/* &&
+			gr::AccelerationStructure::BuildFlags::PerformUpdate == D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE*/,
 			"Build flags out of sync");
 
 		return static_cast<D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS>(flags);
@@ -82,12 +82,12 @@ namespace
 
 
 	constexpr D3D12_RAYTRACING_GEOMETRY_FLAGS GeometryFlagsToD3DGeometryFlags(
-		re::AccelerationStructure::GeometryFlags flags)
+		gr::AccelerationStructure::GeometryFlags flags)
 	{
 		SEStaticAssert(
-			re::AccelerationStructure::GeometryFlags::GeometryFlags_None == D3D12_RAYTRACING_GEOMETRY_FLAG_NONE &&
-			re::AccelerationStructure::GeometryFlags::Opaque == D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE &&
-			re::AccelerationStructure::GeometryFlags::NoDuplicateAnyHitInvocation == D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION,
+			gr::AccelerationStructure::GeometryFlags::GeometryFlags_None == D3D12_RAYTRACING_GEOMETRY_FLAG_NONE &&
+			gr::AccelerationStructure::GeometryFlags::Opaque == D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE &&
+			gr::AccelerationStructure::GeometryFlags::NoDuplicateAnyHitInvocation == D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION,
 			"Geometry flags out of sync");
 
 		return static_cast<D3D12_RAYTRACING_GEOMETRY_FLAGS>(flags);
@@ -95,14 +95,14 @@ namespace
 
 
 	constexpr D3D12_RAYTRACING_INSTANCE_FLAGS InstanceFlagsToD3DInstanceFlags(
-		re::AccelerationStructure::InstanceFlags flags)
+		gr::AccelerationStructure::InstanceFlags flags)
 	{
 		SEStaticAssert(
-			re::AccelerationStructure::InstanceFlags::InstanceFlags_None == D3D12_RAYTRACING_INSTANCE_FLAG_NONE &&
-			re::AccelerationStructure::InstanceFlags::TriangleCullDisable == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE &&
-			re::AccelerationStructure::InstanceFlags::TriangleFrontCounterClockwise == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE &&
-			re::AccelerationStructure::InstanceFlags::ForceOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE &&
-			re::AccelerationStructure::InstanceFlags::ForceNonOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE,
+			gr::AccelerationStructure::InstanceFlags::InstanceFlags_None == D3D12_RAYTRACING_INSTANCE_FLAG_NONE &&
+			gr::AccelerationStructure::InstanceFlags::TriangleCullDisable == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE &&
+			gr::AccelerationStructure::InstanceFlags::TriangleFrontCounterClockwise == D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE &&
+			gr::AccelerationStructure::InstanceFlags::ForceOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE &&
+			gr::AccelerationStructure::InstanceFlags::ForceNonOpaque == D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE,
 			"Instance flags out of sync");
 
 		return static_cast<D3D12_RAYTRACING_INSTANCE_FLAGS>(flags);
@@ -135,7 +135,7 @@ namespace
 	}
 
 
-	uint64_t ComputeTLASInstancesBufferSize(re::AccelerationStructure::TLASParams const* tlasParams)
+	uint64_t ComputeTLASInstancesBufferSize(gr::AccelerationStructure::TLASParams const* tlasParams)
 	{
 		// Compute the size of the BLAS instance descriptors that will be stored in GPU memory:
 		return util::RoundUpToNearestMultiple<uint64_t>(
@@ -144,15 +144,15 @@ namespace
 	}
 
 
-	void CreateBLASResources(re::AccelerationStructure& blas)
+	void CreateBLASResources(gr::AccelerationStructure& blas)
 	{
-		SEAssert(blas.GetType() == re::AccelerationStructure::Type::BLAS, "Invalid type");
+		SEAssert(blas.GetType() == gr::AccelerationStructure::Type::BLAS, "Invalid type");
 
 		dx12::AccelerationStructure::PlatObj* blasPlatObj =
 			blas.GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj*>();
 
-		re::AccelerationStructure::BLASParams const* blasParams = 
-			dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas.GetASParams());
+		gr::AccelerationStructure::BLASParams const* blasParams = 
+			dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas.GetASParams());
 		SEAssert(blasParams, "Failed to get BLAS params");
 
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
@@ -224,9 +224,9 @@ namespace
 	}
 
 
-	void BuildBLAS(re::AccelerationStructure& blas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
+	void BuildBLAS(gr::AccelerationStructure& blas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
 	{
-		SEAssert(blas.GetType() == re::AccelerationStructure::Type::BLAS, "Invalid type");
+		SEAssert(blas.GetType() == gr::AccelerationStructure::Type::BLAS, "Invalid type");
 
 		dx12::AccelerationStructure::PlatObj* platObj =
 			blas.GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj*>();
@@ -234,8 +234,8 @@ namespace
 		SEAssert(platObj->m_ASBuffer, "BLAS buffer is null. This should not be possible");
 		SEAssert(!doUpdate || platObj->m_isBuilt, "Can't update a BLAS that has not been created");
 
-		re::AccelerationStructure::BLASParams const* blasParams =
-			dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas.GetASParams());
+		gr::AccelerationStructure::BLASParams const* blasParams =
+			dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas.GetASParams());
 		SEAssert(blasParams, "Failed to get BLASParams");
 
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
@@ -243,7 +243,7 @@ namespace
 
 		for (size_t instanceIdx = 0; instanceIdx < blasParams->m_geometry.size(); ++instanceIdx)
 		{
-			re::AccelerationStructure::Geometry const& geo = blasParams->m_geometry[instanceIdx];
+			gr::AccelerationStructure::Geometry const& geo = blasParams->m_geometry[instanceIdx];
 
 			// Transform:
 			D3D12_GPU_VIRTUAL_ADDRESS transform3x4Addr = NULL;
@@ -299,7 +299,7 @@ namespace
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = BuildFlagsToD3DBuildFlags(blasParams->m_buildFlags);
 		if (doUpdate)
 		{
-			SEAssert(blasParams->m_buildFlags & re::AccelerationStructure::BuildFlags::AllowUpdate,
+			SEAssert(blasParams->m_buildFlags & gr::AccelerationStructure::BuildFlags::AllowUpdate,
 				"Trying to update a BLAS, but the build flags don't have the AllowUpdate bit set");
 
 			// Note: We must add the "perform update" flag to the exact same flags we used to create our original buffer,
@@ -350,15 +350,15 @@ namespace
 	}
 
 
-	void CreateTLASResources(re::AccelerationStructure& tlas)
+	void CreateTLASResources(gr::AccelerationStructure& tlas)
 	{
-		SEAssert(tlas.GetType() == re::AccelerationStructure::Type::TLAS, "Invalid type");
+		SEAssert(tlas.GetType() == gr::AccelerationStructure::Type::TLAS, "Invalid type");
 
 		dx12::AccelerationStructure::PlatObj* platObj =
 			tlas.GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj*>();
 
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
+		gr::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
 		// Compute the estimated buffer sizes:
@@ -399,9 +399,9 @@ namespace
 	}
 
 
-	void BuildTLAS(re::AccelerationStructure& tlas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
+	void BuildTLAS(gr::AccelerationStructure& tlas, bool doUpdate, ID3D12GraphicsCommandList4* cmdList)
 	{
-		SEAssert(tlas.GetType() == re::AccelerationStructure::Type::TLAS, "Invalid type");
+		SEAssert(tlas.GetType() == gr::AccelerationStructure::Type::TLAS, "Invalid type");
 
 		dx12::AccelerationStructure::PlatObj* platObj =
 			tlas.GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj*>();
@@ -409,12 +409,12 @@ namespace
 		SEAssert(platObj->m_ASBuffer, "BLAS buffer is null. This should not be possible");
 		SEAssert(!doUpdate || platObj->m_isBuilt, "Can't update a BLAS that has not been created");
 
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
+		gr::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams const*>(tlas.GetASParams());
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
 		// Compute the hit group indexes:
-		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::Geometry> const& geometry)
+		auto ComputeStyleHash = [](std::vector<gr::AccelerationStructure::Geometry> const& geometry)
 			-> util::HashKey
 			{
 				// We only want to include an EffectID/Material Drawstyle bit combination once in our hash (i.e. the
@@ -445,8 +445,8 @@ namespace
 		std::map<util::HashKey, uint32_t> styleHashToHitGroupIdx;
 		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 			SEAssert(blasParams, "Failed to get TLASParams");
 
 			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
@@ -485,14 +485,14 @@ namespace
 		uint32_t blasBaseOffset = 0;
 		for (uint32_t blasInstanceIdx = 0; blasInstanceIdx < numInstances; ++blasInstanceIdx)
 		{
-			SEAssert(tlasParams->GetBLASInstances()[blasInstanceIdx]->GetType() == re::AccelerationStructure::Type::BLAS,
+			SEAssert(tlasParams->GetBLASInstances()[blasInstanceIdx]->GetType() == gr::AccelerationStructure::Type::BLAS,
 				"Invalid BLAS instance type");
 			SEAssert(blasInstanceIdx <= 0xFFFFFF, "24 bit max instance IDs");
 
-			std::shared_ptr<re::AccelerationStructure> const& blasAS = tlasParams->GetBLASInstances()[blasInstanceIdx];
+			std::shared_ptr<gr::AccelerationStructure> const& blasAS = tlasParams->GetBLASInstances()[blasInstanceIdx];
 
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
 			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
@@ -528,7 +528,7 @@ namespace
 		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS flags = BuildFlagsToD3DBuildFlags(tlasParams->m_buildFlags);
 		if (doUpdate)
 		{
-			SEAssert(tlasParams->m_buildFlags & re::AccelerationStructure::BuildFlags::AllowUpdate,
+			SEAssert(tlasParams->m_buildFlags & gr::AccelerationStructure::BuildFlags::AllowUpdate,
 				"Trying to update a TLAS, but the build flags don't have the AllowUpdate bit set");
 
 			flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
@@ -609,19 +609,19 @@ namespace dx12
 	}
 
 
-	void AccelerationStructure::Create(re::AccelerationStructure& as)
+	void AccelerationStructure::Create(gr::AccelerationStructure& as)
 	{
 		// We create our acceleration structure buffers in advance to ensure they're valid (albeit uninitialized) during
 		// asyncronous command list recording. This prevents a potential race condition where a thread recording a
 		// command list tries to set an acceleration structure before another thread creates it.
 		switch (as.GetType())
 		{
-		case re::AccelerationStructure::Type::TLAS:
+		case gr::AccelerationStructure::Type::TLAS:
 		{
 			CreateTLASResources(as);
 		}
 		break;
-		case re::AccelerationStructure::Type::BLAS:
+		case gr::AccelerationStructure::Type::BLAS:
 		{
 			CreateBLASResources(as);
 		}
@@ -631,14 +631,14 @@ namespace dx12
 	}
 
 
-	void AccelerationStructure::Destroy(re::AccelerationStructure& as)
+	void AccelerationStructure::Destroy(gr::AccelerationStructure& as)
 	{
 		//
 	}
 
 
 	void AccelerationStructure::BuildAccelerationStructure(
-		re::AccelerationStructure& as,
+		gr::AccelerationStructure& as,
 		bool doUpdate,
 		ID3D12GraphicsCommandList4* cmdList)
 	{
@@ -646,12 +646,12 @@ namespace dx12
 
 		switch (as.GetType())
 		{
-		case re::AccelerationStructure::Type::TLAS:
+		case gr::AccelerationStructure::Type::TLAS:
 		{
 			BuildTLAS(as, doUpdate, cmdList);
 		}
 		break;
-		case re::AccelerationStructure::Type::BLAS:
+		case gr::AccelerationStructure::Type::BLAS:
 		{
 			BuildBLAS(as, doUpdate, cmdList);
 		}

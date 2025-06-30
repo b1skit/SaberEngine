@@ -15,9 +15,9 @@ namespace dx12
 	struct AccelerationStructureResource
 	{
 	public:
-		static void GetPlatformResource(re::AccelerationStructureResource const&, void*, size_t);
-		static void GetDescriptor(re::AccelerationStructureResource const&, void*, size_t, uint8_t frameOffsetIdx);
-		static void GetResourceUseState(re::AccelerationStructureResource const&, void*, size_t);
+		static void GetPlatformResource(gr::AccelerationStructureResource const&, void*, size_t);
+		static void GetDescriptor(gr::AccelerationStructureResource const&, void*, size_t, uint8_t frameOffsetIdx);
+		static void GetResourceUseState(gr::AccelerationStructureResource const&, void*, size_t);
 	};
 
 

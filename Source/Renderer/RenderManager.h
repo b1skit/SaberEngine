@@ -166,7 +166,7 @@ namespace re
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
 		util::NBufferedVector<core::InvPtr<re::VertexStream>> m_newVertexStreams;
 
-		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
+		util::NBufferedVector<std::shared_ptr<gr::AccelerationStructure>> m_newAccelerationStructures;
 		util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>> m_newShaderBindingTables;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;		
 

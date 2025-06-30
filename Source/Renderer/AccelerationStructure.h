@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
@@ -20,18 +20,22 @@
 
 namespace re
 {
-	class AccelerationStructure;
 	class Buffer;
+}
+
+namespace gr
+{
+	class AccelerationStructure;
 
 
 	struct ASInput final
 	{
-		ASInput(char const* shaderName, std::shared_ptr<re::AccelerationStructure> const& as) // TLAS shader use
+		ASInput(char const* shaderName, std::shared_ptr<gr::AccelerationStructure> const& as) // TLAS shader use
 			: m_shaderName(shaderName)
 			, m_accelerationStructure(as) 
 		{}
 
-		ASInput(std::shared_ptr<re::AccelerationStructure> const& as) // TLAS/BLAS Updates
+		ASInput(std::shared_ptr<gr::AccelerationStructure> const& as) // TLAS/BLAS Updates
 			: ASInput("<Unnamed ASInput>", as)
 		{}
 
@@ -45,7 +49,7 @@ namespace re
 
 	public:
 		std::string m_shaderName;
-		std::shared_ptr<re::AccelerationStructure> m_accelerationStructure;
+		std::shared_ptr<gr::AccelerationStructure> m_accelerationStructure;
 	};
 
 
@@ -184,8 +188,8 @@ namespace re
 		};
 		struct TLASParams final : public virtual IASParams
 		{
-			void AddBLASInstance(std::shared_ptr<re::AccelerationStructure> const& blasInstance);
-			std::vector<std::shared_ptr<re::AccelerationStructure>> const& GetBLASInstances() const;
+			void AddBLASInstance(std::shared_ptr<gr::AccelerationStructure> const& blasInstance);
+			std::vector<std::shared_ptr<gr::AccelerationStructure>> const& GetBLASInstances() const;
 			uint32_t GetBLASCount() const;
 
 			ResourceHandle GetResourceHandle() const;
@@ -200,7 +204,7 @@ namespace re
 			friend class AccelerationStructure;
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 
-			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
+			std::vector<std::shared_ptr<gr::AccelerationStructure>> m_blasInstances;
 			std::vector<gr::RenderDataID> m_blasGeoRenderDataIDs; // Flattened list of all BLAS geometry elements
 
 			std::shared_ptr<re::ShaderBindingTable> m_sbt; // TODO: Support multiple SBTs per TLAS
@@ -270,7 +274,7 @@ namespace re
 	};
 
 
-	inline re::AccelerationStructure::IASParams::~IASParams() {} // Pure virtual: Must provide an impl
+	inline gr::AccelerationStructure::IASParams::~IASParams() {} // Pure virtual: Must provide an impl
 
 
 	inline AccelerationStructure::PlatObj* AccelerationStructure::GetPlatformObject() const
@@ -301,10 +305,10 @@ namespace re
 
 	inline ResourceHandle AccelerationStructure::GetResourceHandle() const
 	{
-		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
+		SEAssert(m_type == gr::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
 		
-		re::AccelerationStructure::TLASParams* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+		gr::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams*>(m_asParams.get());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 
 		return tlasParams->GetResourceHandle();
@@ -313,10 +317,10 @@ namespace re
 
 	inline re::BufferInput const& AccelerationStructure::GetBindlessVertexStreamLUT() const
 	{
-		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
+		SEAssert(m_type == gr::AccelerationStructure::Type::TLAS, "Only a TLAS has a bindless resource handle");
 
-		re::AccelerationStructure::TLASParams* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+		gr::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams*>(m_asParams.get());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 
 		return tlasParams->GetBindlessVertexStreamLUT();
@@ -325,8 +329,8 @@ namespace re
 
 	inline std::shared_ptr<re::ShaderBindingTable> AccelerationStructure::GetShaderBindingTable() const
 	{
-		re::AccelerationStructure::TLASParams* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+		gr::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams*>(m_asParams.get());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 		
 		return tlasParams->m_sbt;
@@ -418,32 +422,32 @@ namespace re
 	// ---
 
 
-	inline void re::AccelerationStructure::TLASParams::AddBLASInstance(
-		std::shared_ptr<re::AccelerationStructure> const& blasInstance)
+	inline void gr::AccelerationStructure::TLASParams::AddBLASInstance(
+		std::shared_ptr<gr::AccelerationStructure> const& blasInstance)
 	{
 		m_blasInstances.emplace_back(blasInstance);
 	}
 
 
-	inline std::vector<std::shared_ptr<re::AccelerationStructure>> const& re::AccelerationStructure::TLASParams::GetBLASInstances() const
+	inline std::vector<std::shared_ptr<gr::AccelerationStructure>> const& gr::AccelerationStructure::TLASParams::GetBLASInstances() const
 	{
 		return m_blasInstances;
 	}
 
 
-	inline uint32_t re::AccelerationStructure::TLASParams::GetBLASCount() const
+	inline uint32_t gr::AccelerationStructure::TLASParams::GetBLASCount() const
 	{
 		return util::CheckedCast<uint32_t>(m_blasInstances.size());
 	}
 
 
-	inline std::vector<gr::RenderDataID> const& re::AccelerationStructure::TLASParams::GetBLASGeometryRenderDataIDs() const
+	inline std::vector<gr::RenderDataID> const& gr::AccelerationStructure::TLASParams::GetBLASGeometryRenderDataIDs() const
 	{
 		return m_blasGeoRenderDataIDs;
 	};
 
 
-	inline std::shared_ptr<re::ShaderBindingTable> const& re::AccelerationStructure::TLASParams::GetShaderBindingTable() const
+	inline std::shared_ptr<re::ShaderBindingTable> const& gr::AccelerationStructure::TLASParams::GetShaderBindingTable() const
 	{
 		return m_sbt;
 	};

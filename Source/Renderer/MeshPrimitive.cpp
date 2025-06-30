@@ -254,7 +254,7 @@ namespace gr
 
 
 	void MeshPrimitive::RenderData::RegisterGeometryResources(
-		gr::MeshPrimitive::RenderData const& meshPrimRenderData, re::AccelerationStructure::Geometry& geometry)
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, gr::AccelerationStructure::Geometry& geometry)
 	{
 		bool seenPositions = false;
 		for (auto const& stream : meshPrimRenderData.m_vertexStreams)

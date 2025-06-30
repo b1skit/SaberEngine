@@ -20,7 +20,7 @@
 namespace re
 {
 	std::shared_ptr<re::ShaderBindingTable> ShaderBindingTable::Create(
-		char const* name, SBTParams const& sbtParams, std::shared_ptr<re::AccelerationStructure> const& tlas)
+		char const* name, SBTParams const& sbtParams, std::shared_ptr<gr::AccelerationStructure> const& tlas)
 	{
 		std::shared_ptr<re::ShaderBindingTable> newSBT;
 		newSBT.reset(new ShaderBindingTable(name, sbtParams));
@@ -66,7 +66,7 @@ namespace re
 	}
 
 
-	void ShaderBindingTable::Initialize(std::shared_ptr<re::AccelerationStructure> const& tlas)
+	void ShaderBindingTable::Initialize(std::shared_ptr<gr::AccelerationStructure> const& tlas)
 	{
 		SEAssert(tlas, "Invalid TLAS");
 
@@ -100,15 +100,15 @@ namespace re
 		ResolveShaders(seenMissShaders, m_sbtParams.m_missStyles, m_missShaders);
 
 		// Hit group shaders: Build a unique list of shaders used across all BLAS instances:
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
+		gr::AccelerationStructure::TLASParams const* tlasParams =
+			dynamic_cast<gr::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
 		std::set<ShaderID> seenHitShaders;
 		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
-			re::AccelerationStructure::BLASParams const* blasParams =
-				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
+			gr::AccelerationStructure::BLASParams const* blasParams =
+				dynamic_cast<gr::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 			SEAssert(blasParams, "Failed to get TLASParams");
 
 			for (auto const& geo : blasParams->m_geometry)

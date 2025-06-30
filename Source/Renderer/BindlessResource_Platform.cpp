@@ -4,9 +4,9 @@
 
 namespace platform
 {
-	void (*AccelerationStructureResource::GetPlatformResource)(re::AccelerationStructureResource const&, void*, size_t) = nullptr;
-	void (*AccelerationStructureResource::GetDescriptor)(re::AccelerationStructureResource const&, void*, size_t, uint8_t) = nullptr;
-	void (*AccelerationStructureResource::GetResourceUseState)(re::AccelerationStructureResource const&, void*, size_t) = nullptr;
+	void (*AccelerationStructureResource::GetPlatformResource)(gr::AccelerationStructureResource const&, void*, size_t) = nullptr;
+	void (*AccelerationStructureResource::GetDescriptor)(gr::AccelerationStructureResource const&, void*, size_t, uint8_t) = nullptr;
+	void (*AccelerationStructureResource::GetResourceUseState)(gr::AccelerationStructureResource const&, void*, size_t) = nullptr;
 
 
 	// ---

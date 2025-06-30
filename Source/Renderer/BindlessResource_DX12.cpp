@@ -13,7 +13,7 @@
 namespace dx12
 {
 	void dx12::AccelerationStructureResource::GetPlatformResource(
-		re::AccelerationStructureResource const& resource, void* dest, size_t destByteSize)
+		gr::AccelerationStructureResource const& resource, void* dest, size_t destByteSize)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 
@@ -24,7 +24,7 @@ namespace dx12
 
 
 	void AccelerationStructureResource::GetDescriptor(
-		re::AccelerationStructureResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
+		gr::AccelerationStructureResource const& resource, void* dest, size_t destByteSize, uint8_t frameOffsetIdx)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 		SEAssert(resource.m_viewType == re::ViewType::SRV, "Unexpected view type");
@@ -40,7 +40,7 @@ namespace dx12
 
 
 	void AccelerationStructureResource::GetResourceUseState(
-		re::AccelerationStructureResource const& resource, void* dest, size_t destByteSize)
+		gr::AccelerationStructureResource const& resource, void* dest, size_t destByteSize)
 	{
 		SEAssert(dest && destByteSize, "Invalid args received");
 

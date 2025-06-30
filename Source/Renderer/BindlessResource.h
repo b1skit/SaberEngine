@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
@@ -16,7 +16,7 @@ namespace re
 
 	struct AccelerationStructureResource : public virtual IBindlessResource
 	{
-		AccelerationStructureResource(std::shared_ptr<re::AccelerationStructure> const& input)
+		AccelerationStructureResource(std::shared_ptr<gr::AccelerationStructure> const& input)
 			: m_resource(input)
 		{
 			m_viewType = re::ViewType::SRV;
@@ -32,7 +32,7 @@ namespace re
 
 
 	public:
-		std::shared_ptr<re::AccelerationStructure> m_resource;
+		std::shared_ptr<gr::AccelerationStructure> m_resource;
 	};
 
 

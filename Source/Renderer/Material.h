@@ -104,7 +104,7 @@ namespace gr
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
 			static void RegisterGeometryResources(
-				MaterialInstanceRenderData const&, re::AccelerationStructure::Geometry&);
+				MaterialInstanceRenderData const&, gr::AccelerationStructure::Geometry&);
 		};
 
 		template<typename T>

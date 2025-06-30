@@ -138,7 +138,7 @@ namespace dx12
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
 
-		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
+		void BuildRaytracingAccelerationStructure(gr::AccelerationStructure&, bool doUpdate);
 
 		void AttachBindlessResources(re::ShaderBindingTable const&, re::BindlessResourceManager const&);
 

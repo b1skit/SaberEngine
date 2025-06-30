@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "CPUDescriptorHeapManager_DX12.h"
@@ -10,7 +10,7 @@ namespace dx12
 	class AccelerationStructure
 	{
 	public:
-		struct PlatObj final : public re::AccelerationStructure::PlatObj
+		struct PlatObj final : public gr::AccelerationStructure::PlatObj
 		{
 			PlatObj();
 
@@ -28,12 +28,12 @@ namespace dx12
 
 
 	public: // Platform functionality:
-		static void Create(re::AccelerationStructure&);
-		static void Destroy(re::AccelerationStructure&);
+		static void Create(gr::AccelerationStructure&);
+		static void Destroy(gr::AccelerationStructure&);
 
 
 	public: // DX12-specific functionality:
-		static void BuildAccelerationStructure(re::AccelerationStructure&, bool doUpdate, ID3D12GraphicsCommandList4*);
+		static void BuildAccelerationStructure(gr::AccelerationStructure&, bool doUpdate, ID3D12GraphicsCommandList4*);
 	};
 
 }
