@@ -1,11 +1,11 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
 
 #include "Core/Assert.h"
 
 
-namespace re
+namespace gr
 {
 	class Stage;
 }
@@ -79,7 +79,7 @@ namespace gr
 		void CreateBatches();
 
 	private:
-		std::shared_ptr<re::Stage> m_gBufferStage;
+		std::shared_ptr<gr::Stage> m_gBufferStage;
 		std::shared_ptr<re::TextureTargetSet> m_gBufferTargets;
 		re::StagePipeline* m_owningPipeline;
 

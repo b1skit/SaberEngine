@@ -25,7 +25,7 @@ namespace platform
 
 
 	public:
-		struct Payload final : public virtual re::LibraryStage::IPayload
+		struct Payload final : public virtual gr::LibraryStage::IPayload
 		{
 			uint64_t m_currentFrameNum = std::numeric_limits<uint64_t>::max();
 			core::FrameIndexedCommandManager* m_perFrameCommands = nullptr;
@@ -41,7 +41,7 @@ namespace platform
 		static void ConfigureScaling(RLibraryImGui&);
 
 	public:
-		virtual void Execute(re::Stage*, void* platformObject) = 0;
+		virtual void Execute(gr::Stage*, void* platformObject) = 0;
 		virtual void Destroy() = 0;
 
 

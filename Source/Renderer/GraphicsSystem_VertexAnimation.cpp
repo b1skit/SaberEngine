@@ -148,13 +148,13 @@ namespace gr
 		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 
 		m_morphAnimationStage = 
-			re::Stage::CreateComputeStage("Morph Animation Stage", re::Stage::ComputeStageParams{});
+			gr::Stage::CreateComputeStage("Morph Animation Stage", gr::Stage::ComputeStageParams{});
 		m_morphAnimationStage->AddDrawStyleBits(effect::drawstyle::VertexAnimation_Morph);
 		
 		pipeline.AppendStage(m_morphAnimationStage);
 
 		m_skinAnimationStage =
-			re::Stage::CreateComputeStage("Skinned Animation Stage", re::Stage::ComputeStageParams{});
+			gr::Stage::CreateComputeStage("Skinned Animation Stage", gr::Stage::ComputeStageParams{});
 		m_skinAnimationStage->AddDrawStyleBits(effect::drawstyle::VertexAnimation_Skinning);
 
 		pipeline.AppendStage(m_skinAnimationStage);

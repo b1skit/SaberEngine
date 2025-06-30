@@ -51,7 +51,7 @@ namespace gr
 
 		re::StagePipeline* m_stagePipeline;
 
-		std::shared_ptr<re::Stage> m_rtStage;
+		std::shared_ptr<gr::Stage> m_rtStage;
 		core::InvPtr<re::Texture> m_rtTarget;
 
 		uint32_t m_rayGenIdx;

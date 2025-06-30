@@ -176,7 +176,7 @@ namespace gr
 
 
 		// Ray tracing stage:
-		m_rtStage = re::Stage::CreateRayTracingStage("RayTracing_Experimental", re::Stage::RayTracingStageParams{});
+		m_rtStage = gr::Stage::CreateRayTracingStage("RayTracing_Experimental", gr::Stage::RayTracingStageParams{});
 		
 		// Add the camera buffer:
 		m_rtStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -254,8 +254,8 @@ namespace gr
 		}
 		else
 		{
-			std::shared_ptr<re::ClearRWTexturesStage> clearStage =
-				re::Stage::CreateSingleFrameRWTextureClearStage("RayTracing_Experimental Target clear stage");
+			std::shared_ptr<gr::ClearRWTexturesStage> clearStage =
+				gr::Stage::CreateSingleFrameRWTextureClearStage("RayTracing_Experimental Target clear stage");
 
 			clearStage->AddSingleFrameRWTextureInput(m_rtTarget, re::TextureView(m_rtTarget));
 			clearStage->SetClearValue(glm::vec4(0.f));

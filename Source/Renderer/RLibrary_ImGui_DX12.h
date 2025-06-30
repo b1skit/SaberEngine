@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "RLibrary_ImGui_Platform.h"
 
@@ -7,7 +7,7 @@
 
 struct ImGui_ImplDX12_InitInfo;
 
-namespace re
+namespace gr
 {
 	class Stage;
 }
@@ -75,7 +75,7 @@ namespace dx12
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::Stage*, void* platformObject) override;
+		void Execute(gr::Stage*, void* platformObject) override;
 
 		void Destroy() override;
 

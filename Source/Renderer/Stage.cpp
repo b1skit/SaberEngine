@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
@@ -21,7 +21,7 @@
 #include "Renderer/Shaders/Common/InstancingParams.h"
 
 
-namespace re
+namespace gr
 {
 	std::shared_ptr<Stage> Stage::CreateParentStage(char const* name)
 	{
@@ -509,7 +509,7 @@ namespace re
 		}
 		if (!foundExistingEntry)
 		{
-			m_permanentTextureSamplerInputs.emplace_back(TextureAndSamplerInput{shaderName, tex, sampler, texView});
+			m_permanentTextureSamplerInputs.emplace_back(re::TextureAndSamplerInput{shaderName, tex, sampler, texView});
 		}
 
 		if (m_textureTargetSet && 
@@ -1047,7 +1047,7 @@ namespace re
 		}
 		return m_type == Type::Parent || m_resolvedBatches.empty();
 
-		SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 10,
+		SEStaticAssert(static_cast<uint8_t>(gr::Stage::Type::Invalid) == 10,
 			"Number of stage types has changed. This must be updated");
 	}
 	
@@ -1100,8 +1100,8 @@ namespace re
 
 	gr::StageBatchHandle* Stage::AddBatch(gr::BatchHandle batch)
 	{
-		SEAssert(m_type != re::Stage::Type::Parent &&
-			m_type != re::Stage::Type::ClearTargetSet,
+		SEAssert(m_type != gr::Stage::Type::Parent &&
+			m_type != gr::Stage::Type::ClearTargetSet,
 			"Incompatible stage type: Cannot add batches");
 
 		SEAssert(m_type != Type::FullscreenQuad || m_resolvedBatches.empty(),

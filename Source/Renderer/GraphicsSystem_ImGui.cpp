@@ -18,10 +18,10 @@ namespace gr
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		// Create a library stage:
-		re::Stage::LibraryStageParams imGuiLibraryParams(
-			re::Stage::Type::LibraryRaster,
-			re::Stage::LibraryStageParams::LibraryType::ImGui);
-		m_imguiLibraryStage = re::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
+		gr::Stage::LibraryStageParams imGuiLibraryParams(
+			gr::Stage::Type::LibraryRaster,
+			gr::Stage::LibraryStageParams::LibraryType::ImGui);
+		m_imguiLibraryStage = gr::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 
 		// Append the library stage
 		pipeline.AppendStage(m_imguiLibraryStage);
@@ -36,6 +36,6 @@ namespace gr
 		framePayload->m_currentFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
 		framePayload->m_perFrameCommands = &m_perFrameCommands;
 
-		dynamic_cast<re::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));
+		dynamic_cast<gr::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));
 	}
 }

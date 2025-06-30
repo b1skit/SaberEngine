@@ -1,9 +1,9 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "RLibrary_ImGui_Platform.h"
 
 
-namespace re
+namespace gr
 {
 	class Stage;
 }
@@ -26,7 +26,7 @@ namespace opengl
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(re::Stage*, void* platformObject) override;
+		void Execute(gr::Stage*, void* platformObject) override;
 
 		void Destroy() override;
 

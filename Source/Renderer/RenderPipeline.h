@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Stage.h"
 
@@ -19,7 +19,7 @@ namespace re
 	class StagePipeline final : public virtual core::INamedObject
 	{
 	public:
-		typedef std::list<std::shared_ptr<re::Stage>>::iterator StagePipelineItr;
+		typedef std::list<std::shared_ptr<gr::Stage>>::iterator StagePipelineItr;
 
 
 	public:
@@ -32,17 +32,17 @@ namespace re
 		void Destroy();
 	
 
-		StagePipelineItr AppendStage(std::shared_ptr<re::Stage> const&);
-		StagePipelineItr AppendStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendStage(std::shared_ptr<gr::Stage> const&);
+		StagePipelineItr AppendStage(StagePipelineItr const& parent, std::shared_ptr<gr::Stage> const&);
 
-		StagePipelineItr AppendStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<re::Stage> const&);
+		StagePipelineItr AppendStageForSingleFrame(StagePipelineItr const& parent, std::shared_ptr<gr::Stage> const&);
 
-		StagePipelineItr AppendSingleFrameStage(std::shared_ptr<re::Stage>&&); // Append to end
-		StagePipelineItr AppendSingleFrameStage(StagePipelineItr const& parent, std::shared_ptr<re::Stage>&&);
+		StagePipelineItr AppendSingleFrameStage(std::shared_ptr<gr::Stage>&&); // Append to end
+		StagePipelineItr AppendSingleFrameStage(StagePipelineItr const& parent, std::shared_ptr<gr::Stage>&&);
 
 		size_t GetNumberOfStages() const;
 
-		std::list<std::shared_ptr<re::Stage>> const& GetStages() const;
+		std::list<std::shared_ptr<gr::Stage>> const& GetStages() const;
 
 
 	public:
@@ -51,7 +51,7 @@ namespace re
 
 
 	private:
-		std::list<std::shared_ptr<re::Stage>> m_stages;
+		std::list<std::shared_ptr<gr::Stage>> m_stages;
 
 		std::vector<StagePipelineItr> m_singleFrameInsertionPoints;
 
@@ -115,7 +115,7 @@ namespace re
 	}
 
 
-	inline std::list<std::shared_ptr<re::Stage>> const& StagePipeline::GetStages() const
+	inline std::list<std::shared_ptr<gr::Stage>> const& StagePipeline::GetStages() const
 	{
 		return m_stages;
 	}

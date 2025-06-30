@@ -43,7 +43,7 @@ namespace gr
 	void TonemappingGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		m_tonemappingStage = re::Stage::CreateComputeStage("Tonemapping stage", re::Stage::ComputeStageParams{});
+		m_tonemappingStage = gr::Stage::CreateComputeStage("Tonemapping stage", gr::Stage::ComputeStageParams{});
 
 		m_tonemappingStage->AddDrawStyleBits(effect::drawstyle::Tonemapping_ACES);
 
@@ -79,11 +79,11 @@ namespace gr
 			.Build();
 
 		// Swap chain blit: Must handle this manually as a copy stage has limited format support
-		re::Stage::FullscreenQuadParams swapchainBlitStageParams{};
+		gr::Stage::FullscreenQuadParams swapchainBlitStageParams{};
 		swapchainBlitStageParams.m_effectID = k_tonemappingEffectID;
 		swapchainBlitStageParams.m_drawStyleBitmask = effect::drawstyle::Tonemapping_SwapchainBlit;
 
-		m_swapchainBlitStage = re::Stage::CreateFullscreenQuadStage("Swapchain blit stage", swapchainBlitStageParams);
+		m_swapchainBlitStage = gr::Stage::CreateFullscreenQuadStage("Swapchain blit stage", swapchainBlitStageParams);
 
 		m_swapchainBlitStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

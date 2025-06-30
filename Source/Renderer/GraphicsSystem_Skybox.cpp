@@ -38,11 +38,11 @@ namespace gr
 	void SkyboxGraphicsSystem::InitPipeline(
 		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		re::Stage::FullscreenQuadParams fsqParams;
+		gr::Stage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;
 		fsqParams.m_effectID = k_skyboxEffectID;
 
-		m_skyboxStage = re::Stage::CreateFullscreenQuadStage("Skybox stage", fsqParams);
+		m_skyboxStage = gr::Stage::CreateFullscreenQuadStage("Skybox stage", fsqParams);
 
 		if (m_fallbackColorTex == nullptr)
 		{

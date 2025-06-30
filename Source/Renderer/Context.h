@@ -1,8 +1,9 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferAllocator.h"
 #include "GPUTimer.h"
+
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
@@ -11,16 +12,18 @@
 #include "renderdoc_app.h"
 
 
+namespace gr
+{
+	class Stage;
+}
 namespace opengl
 {
 	class Context;
 }
-
 namespace dx12
 {
 	class Context;
 }
-
 namespace re
 {
 	class Context

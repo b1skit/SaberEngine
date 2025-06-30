@@ -75,8 +75,8 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::Stage> m_debugStage;
-		std::shared_ptr<re::Stage> m_wireframeStage;
+		std::shared_ptr<gr::Stage> m_debugStage;
+		std::shared_ptr<gr::Stage> m_wireframeStage;
 
 		re::BufferInput m_debugParams;
 		bool m_isDirty; // Triggers m_debugParams recommit

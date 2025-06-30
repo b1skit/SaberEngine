@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "IndexedBuffer.h"
 #include "RenderPipeline.h"
 
@@ -9,8 +9,8 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::list<std::shared_ptr<re::Stage>>::iterator StagePipeline::AppendStage(
-		std::shared_ptr<re::Stage> const& stage)
+	std::list<std::shared_ptr<gr::Stage>>::iterator StagePipeline::AppendStage(
+		std::shared_ptr<gr::Stage> const& stage)
 	{
 		SEAssert(stage != nullptr, "Cannot append a null Stage");
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -23,7 +23,7 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendStage(
 		StagePipeline::StagePipelineItr const& parentItr, 
-		std::shared_ptr<re::Stage> const& stage)
+		std::shared_ptr<gr::Stage> const& stage)
 	{
 		SEAssert(stage != nullptr, "Cannot append a null Stage");
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -39,7 +39,7 @@ namespace re
 
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameStage(
-		std::shared_ptr<re::Stage>&& stage)
+		std::shared_ptr<gr::Stage>&& stage)
 	{
 		SEAssert(stage != nullptr, "Cannot append a null Stage");
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::SingleFrame,
@@ -57,7 +57,7 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendSingleFrameStage(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::Stage>&& stage)
+		std::shared_ptr<gr::Stage>&& stage)
 	{
 		SEAssert(stage != nullptr, "Cannot append a null Stage");
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::SingleFrame,
@@ -85,7 +85,7 @@ namespace re
 
 	StagePipeline::StagePipelineItr StagePipeline::AppendStageForSingleFrame(
 		StagePipeline::StagePipelineItr const& parentItr,
-		std::shared_ptr<re::Stage> const& stage)
+		std::shared_ptr<gr::Stage> const& stage)
 	{
 		SEAssert(stage != nullptr, "Cannot append a null Stage");
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::Permanent,
@@ -115,7 +115,7 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::PostUpdatePreRender");
 
-		for (std::shared_ptr<re::Stage>& stage : m_stages)
+		for (std::shared_ptr<gr::Stage>& stage : m_stages)
 		{
 			stage->PostUpdatePreRender(ibm, effectDB);
 		}
@@ -128,7 +128,7 @@ namespace re
 	{
 		SEBeginCPUEvent("StagePipeline::EndOfFrame");
 
-		for (std::shared_ptr<re::Stage>& stage : m_stages)
+		for (std::shared_ptr<gr::Stage>& stage : m_stages)
 		{
 			stage->EndOfFrame();
 		}

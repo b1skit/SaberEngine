@@ -60,7 +60,7 @@ namespace gr
 
 
 	private:
-		std::shared_ptr<re::Stage> m_transparencyStage;
+		std::shared_ptr<gr::Stage> m_transparencyStage;
 
 	private: // Cached dependencies:
 		core::InvPtr<re::Texture> const* m_ambientIEMTex;

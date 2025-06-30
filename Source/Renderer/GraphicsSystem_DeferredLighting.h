@@ -100,7 +100,7 @@ namespace gr
 			core::InvPtr<re::Texture> m_PMREMTex;
 		} m_activeAmbientLightData;
 
-		std::shared_ptr<re::Stage> m_ambientStage;
+		std::shared_ptr<gr::Stage> m_ambientStage;
 		re::BufferInput m_ambientParams;
 		core::InvPtr<re::Texture> m_ssaoTex;
 
@@ -114,7 +114,7 @@ namespace gr
 
 
 		// TODO: Convert all fullscreen lights (i.e. ambient, directional) to this stage
-		std::shared_ptr<re::Stage> m_fullscreenStage;
+		std::shared_ptr<gr::Stage> m_fullscreenStage;
 		gr::BatchHandle m_fullscreenComputeBatch;
 		static constexpr uint32_t k_dispatchXYThreadDims = 8;
 
@@ -129,9 +129,9 @@ namespace gr
 		};
 		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
 
-		std::shared_ptr<re::Stage> m_directionalStage;
-		std::shared_ptr<re::Stage> m_pointStage;
-		std::shared_ptr<re::Stage> m_spotStage;
+		std::shared_ptr<gr::Stage> m_directionalStage;
+		std::shared_ptr<gr::Stage> m_pointStage;
+		std::shared_ptr<gr::Stage> m_spotStage;
 
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;

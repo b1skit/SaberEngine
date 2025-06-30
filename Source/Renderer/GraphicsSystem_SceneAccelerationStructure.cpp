@@ -107,7 +107,7 @@ namespace gr
 		DataDependencies const& dataDependencies)
 	{
 		m_stagePipeline = &pipeline;
-		m_rtParentStageItr = pipeline.AppendStage(re::Stage::CreateParentStage("Ray Tracing parent stage"));
+		m_rtParentStageItr = pipeline.AppendStage(gr::Stage::CreateParentStage("Ray Tracing parent stage"));
 
 		m_animatedVertexStreams =
 			GetDataDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
@@ -314,9 +314,9 @@ namespace gr
 		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			singleFrameBlasCreateStageItr = m_stagePipeline->AppendSingleFrameStage(m_rtParentStageItr,
-				re::Stage::CreateSingleFrameRayTracingStage(
+				gr::Stage::CreateSingleFrameRayTracingStage(
 					"Acceleration structure build/update stages",
-					re::Stage::RayTracingStageParams{}));
+					gr::Stage::RayTracingStageParams{}));
 		}
 
 		// Create BLAS work:

@@ -361,32 +361,32 @@ namespace dx12
 		re::GPUTimer::Handle frameTimer;
 
 
-		auto StageTypeToCommandListType = [](const re::Stage::Type stageType) -> dx12::CommandListType
+		auto StageTypeToCommandListType = [](const gr::Stage::Type stageType) -> dx12::CommandListType
 			{
-				SEStaticAssert(static_cast<uint8_t>(re::Stage::Type::Invalid) == 10,
+				SEStaticAssert(static_cast<uint8_t>(gr::Stage::Type::Invalid) == 10,
 					"Number of stage types has changed. This must be updated");
 
 				switch (stageType)
 				{
-				case re::Stage::Type::Raster:
-				case re::Stage::Type::LibraryRaster:
-				case re::Stage::Type::FullscreenQuad:
-				case re::Stage::Type::ClearTargetSet: // All clears are currently done on the graphics queue
-				case re::Stage::Type::Copy: // All copies are currently done on the graphics queue
+				case gr::Stage::Type::Raster:
+				case gr::Stage::Type::LibraryRaster:
+				case gr::Stage::Type::FullscreenQuad:
+				case gr::Stage::Type::ClearTargetSet: // All clears are currently done on the graphics queue
+				case gr::Stage::Type::Copy: // All copies are currently done on the graphics queue
 					return dx12::CommandListType::Direct;
-				case re::Stage::Type::Compute:
-				case re::Stage::Type::LibraryCompute:
-				case re::Stage::Type::ClearRWTextures:
-				case re::Stage::Type::RayTracing:
+				case gr::Stage::Type::Compute:
+				case gr::Stage::Type::LibraryCompute:
+				case gr::Stage::Type::ClearRWTextures:
+				case gr::Stage::Type::RayTracing:
 					return dx12::CommandListType::Compute;
-				case re::Stage::Type::Parent:
-				case re::Stage::Type::Invalid:
+				case gr::Stage::Type::Parent:
+				case gr::Stage::Type::Invalid:
 				default: SEAssertF("Unexpected stage type");
 				}
 				return dx12::CommandListType_Invalid; // This should never happen
 			};
 
-		auto IsGraphicsQueueStageType = [&StageTypeToCommandListType](const re::Stage::Type stageType) -> bool
+		auto IsGraphicsQueueStageType = [&StageTypeToCommandListType](const gr::Stage::Type stageType) -> bool
 			{
 				return StageTypeToCommandListType(stageType) == dx12::CommandListType::Direct;
 			};
@@ -394,19 +394,19 @@ namespace dx12
 		// A command list can't set a different CBV/SRV/UAV descriptor heap after setting a root signature with the 
 		// D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED flag set. Currently, we only set
 		// externally-managed descriptor heaps when using bindless resources, which is only used when ray-tracing
-		auto StageUsesCustomHeap = [](const re::Stage::Type stageType) -> bool
+		auto StageUsesCustomHeap = [](const gr::Stage::Type stageType) -> bool
 			{
-				return stageType == re::Stage::Type::RayTracing;
+				return stageType == gr::Stage::Type::RayTracing;
 			};
 
 		auto CmdListTypeChanged = [&IsGraphicsQueueStageType, &StageUsesCustomHeap](
-			const re::Stage::Type prev, const re::Stage::Type current) -> bool
+			const gr::Stage::Type prev, const gr::Stage::Type current) -> bool
 			{
-				SEAssert(prev != re::Stage::Type::Parent &&
-					prev != re::Stage::Type::Invalid,
+				SEAssert(prev != gr::Stage::Type::Parent &&
+					prev != gr::Stage::Type::Invalid,
 					"Previous type should always represent the last command list executed");
 
-				return current != re::Stage::Type::Parent &&
+				return current != gr::Stage::Type::Parent &&
 					(IsGraphicsQueueStageType(prev) != IsGraphicsQueueStageType(current) ||
 						StageUsesCustomHeap(prev) != StageUsesCustomHeap(current));
 			};
@@ -416,8 +416,8 @@ namespace dx12
 		{
 			re::RenderPipeline const* m_renderPipeline;
 			std::vector<re::StagePipeline>::const_iterator m_stagePipelineItr;
-			std::list<std::shared_ptr<re::Stage>>::const_iterator m_stageBeginItr;
-			std::list<std::shared_ptr<re::Stage>>::const_iterator m_stageEndItr;
+			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageBeginItr;
+			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageEndItr;
 		};
 
 
@@ -436,8 +436,8 @@ namespace dx12
 				SEAssert(!workRange.empty(), "Work range is empty");
 
 				auto SetDrawState = [&context](
-					re::Stage const* stage,
-					re::Stage::Type stageType,
+					gr::Stage const* stage,
+					gr::Stage::Type stageType,
 					core::InvPtr<re::Shader> const& shader,
 					re::TextureTargetSet const* targetSet,
 					dx12::CommandList* commandList,
@@ -451,13 +451,13 @@ namespace dx12
 
 						switch (stageType)
 						{
-						case re::Stage::Type::Raster:
-						case re::Stage::Type::FullscreenQuad:
+						case gr::Stage::Type::Raster:
+						case gr::Stage::Type::FullscreenQuad:
 						{
 							commandList->SetGraphicsRootSignature(dx12::Shader::GetRootSignature(*shader));
 						}
 						break;
-						case re::Stage::Type::Compute:
+						case gr::Stage::Type::Compute:
 						{
 							commandList->SetComputeRootSignature(dx12::Shader::GetRootSignature(*shader));
 						}
@@ -483,14 +483,14 @@ namespace dx12
 							// Set the targets:
 							switch (stageType)
 							{
-							case re::Stage::Type::Compute:
+							case gr::Stage::Type::Compute:
 							{
 								//
 							}
 							break;
-							case re::Stage::Type::Raster:
-							case re::Stage::Type::FullscreenQuad:
-							case re::Stage::Type::ClearTargetSet:
+							case gr::Stage::Type::Raster:
+							case gr::Stage::Type::FullscreenQuad:
+							case gr::Stage::Type::ClearTargetSet:
 							{
 								commandList->SetRenderTargets(*targetSet);
 							}
@@ -601,26 +601,26 @@ namespace dx12
 						cmdList->RecordStageName(stage->GetName());
 #endif
 
-						const re::Stage::Type curStageType = (*stageItr)->GetStageType();
+						const gr::Stage::Type curStageType = (*stageItr)->GetStageType();
 						switch (curStageType)
 						{
-						case re::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
-						case re::Stage::Type::LibraryCompute:
+						case gr::Stage::Type::LibraryRaster: // Library stages are executed with their own internal logic
+						case gr::Stage::Type::LibraryCompute:
 						{
 							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
 
-							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
+							dynamic_cast<gr::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
 						break;
-						case re::Stage::Type::ClearTargetSet:
+						case gr::Stage::Type::ClearTargetSet:
 						{
 							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 								"Incorrect command list type");
 
 							// Note: We do not have to have SetRenderTargets() to clear them in DX12
 
-							re::ClearTargetSetStage const* clearStage = 
-								dynamic_cast<re::ClearTargetSetStage const*>((*stageItr).get());
+							gr::ClearTargetSetStage const* clearStage = 
+								dynamic_cast<gr::ClearTargetSetStage const*>((*stageItr).get());
 							SEAssert(clearStage, "Failed to get clear stage");
 
 							cmdList->ClearTargets(
@@ -634,19 +634,19 @@ namespace dx12
 								*(*stageItr)->GetTextureTargetSet());
 						}
 						break;
-						case re::Stage::Type::ClearRWTextures:
+						case gr::Stage::Type::ClearRWTextures:
 						{
 							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
 								"Incorrect command list type");
 
-							re::ClearRWTexturesStage const* clearStage =
-								dynamic_cast<re::ClearRWTexturesStage const*>((*stageItr).get());
+							gr::ClearRWTexturesStage const* clearStage =
+								dynamic_cast<gr::ClearRWTexturesStage const*>((*stageItr).get());
 							SEAssert(clearStage, "Failed to get clear stage");
 
 							void const* clearValue = clearStage->GetClearValue();
 							switch (clearStage->GetClearValueType())
 							{
-							case re::ClearRWTexturesStage::ValueType::Float:
+							case gr::ClearRWTexturesStage::ValueType::Float:
 							{
 								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
 									*static_cast<glm::vec4 const*>(clearValue));
@@ -654,7 +654,7 @@ namespace dx12
 									*static_cast<glm::vec4 const*>(clearValue));
 							}
 							break;
-							case re::ClearRWTexturesStage::ValueType::Uint:
+							case gr::ClearRWTexturesStage::ValueType::Uint:
 							{
 								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
 									*static_cast<glm::uvec4 const*>(clearValue));
@@ -666,9 +666,9 @@ namespace dx12
 							}
 						}
 						break;
-						case re::Stage::Type::Copy:
+						case gr::Stage::Type::Copy:
 						{
-							re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>((*stageItr).get());
+							gr::CopyStage const* copyStage = dynamic_cast<gr::CopyStage const*>((*stageItr).get());
 							SEAssert(copyStage, "Failed to get clear stage");
 
 							core::InvPtr<re::Texture> dstTexture = copyStage->GetDstTexture();
@@ -683,10 +683,10 @@ namespace dx12
 							cmdList->CopyTexture(copyStage->GetSrcTexture(), dstTexture);
 						}
 						break;
-						case re::Stage::Type::RayTracing:
+						case gr::Stage::Type::RayTracing:
 						{
-							re::Stage::RayTracingStageParams const* rtStageParams = 
-								dynamic_cast<re::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
+							gr::Stage::RayTracingStageParams const* rtStageParams = 
+								dynamic_cast<gr::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
 							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
 
 							std::vector<gr::StageBatchHandle> const& batches = (*stageItr)->GetStageBatches();
@@ -749,17 +749,17 @@ namespace dx12
 							}
 						}
 						break;
-						case re::Stage::Type::Raster:
-						case re::Stage::Type::FullscreenQuad:
-						case re::Stage::Type::Compute:
+						case gr::Stage::Type::Raster:
+						case gr::Stage::Type::FullscreenQuad:
+						case gr::Stage::Type::Compute:
 						{
 							// Get the stage targets:
 							re::TextureTargetSet const* stageTargets = (*stageItr)->GetTextureTargetSet();
-							if (stageTargets == nullptr && curStageType != re::Stage::Type::Compute)
+							if (stageTargets == nullptr && curStageType != gr::Stage::Type::Compute)
 							{
 								stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain()).get();
 							}
-							SEAssert(stageTargets || curStageType == re::Stage::Type::Compute,
+							SEAssert(stageTargets || curStageType == gr::Stage::Type::Compute,
 								"The current stage does not have targets set. This is unexpected");
 
 							core::InvPtr<re::Shader> currentShader;
@@ -811,8 +811,8 @@ namespace dx12
 
 								switch (curStageType)
 								{
-								case re::Stage::Type::Raster:
-								case re::Stage::Type::FullscreenQuad:
+								case gr::Stage::Type::Raster:
+								case gr::Stage::Type::FullscreenQuad:
 								{
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 										"Incorrect command list type");
@@ -820,7 +820,7 @@ namespace dx12
 									cmdList->DrawBatchGeometry(batches[batchIdx]);
 								}
 								break;
-								case re::Stage::Type::Compute:
+								case gr::Stage::Type::Compute:
 								{
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
 										"Incorrect command list type");
@@ -958,7 +958,7 @@ namespace dx12
 		// command list and then immediately execute it when we detect the command list type has changed
 		std::vector<WorkRange> workRange;
 
-		re::Stage::Type prevStageType = re::Stage::Type::Invalid;
+		gr::Stage::Type prevStageType = gr::Stage::Type::Invalid;
 		bool mustStartFrameTimer = true;
 
 		auto renderSystemItr = m_renderSystems.begin();
@@ -969,7 +969,7 @@ namespace dx12
 			auto stagePipelineItr = renderPipeline.GetStagePipeline().begin();
 			while (stagePipelineItr != renderPipeline.GetStagePipeline().end())
 			{
-				std::list<std::shared_ptr<re::Stage>> const& stages = (*stagePipelineItr).GetStages();
+				std::list<std::shared_ptr<gr::Stage>> const& stages = (*stagePipelineItr).GetStages();
 				if (stages.empty())
 				{
 					++stagePipelineItr;
@@ -1000,13 +1000,13 @@ namespace dx12
 					}
 
 					// We've found our first valid Stage: Initialize our state:
-					if (prevStageType == re::Stage::Type::Invalid)
+					if (prevStageType == gr::Stage::Type::Invalid)
 					{
 						prevStageType = (*stageEndItr)->GetStageType();
-						SEAssert(prevStageType != re::Stage::Type::Invalid, "Invalid stage type");
+						SEAssert(prevStageType != gr::Stage::Type::Invalid, "Invalid stage type");
 					}
 
-					const re::Stage::Type curStageType = (*stageEndItr)->GetStageType();
+					const gr::Stage::Type curStageType = (*stageEndItr)->GetStageType();
 					const bool cmdListTypeChanged = CmdListTypeChanged(prevStageType, curStageType);
 					if (cmdListTypeChanged)
 					{
