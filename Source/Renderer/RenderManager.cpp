@@ -140,7 +140,7 @@ namespace re
 		, m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
-		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<gr::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newAccelerationStructures(util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newShaderBindingTables(util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -594,7 +594,7 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreate(core::InvPtr<gr::VertexStream> const& newObject)
+	void RenderManager::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
 	{
 		m_newVertexStreams.EmplaceBack(newObject);
 	}

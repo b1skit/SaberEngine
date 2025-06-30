@@ -805,7 +805,7 @@ namespace opengl
 		uint64_t vaoHash = 0;
 
 		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
-		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
+		for (uint8_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			SEAssert(!vertexBuffers[streamIdx].first ||
 				(vertexBuffers[streamIdx].first->GetStream() &&
@@ -864,7 +864,7 @@ namespace opengl
 
 				std::string objectLabel; // Debug name to visually identify our VAOs
 
-				for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
+				for (uint8_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
 				{
 					SEAssert(!vertexBuffers[streamIdx].first ||
 						(vertexBuffers[streamIdx].first->GetStream() &&

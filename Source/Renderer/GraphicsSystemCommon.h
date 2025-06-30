@@ -31,7 +31,7 @@ namespace gr
 	using PunctualLightCullingResults = std::vector<gr::RenderDataID>;
 
 	using AnimatedVertexStreams = std::unordered_map<
-		gr::RenderDataID, std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>>;
+		gr::RenderDataID, std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>>;
 
 	using TLAS = std::shared_ptr<re::AccelerationStructure>;
 

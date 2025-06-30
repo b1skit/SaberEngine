@@ -14,12 +14,12 @@ namespace
 #if defined(_DEBUG)
 
 		std::unordered_set<uint8_t> seenSlots;
-		seenSlots.reserve(gr::VertexStream::k_maxVertexStreams);
+		seenSlots.reserve(re::VertexStream::k_maxVertexStreams);
 
 		SEAssert(m_vertexBuffers[0].first, "Must have at least 1 non-null vertex stream");
 
 		bool seenNull = false;
-		for (size_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
+		for (size_t i = 0; i < re::VertexStream::k_maxVertexStreams; ++i)
 		{
 			if (m_vertexBuffers[i].first == nullptr)
 			{
@@ -33,7 +33,7 @@ namespace
 				"Invalid bind slot detected");
 
 			SEAssert(m_vertexBuffers[i].first == nullptr ||
-				i + 1 == gr::VertexStream::k_maxVertexStreams ||
+				i + 1 == re::VertexStream::k_maxVertexStreams ||
 				m_vertexBuffers[i + 1].first == nullptr ||
 				(m_vertexBuffers[i].first->m_view.m_streamView.m_type < m_vertexBuffers[i + 1].first->m_view.m_streamView.m_type) ||
 				m_vertexBuffers[i].second + 1 == m_vertexBuffers[i + 1].second,
@@ -270,7 +270,7 @@ namespace gr
 
 			uint8_t numVertexStreams = 0;
 			bool needsRepacking = false;
-			for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
+			for (uint8_t i = 0; i < re::VertexStream::k_maxVertexStreams; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
 				if (rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
@@ -278,11 +278,11 @@ namespace gr
 					break;
 				}
 
-				const gr::VertexStream::Type curStreamType = rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
+				const re::VertexStream::Type curStreamType = rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
 
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
-				while (i + semanticIdx < gr::VertexStream::k_maxVertexStreams &&
+				while (i + semanticIdx < re::VertexStream::k_maxVertexStreams &&
 					rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
 					rasterParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
 				{

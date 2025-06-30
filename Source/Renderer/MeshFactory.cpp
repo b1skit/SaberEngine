@@ -260,48 +260,48 @@ namespace
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(4);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 		
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Color,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)));
 		}
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices));
@@ -599,55 +599,55 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(assembledPositions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(assembledUVs)));
 
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Color,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)));
 		}
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(cubeIndices));
@@ -723,23 +723,23 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(2);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)));
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(triIndices));
@@ -825,55 +825,55 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)));
 
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Color,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)));
 		}
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(quadIndices));
@@ -1107,55 +1107,55 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(4);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)));
 
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Color,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)));
 		}
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices));
@@ -1373,55 +1373,55 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)));
 
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
 		if (colorsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Color,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Color,
 					.m_dataType = re::DataType::Float4,
 				},
 				std::move(*colorsPtr)));
 		}
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices));
@@ -1559,52 +1559,52 @@ namespace gr::meshfactory
 		std::vector<gr::MeshPrimitive::MeshVertexStream> vertexStreams;
 		vertexStreams.reserve(5);
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(positions)));
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::TexCoord,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::TexCoord,
 				.m_dataType = re::DataType::Float2,
 			},
 			std::move(uvs)));
 
 		if (normalsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Normal,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Normal,
 					.m_dataType = re::DataType::Float3,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*normalsPtr)));
 		}
 
 		if (tangentsPtr)
 		{
-			vertexStreams.emplace_back(gr::VertexStream::Create(
-				gr::VertexStream::StreamDesc{
-					.m_type = gr::VertexStream::Type::Tangent,
+			vertexStreams.emplace_back(re::VertexStream::Create(
+				re::VertexStream::StreamDesc{
+					.m_type = re::VertexStream::Type::Tangent,
 					.m_dataType = re::DataType::Float4,
-					.m_doNormalize = gr::VertexStream::Normalize::True,
+					.m_doNormalize = re::VertexStream::Normalize::True,
 				},
 				std::move(*tangentsPtr)));
 		}
 
-		vertexStreams.emplace_back(gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Color,
+		vertexStreams.emplace_back(re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4,
 			},
 			std::move(colors)));
 
-		core::InvPtr<gr::VertexStream> const& indexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(indices));

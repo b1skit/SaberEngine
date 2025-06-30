@@ -29,9 +29,9 @@ namespace
 	{
 		util::ByteVector axisOriginPos = util::ByteVector::Create<glm::vec3>({ glm::vec3(0.f, 0.f, 0.f) });
 
-		core::InvPtr<gr::VertexStream> const& axisPositionStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		core::InvPtr<re::VertexStream> const& axisPositionStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(axisOriginPos));
@@ -54,24 +54,24 @@ namespace
 	{
 		constexpr glm::vec4 k_originPoint(0.f, 0.f, 0.f, 1.f);
 
-		core::InvPtr<gr::VertexStream> const& linePositionsStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		core::InvPtr<re::VertexStream> const& linePositionsStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			util::ByteVector::Create<glm::vec3>({ k_originPoint, k_originPoint })); // [0] = parent, [1] = child
 			
 
-		core::InvPtr<gr::VertexStream> const& lineColorStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Color,
+		core::InvPtr<re::VertexStream> const& lineColorStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			util::ByteVector::Create<glm::vec4>({ parentColor, childColor }));
 
-		core::InvPtr<gr::VertexStream> const& lineIndexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& lineIndexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			util::ByteVector::Create<uint16_t>({ 0, 1 }));
@@ -145,23 +145,23 @@ namespace
 			7, 3
 		});
 
-		core::InvPtr<gr::VertexStream> const& boxPositionsStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		core::InvPtr<re::VertexStream> const& boxPositionsStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(boxPositions));
 
-		core::InvPtr<gr::VertexStream> const& boxColorStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Color,
+		core::InvPtr<re::VertexStream> const& boxColorStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(boxColors));
 
-		core::InvPtr<gr::VertexStream> const& boxIndexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& boxIndexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(boxIndexes));
@@ -182,19 +182,19 @@ namespace
 
 	gr::BatchHandle BuildVertexNormalsBatch(gr::BatchHandle existingBatch)
 	{
-		if ((*existingBatch).GetRasterParams().HasVertexStream(gr::VertexStream::Type::Normal) == false)
+		if ((*existingBatch).GetRasterParams().HasVertexStream(re::VertexStream::Type::Normal) == false)
 		{
 			return gr::BatchHandle(); // No normals? Nothing to build
 		}
 
-		SEAssert((*existingBatch).GetRasterParams().HasVertexStream(gr::VertexStream::Position),
+		SEAssert((*existingBatch).GetRasterParams().HasVertexStream(re::VertexStream::Position),
 			"Existing Batch has no Position vertex stream. This should not be possible");
 
 		re::Batch::RasterParams const& rasterParams = (*existingBatch).GetRasterParams();
 
 		SEAssert(
-			rasterParams.GetVertexStreamInput(gr::VertexStream::Position)->GetStream()->GetDataType() == re::DataType::Float3 &&
-			rasterParams.GetVertexStreamInput(gr::VertexStream::Normal)->GetStream()->GetDataType() == re::DataType::Float3,
+			rasterParams.GetVertexStreamInput(re::VertexStream::Position)->GetStream()->GetDataType() == re::DataType::Float3 &&
+			rasterParams.GetVertexStreamInput(re::VertexStream::Normal)->GetStream()->GetDataType() == re::DataType::Float3,
 			"Unexpected position or normal data");
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder::CloneAndModify(existingBatch)
@@ -250,23 +250,23 @@ namespace
 			3, 7
 		});
 
-		core::InvPtr<gr::VertexStream> const& frustumPositionsStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Position,
+		core::InvPtr<re::VertexStream> const& frustumPositionsStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Position,
 				.m_dataType = re::DataType::Float3,
 			},
 			std::move(frustumPositions));
 
-		core::InvPtr<gr::VertexStream> const& frustumColorStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Color,
+		core::InvPtr<re::VertexStream> const& frustumColorStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Color,
 				.m_dataType = re::DataType::Float4
 			},
 			std::move(frustumColors));
 
-		core::InvPtr<gr::VertexStream> const& frustumIndexStream = gr::VertexStream::Create(
-			gr::VertexStream::StreamDesc{
-				.m_type = gr::VertexStream::Type::Index,
+		core::InvPtr<re::VertexStream> const& frustumIndexStream = re::VertexStream::Create(
+			re::VertexStream::StreamDesc{
+				.m_type = re::VertexStream::Type::Index,
 				.m_dataType = re::DataType::UShort,
 			},
 			std::move(frustumIndexes));
@@ -288,12 +288,12 @@ namespace
 
 	gr::BatchHandle BuildWireframeBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData)
 	{
-		core::InvPtr<gr::VertexStream> const& positionStream = 
+		core::InvPtr<re::VertexStream> const& positionStream = 
 			gr::MeshPrimitive::RenderData::GetVertexStreamFromRenderData(
 				meshPrimRenderData,
-				gr::VertexStream::Type::Position);
+				re::VertexStream::Type::Position);
 
-		core::InvPtr<gr::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
+		core::InvPtr<re::VertexStream> const& indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()

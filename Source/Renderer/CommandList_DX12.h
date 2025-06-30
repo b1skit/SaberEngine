@@ -11,7 +11,6 @@
 
 namespace gr
 {
-	class VertexStream;
 	class StageBatchHandle;
 }
 
@@ -27,6 +26,7 @@ namespace re
 	class RootConstants;
 	class ShaderBindingTable;
 	class VertexBufferInput;
+	class VertexStream;
 
 	struct ASInput;
 	struct RWTextureInput;

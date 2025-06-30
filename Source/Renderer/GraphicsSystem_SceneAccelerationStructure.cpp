@@ -366,7 +366,7 @@ namespace gr
 					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
 					if (animatedStreamsItr != m_animatedVertexStreams->end())
 					{
-						instance.SetVertexPositions(animatedStreamsItr->second[gr::VertexStream::Position]);
+						instance.SetVertexPositions(animatedStreamsItr->second[re::VertexStream::Position]);
 					}
 
 					// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to

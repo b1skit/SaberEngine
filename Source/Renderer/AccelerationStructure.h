@@ -105,8 +105,8 @@ namespace re
 			void SetVertexPositions(re::VertexBufferInput const& positions);
 			re::VertexBufferInput const& GetVertexPositions() const;
 
-			void SetVertexIndices(core::InvPtr<gr::VertexStream> const& indices);
-			core::InvPtr<gr::VertexStream> const& GetVertexIndices() const;
+			void SetVertexIndices(core::InvPtr<re::VertexStream> const& indices);
+			core::InvPtr<re::VertexStream> const& GetVertexIndices() const;
 
 			void SetGeometryFlags(GeometryFlags geometryFlags);
 			GeometryFlags GetGeometryFlags() const;
@@ -120,34 +120,34 @@ namespace re
 			effect::drawstyle::Bitmask GetDrawstyleBits() const;
 			
 			// If forceReplace == true, replaces the FIRST stream with the same type, if it exists
-			void RegisterResource(core::InvPtr<gr::VertexStream> const&, bool forceReplace = false);
+			void RegisterResource(core::InvPtr<re::VertexStream> const&, bool forceReplace = false);
 			void RegisterResource(re::VertexBufferInput const&, bool forceReplace = false);
 
-			// Note: For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit
-			ResourceHandle GetResourceHandle(gr::VertexStream::Type, uint8_t setIdx = 0) const;
+			// Note: For re::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit
+			ResourceHandle GetResourceHandle(re::VertexStream::Type, uint8_t setIdx = 0) const;
 
 
 		private:
 			re::VertexBufferInput m_positions; // Respects buffer overrides
-			core::InvPtr<gr::VertexStream> m_indices; // Can be null/invalid
+			core::InvPtr<re::VertexStream> m_indices; // Can be null/invalid
 
 			// We pack the VertexStreamMetadata the same way as vertex streams in MeshPrimitive::RenderData: 
 			// Streams of the same type are packed contiguously, in monotonically-increasing set order. Stream types are
-			// packed in the same order as the gr::VertexStream types are declared
+			// packed in the same order as the re::VertexStream types are declared
 			struct VertexStreamMetadata
 			{
 				ResourceHandle m_resourceHandle = INVALID_RESOURCE_IDX;
-				gr::VertexStream::Type m_streamType = gr::VertexStream::Type::Type_Count;
+				re::VertexStream::Type m_streamType = re::VertexStream::Type::Type_Count;
 				uint8_t m_setIndex = 0;
 			};
-			std::array<VertexStreamMetadata, gr::VertexStream::k_maxVertexStreams> m_vertexStreamMetadata{};
+			std::array<VertexStreamMetadata, re::VertexStream::k_maxVertexStreams> m_vertexStreamMetadata{};
 
 			// SaberEngine supports 16 and 32 bit uint index streams, we abuse the set index here to differentiate them:
 			VertexStreamMetadata m_indexStream16BitMetadata{}; // setIdx = 0
 			VertexStreamMetadata m_indexStream32BitMetadata{}; // setIdx = 1
 
 			void RegisterResourceInternal(
-				ResourceHandle resolvedResourceHandle, gr::VertexStream::Type, re::DataType, bool forceReplace = false);
+				ResourceHandle resolvedResourceHandle, re::VertexStream::Type, re::DataType, bool forceReplace = false);
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
@@ -355,7 +355,7 @@ namespace re
 	}
 
 
-	inline void AccelerationStructure::Geometry::SetVertexIndices(core::InvPtr<gr::VertexStream> const& indices)
+	inline void AccelerationStructure::Geometry::SetVertexIndices(core::InvPtr<re::VertexStream> const& indices)
 	{
 		m_indices = indices;
 
@@ -366,7 +366,7 @@ namespace re
 	}
 
 
-	inline core::InvPtr<gr::VertexStream> const& AccelerationStructure::Geometry::GetVertexIndices() const
+	inline core::InvPtr<re::VertexStream> const& AccelerationStructure::Geometry::GetVertexIndices() const
 	{
 		return m_indices;
 	}

@@ -11,7 +11,7 @@ namespace fr
 {
 	MeshMorphComponent::MeshMorphComponent(PrivateCTORTag)
 	{
-		m_morphTargetWeights.reserve(gr::VertexStream::k_maxVertexStreams); // Best guess
+		m_morphTargetWeights.reserve(re::VertexStream::k_maxVertexStreams); // Best guess
 	}
 
 

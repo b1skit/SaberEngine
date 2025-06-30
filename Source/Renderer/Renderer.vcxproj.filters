@@ -408,7 +408,7 @@
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="VertexStream.h">
-      <Filter>Header Files\gr</Filter>
+      <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="BufferView.h">
       <Filter>Header Files\re</Filter>
@@ -827,7 +827,7 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="VertexStream.cpp">
-      <Filter>Source Files\gr</Filter>
+      <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="BufferView.cpp">
       <Filter>Source Files\re</Filter>

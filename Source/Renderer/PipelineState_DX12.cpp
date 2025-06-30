@@ -44,11 +44,11 @@ namespace
 	};
 
 
-	inline constexpr char const* VertexStreamTypeToSemanticName(gr::VertexStream::Type streamType, uint8_t semanticIdx)
+	inline constexpr char const* VertexStreamTypeToSemanticName(re::VertexStream::Type streamType, uint8_t semanticIdx)
 	{
 		switch (streamType)
 		{
-		case gr::VertexStream::Type::Position:
+		case re::VertexStream::Type::Position:
 		{
 			if (semanticIdx == 0)
 			{
@@ -57,17 +57,17 @@ namespace
 			return "POSITION";
 		}
 		break;
-		case gr::VertexStream::Type::Normal: return "NORMAL";
-		//case gr::VertexStream::Type::Binormal: return "BINORMAL";
-		case gr::VertexStream::Type::Tangent: return "TANGENT";
-		case gr::VertexStream::Type::TexCoord: return "TEXCOORD";
-		case gr::VertexStream::Type::Color: return "COLOR";
-		case gr::VertexStream::Type::BlendIndices: return "BLENDINDICES";
-		case gr::VertexStream::Type::BlendWeight: return "BLENDWEIGHT";
-		//case gr::VertexStream::Type::PointSize: return "PSIZE";
+		case re::VertexStream::Type::Normal: return "NORMAL";
+		//case re::VertexStream::Type::Binormal: return "BINORMAL";
+		case re::VertexStream::Type::Tangent: return "TANGENT";
+		case re::VertexStream::Type::TexCoord: return "TEXCOORD";
+		case re::VertexStream::Type::Color: return "COLOR";
+		case re::VertexStream::Type::BlendIndices: return "BLENDINDICES";
+		case re::VertexStream::Type::BlendWeight: return "BLENDWEIGHT";
+		//case re::VertexStream::Type::PointSize: return "PSIZE";
 		default: return "INVALID_RE_VERTEX_STREAM_TYPE";
 		}
-		SEStaticAssert(gr::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
+		SEStaticAssert(re::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
 	}
 
 

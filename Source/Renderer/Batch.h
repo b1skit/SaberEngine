@@ -78,14 +78,14 @@ namespace re
 
 		protected: // Use the StageBatchHandle's resolved vertex buffers instead
 			// Vertex streams must be contiguously packed, with streams of the same type stored consecutively
-			std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
+			std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
 
 			VertexBufferInput m_indexBuffer{};
 
 
 		public:
-			bool HasVertexStream(gr::VertexStream::Type) const noexcept;
-			re::VertexBufferInput const* GetVertexStreamInput(gr::VertexStream::Type, uint8_t setIdx = 0) const noexcept;
+			bool HasVertexStream(re::VertexStream::Type) const noexcept;
+			re::VertexBufferInput const* GetVertexStreamInput(re::VertexStream::Type, uint8_t setIdx = 0) const noexcept;
 
 
 		public:
@@ -97,7 +97,7 @@ namespace re
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
 			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 		};
-		using VertexStreamOverride = std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>;
+		using VertexStreamOverride = std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>;
 
 		struct ComputeParams final
 		{
@@ -237,7 +237,7 @@ namespace re
 	// ---
 
 
-	inline bool re::Batch::RasterParams::HasVertexStream(gr::VertexStream::Type streamType) const noexcept
+	inline bool re::Batch::RasterParams::HasVertexStream(re::VertexStream::Type streamType) const noexcept
 	{
 		for (auto const& vertexBuffer : m_vertexBuffers)
 		{
@@ -255,11 +255,11 @@ namespace re
 
 
 	inline re::VertexBufferInput const* re::Batch::RasterParams::GetVertexStreamInput(
-		gr::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const noexcept
+		re::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const noexcept
 	{
-		SEAssert(streamType != gr::VertexStream::Type::Type_Count, "Invalid vertex stream type");
+		SEAssert(streamType != re::VertexStream::Type::Type_Count, "Invalid vertex stream type");
 
-		if (streamType == gr::VertexStream::Type::Index)
+		if (streamType == re::VertexStream::Type::Index)
 		{
 			if (m_indexBuffer.GetStream() == nullptr)
 			{
@@ -270,7 +270,7 @@ namespace re
 
 		for (uint8_t streamIdx = 0; streamIdx < m_vertexBuffers.size(); ++streamIdx)
 		{
-			if (m_vertexBuffers[streamIdx].GetStream()->GetType() == gr::VertexStream::Type_Count)
+			if (m_vertexBuffers[streamIdx].GetStream()->GetType() == re::VertexStream::Type_Count)
 			{
 				return nullptr;
 			}

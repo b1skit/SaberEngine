@@ -53,16 +53,16 @@ namespace
 			{
 				vertexStreamLUTData.emplace_back(VertexStreamLUTData{
 					.g_posNmlTanUV0Index = glm::uvec4(
-						geometry.GetResourceHandle(gr::VertexStream::Position),
-						geometry.GetResourceHandle(gr::VertexStream::Normal),
-						geometry.GetResourceHandle(gr::VertexStream::Tangent),
-						geometry.GetResourceHandle(gr::VertexStream::TexCoord, 0)
+						geometry.GetResourceHandle(re::VertexStream::Position),
+						geometry.GetResourceHandle(re::VertexStream::Normal),
+						geometry.GetResourceHandle(re::VertexStream::Tangent),
+						geometry.GetResourceHandle(re::VertexStream::TexCoord, 0)
 					),
 					.g_UV1ColorIndex = glm::uvec4(
-						geometry.GetResourceHandle(gr::VertexStream::TexCoord, 1),
-						geometry.GetResourceHandle(gr::VertexStream::Color),
-						geometry.GetResourceHandle(gr::VertexStream::Index, 0), // 16 bit
-						geometry.GetResourceHandle(gr::VertexStream::Index, 1) // 32 bit
+						geometry.GetResourceHandle(re::VertexStream::TexCoord, 1),
+						geometry.GetResourceHandle(re::VertexStream::Color),
+						geometry.GetResourceHandle(re::VertexStream::Index, 0), // 16 bit
+						geometry.GetResourceHandle(re::VertexStream::Index, 1) // 32 bit
 					),
 				});
 
@@ -93,7 +93,7 @@ namespace
 namespace re
 {
 	void AccelerationStructure::Geometry::RegisterResource(
-		core::InvPtr<gr::VertexStream> const& vertexStream, bool forceReplace /*= false*/)
+		core::InvPtr<re::VertexStream> const& vertexStream, bool forceReplace /*= false*/)
 	{
 		RegisterResourceInternal(
 			vertexStream->GetBindlessResourceHandle(),
@@ -116,11 +116,11 @@ namespace re
 
 	void AccelerationStructure::Geometry::RegisterResourceInternal(
 		ResourceHandle resolvedResourceHandle,
-		gr::VertexStream::Type streamType,
+		re::VertexStream::Type streamType,
 		re::DataType dataType,
 		bool forceReplace /*= false*/)
 	{
-		if (streamType == gr::VertexStream::Index)
+		if (streamType == re::VertexStream::Index)
 		{
 			switch (dataType)
 			{
@@ -155,12 +155,12 @@ namespace re
 
 			for (size_t i = 0; i < m_vertexStreamMetadata.size(); ++i)
 			{
-				SEAssert(m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count ||
+				SEAssert(m_vertexStreamMetadata[i].m_streamType == re::VertexStream::Type::Type_Count ||
 					m_vertexStreamMetadata[i].m_streamType <= streamType,
 					"Invalid insertion order. We currently assume streams will be added in the same order they're packed "
 					"into MeshPrimitive::RenderData");
 
-				if (m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count ||
+				if (m_vertexStreamMetadata[i].m_streamType == re::VertexStream::Type::Type_Count ||
 					m_vertexStreamMetadata[i].m_streamType == streamType)
 				{
 					// If the current index has the same type as the new one, find first open spot:
@@ -173,7 +173,7 @@ namespace re
 							newStreamMetadata.m_setIndex++;
 						}
 						SEAssert(i < m_vertexStreamMetadata.size() &&
-							m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count,
+							m_vertexStreamMetadata[i].m_streamType == re::VertexStream::Type::Type_Count,
 							"Trying to add a new vertex stream with a set index > 0, but could not find a suitable location");
 					}
 
@@ -184,7 +184,7 @@ namespace re
 				}
 			}
 
-			SEAssert(streamType != gr::VertexStream::Position ||
+			SEAssert(streamType != re::VertexStream::Position ||
 				newStreamMetadata.m_setIndex == 0,
 				"Found multiple position streams. This is unexpected");
 		}
@@ -192,9 +192,9 @@ namespace re
 
 
 	ResourceHandle AccelerationStructure::Geometry::GetResourceHandle(
-		gr::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const
+		re::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const
 	{
-		if (streamType == gr::VertexStream::Type::Index)
+		if (streamType == re::VertexStream::Type::Index)
 		{
 			switch (setIdx)
 			{
@@ -208,7 +208,7 @@ namespace re
 				return m_indexStream32BitMetadata.m_resourceHandle;
 			}
 			break;
-			default: SEAssertF("Invalid setIdx. For gr::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit");
+			default: SEAssertF("Invalid setIdx. For re::VertexStream::Type::Index, setIdx 0 = 16 bit, setIdx 1 = 32 bit");
 			}
 		}
 		else
@@ -216,7 +216,7 @@ namespace re
 			for (size_t i = 0; i < m_vertexStreamMetadata.size(); ++i)
 			{
 				// Searched all contiguously-packed elements and couldn't find a stream with the given type:
-				if (m_vertexStreamMetadata[i].m_streamType == gr::VertexStream::Type::Type_Count)
+				if (m_vertexStreamMetadata[i].m_streamType == re::VertexStream::Type::Type_Count)
 				{
 					return INVALID_RESOURCE_IDX;
 				}

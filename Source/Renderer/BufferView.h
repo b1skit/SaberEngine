@@ -31,7 +31,7 @@ namespace re
 		{
 			uint32_t m_firstElement = 0;		// Index of first vertex element to be accessed
 			uint32_t m_numElements = 0;
-			gr::VertexStream::Type m_type = gr::VertexStream::Type::Type_Count;
+			re::VertexStream::Type m_type = re::VertexStream::Type::Type_Count;
 			re::DataType m_dataType = re::DataType::DataType_Count;
 			bool m_isNormalized = false;
 		};
@@ -305,8 +305,8 @@ namespace re
 		static constexpr uint8_t k_invalidSlotIdx = std::numeric_limits<uint8_t>::max();
 		
 		VertexBufferInput();
-		VertexBufferInput(core::InvPtr<gr::VertexStream> const&);
-		VertexBufferInput(core::InvPtr<gr::VertexStream> const&, re::Buffer const* bufferOverride);
+		VertexBufferInput(core::InvPtr<re::VertexStream> const&);
+		VertexBufferInput(core::InvPtr<re::VertexStream> const&, re::Buffer const* bufferOverride);
 
 		VertexBufferInput(VertexBufferInput const&) noexcept = default;
 		VertexBufferInput(VertexBufferInput&&) noexcept = default;
@@ -315,8 +315,8 @@ namespace re
 		~VertexBufferInput() = default;
 
 	public:
-		core::InvPtr<gr::VertexStream> const& GetStream() const;
-		core::InvPtr<gr::VertexStream>& GetStream();
+		core::InvPtr<re::VertexStream> const& GetStream() const;
+		core::InvPtr<re::VertexStream>& GetStream();
 
 		re::Buffer const* GetBuffer() const;
 
@@ -326,7 +326,7 @@ namespace re
 
 
 	private:
-		core::InvPtr<gr::VertexStream> m_vertexStream;
+		core::InvPtr<re::VertexStream> m_vertexStream;
 		re::Buffer const* m_bufferOverride;
 	};
 
@@ -339,7 +339,7 @@ namespace re
 	}
 
 
-	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream)
+	inline VertexBufferInput::VertexBufferInput(core::InvPtr<re::VertexStream> const& stream)
 		: m_vertexStream(stream)
 		, m_bufferOverride(nullptr)
 	{
@@ -360,7 +360,7 @@ namespace re
 	}
 
 
-	inline VertexBufferInput::VertexBufferInput(core::InvPtr<gr::VertexStream> const& stream, re::Buffer const* bufferOverride)
+	inline VertexBufferInput::VertexBufferInput(core::InvPtr<re::VertexStream> const& stream, re::Buffer const* bufferOverride)
 		: m_vertexStream(stream)
 		, m_bufferOverride(bufferOverride)
 	{
@@ -376,13 +376,13 @@ namespace re
 	}
 
 
-	inline core::InvPtr<gr::VertexStream> const& VertexBufferInput::GetStream() const
+	inline core::InvPtr<re::VertexStream> const& VertexBufferInput::GetStream() const
 	{
 		return m_vertexStream;
 	}
 
 
-	inline core::InvPtr<gr::VertexStream>& VertexBufferInput::GetStream()
+	inline core::InvPtr<re::VertexStream>& VertexBufferInput::GetStream()
 	{
 		return m_vertexStream;
 	}
