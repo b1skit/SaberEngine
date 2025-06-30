@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
@@ -509,7 +509,7 @@ namespace gr
 		}
 		if (!foundExistingEntry)
 		{
-			m_permanentTextureSamplerInputs.emplace_back(TextureAndSamplerInput{shaderName, tex, sampler, texView});
+			m_permanentTextureSamplerInputs.emplace_back(re::TextureAndSamplerInput{shaderName, tex, sampler, texView});
 		}
 
 		if (m_textureTargetSet && 
