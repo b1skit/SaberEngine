@@ -1,4 +1,4 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"

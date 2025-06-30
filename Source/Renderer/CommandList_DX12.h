@@ -1,4 +1,4 @@
-// ï¿½ 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"

@@ -1,4 +1,4 @@
-// ï¿½ 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "EnumTypes_DX12.h"
