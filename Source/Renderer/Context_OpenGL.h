@@ -6,7 +6,6 @@
 
 namespace gr
 {
-	class VertexStream;
 }
 
 namespace re
@@ -14,6 +13,7 @@ namespace re
 	class BindlessResourceManager;
 	class VertexBufferInput;
 	class RasterizationState;
+	class VertexStream;
 }
 
 namespace opengl

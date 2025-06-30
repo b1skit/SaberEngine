@@ -396,7 +396,7 @@ namespace opengl
 								}
 
 								// Bind the vertex streams:
-								for (uint8_t slotIdx = 0; slotIdx < gr::VertexStream::k_maxVertexStreams; slotIdx++)
+								for (uint8_t slotIdx = 0; slotIdx < re::VertexStream::k_maxVertexStreams; slotIdx++)
 								{
 									SEAssert(!batch.GetResolvedVertexBuffer(slotIdx).first ||
 										(batch.GetResolvedVertexBuffer(slotIdx).first->GetStream() &&

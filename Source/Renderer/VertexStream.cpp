@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BindlessResource.h"
 #include "BindlessResourceManager.h"
 #include "Buffer.h"
@@ -86,7 +86,7 @@ namespace
 
 
 	util::HashKey ComputeVertexStreamDataHash(
-		gr::VertexStream::StreamDesc const& streamDesc, void const* data, size_t numBytes)
+		re::VertexStream::StreamDesc const& streamDesc, void const* data, size_t numBytes)
 	{
 		util::HashKey result = util::HashDataBytes(data, numBytes);
 		util::AddDataBytesToHash(result, streamDesc);
@@ -96,9 +96,9 @@ namespace
 }
 
 
-namespace gr
+namespace re
 {
-	core::InvPtr<gr::VertexStream> VertexStream::Create(
+	core::InvPtr<re::VertexStream> VertexStream::Create(
 		StreamDesc const& streamDesc,
 		util::ByteVector&& data,
 		re::Buffer::UsageMask extraUsageBits /*= 0*/)
@@ -109,19 +109,19 @@ namespace gr
 			ComputeVertexStreamDataHash(streamDesc, data.data().data(), data.GetTotalNumBytes());
 
 		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
-		if (inventory->Has<gr::VertexStream>(streamDataHash))
+		if (inventory->Has<re::VertexStream>(streamDataHash))
 		{
-			return inventory->Get<gr::VertexStream>(streamDataHash);
+			return inventory->Get<re::VertexStream>(streamDataHash);
 		}
 
 
-		struct VertexStreamLoadContext : core::ILoadContext<gr::VertexStream>
+		struct VertexStreamLoadContext : core::ILoadContext<re::VertexStream>
 		{
-			std::unique_ptr<gr::VertexStream> Load(core::InvPtr<gr::VertexStream>& newVertexStream) override
+			std::unique_ptr<re::VertexStream> Load(core::InvPtr<re::VertexStream>& newVertexStream) override
 			{
 				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
 
-				return std::unique_ptr<gr::VertexStream>(
+				return std::unique_ptr<re::VertexStream>(
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
 			}
 
@@ -141,18 +141,18 @@ namespace gr
 
 		return inventory->Get(
 			streamDataHash,
-			static_pointer_cast<core::ILoadContext<gr::VertexStream>>(loadContext));
+			static_pointer_cast<core::ILoadContext<re::VertexStream>>(loadContext));
 	}
 
 
-	core::InvPtr<gr::VertexStream> VertexStream::Create(CreateParams&& createParams)
+	core::InvPtr<re::VertexStream> VertexStream::Create(CreateParams&& createParams)
 	{
 		return Create(
 			createParams.m_streamDesc, std::move(*createParams.m_streamData.get()), createParams.m_extraUsageBits);
 	}
 
 
-	void VertexStream::CreateBuffers(core::InvPtr<gr::VertexStream> const& vertexStream)
+	void VertexStream::CreateBuffers(core::InvPtr<re::VertexStream> const& vertexStream)
 	{
 		SEAssert(m_deferredBufferCreateParams, "Deferred create params cannot be null");
 

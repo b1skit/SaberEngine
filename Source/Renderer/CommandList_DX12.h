@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
@@ -11,7 +11,6 @@
 
 namespace gr
 {
-	class VertexStream;
 	class StageBatchHandle;
 }
 
@@ -27,6 +26,7 @@ namespace re
 	class RootConstants;
 	class ShaderBindingTable;
 	class VertexBufferInput;
+	class VertexStream;
 
 	struct ASInput;
 	struct RWTextureInput;

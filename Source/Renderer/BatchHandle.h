@@ -85,7 +85,7 @@ namespace gr
 	{
 	public:
 		using ResolvedVertexBuffers =
-			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, gr::VertexStream::k_maxVertexStreams>;
+			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams>;
 
 	public:
 		StageBatchHandle(BatchHandle);

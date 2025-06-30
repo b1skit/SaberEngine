@@ -127,8 +127,8 @@ namespace gr
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput&&)&& noexcept;
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput const&)&& noexcept;
 
-		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>&&)&& noexcept;
-		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>const&)&& noexcept;
+		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>&&)&& noexcept;
+		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>const&)&& noexcept;
 
 		RasterBatchBuilder&& SetVertexStreamOverrides(re::Batch::VertexStreamOverride const*)&& noexcept;
 
@@ -356,7 +356,7 @@ namespace gr
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetVertexBuffer(
 		uint8_t slotIdx, re::VertexBufferInput&& vertexBufferInput) && noexcept
 	{
-		SEAssert(slotIdx < gr::VertexStream::k_maxVertexStreams, "Invalid vertex stream slot index");
+		SEAssert(slotIdx < re::VertexStream::k_maxVertexStreams, "Invalid vertex stream slot index");
 		m_batch.m_rasterParams.m_vertexBuffers[slotIdx] = std::move(vertexBufferInput);
 		return std::move(*this);
 	}
@@ -365,14 +365,14 @@ namespace gr
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetVertexBuffer(
 		uint8_t slotIdx, re::VertexBufferInput const& vertexBufferInput) && noexcept
 	{
-		SEAssert(slotIdx < gr::VertexStream::k_maxVertexStreams, "Invalid vertex stream slot index");
+		SEAssert(slotIdx < re::VertexStream::k_maxVertexStreams, "Invalid vertex stream slot index");
 		m_batch.m_rasterParams.m_vertexBuffers[slotIdx] = vertexBufferInput;
 		return std::move(*this);
 	}
 
 
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetVertexBuffers(
-		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>&& vertexBuffers) && noexcept
+		std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>&& vertexBuffers) && noexcept
 	{
 		m_batch.m_rasterParams.m_vertexBuffers = std::move(vertexBuffers);
 		return std::move(*this);
@@ -380,7 +380,7 @@ namespace gr
 
 
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetVertexBuffers(
-		std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams> const& vertexBuffers) && noexcept
+		std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> const& vertexBuffers) && noexcept
 	{
 		m_batch.m_rasterParams.m_vertexBuffers = vertexBuffers;
 		return std::move(*this);

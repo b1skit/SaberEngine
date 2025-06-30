@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchPool.h"
 #include "Context.h"
@@ -40,7 +40,6 @@ namespace fr
 namespace gr
 {
 	class GraphicsSystem;
-	class VertexStream;
 }
 
 namespace opengl
@@ -52,6 +51,7 @@ namespace re
 {
 	class AccelerationStructure;
 	class ShaderBindingTable;
+	class VertexStream;
 
 
 	class RenderManager
@@ -164,7 +164,7 @@ namespace re
 		util::NBufferedVector<core::InvPtr<re::Shader>> m_newShaders;
 		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
 		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
-		util::NBufferedVector<core::InvPtr<gr::VertexStream>> m_newVertexStreams;
+		util::NBufferedVector<core::InvPtr<re::VertexStream>> m_newVertexStreams;
 
 		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
 		util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>> m_newShaderBindingTables;

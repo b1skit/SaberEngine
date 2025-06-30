@@ -580,7 +580,7 @@ namespace dx12
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{		
 			SEAssert(batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_type ==
-				gr::VertexStream::Type::Position,
+				re::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
 
@@ -608,7 +608,7 @@ namespace dx12
 		std::vector<TransitionMetadata> resourceTransitions;
 		resourceTransitions.reserve(vertexBuffers.size());
 
-		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
+		for (uint32_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			SEAssert(!vertexBuffers[streamIdx].first || 
 				(vertexBuffers[streamIdx].first->GetStream() &&
@@ -639,11 +639,11 @@ namespace dx12
 
 
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
-		streamViews.reserve(gr::VertexStream::k_maxVertexStreams);
+		streamViews.reserve(re::VertexStream::k_maxVertexStreams);
 
 		uint8_t startSlotIdx = vertexBuffers[0].second;
 		uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;
-		for (uint32_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; streamIdx++)
+		for (uint32_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; streamIdx++)
 		{
 			SEAssert(!vertexBuffers[streamIdx].first ||
 				(vertexBuffers[streamIdx].first->GetStream() &&
@@ -666,10 +666,10 @@ namespace dx12
 
 			// Peek ahead: If there are no more contiguous slots, flush the stream views
 			const uint32_t nextStreamIdx = streamIdx + 1;
-			if (nextStreamIdx >= gr::VertexStream::k_maxVertexStreams ||
+			if (nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
 				vertexBuffers[nextStreamIdx].second != nextConsecutiveSlotIdx)
 			{
-				SEAssert(nextStreamIdx >= gr::VertexStream::k_maxVertexStreams ||
+				SEAssert(nextStreamIdx >= re::VertexStream::k_maxVertexStreams ||
 					vertexBuffers[nextStreamIdx].second > nextConsecutiveSlotIdx, 
 					"Out of order vertex streams detected");
 
@@ -685,7 +685,7 @@ namespace dx12
 				}
 
 				// Prepare for the next iteration:
-				if (nextStreamIdx < gr::VertexStream::k_maxVertexStreams)
+				if (nextStreamIdx < re::VertexStream::k_maxVertexStreams)
 				{
 					startSlotIdx = vertexBuffers[nextStreamIdx].second;
 					uint8_t nextConsecutiveSlotIdx = startSlotIdx + 1;

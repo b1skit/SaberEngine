@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
@@ -81,7 +81,7 @@ namespace
 				});
 			numStreams++;
 
-			if (numStreams > gr::VertexStream::k_maxVertexStreams)
+			if (numStreams > re::VertexStream::k_maxVertexStreams)
 			{
 				std::cout << "Error: Trying to add too many vertex streams\n";
 				return droid::ErrorCode::JSONError;

@@ -21,7 +21,7 @@ namespace
 			meshPrimRenderData.m_numVertexStreams > 0,
 			"Must have at least 1 vertex stream");
 
-		std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> const& vertexStreams =
+		std::array<core::InvPtr<re::VertexStream>, re::VertexStream::k_maxVertexStreams> const& vertexStreams =
 			meshPrimRenderData.m_vertexStreams;
 
 		gr::MeshPrimitive::MorphTargetMetadata const& morphMetadata = meshPrimRenderData.m_morphTargetMetadata;
@@ -36,7 +36,7 @@ namespace
 			0);
 
 		uint8_t streamIdx = 0;
-		for (uint8_t i = 0; i < gr::VertexStream::k_maxVertexStreams; ++i)
+		for (uint8_t i = 0; i < re::VertexStream::k_maxVertexStreams; ++i)
 		{
 			if (vertexStreams[i] == nullptr)
 			{
@@ -584,7 +584,7 @@ namespace gr
 					// Attach input/output vertex buffers:
 					for (uint8_t srcIdx = 0; srcIdx < meshPrimRenderData.m_numVertexStreams; ++srcIdx)
 					{
-						const gr::VertexStream::Type streamType =
+						const re::VertexStream::Type streamType =
 							meshPrimRenderData.m_vertexStreams[srcIdx]->GetType();
 
 						char const* inShaderName = nullptr;
@@ -594,7 +594,7 @@ namespace gr
 						// Set the input and output vertex stream buffers:
 						switch (streamType)
 						{
-						case gr::VertexStream::Type::Position:
+						case re::VertexStream::Type::Position:
 						{
 							SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float3,
 								"We're expecing our position data will be stored as Float3s");
@@ -610,7 +610,7 @@ namespace gr
 							numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
 						}
 						break;
-						case gr::VertexStream::Type::Normal:
+						case re::VertexStream::Type::Normal:
 						{
 							SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float3,
 								"We're expecing our normal data will be stored as Float3s");
@@ -626,7 +626,7 @@ namespace gr
 							numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
 						}
 						break;
-						case gr::VertexStream::Type::Tangent:
+						case re::VertexStream::Type::Tangent:
 						{
 							SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
 								"We're expecing our tangent data will be stored as Float4s");
@@ -642,7 +642,7 @@ namespace gr
 							numElements = meshPrimRenderData.m_vertexStreams[srcIdx]->GetNumElements();
 						}
 						break;
-						case gr::VertexStream::Type::BlendIndices:
+						case re::VertexStream::Type::BlendIndices:
 						{
 							SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
 								"We're expecing our joint indexes will be stored as Float4s");
@@ -659,7 +659,7 @@ namespace gr
 								DataTypeToNumComponents(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType());
 						}
 						break;
-						case gr::VertexStream::Type::BlendWeight:
+						case re::VertexStream::Type::BlendWeight:
 						{
 							SEAssert(meshPrimRenderData.m_vertexStreams[srcIdx]->GetDataType() == re::DataType::Float4,
 								"We're expecing our blend weights will be stored as Float4s");
@@ -741,17 +741,17 @@ namespace gr
 		auto destVertexBuffers = m_meshPrimIDToAnimBuffers.emplace(renderDataID, AnimationBuffers{});
 
 		auto newOutputs = m_outputs.emplace(
-			renderDataID, std::array<re::VertexBufferInput, gr::VertexStream::k_maxVertexStreams>{});
+			renderDataID, std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>{});
 
 
-		for (uint8_t streamIdx = 0; streamIdx < gr::VertexStream::k_maxVertexStreams; ++streamIdx)
+		for (uint8_t streamIdx = 0; streamIdx < re::VertexStream::k_maxVertexStreams; ++streamIdx)
 		{
 			if (meshPrimRenderData.m_vertexStreams[streamIdx] == nullptr)
 			{
 				break;
 			}
 
-			const gr::VertexStream::Type streamType = meshPrimRenderData.m_vertexStreams[streamIdx]->GetType();
+			const re::VertexStream::Type streamType = meshPrimRenderData.m_vertexStreams[streamIdx]->GetType();
 
 			bool needDestBuffer = false;
 			std::string destBufferName;
@@ -770,7 +770,7 @@ namespace gr
 						"MorphVerts: MeshPrim ID {}, stream {}: {}, Hash:{}",
 						renderDataID,
 						streamIdx,
-						gr::VertexStream::TypeToCStr(streamType),
+						re::VertexStream::TypeToCStr(streamType),
 						meshPrimRenderData.m_vertexStreams[streamIdx]->GetDataHash());
 
 					needDestBuffer = true;
@@ -778,15 +778,15 @@ namespace gr
 			}
 			else if (!hasMorphData && hasSkinningData) // Skinning only
 			{
-				if (streamType == gr::VertexStream::Type::Position ||
-					streamType == gr::VertexStream::Type::Normal ||
-					streamType == gr::VertexStream::Type::Tangent)
+				if (streamType == re::VertexStream::Type::Position ||
+					streamType == re::VertexStream::Type::Normal ||
+					streamType == re::VertexStream::Type::Tangent)
 				{
 					destBufferName = std::format(
 						"SkinnedVerts: MeshPrim ID {}, stream {}: {}, Hash:{}",
 						renderDataID,
 						streamIdx,
-						gr::VertexStream::TypeToCStr(streamType),
+						re::VertexStream::TypeToCStr(streamType),
 						meshPrimRenderData.m_vertexStreams[streamIdx]->GetDataHash());
 
 					needDestBuffer = true;

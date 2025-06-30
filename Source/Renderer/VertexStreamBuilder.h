@@ -22,7 +22,7 @@ namespace grutil
 			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams = nullptr;
 
 			util::ByteVector* m_indices = nullptr;		// uint32_t
-			gr::VertexStream::StreamDesc* m_indicesStreamDesc = nullptr; // Required if we change the data type
+			re::VertexStream::StreamDesc* m_indicesStreamDesc = nullptr; // Required if we change the data type
 
 			util::ByteVector* m_positions = nullptr;	// glm::vec3 (Note: Cannot be built)
 

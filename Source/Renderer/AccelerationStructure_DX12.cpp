@@ -160,8 +160,8 @@ namespace
 
 		for (auto const& instance : blasParams->m_geometry)
 		{
-			SEAssert(instance.GetVertexIndices()->GetType() == gr::VertexStream::Type::Index &&
-				instance.GetVertexPositions().GetStream()->GetType() == gr::VertexStream::Type::Position,
+			SEAssert(instance.GetVertexIndices()->GetType() == re::VertexStream::Type::Index &&
+				instance.GetVertexPositions().GetStream()->GetType() == re::VertexStream::Type::Position,
 				"Invalid vertex stream geometry inputs");
 
 			// Currently, our re::Buffers have not been created/allocated at this point (they're staged in CPU memory,

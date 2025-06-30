@@ -61,7 +61,7 @@ namespace gr
 		// Batch construction by other GS's
 		struct AnimationBuffers
 		{
-			std::array<std::shared_ptr<re::Buffer>, gr::VertexStream::k_maxVertexStreams> m_destBuffers;
+			std::array<std::shared_ptr<re::Buffer>, re::VertexStream::k_maxVertexStreams> m_destBuffers;
 			std::shared_ptr<re::Buffer> m_morphMetadataBuffer;
 
 			std::shared_ptr<re::Buffer> m_skinningDataBuffer;

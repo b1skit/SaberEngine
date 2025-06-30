@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "Buffer.h"
@@ -27,7 +27,7 @@ namespace re
 	struct VertexStreamView;
 }
 
-namespace gr
+namespace re
 {
 	class VertexStream : public virtual core::IHashedDataObject
 	{
@@ -81,7 +81,7 @@ namespace gr
 		struct CreateParams final
 		{
 			std::unique_ptr<util::ByteVector> m_streamData;
-			gr::VertexStream::StreamDesc m_streamDesc{};
+			re::VertexStream::StreamDesc m_streamDesc{};
 			uint8_t m_setIdx = std::numeric_limits<uint8_t>::max();
 
 			std::vector<MorphData> m_morphTargetData; // 1 entry per displacement
@@ -92,10 +92,10 @@ namespace gr
 
 
 	public:
-		[[nodiscard]] static core::InvPtr<gr::VertexStream> Create(
+		[[nodiscard]] static core::InvPtr<re::VertexStream> Create(
 			StreamDesc const&, util::ByteVector&&, re::Buffer::UsageMask extraUsageBits = 0);
 
-		[[nodiscard]] static core::InvPtr<gr::VertexStream> Create(CreateParams&&);
+		[[nodiscard]] static core::InvPtr<re::VertexStream> Create(CreateParams&&);
 
 		VertexStream(VertexStream&&) noexcept = default;
 		VertexStream& operator=(VertexStream&&) noexcept = default;
@@ -129,7 +129,7 @@ namespace gr
 	protected:
 		friend class dx12::RenderManager;
 		friend class opengl::RenderManager;
-		void CreateBuffers(core::InvPtr<gr::VertexStream> const&);
+		void CreateBuffers(core::InvPtr<re::VertexStream> const&);
 
 
 	private:
@@ -199,6 +199,6 @@ namespace gr
 		case Type::Index: return "Index";
 		default: return "INVALID_VERTEX_STREAM_TYPE_ENUM_RECEIVED";
 		}
-		SEStaticAssert(gr::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
+		SEStaticAssert(re::VertexStream::Type_Count == 8, "Number of vertex stream types changed. This must be updated");
 	}
 }

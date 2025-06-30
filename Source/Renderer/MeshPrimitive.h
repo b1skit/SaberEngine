@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "AccelerationStructure.h"
 #include "Buffer.h"
@@ -26,7 +26,6 @@ namespace core
 
 namespace gr
 {
-	class VertexStream;
 
 
 	class MeshPrimitive final : 
@@ -65,13 +64,13 @@ namespace gr
 
 		struct MeshVertexStream final
 		{
-			core::InvPtr<gr::VertexStream> m_vertexStream;
+			core::InvPtr<re::VertexStream> m_vertexStream;
 			uint8_t m_setIdx = 0; // Index of m_vertexStream, w.r.t other streams of the same type. Used for sorting
 		};
 
 		struct MeshVertexStreamComparisonData final
 		{
-			gr::VertexStream::Type m_streamType;
+			re::VertexStream::Type m_streamType;
 			uint8_t m_setIdx;
 		};
 		struct MeshVertexStreamComparator final
@@ -94,7 +93,7 @@ namespace gr
 			uint8_t m_maxMorphTargets;	// A vertex may either have 0 or m_maxMorphTargets, exactly
 			uint32_t m_morphByteStride;	// Total bytes for all interleaved displacements for 1 vertex (e.g. from Vn to Vn+1)
 
-			std::array<PackingMetadata, gr::VertexStream::k_maxVertexStreams> m_perStreamMetadata;
+			std::array<PackingMetadata, re::VertexStream::k_maxVertexStreams> m_perStreamMetadata;
 		};
 
 	public:
@@ -102,10 +101,10 @@ namespace gr
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
 
-			std::array<core::InvPtr<gr::VertexStream>, gr::VertexStream::k_maxVertexStreams> m_vertexStreams;
+			std::array<core::InvPtr<re::VertexStream>, re::VertexStream::k_maxVertexStreams> m_vertexStreams;
 			uint8_t m_numVertexStreams;
 
-			core::InvPtr<gr::VertexStream> m_indexStream;
+			core::InvPtr<re::VertexStream> m_indexStream;
 
 			bool m_hasMorphTargets;
 			std::shared_ptr<re::Buffer> m_interleavedMorphData;
@@ -120,8 +119,8 @@ namespace gr
 
 			// Helper: Get a specific vertex stream packed into a MeshPrimitive::RenderData.
 			// If the setIdx index < 0, the first matching type is returned
-			static core::InvPtr<gr::VertexStream> GetVertexStreamFromRenderData(
-				gr::MeshPrimitive::RenderData const&, gr::VertexStream::Type, int8_t setIdx = 0);
+			static core::InvPtr<re::VertexStream> GetVertexStreamFromRenderData(
+				gr::MeshPrimitive::RenderData const&, re::VertexStream::Type, int8_t setIdx = 0);
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
 			static void RegisterGeometryResources(
@@ -146,14 +145,14 @@ namespace gr
 		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
 			core::Inventory*,
 			std::string const& name,
-			core::InvPtr<gr::VertexStream> const& indexStream,
+			core::InvPtr<re::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
 			core::Inventory*,
 			std::string const& name,
-			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&&,
+			std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&&,
 			gr::MeshPrimitive::MeshPrimitiveParams const&);
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
@@ -164,9 +163,9 @@ namespace gr
 		
 		MeshPrimitiveParams const& GetMeshParams() const;
 
-		core::InvPtr<gr::VertexStream> const& GetIndexStream() const;
+		core::InvPtr<re::VertexStream> const& GetIndexStream() const;
 		
-		core::InvPtr<gr::VertexStream> const& GetVertexStream(gr::VertexStream::Type, uint8_t srcTypeIdx) const;
+		core::InvPtr<re::VertexStream> const& GetVertexStream(re::VertexStream::Type, uint8_t srcTypeIdx) const;
 		std::vector<MeshVertexStream> const& GetVertexStreams() const;
 
 		bool HasMorphTargets() const;
@@ -179,7 +178,7 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		core::InvPtr<gr::VertexStream> m_indexStream;
+		core::InvPtr<re::VertexStream> m_indexStream;
 		std::vector<MeshVertexStream> m_vertexStreams;	
 
 		std::shared_ptr<re::Buffer> m_interleavedMorphData;
@@ -191,12 +190,12 @@ namespace gr
 
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(char const* name,
-			core::InvPtr<gr::VertexStream> const& indexStream,
+			core::InvPtr<re::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		MeshPrimitive(char const* name,
-			std::vector<std::array<gr::VertexStream::CreateParams, gr::VertexStream::Type::Type_Count>>&&,
+			std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&&,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
@@ -218,7 +217,7 @@ namespace gr
 	}
 
 
-	inline core::InvPtr<gr::VertexStream> const& MeshPrimitive::GetIndexStream() const
+	inline core::InvPtr<re::VertexStream> const& MeshPrimitive::GetIndexStream() const
 	{
 		return m_indexStream;
 	}
