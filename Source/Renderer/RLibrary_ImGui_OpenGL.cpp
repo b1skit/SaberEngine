@@ -54,9 +54,9 @@ namespace opengl
 
 	void RLibraryImGui::Execute(gr::Stage* stage, void* platformObject)
 	{
-		re::LibraryStage* imGuiStage = dynamic_cast<re::LibraryStage*>(stage);
+		gr::LibraryStage* imGuiStage = dynamic_cast<gr::LibraryStage*>(stage);
 
-		std::unique_ptr<re::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
+		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
 		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(

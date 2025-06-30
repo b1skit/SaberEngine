@@ -511,7 +511,7 @@ namespace gr
 			depthTargetParams);
 
 		// Append a color-only clear stage to clear the lighting target:
-		std::shared_ptr<re::ClearTargetSetStage> clearStage = 
+		std::shared_ptr<gr::ClearTargetSetStage> clearStage = 
 			gr::Stage::CreateTargetSetClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
 		clearStage->EnableAllColorClear();
 

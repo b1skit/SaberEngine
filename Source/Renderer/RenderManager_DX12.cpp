@@ -609,7 +609,7 @@ namespace dx12
 						{
 							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
 
-							dynamic_cast<re::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
+							dynamic_cast<gr::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
 						}
 						break;
 						case gr::Stage::Type::ClearTargetSet:
@@ -619,8 +619,8 @@ namespace dx12
 
 							// Note: We do not have to have SetRenderTargets() to clear them in DX12
 
-							re::ClearTargetSetStage const* clearStage = 
-								dynamic_cast<re::ClearTargetSetStage const*>((*stageItr).get());
+							gr::ClearTargetSetStage const* clearStage = 
+								dynamic_cast<gr::ClearTargetSetStage const*>((*stageItr).get());
 							SEAssert(clearStage, "Failed to get clear stage");
 
 							cmdList->ClearTargets(
@@ -639,14 +639,14 @@ namespace dx12
 							SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Compute,
 								"Incorrect command list type");
 
-							re::ClearRWTexturesStage const* clearStage =
-								dynamic_cast<re::ClearRWTexturesStage const*>((*stageItr).get());
+							gr::ClearRWTexturesStage const* clearStage =
+								dynamic_cast<gr::ClearRWTexturesStage const*>((*stageItr).get());
 							SEAssert(clearStage, "Failed to get clear stage");
 
 							void const* clearValue = clearStage->GetClearValue();
 							switch (clearStage->GetClearValueType())
 							{
-							case re::ClearRWTexturesStage::ValueType::Float:
+							case gr::ClearRWTexturesStage::ValueType::Float:
 							{
 								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
 									*static_cast<glm::vec4 const*>(clearValue));
@@ -654,7 +654,7 @@ namespace dx12
 									*static_cast<glm::vec4 const*>(clearValue));
 							}
 							break;
-							case re::ClearRWTexturesStage::ValueType::Uint:
+							case gr::ClearRWTexturesStage::ValueType::Uint:
 							{
 								cmdList->ClearUAV(clearStage->GetPermanentRWTextureInputs(),
 									*static_cast<glm::uvec4 const*>(clearValue));
@@ -668,7 +668,7 @@ namespace dx12
 						break;
 						case gr::Stage::Type::Copy:
 						{
-							re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>((*stageItr).get());
+							gr::CopyStage const* copyStage = dynamic_cast<gr::CopyStage const*>((*stageItr).get());
 							SEAssert(copyStage, "Failed to get clear stage");
 
 							core::InvPtr<re::Texture> dstTexture = copyStage->GetDstTexture();

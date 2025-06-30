@@ -36,6 +36,6 @@ namespace gr
 		framePayload->m_currentFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
 		framePayload->m_perFrameCommands = &m_perFrameCommands;
 
-		dynamic_cast<re::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));
+		dynamic_cast<gr::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));
 	}
 }

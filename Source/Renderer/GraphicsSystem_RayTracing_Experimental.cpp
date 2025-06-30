@@ -254,7 +254,7 @@ namespace gr
 		}
 		else
 		{
-			std::shared_ptr<re::ClearRWTexturesStage> clearStage =
+			std::shared_ptr<gr::ClearRWTexturesStage> clearStage =
 				gr::Stage::CreateSingleFrameRWTextureClearStage("RayTracing_Experimental Target clear stage");
 
 			clearStage->AddSingleFrameRWTextureInput(m_rtTarget, re::TextureView(m_rtTarget));

@@ -157,7 +157,7 @@ namespace gr
 
 		shadowStage->AddPermanentBuffer(cubeShadowBuf);
 		
-		std::shared_ptr<re::ClearTargetSetStage> shadowClearStage =
+		std::shared_ptr<gr::ClearTargetSetStage> shadowClearStage =
 			gr::Stage::CreateTargetSetClearStage("Shadows: Cube shadow clear stage", pointShadowTargetSet);
 		shadowClearStage->EnableDepthClear(1.f);
 
@@ -226,7 +226,7 @@ namespace gr
 
 		shadowStage->SetTextureTargetSet(shadowTargetSet);
 
-		std::shared_ptr<re::ClearTargetSetStage> shadowClearStage =
+		std::shared_ptr<gr::ClearTargetSetStage> shadowClearStage =
 			gr::Stage::CreateTargetSetClearStage("Shadows: 2D shadow clear stage", shadowTargetSet);
 		shadowClearStage->EnableDepthClear(1.f);
 

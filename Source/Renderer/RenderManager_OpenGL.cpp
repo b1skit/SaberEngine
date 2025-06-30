@@ -234,7 +234,7 @@ namespace opengl
 						SEAssert(stage->GetRootConstants().GetRootConstantCount() == 0,
 							"TODO: Handle setting root constants for library stages");
 
-						dynamic_cast<re::LibraryStage*>(stage.get())->Execute(nullptr);
+						dynamic_cast<gr::LibraryStage*>(stage.get())->Execute(nullptr);
 					}
 					break;
 					case gr::Stage::Type::ClearTargetSet:
@@ -244,7 +244,7 @@ namespace opengl
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 
-						re::ClearTargetSetStage const* clearStage = dynamic_cast<re::ClearTargetSetStage const*>(stage.get());
+						gr::ClearTargetSetStage const* clearStage = dynamic_cast<gr::ClearTargetSetStage const*>(stage.get());
 						SEAssert(clearStage, "Failed to get clear stage");
 
 						opengl::TextureTargetSet::ClearTargets(
@@ -260,14 +260,14 @@ namespace opengl
 					break;
 					case gr::Stage::Type::ClearRWTextures:
 					{
-						re::ClearRWTexturesStage const* clearStage =
-							dynamic_cast<re::ClearRWTexturesStage const*>(stage.get());
+						gr::ClearRWTexturesStage const* clearStage =
+							dynamic_cast<gr::ClearRWTexturesStage const*>(stage.get());
 						SEAssert(clearStage, "Failed to get clear stage");
 
 						void const* clearValue = clearStage->GetClearValue();
 						switch (clearStage->GetClearValueType())
 						{
-						case re::ClearRWTexturesStage::ValueType::Float:
+						case gr::ClearRWTexturesStage::ValueType::Float:
 						{
 							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetPermanentRWTextureInputs(),
 								*static_cast<glm::vec4 const*>(clearValue));
@@ -275,7 +275,7 @@ namespace opengl
 								*static_cast<glm::vec4 const*>(clearValue));
 						}
 						break;
-						case re::ClearRWTexturesStage::ValueType::Uint:
+						case gr::ClearRWTexturesStage::ValueType::Uint:
 						{
 							opengl::TextureTargetSet::ClearImageTextures(clearStage->GetPermanentRWTextureInputs(),
 								*static_cast<glm::uvec4 const*>(clearValue));
@@ -289,7 +289,7 @@ namespace opengl
 					break;
 					case gr::Stage::Type::Copy:
 					{
-						re::CopyStage const* copyStage = dynamic_cast<re::CopyStage const*>(stage.get());
+						gr::CopyStage const* copyStage = dynamic_cast<gr::CopyStage const*>(stage.get());
 						SEAssert(copyStage, "Failed to get clear stage");
 
 						opengl::TextureTargetSet::CopyTexture(copyStage->GetSrcTexture(), copyStage->GetDstTexture());

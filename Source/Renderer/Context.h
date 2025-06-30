@@ -1,8 +1,11 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferAllocator.h"
 #include "GPUTimer.h"
+
+namespace gr { class Stage; }
+
 #include "RLibrary_Platform.h"
 #include "SwapChain.h"
 
