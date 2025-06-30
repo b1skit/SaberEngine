@@ -18,6 +18,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/ProfilingMarkers.h"
 
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EventKeys.h"
@@ -986,6 +987,8 @@ namespace fr
 			return;
 		}
 
+		SEBeginCPUEvent("EntityManager::ShowSceneObjectsImGuiWindow");
+
 		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
@@ -998,238 +1001,244 @@ namespace fr
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 		constexpr char const* k_panelTitle = "Scene objects";
-		ImGui::Begin(k_panelTitle, show);
-
-		if (ImGui::CollapsingHeader("Cameras", ImGuiTreeNodeFlags_None))
+		
+		if (ImGui::Begin(k_panelTitle, show))
 		{
-			auto cameraCmptView = m_registry.view<fr::CameraComponent>();
-
-			const entt::entity mainCamEntity = GetMainCamera();
-
-			// Find the index of the main camera:
-			int mainCamIdx = 0;
-			for (entt::entity entity : cameraCmptView)
+			if (ImGui::CollapsingHeader("Cameras", ImGuiTreeNodeFlags_None))
 			{
-				if (entity == mainCamEntity)
+				auto cameraCmptView = m_registry.view<fr::CameraComponent>();
+
+				const entt::entity mainCamEntity = GetMainCamera();
+
+				// Find the index of the main camera:
+				int mainCamIdx = 0;
+				for (entt::entity entity : cameraCmptView)
 				{
-					break;
-				}
-				mainCamIdx++;
-			}
-
-			int buttonIdx = 0;
-			for (entt::entity entity : cameraCmptView)
-			{
-				// Display a radio button on the same line as our camera header:
-				const bool pressed = ImGui::RadioButton(
-					std::format("##{}", static_cast<uint32_t>(entity)).c_str(),
-					&mainCamIdx,
-					buttonIdx++);
-				ImGui::SameLine();
-				fr::CameraComponent::ShowImGuiWindow(*this, entity);
-				ImGui::Separator();
-
-				// Update the main camera:
-				if (pressed)
-				{
-					SetMainCamera(entity);
-				}
-			}
-		} // "Cameras"
-
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Camera controller", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			entt::entity mainCam = GetMainCamera();
-
-			auto camControllerView = m_registry.view<fr::CameraControlComponent>();
-			for (entt::entity entity : camControllerView)
-			{
-				fr::CameraControlComponent::ShowImGuiWindow(*this, entity, mainCam);
-			}
-			ImGui::Unindent();
-		} // "Camera controller"
-
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Animation", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			auto animControllerView = m_registry.view<fr::AnimationController>();
-			for (entt::entity entity : animControllerView)
-			{
-				fr::AnimationController::ShowImGuiWindow(*this, entity);
-				ImGui::Separator();
-			}
-
-			ImGui::Unindent();
-		}
-
-		ImGui::Separator();
-
-		auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker>();
-		if (ImGui::CollapsingHeader(std::format("Meshes ({})", meshView.size()).c_str(), ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-			
-			for (entt::entity entity : meshView)
-			{
-				fr::Mesh::ShowImGuiWindow(*this, entity);
-				ImGui::Separator();
-			}
-
-			ImGui::Unindent();
-		} // "Meshes"
-
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			auto materialView = m_registry.view<fr::MaterialInstanceComponent>();
-			for (entt::entity entity : materialView)
-			{
-				fr::MaterialInstanceComponent::ShowImGuiWindow(*this, entity);
-				ImGui::Separator();
-			}
-
-			ImGui::Unindent();
-		} // "Materials"
-
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			if (ImGui::CollapsingHeader("Ambient Lights", ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-
-				const entt::entity currentActiveAmbient = GetActiveAmbientLight();
-
-				auto ambientLightView =
-					m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
-
-				// Find the index of the currently active ambient light:
-				int activeAmbientLightIndex = 0;
-				for (entt::entity entity : ambientLightView)
-				{
-					if (entity == currentActiveAmbient)
+					if (entity == mainCamEntity)
 					{
 						break;
 					}
-					activeAmbientLightIndex++;
+					mainCamIdx++;
 				}
 
-				// Display radio buttons next to each ambient light:
-				int buttonIdx = 0;				
-				for (entt::entity entity : ambientLightView)
+				int buttonIdx = 0;
+				for (entt::entity entity : cameraCmptView)
 				{
-					if (ImGui::RadioButton(
+					// Display a radio button on the same line as our camera header:
+					const bool pressed = ImGui::RadioButton(
 						std::format("##{}", static_cast<uint32_t>(entity)).c_str(),
-						&activeAmbientLightIndex,
-						buttonIdx++))
-					{
-						SetActiveAmbientLight(entity);
-					}
+						&mainCamIdx,
+						buttonIdx++);
 					ImGui::SameLine();
-					fr::LightComponent::ShowImGuiWindow(*this, entity);
-				}
-				ImGui::Unindent();
-			}
+					fr::CameraComponent::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
 
-			if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_None))
+					// Update the main camera:
+					if (pressed)
+					{
+						SetMainCamera(entity);
+					}
+				}
+			} // "Cameras"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Camera controller", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
-				for (entt::entity entity : directionalLightView)
+
+				entt::entity mainCam = GetMainCamera();
+
+				auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+				for (entt::entity entity : camControllerView)
 				{
-					fr::LightComponent::ShowImGuiWindow(*this, entity);
+					fr::CameraControlComponent::ShowImGuiWindow(*this, entity, mainCam);
 				}
 				ImGui::Unindent();
-			}
+			} // "Camera controller"
 
-			if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_None))
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Animation", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				auto pointLightView = m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker>();
-				for (entt::entity entity : pointLightView)
+
+				auto animControllerView = m_registry.view<fr::AnimationController>();
+				for (entt::entity entity : animControllerView)
 				{
-					fr::LightComponent::ShowImGuiWindow(*this, entity);
+					fr::AnimationController::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
 				}
+
 				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader("Spot Lights", ImGuiTreeNodeFlags_None))
+			ImGui::Separator();
+
+			auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker>();
+			if (ImGui::CollapsingHeader(std::format("Meshes ({})", meshView.size()).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				auto spotLightView = m_registry.view<fr::LightComponent, fr::LightComponent::SpotDeferredMarker>();
-				for (entt::entity entity : spotLightView)
+
+				for (entt::entity entity : meshView)
 				{
-					fr::LightComponent::ShowImGuiWindow(*this, entity);
+					fr::Mesh::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
 				}
+
 				ImGui::Unindent();
-			}
+			} // "Meshes"
 
-			ImGui::Unindent();
-		} // "Lights"
+			ImGui::Separator();
 
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Shadow maps", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			auto shadowMapView = m_registry.view<fr::ShadowMapComponent>();
-			for (auto entity : shadowMapView)
+			if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_None))
 			{
-				fr::ShadowMapComponent::ShowImGuiWindow(*this, entity);
-			}
+				ImGui::Indent();
 
-			ImGui::Unindent();
-		} // "Shadow maps"
+				auto materialView = m_registry.view<fr::MaterialInstanceComponent>();
+				for (entt::entity entity : materialView)
+				{
+					fr::MaterialInstanceComponent::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
+				}
 
-		ImGui::Separator();
+				ImGui::Unindent();
+			} // "Materials"
 
-		if (ImGui::CollapsingHeader("Bounds", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
+			ImGui::Separator();
 
-			auto boundsView = m_registry.view<fr::BoundsComponent>();
-			for (auto entity : boundsView)
+			if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_None))
 			{
-				fr::BoundsComponent::ShowImGuiWindow(*this, entity, true);
-			}
+				ImGui::Indent();
 
-			ImGui::Unindent();
-		} // "Bounds"
+				if (ImGui::CollapsingHeader("Ambient Lights", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
 
-		ImGui::Separator();
+					const entt::entity currentActiveAmbient = GetActiveAmbientLight();
 
-		if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
-		{
-			std::vector<fr::RenderDataComponent const*> renderDataComponents;
+					auto ambientLightView =
+						m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
 
-			auto renderDataView = m_registry.view<fr::RenderDataComponent>();
-			for (auto entity : renderDataView)
+					// Find the index of the currently active ambient light:
+					int activeAmbientLightIndex = 0;
+					for (entt::entity entity : ambientLightView)
+					{
+						if (entity == currentActiveAmbient)
+						{
+							break;
+						}
+						activeAmbientLightIndex++;
+					}
+
+					// Display radio buttons next to each ambient light:
+					int buttonIdx = 0;
+					for (entt::entity entity : ambientLightView)
+					{
+						if (ImGui::RadioButton(
+							std::format("##{}", static_cast<uint32_t>(entity)).c_str(),
+							&activeAmbientLightIndex,
+							buttonIdx++))
+						{
+							SetActiveAmbientLight(entity);
+						}
+						ImGui::SameLine();
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
+				}
+
+				if (ImGui::CollapsingHeader("Directional Lights", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
+					for (entt::entity entity : directionalLightView)
+					{
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
+				}
+
+				if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					auto pointLightView = m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker>();
+					for (entt::entity entity : pointLightView)
+					{
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
+				}
+
+				if (ImGui::CollapsingHeader("Spot Lights", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					auto spotLightView = m_registry.view<fr::LightComponent, fr::LightComponent::SpotDeferredMarker>();
+					for (entt::entity entity : spotLightView)
+					{
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
+				}
+
+				ImGui::Unindent();
+			} // "Lights"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Shadow maps", ImGuiTreeNodeFlags_None))
 			{
-				fr::RenderDataComponent const& renderDataCmpt = renderDataView.get<fr::RenderDataComponent>(entity);
+				ImGui::Indent();
 
-				renderDataComponents.emplace_back(&renderDataCmpt);
-			}
+				auto shadowMapView = m_registry.view<fr::ShadowMapComponent>();
+				for (auto entity : shadowMapView)
+				{
+					fr::ShadowMapComponent::ShowImGuiWindow(*this, entity);
+				}
 
-			fr::RenderDataComponent::ShowImGuiWindow(renderDataComponents);
-		} // "Render data IDs"
+				ImGui::Unindent();
+			} // "Shadow maps"
 
-		//ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Bounds", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				auto boundsView = m_registry.view<fr::BoundsComponent>();
+				for (auto entity : boundsView)
+				{
+					fr::BoundsComponent::ShowImGuiWindow(*this, entity, true);
+				}
+
+				ImGui::Unindent();
+			} // "Bounds"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
+			{
+				std::vector<fr::RenderDataComponent const*> renderDataComponents;
+
+				auto renderDataView = m_registry.view<fr::RenderDataComponent>();
+				for (auto entity : renderDataView)
+				{
+					fr::RenderDataComponent const& renderDataCmpt = renderDataView.get<fr::RenderDataComponent>(entity);
+
+					renderDataComponents.emplace_back(&renderDataCmpt);
+				}
+
+				fr::RenderDataComponent::ShowImGuiWindow(renderDataComponents);
+			} // "Render data IDs"
+
+			//ImGui::Separator();
+
+
+		}
 
 		ImGui::End();
+
+		SEEndCPUEvent(); // EntityManager::ShowSceneObjectsImGuiWindow
 	}
 
 
@@ -1240,7 +1249,10 @@ namespace fr
 			return;
 		}
 
+		SEBeginCPUEvent("EntityManager::ShowSceneTransformImGuiWindow");
+
 		// Build a list of root nodes to pass to the Transform window to process:
+		SEBeginCPUEvent("EntityManager::ShowSceneTransformImGuiWindow: Build root nodes list");
 		static size_t s_numRootNodes = 16;
 		std::vector<fr::Transform*> rootNodes;
 		rootNodes.reserve(s_numRootNodes);
@@ -1256,8 +1268,11 @@ namespace fr
 			}
 		}
 		s_numRootNodes = std::max(s_numRootNodes, rootNodes.size());
+		SEEndCPUEvent(); // EntityManager::ShowSceneTransformImGuiWindow: Build root nodes list
 
 		fr::Transform::ShowImGuiWindow(*this, rootNodeEntities, show);
+
+		SEEndCPUEvent(); // EntityManager::ShowSceneTransformImGuiWindow
 	}
 
 
@@ -1384,6 +1399,8 @@ namespace fr
 			return;
 		}
 
+		SEBeginCPUEvent("EntityManager::ShowImGuiEntityComponentDebug");
+		
 		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
@@ -1396,33 +1413,35 @@ namespace fr
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 		constexpr char const* k_panelTitle = "Node Hierarchy";
-		ImGui::Begin(k_panelTitle, show);
-
-		static bool s_expandAll = false;
-		bool expandChangeTriggered = false;
-		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+		if (ImGui::Begin(k_panelTitle, show))
 		{
-			s_expandAll = !s_expandAll;
-			expandChangeTriggered = true;
-		}
-
-		// Build a list of root entities, and sort them for readability
-		std::vector<entt::entity> sortedRootEntities;
-		for (auto entityTuple : m_registry.storage<entt::entity>().each())
-		{
-			const entt::entity curEntity = std::get<entt::entity>(entityTuple);
-			fr::Relationship const& curRelationship = m_registry.get<fr::Relationship>(curEntity);
-
-			if (!curRelationship.HasParent())
+			static bool s_expandAll = false;
+			bool expandChangeTriggered = false;
+			if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
 			{
-				sortedRootEntities.emplace_back(curEntity);
+				s_expandAll = !s_expandAll;
+				expandChangeTriggered = true;
 			}
+
+			// Build a list of root entities, and sort them for readability
+			std::vector<entt::entity> sortedRootEntities;
+			for (auto entityTuple : m_registry.storage<entt::entity>().each())
+			{
+				const entt::entity curEntity = std::get<entt::entity>(entityTuple);
+				fr::Relationship const& curRelationship = m_registry.get<fr::Relationship>(curEntity);
+
+				if (!curRelationship.HasParent())
+				{
+					sortedRootEntities.emplace_back(curEntity);
+				}
+			}
+			std::sort(sortedRootEntities.begin(), sortedRootEntities.end());
+
+			// Call the recursive helper:
+			ShowImGuiEntityComponentDebugHelper(sortedRootEntities, s_expandAll, expandChangeTriggered);
 		}
-		std::sort(sortedRootEntities.begin(), sortedRootEntities.end());
-
-		// Call the recursive helper:
-		ShowImGuiEntityComponentDebugHelper(sortedRootEntities, s_expandAll, expandChangeTriggered);
-
 		ImGui::End();
+
+		SEEndCPUEvent();
 	}
 }

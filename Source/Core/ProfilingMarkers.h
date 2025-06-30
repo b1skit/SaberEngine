@@ -100,3 +100,122 @@ namespace perfmarkers
 	do {} while(0);
 
 #endif
+
+
+/***********************************************************************************************************************
+* Debug marker tracking:
+***********************************************************************************************************************/
+
+// DO NOT CHECK THIS IN: Define this to enable debug marker tracking
+//#define SE_ENABLE_DEBUG_MARKER_TRACKING
+
+// DO NOT CHECK THIS IN: Convenience helper: Enable this if there is SEEndCPUEventAndVerify macros temporarily in use
+//#define TOLERATE_SE_END_EVENT_AND_VERIFY
+#if defined(TOLERATE_SE_END_EVENT_AND_VERIFY)
+#define SEEndCPUEventAndVerify(eventNameCStr) SEEndCPUEvent()
+#endif
+
+
+#ifdef SE_ENABLE_DEBUG_MARKER_TRACKING
+
+// Include logger:
+#include "Logger.h"
+
+
+// Redefine our macros to use the the tracking functions:
+#undef SEBeginCPUEvent
+#undef SEEndCPUEvent
+
+#define SEBeginCPUEvent(eventNameCStr) \
+	debugperfmarkers::SEInternalBeginCPUEvent(eventNameCStr, __FILE__, __LINE__)
+
+#define SEEndCPUEvent() \
+	debugperfmarkers::SEInternalEndCPUEvent()
+
+#define SEEndCPUEventAndVerify(eventNameCStr) \
+	debugperfmarkers::SEInternalEndCPUEvent(eventNameCStr)
+
+
+// Debug marker tracking implementation:
+namespace debugperfmarkers
+{
+
+	struct MarkerInfo
+	{
+		std::string m_name;
+		std::string m_file;
+		uint32_t m_line;
+	};
+
+	inline std::mutex g_mapMutex;
+	inline std::unordered_map<std::thread::id, std::stack<MarkerInfo>> g_markerStacks;
+
+
+	inline void RecordMarkerBegin(const char* m_name, const char* m_file, uint32_t m_line)
+	{
+		std::lock_guard lock(g_mapMutex);
+		auto& threadStack = g_markerStacks[std::this_thread::get_id()];
+		threadStack.push({ m_name, m_file, m_line });
+	}
+
+
+	inline void RecordMarkerEnd(char const* name = nullptr)
+	{
+		std::lock_guard lock(g_mapMutex);
+		auto& stack = g_markerStacks[std::this_thread::get_id()];
+		if (stack.empty())
+		{
+			SEAssertF("SEEndCPUEvent() called with no matching SEBeginCPUEvent()");
+		}
+		else
+		{
+			if (name != nullptr)
+			{
+				MarkerInfo const& markerInfo = stack.top();
+				SEAssert(std::string(name) == markerInfo.name, "Mismatched marker m_name");
+			}
+			stack.pop();
+		}
+	}
+
+
+	inline void ValidatePerfMarkers()
+	{
+		std::lock_guard lock(g_mapMutex);
+
+		for (const auto& [threadId, stack] : g_markerStacks)
+		{
+			if (!stack.empty())
+			{
+				// Make a copy of the stack so we can compare the contents
+				std::stack<MarkerInfo> currentStack = stack;
+
+				while (!currentStack.empty())
+				{
+					MarkerInfo const& markerInfo = currentStack.top();
+					LOG_ERROR(std::format("Leak: {} started at {}:{}", 
+						markerInfo.m_name, markerInfo.m_file, markerInfo.m_line).c_str());
+					currentStack.pop();
+				}
+				SEAssertF("Unclosed SEBeginCPUEvent() markers at end of frame");
+			}
+		}
+	}
+
+
+	inline void SEInternalBeginCPUEvent(char const* m_name, char const* m_file, uint32_t m_line)
+	{
+		debugperfmarkers::RecordMarkerBegin(m_name, m_file, m_line);
+		PIXBeginEvent(PIX_COLOR_INDEX(perfmarkers::Type::CPUSection), m_name);
+	}
+
+
+	inline void SEInternalEndCPUEvent(char const* name = nullptr)
+	{
+		debugperfmarkers::RecordMarkerEnd(name);
+		PIXEndEvent();
+	}
+} // namespace debugperfmarkers
+
+
+#endif // SE_ENABLE_DEBUG_MARKER_TRACKING

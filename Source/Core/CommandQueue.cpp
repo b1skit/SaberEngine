@@ -35,6 +35,8 @@ namespace core
 
 	void CommandBuffer::Execute() const
 	{
+		SEBeginCPUEvent("CommandBuffer::Execute");
+
 		// To ensure deterministic execution order, we execute commands single threaded via the CommandManager. We lock
 		// our own mutex just to be safe, but it shouldn't be necessary as we're executing the CommandBuffer at the
 		// reading index
@@ -43,14 +45,19 @@ namespace core
 
 			for (size_t cmdIdx = 0; cmdIdx < m_commandMetadata.size(); cmdIdx++)
 			{
+				SEBeginCPUEvent(std::format("CommandBuffer::Execute command {}/{}", cmdIdx, m_commandMetadata.size()).c_str());
 				m_commandMetadata[cmdIdx]->Execute(m_commandMetadata[cmdIdx]->m_commandData);
+				SEEndCPUEvent();
 			}			
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void CommandBuffer::Reset()
 	{
+		SEBeginCPUEvent("CommandBuffer::Reset");
 		{
 			std::unique_lock<std::mutex> lock(m_commandMetadataMutex);
 
@@ -62,6 +69,7 @@ namespace core
 			m_commandMetadata.clear();
 			m_baseIdx = 0;
 		}
+		SEEndCPUEvent();
 	}
 
 
@@ -81,6 +89,7 @@ namespace core
 
 	void CommandManager::SwapBuffers()
 	{
+		SEBeginCPUEvent("CommandManager::SwapBuffers");
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_commandBuffersMutex);
 
@@ -91,17 +100,20 @@ namespace core
 			// command using the old/new write index
 			m_commandBuffers[m_writeIdx]->Reset();
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void CommandManager::Execute()
 	{
-		// To ensure deterministic execution order, we execute commands single threaded
+		SEBeginCPUEvent("CommandManager::Execute");
 
+		// To ensure deterministic execution order, we execute commands single threaded
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_commandBuffersMutex);
 			m_commandBuffers[m_readIdx]->Execute();
 		}
+		SEEndCPUEvent();
 	}
 
 
@@ -144,6 +156,8 @@ namespace core
 
 	void FrameIndexedCommandManager::Execute(uint64_t frameNum)
 	{
+		SEBeginCPUEvent("FrameIndexedCommandManager::Execute");
+
 		SEAssert(frameNum > m_lastExecutedFrameNum || m_lastExecutedFrameNum == k_invalidFrameNum,
 			"Trying to execute a frame that has already been executed");
 
@@ -153,5 +167,7 @@ namespace core
 		m_commandBuffers[readIdx]->Reset();
 
 		m_lastExecutedFrameNum = frameNum;
+
+		SEEndCPUEvent();
 	}
 }

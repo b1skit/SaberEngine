@@ -213,70 +213,70 @@ namespace fr
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 		constexpr char const* k_panelTitle = "Scene Manager";
-		ImGui::Begin(k_panelTitle, show);
-
-		if (ImGui::CollapsingHeader("Spawn Entities", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::Begin(k_panelTitle, show))
 		{
-			ImGui::Indent();
-
-			enum EntityType : uint8_t
+			if (ImGui::CollapsingHeader("Spawn Entities", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Light,
-				Mesh,
+				ImGui::Indent();
 
-				EntityType_Count
-			};
-			constexpr std::array<char const*, EntityType::EntityType_Count> k_entityTypeNames = {
-				"Light",
-				"Mesh"
-			};
-			static_assert(k_entityTypeNames.size() == EntityType::EntityType_Count);
-
-			constexpr ImGuiComboFlags k_comboFlags = 0;
-
-			static EntityType s_selectedEntityTypeIdx = static_cast<EntityType>(0);
-			const EntityType currentSelectedEntityTypeIdx = s_selectedEntityTypeIdx;
-			if (ImGui::BeginCombo("Entity type", k_entityTypeNames[s_selectedEntityTypeIdx], k_comboFlags))
-			{
-				for (uint8_t comboIdx = 0; comboIdx < k_entityTypeNames.size(); comboIdx++)
+				enum EntityType : uint8_t
 				{
-					const bool isSelected = comboIdx == s_selectedEntityTypeIdx;
-					if (ImGui::Selectable(k_entityTypeNames[comboIdx], isSelected))
-					{
-						s_selectedEntityTypeIdx = static_cast<EntityType>(comboIdx);
-					}
+					Light,
+					Mesh,
 
-					// Set the initial focus:
-					if (isSelected)
+					EntityType_Count
+				};
+				constexpr std::array<char const*, EntityType::EntityType_Count> k_entityTypeNames = {
+					"Light",
+					"Mesh"
+				};
+				static_assert(k_entityTypeNames.size() == EntityType::EntityType_Count);
+
+				constexpr ImGuiComboFlags k_comboFlags = 0;
+
+				static EntityType s_selectedEntityTypeIdx = static_cast<EntityType>(0);
+				const EntityType currentSelectedEntityTypeIdx = s_selectedEntityTypeIdx;
+				if (ImGui::BeginCombo("Entity type", k_entityTypeNames[s_selectedEntityTypeIdx], k_comboFlags))
+				{
+					for (uint8_t comboIdx = 0; comboIdx < k_entityTypeNames.size(); comboIdx++)
 					{
-						ImGui::SetItemDefaultFocus();
+						const bool isSelected = comboIdx == s_selectedEntityTypeIdx;
+						if (ImGui::Selectable(k_entityTypeNames[comboIdx], isSelected))
+						{
+							s_selectedEntityTypeIdx = static_cast<EntityType>(comboIdx);
+						}
+
+						// Set the initial focus:
+						if (isSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
 					}
+					ImGui::EndCombo();
 				}
-				ImGui::EndCombo();
+
+
+				ImGui::Separator();
+
+
+				switch (s_selectedEntityTypeIdx)
+				{
+				case EntityType::Light:
+				{
+					fr::LightComponent::ShowImGuiSpawnWindow();
+				}
+				break;
+				case EntityType::Mesh:
+				{
+					fr::Mesh::ShowImGuiSpawnWindow();
+				}
+				break;
+				default: SEAssertF("Invalid EntityType");
+				}
+
+				ImGui::Unindent();
 			}
-
-
-			ImGui::Separator();
-
-
-			switch (s_selectedEntityTypeIdx)
-			{
-			case EntityType::Light:
-			{
-				fr::LightComponent::ShowImGuiSpawnWindow();
-			}
-			break;
-			case EntityType::Mesh:
-			{
-				fr::Mesh::ShowImGuiSpawnWindow();
-			}
-			break;
-			default: SEAssertF("Invalid EntityType");
-			}
-
-			ImGui::Unindent();
 		}
-
 		ImGui::End();
 	}
 }

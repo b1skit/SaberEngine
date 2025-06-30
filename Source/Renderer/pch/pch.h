@@ -25,6 +25,7 @@
 #include <ranges>
 #include <set>
 #include <shared_mutex>
+#include <stack>
 #include <string>
 #include <typeindex>
 #include <unordered_map>

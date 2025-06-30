@@ -23,6 +23,8 @@ namespace dx12
 {
 	void RLibraryImGui::PlatObj::InitializeImGuiSRVHeap()
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::InitializeImGuiSRVHeap");
+
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
 
 		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
@@ -51,11 +53,15 @@ namespace dx12
 			m_freeIndices.emplace_back(i); // Add in reverse order, so our allocations start at 0
 		}
 		SEStaticAssert(k_imguiHeapSize < std::numeric_limits<int32_t>::max(), "Heap size will overflow this loop");
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::InitializeImGuiSRVHeap"
 	}
 
 
 	void RLibraryImGui::PlatObj::DestroyImGuiSRVHeap()
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::DestroyImGuiSRVHeap");
+
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
 
 		SEAssert(m_freeIndices.size() == k_imguiHeapSize, "Missing ImGui free indices - have all been returned?");
@@ -65,12 +71,16 @@ namespace dx12
 		m_heapStartGPU = {};
 		m_handleIncrementSize = 0;
 		m_freeIndices.clear();
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::DestroyImGuiSRVHeap"
 	}
 
 
 	void RLibraryImGui::PlatObj::Allocate(
 		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandleOut, D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandleOut)
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::Allocate");
+
 		dx12::RLibraryImGui* dx12ImGuiLibrary = nullptr;
 		if (info) // Might be null if we're calling internally
 		{
@@ -96,12 +106,16 @@ namespace dx12
 
 		cpuHandleOut->ptr = platObj->m_heapStartCPU.ptr + (allocationIdx * platObj->m_handleIncrementSize);
 		gpuHandleOut->ptr = platObj->m_heapStartGPU.ptr + (allocationIdx * platObj->m_handleIncrementSize);
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::Allocate"
 	}
 
 
 	void RLibraryImGui::PlatObj::Free(
 		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHanle)
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::Free");
+
 		dx12::RLibraryImGui* dx12ImGuiLibrary = nullptr;
 		if (info) // Might be null if we're calling internally
 		{
@@ -127,6 +141,8 @@ namespace dx12
 			"CPU and GPU heap pointers are out of sync");
 		
 		platObj->m_freeIndices.push_back(cpuIdx);
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::Free"
 	}
 
 
@@ -135,6 +151,8 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE& cpuDstOut,
 		D3D12_GPU_DESCRIPTOR_HANDLE& gpuDstOut)
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::CopyTempDescriptorToImGuiHeap");
+
 		// Allocate a destination in our ImGui descriptor heap:
 		Allocate(nullptr, &cpuDstOut, &gpuDstOut);
 
@@ -161,16 +179,21 @@ namespace dx12
 			TempDescriptorAllocation{ 
 				cpuDstOut, 
 				gpuDstOut });
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::CopyTempDescriptorToImGuiHeap"
 	}
 
 
 	void RLibraryImGui::PlatObj::FreeTempDescriptors(uint64_t currentFrame)
 	{
+		SEBeginCPUEvent("RLibraryImGui::PlatObj::FreeTempDescriptors");
+
 		{
 			util::ScopedThreadProtector scopedThreadProtector(m_threadProtector); // Avoid recursive call in Free()
 
 			if (m_deferredDescriptorDelete.empty())
 			{
+				SEEndCPUEvent(); // "RLibraryImGui::PlatObj::FreeTempDescriptors"
 				return;
 			}
 		}
@@ -188,11 +211,15 @@ namespace dx12
 
 			m_deferredDescriptorDelete.pop();
 		}
+
+		SEEndCPUEvent(); // "RLibraryImGui::PlatObj::FreeTempDescriptors"
 	}
 
 
 	std::unique_ptr<platform::RLibrary> RLibraryImGui::Create()
 	{
+		SEBeginCPUEvent("RLibraryImGui::Create");
+
 		std::unique_ptr<platform::RLibrary> newLibrary = std::make_unique<dx12::RLibraryImGui>();
 
 		dx12::RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(newLibrary.get());
@@ -244,6 +271,8 @@ namespace dx12
 
 		platform::RLibraryImGui::ConfigureScaling(*dynamic_cast<platform::RLibraryImGui*>(newLibrary.get()));
 
+		SEEndCPUEvent(); // "RLibraryImGui::Create"
+
 		return std::move(newLibrary);
 	}
 
@@ -253,6 +282,8 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE& cpuDstOut,
 		D3D12_GPU_DESCRIPTOR_HANDLE& gpuDstOut)
 	{
+		SEBeginCPUEvent("RLibraryImGui::CopyTempDescriptorToImGuiHeap");
+
 		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
@@ -262,11 +293,15 @@ namespace dx12
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();
 
 		platObj->CopyTempDescriptorToImGuiHeap(srcDescriptor, cpuDstOut, gpuDstOut);
+
+		SEEndCPUEvent(); // "RLibraryImGui::CopyTempDescriptorToImGuiHeap"
 	}
 
 
 	void RLibraryImGui::Destroy()
 	{
+		SEBeginCPUEvent("RLibraryImGui::Destroy");
+
 		LOG("Destroying ImGui render library");
 
 		// ImGui Cleanup:
@@ -284,11 +319,16 @@ namespace dx12
 		platObj->FreeTempDescriptors(std::numeric_limits<uint64_t>::max());
 
 		platObj->DestroyImGuiSRVHeap();
+
+		SEEndCPUEvent(); // "RLibraryImGui::Destroy"
 	}
 
 
 	void RLibraryImGui::Execute(gr::Stage* stage, void* platformObject)
 	{
+		SEBeginCPUEvent("RLibraryImGui::Execute");
+
+		SEBeginCPUEvent("RLibraryImGui::Execute: Setup");
 		gr::LibraryStage* imGuiStage = dynamic_cast<gr::LibraryStage*>(stage);
 
 		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
@@ -304,21 +344,32 @@ namespace dx12
 		dx12::RLibraryImGui::PlatObj* platObj =
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();
 
+		SEEndCPUEvent(); // "RLibraryImGui::Execute: Setup"
+
 		if (payload->m_perFrameCommands->HasCommandsToExecute(payload->m_currentFrameNum))
 		{
+			SEBeginCPUEvent("RLibraryImGui::Execute: Has commands");
+
 			// Start the ImGui Frame:
+			SEBeginCPUEvent("RLibraryImGui::Execute: Start ImGui frame");
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: Start ImGui frame"
 
 			// Execute our queued commands:
 			//-----------------------------
+			SEBeginCPUEvent("RLibraryImGui::Execute: Execute commands");
 			payload->m_perFrameCommands->Execute(payload->m_currentFrameNum);
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: Execute commands"
 
 			// ImGui internal rendering:
+			SEBeginCPUEvent("RLibraryImGui::Execute: ImGui render");
 			ImGui::Render(); // Note: Does not touch the GPU/graphics API
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: ImGui render"
 
 			// Get our SE rendering objects:
+			SEBeginCPUEvent("RLibraryImGui::Execute: Prepare command list");
 			dx12::CommandList* commandList = static_cast<dx12::CommandList*>(platformObject);
 			SEAssert(commandList && commandList->GetCommandListType() == dx12::CommandListType::Direct,
 				"ImGui expects a graphics command list")
@@ -338,13 +389,21 @@ namespace dx12
 			re::SwapChain const& swapChain = context->GetSwapChain();
 			commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
 
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: Prepare command list"
+
 			// Record our ImGui draws:
+			SEBeginCPUEvent("RLibraryImGui::Execute: Record ImGui draws");
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList.Get());
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: Record ImGui draws"
 
 			SEEndGPUEvent(d3dCommandList.Get());
+
+			SEEndCPUEvent(); // "RLibraryImGui::Execute: Has commands"
 		}
 
 		// Descriptor deferred delete queue:
 		platObj->FreeTempDescriptors(re::RenderManager::Get()->GetCurrentRenderFrameNum());
+
+		SEEndCPUEvent(); // "RLibraryImGui::Execute"
 	}
 }

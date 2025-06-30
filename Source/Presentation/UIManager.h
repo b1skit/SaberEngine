@@ -61,7 +61,6 @@ namespace fr
 			IndexedBufferMgrDbg,
 			GPUCaptures,
 			ImGuiDemo,
-			LightMgrDbg,
 			Logger,
 			PerfLogger,
 			RenderDataDbg,

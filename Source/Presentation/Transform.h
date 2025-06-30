@@ -123,6 +123,7 @@ namespace fr
 		static void ImGuiHelper_ShowHierarchy(
 			fr::EntityManager&,
 			entt::entity nodeEntity,
+			std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntityMap,
 			bool highlightCurrentNode = false,
 			bool expandAllState = false,
 			bool expandChangeTriggered = false);

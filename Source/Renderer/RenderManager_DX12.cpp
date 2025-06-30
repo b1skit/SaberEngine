@@ -871,6 +871,7 @@ namespace dx12
 
 				if (workRange.empty())
 				{
+					SEEndCPUEvent(); // "EnqueueWorkRecording"
 					return;
 				}
 

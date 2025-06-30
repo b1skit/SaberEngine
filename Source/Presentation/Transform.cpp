@@ -7,6 +7,8 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/ProfilingMarkers.h"
+
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/TransformRenderData.h"
@@ -19,6 +21,51 @@ namespace
 		eulerXYZRadians.x = glm::fmod<float>(abs(eulerXYZRadians.x), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.x);
 		eulerXYZRadians.y = glm::fmod<float>(abs(eulerXYZRadians.y), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.y);
 		eulerXYZRadians.z = glm::fmod<float>(abs(eulerXYZRadians.z), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.z);
+	}
+
+
+	// Helper: Builds a map from Transform* -> entt::entity:
+	std::unordered_map<fr::Transform const*, entt::entity> BuildEntityToTransformMap(fr::EntityManager const& em)
+	{
+		SEBeginCPUEvent("BuildEntityToTransformMap");
+
+		std::vector<entt::entity> const& transformEntities = em.GetAllEntities<fr::TransformComponent>();
+
+		std::unordered_map<fr::Transform const*, entt::entity> transformToEntity;
+		transformToEntity.reserve(transformEntities.size());
+
+		for (entt::entity curEntity : transformEntities)
+		{
+			fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
+			transformToEntity.emplace(&curTransformCmpt.GetTransform(), curEntity);
+		}
+
+		SEEndCPUEvent();
+
+		return transformToEntity;
+	}
+
+	
+	// Helper: Find the entity of the root node of an entity
+	entt::entity FindRootNodeEntity(
+		fr::EntityManager const& em, 
+		entt::entity nodeEntity, 
+		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity)
+	{
+		SEBeginCPUEvent("FindRootNodeEntity");
+
+		fr::TransformComponent const* transformCmpt = &em.GetComponent<fr::TransformComponent>(nodeEntity);
+		fr::Transform const* transform = &transformCmpt->GetTransform();
+
+		while (transform->GetParent() != nullptr)
+		{
+			transform = transform->GetParent();
+		}
+
+		SEAssert(transformToEntity.contains(transform), "Failed to find transform. This should not be possible");
+
+		SEEndCPUEvent();
+		return transformToEntity.at(transform);
 	}
 }
 
@@ -841,6 +888,8 @@ namespace fr
 
 	void Transform::ImGuiHelper_Hierarchy(fr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
 	{
+		SEBeginCPUEvent("Transform::ImGuiHelper_Hierarchy");
+
 		if (ImGui::CollapsingHeader(std::format("Hierarchy##{}", uniqueID).c_str()))
 		{
 			ImGui::Indent();
@@ -902,12 +951,18 @@ namespace fr
 
 			ImGui::Unindent();
 		}
+
+		SEEndCPUEvent(); // Transform::ImGuiHelper_Hierarchy
 	}
 
 
 	void Transform::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
 	{
-		ImGuiHelper_ShowHierarchy(em, owningEntity, true);
+		// Build a map from Transform* -> entt::entity:
+		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity =
+			BuildEntityToTransformMap(em);
+
+		ImGuiHelper_ShowHierarchy(em, owningEntity, transformToEntity, true);
 	}
 
 
@@ -919,6 +974,9 @@ namespace fr
 			return;
 		}
 
+		SEBeginCPUEvent("Transform::ShowImGuiWindow");
+
+		SEBeginCPUEvent("Transform::ShowImGuiWindow: Window setup");
 		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
@@ -929,88 +987,60 @@ namespace fr
 			static_cast<float>(windowHeight) - k_windowYOffset),
 			ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
+		SEEndCPUEvent(); // Transform::ShowImGuiWindow: Window setup
 
+		SEBeginCPUEvent("Transform::ShowImGuiWindow: Show nodes");
 		constexpr char const* k_panelTitle = "Transform Hierarchy";
-		ImGui::Begin(k_panelTitle, show);
-
-		static bool s_expandAll = false;
-		bool showHideAll = false;
-		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+		if (ImGui::Begin(k_panelTitle, show))
 		{
-			s_expandAll = !s_expandAll;
-			showHideAll = true;
+			static bool s_expandAll = false;
+			bool showHideAll = false;
+			if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+			{
+				s_expandAll = !s_expandAll;
+				showHideAll = true;
+			}
+
+			// Build a map from Transform* -> entt::entity:
+			std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity = 
+				BuildEntityToTransformMap(em);
+
+			// Show each root node in the panel
+			for (entt::entity rootNodeEntity : rootNodeEntities)
+			{
+				ImGuiHelper_ShowHierarchy(em, rootNodeEntity, transformToEntity, false, s_expandAll, showHideAll);
+
+				ImGui::Separator();
+			}
 		}
-
-		// Show each root node in the panel
-		for (entt::entity rootNodeEntity : rootNodeEntities)
-		{
-			ImGuiHelper_ShowHierarchy(em, rootNodeEntity, false, s_expandAll, showHideAll);
-
-			ImGui::Separator();
-		}
-
 		ImGui::End();
+		SEEndCPUEvent(); // Transform::ShowImGuiWindow: Show nodes
+
+		SEEndCPUEvent(); // Transform::ShowImGuiWindow
 	}
 
 
 	void Transform::ImGuiHelper_ShowHierarchy(
 		fr::EntityManager& em,
 		entt::entity nodeEntity,
+		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntityMap,
 		bool highlightCurrentNode/* = false*/,
 		bool expandAllState/* = false*/,
 		bool expandChangeTriggered/* = false*/)
 	{
+		SEBeginCPUEvent("Transform::ImGuiHelper_ShowHierarchy");
+
 		constexpr float k_indentSize = 16.f;
 		constexpr ImVec4 k_thisObjectMarkerTextCol = ImVec4(0, 1, 0, 1);
 		constexpr char const* k_thisObjectText = "<this object>";
 		
 		SEAssert(em.HasComponent<fr::TransformComponent>(nodeEntity), "Node entity does not have a TransformComponent");
 
-		// Find the root node
-		entt::entity rootEntity = nodeEntity;
+		// Find the root node entity
+		entt::entity rootEntity = FindRootNodeEntity(em, nodeEntity, transformToEntityMap);
 		fr::TransformComponent* rootTransformCmpt = &em.GetComponent<fr::TransformComponent>(rootEntity);
-		while (rootTransformCmpt->GetTransform().GetParent() != nullptr)
-		{
-			// Start our search for the next TransformComponent from the parent of the current node:
-			fr::Relationship const& currentRelationship = em.GetComponent<fr::Relationship>(rootEntity);
-			const entt::entity parentEntity = currentRelationship.GetParent();
-			if (parentEntity != entt::null)
-			{
-				fr::Relationship const& parentRelationship = em.GetComponent<fr::Relationship>(parentEntity);
 
-				entt::entity transformEntity = entt::null;
-				fr::TransformComponent* parentTransformCmpt = 
-					parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformEntity);
-
-				SEAssert((transformEntity == entt::null) == (parentTransformCmpt == nullptr),
-					"Mismatched null results. This should not be possible");
-
-				if (parentTransformCmpt)
-				{
-					rootEntity = transformEntity;
-					rootTransformCmpt = parentTransformCmpt;
-				}
-				else
-				{
-					break;
-				}
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		std::vector<entt::entity> transformEntities = em.GetAllEntities<fr::TransformComponent>();
-
-		// Build a map from Transform* -> entt::entity:
-		std::unordered_map<fr::Transform const*, entt::entity> transformToEntity;
-		for (entt::entity curEntity : transformEntities)
-		{
-			fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
-			transformToEntity.emplace(&curTransformCmpt.GetTransform(), curEntity);
-		}
-
+		SEBeginCPUEvent("Transform::ImGuiHelper_ShowHierarchy: Process nodes");
 		struct NodeState
 		{
 			fr::Transform* m_node;
@@ -1042,19 +1072,19 @@ namespace fr
 			}
 
 			// Start-up race condition: We might find a node in the Transformation heirarchy that didn't exist when we
-			// were building transformToEntity. If so, just skip this operation
-			if (!transformToEntity.contains(curNodeState.m_node))
+			// were building transformToEntityMap. If so, just skip this operation
+			if (!transformToEntityMap.contains(curNodeState.m_node))
 			{
 				continue;
 			}
 
-			const entt::entity curTransformEntity = transformToEntity.at(curNodeState.m_node);
+			const entt::entity curTransformEntity = transformToEntityMap.at(curNodeState.m_node);
 
 			fr::NameComponent const* nameCmpt = em.TryGetComponent<fr::NameComponent>(curTransformEntity);
 
 			if (ImGui::TreeNode(std::format("TransformID: {}, Entity {}, \"{}\"",
 				curNodeState.m_node->m_transformID,
-				static_cast<uint64_t>(transformToEntity.at(curNodeState.m_node)),
+				static_cast<uint64_t>(transformToEntityMap.at(curNodeState.m_node)),
 				nameCmpt ? nameCmpt->GetName().c_str() : "<unnamed>").c_str()))
 			{
 				if (highlightCurrentNode && curTransformEntity == nodeEntity)
@@ -1084,13 +1114,16 @@ namespace fr
 
 				ImGui::TreePop();
 			}
-			else if (highlightCurrentNode && transformToEntity.at(curNodeState.m_node) == nodeEntity)
+			else if (highlightCurrentNode && transformToEntityMap.at(curNodeState.m_node) == nodeEntity)
 			{
 				ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
 			}
 
 			ImGui::Unindent(k_indentSize * curNodeState.m_depth);
 		}
+		SEEndCPUEvent(); // Transform::ImGuiHelper_ShowHierarchy: Process nodes
+
+		SEEndCPUEvent(); //Transform::ImGuiHelper_ShowHierarchy
 	}
 }
 

@@ -28,6 +28,7 @@
 #include <numbers>
 #include <ranges>
 #include <set>
+#include <stack>
 #include <queue>
 #include <shared_mutex>
 #include <stack>

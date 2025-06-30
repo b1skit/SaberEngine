@@ -502,14 +502,15 @@ namespace fr
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-				ImGui::Begin("SaberEngineMainDockSpace", nullptr, passthroughDockingWindowFlags);
+				if (ImGui::Begin("SaberEngineMainDockSpace", nullptr, passthroughDockingWindowFlags))
+				{
 
-				ImGui::PopStyleVar(3);
+					ImGui::PopStyleVar(3);
 
-				// Submit the DockSpace:
-				ImGuiID dockspaceID = ImGui::GetID("SaberEngineMainDockSpaceID");
-				ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
-
+					// Submit the DockSpace:
+					ImGuiID dockspaceID = ImGui::GetID("SaberEngineMainDockSpaceID");
+					ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+				}
 				ImGui::End();
 			});
 
@@ -517,7 +518,7 @@ namespace fr
 		// Menu bar:
 		auto ShowMenuBar = [&]()
 			{	
-				ImGui::BeginMainMenuBar();
+				if (ImGui::BeginMainMenuBar())
 				{
 					menuBarSize = ImGui::GetWindowSize();
 
@@ -578,7 +579,6 @@ namespace fr
 							ImGui::MenuItem("Render Systems", "", &m_show[Show::RenderMgrDbg]);
 							ImGui::MenuItem("Render data debug", "", &m_show[Show::RenderDataDbg]);
 							ImGui::MenuItem("Indexed buffer debug", "", &m_show[Show::IndexedBufferMgrDbg]);
-							ImGui::MenuItem("Light manager debug", "", &m_show[Show::LightMgrDbg]);
 							ImGui::EndMenu();
 						}
 
@@ -685,14 +685,12 @@ namespace fr
 				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
 				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
 				re::RenderManager::Get()->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
-				re::RenderManager::Get()->ShowLightManagerImGuiWindow(&m_show[Show::LightMgrDbg]);
 				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
 				
 			};
 		if (m_show[Show::RenderMgrDbg] ||
 			m_show[Show::RenderDataDbg] ||
 			m_show[Show::IndexedBufferMgrDbg] ||
-			m_show[Show::LightMgrDbg] ||
 			m_show[Show::GPUCaptures])
 		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowRenderMgrDebug);

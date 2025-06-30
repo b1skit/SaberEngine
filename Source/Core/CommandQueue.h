@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
+#include "ProfilingMarkers.h"
 
 
 namespace core
@@ -65,6 +66,8 @@ namespace core
 	template<typename T, typename... Args>
 	void CommandBuffer::Enqueue(Args&&... args)
 	{
+		SEBeginCPUEvent("CommandBuffer::Enqueue");
+
 		SEAssert(m_buffer != nullptr, "No buffer allocation exists");
 
 		{
@@ -91,6 +94,8 @@ namespace core
 			
 			m_commandMetadata.emplace_back(&packedCommand->m_metadata);
 		}
+
+		SEEndCPUEvent();
 	}
 
 
@@ -121,13 +126,17 @@ namespace core
 	public:
 		static inline void Execute(void* cmdData)
 		{
+			SEBeginCPUEvent("LambdaCommandWrapper::Execute");
 			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->m_lambda();
+			SEEndCPUEvent();
 		}
 
 
 		static inline void Destroy(void* cmdData)
 		{
+			SEBeginCPUEvent("LambdaCommandWrapper::Destroy");
 			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->~LambdaCommandWrapper();
+			SEEndCPUEvent();
 		}
 
 	private:
@@ -173,13 +182,17 @@ namespace core
 	template<typename T, typename... Args>
 	inline void CommandManager::Enqueue(Args&&... args)
 	{
+		SEBeginCPUEvent("CommandManager::Enqueue");
 		m_commandBuffers[GetWriteIdx()]->Enqueue<T>(std::forward<Args>(args)...);
+		SEEndCPUEvent();
 	}
 
 
 	inline void CommandManager::Enqueue(std::function<void(void)>&& lambda)
 	{
+		SEBeginCPUEvent("CommandManager::Enqueue");
 		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::move(lambda)));
+		SEEndCPUEvent();
 	}
 
 
@@ -229,6 +242,8 @@ namespace core
 	template<typename T, typename... Args>
 	inline void FrameIndexedCommandManager::Enqueue(uint64_t frameNum, Args&&... args)
 	{
+		SEBeginCPUEvent("FrameIndexedCommandManager::Enqueue");
+
 		SEAssert(frameNum > m_lastExecutedFrameNum || m_lastExecutedFrameNum == k_invalidFrameNum,
 			"Trying to enqueue for a frame that has already been executed");
 
@@ -241,6 +256,8 @@ namespace core
 		m_commandBuffers[GetWriteIdx(frameNum)]->Enqueue<T>(std::forward<Args>(args)...);
 
 		m_lastEnqueuedFrameNum = frameNum;
+
+		SEEndCPUEvent();
 	}
 
 
