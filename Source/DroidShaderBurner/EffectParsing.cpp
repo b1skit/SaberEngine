@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "ParseDB.h"
 
@@ -7,24 +7,7 @@
 
 namespace droid
 {
-	constexpr char const* ErrorCodeToCStr(ErrorCode errorCode)
-	{
-		switch (errorCode)
-		{
-		case ErrorCode::Success: return "Success";
-		case ErrorCode::NoModification: return "NoModification";
-		case ErrorCode::FileError: return "FileError";
-		case ErrorCode::JSONError: return "JSONError";
-		case ErrorCode::ShaderError: return "ShaderError";
-		case ErrorCode::GenerationError: return "GenerationError";
-		case ErrorCode::ConfigurationError: return "ConfigurationError";
-		case ErrorCode::DependencyError: return "DependencyError";
-		default: return "INVALID_ERROR_CODE";
-		}
-	}
-
-
-	ErrorCode DoParsingAndCodeGen(ParseParams const& parseParams)
+	bool DoParsingAndCodeGen(ParseParams const& parseParams)
 	{
 		const bool isSameBuildConfig =
 			(util::GetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir) == parseParams.m_buildConfiguration) &&
@@ -67,28 +50,23 @@ namespace droid
 			glslOutputNewer &&
 			commonSrcNewer)
 		{
-			return droid::ErrorCode::NoModification;
+			// No modification needed - return false for didModify
+			return false;
 		}
 
 		ParseDB parseDB(parseParams);
 
-		droid::ErrorCode result = droid::ErrorCode::Success;
+		bool didModify = false;
 
-		result = parseDB.Parse();
-		if (result < 0)
-		{
-			return result;
-		}
+		parseDB.Parse();
+		didModify = true;
 		
 		if (parseParams.m_doCppCodeGen &&
 			(!isSameBuildConfig ||
 			!cppGenDirNewer))
 		{
-			result = parseDB.GenerateCPPCode();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateCPPCode();
+			didModify = true;
 		}
 
 		if (parseParams.m_compileShaders &&
@@ -99,23 +77,17 @@ namespace droid
 				!glslOutputNewer ||
 				!commonSrcNewer))
 		{
-			result = parseDB.GenerateShaderCode();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateShaderCode();
+			didModify = true;
 
-			result = parseDB.CompileShaders();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.CompileShaders();
+			didModify = true;
 
 			// Write the build configuration marker files:
 			util::SetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir, parseParams.m_buildConfiguration);
 			util::SetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir, parseParams.m_buildConfiguration);
 		}
 
-		return result;
+		return didModify;
 	}
 }
