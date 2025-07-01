@@ -84,7 +84,7 @@ namespace app
 
 		// Create the RenderManager immediately after processing the command line args, as it needs to set the
 		// platform::RenderingAPI in the Config before we bind the platform functions
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		// Register our API-specific bindings before anything attempts to call them:
 		if (!platform::RegisterPlatformFunctions())

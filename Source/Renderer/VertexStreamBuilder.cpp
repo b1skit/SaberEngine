@@ -479,7 +479,7 @@ namespace grutil
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);g::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 

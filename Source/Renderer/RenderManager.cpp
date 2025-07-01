@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "Context.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
@@ -202,7 +203,7 @@ namespace gr
 		LOG("RenderManager starting...");
 		
 		// Create the context:
-		m_context = Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
+		m_context = re::Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");
 
 		m_context->Create(m_renderFrameNum);
