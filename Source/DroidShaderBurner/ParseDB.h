@@ -64,11 +64,11 @@ namespace droid
 
 
 	public:
-		void Parse();
+		bool Parse();
 
-		void GenerateCPPCode() const;
-		void GenerateShaderCode() const;
-		void CompileShaders() const;
+		bool GenerateCPPCode() const;
+		bool GenerateShaderCode() const;
+		bool CompileShaders() const;
 
 
 	public:

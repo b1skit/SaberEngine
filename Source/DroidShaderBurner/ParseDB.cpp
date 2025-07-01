@@ -162,7 +162,7 @@ namespace droid
 	}
 
 
-	void ParseDB::Parse()
+	bool ParseDB::Parse()
 	{
 		std::string const& effectManifestPath = std::format("{}{}",
 			m_parseParams.m_effectSourceDir,
@@ -219,6 +219,8 @@ namespace droid
 		{
 			ParseEffectFile(effectName, m_parseParams);
 		}
+
+		return true; // Always return true since parsing was performed
 	}
 
 
@@ -399,25 +401,19 @@ namespace droid
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateCPPCode() const
+	bool ParseDB::GenerateCPPCode() const
 	{
 		std::cout << "Generating C++ code...\n";
 
 		// Start by clearing out any previously generated code:
 		droid::CleanDirectory(m_parseParams.m_cppCodeGenOutputDir.c_str());
 
-		droid::ErrorCode result = droid::ErrorCode::Success;
-			
-		if (result == droid::ErrorCode::Success)
-		{
-			result = GenerateCPPCode_Drawstyle();
-		}
-		
-		return result;
+		GenerateCPPCode_Drawstyle();
+		return true; // Code generation was performed
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateShaderCode() const
+	bool ParseDB::GenerateShaderCode() const
 	{
 		std::cout << "Generating shader code...\n";
 
@@ -425,18 +421,12 @@ namespace droid
 		droid::CleanDirectory(m_parseParams.m_hlslCodeGenOutputDir.c_str());
 		droid::CleanDirectory(m_parseParams.m_glslCodeGenOutputDir.c_str());
 
-		droid::ErrorCode result = droid::ErrorCode::Success;
-
-		if (result == droid::ErrorCode::Success)
-		{
-			result = GenerateShaderCode_VertexStreams();
-		}
-
-		return result;
+		GenerateShaderCode_VertexStreams();
+		return true; // Shader code generation was performed
 	}
 
 
-	droid::ErrorCode ParseDB::CompileShaders() const
+	bool ParseDB::CompileShaders() const
 	{
 		droid::ErrorCode result = droid::ErrorCode::Success;
 
@@ -745,19 +735,40 @@ namespace droid
 			}
 		}		
 
-		return result;
+		// Convert ErrorCode result to bool or exception
+		if (result == droid::ErrorCode::Success)
+		{
+			return true; // Compilation was performed successfully
+		}
+		else if (result == droid::ErrorCode::NoModification)
+		{
+			return false; // No compilation was needed
+		}
+		else
+		{
+			// Throw appropriate exception based on error type
+			switch (result)
+			{
+			case droid::ErrorCode::FileError:
+				throw droid::FileException("Shader compilation failed due to file error");
+			case droid::ErrorCode::ShaderError:
+				throw droid::ShaderException("Shader compilation failed");
+			case droid::ErrorCode::ConfigurationError:
+				throw droid::ConfigurationException("Shader compilation failed due to configuration error");
+			case droid::ErrorCode::DependencyError:
+				throw droid::DependencyException("Shader compilation failed due to dependency error");
+			default:
+				throw droid::GenerationException("Shader compilation failed");
+			}
+		}
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
+	void ParseDB::GenerateCPPCode_Drawstyle() const
 	{
 		FileWriter filewriter(m_parseParams.m_cppCodeGenOutputDir, m_drawstyleHeaderFilename);
 
-		droid::ErrorCode result = filewriter.GetStatus();
-		if (result != droid::ErrorCode::Success)
-		{
-			return filewriter.GetStatus();
-		}
+		// FileWriter constructor throws FileException on failure, no need to check status
 
 		filewriter.WriteLine("#pragma once");
 		filewriter.EmptyLine();
@@ -834,15 +845,11 @@ namespace droid
 		}
 
 		filewriter.CloseNamespace();
-
-		return result;
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateShaderCode_VertexStreams() const
-	{
-		droid::ErrorCode result = droid::ErrorCode::Success;
-		
+	void ParseDB::GenerateShaderCode_VertexStreams() const
+	{		
 		for (auto const& vertexStreamDesc : m_vertexStreamDescs)
 		{
 			std::string const& hlslFilename = std::format("{}{}.hlsli", 
@@ -910,7 +917,5 @@ namespace droid
 			hlslWriter.WriteLine(std::format("#endif // {}", hlslIncludeGuard));
 			glslWriter.WriteLine(std::format("#endif // {}", glslIncludeGuard));
 		}
-
-		return result;
 	}
 }

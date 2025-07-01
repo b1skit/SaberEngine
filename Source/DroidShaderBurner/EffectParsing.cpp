@@ -58,15 +58,15 @@ namespace droid
 
 		bool didModify = false;
 
-		parseDB.Parse();
-		didModify = true;
+		bool parseModified = parseDB.Parse();
+		didModify = parseModified;
 		
 		if (parseParams.m_doCppCodeGen &&
 			(!isSameBuildConfig ||
 			!cppGenDirNewer))
 		{
-			parseDB.GenerateCPPCode();
-			didModify = true;
+			bool cppGenModified = parseDB.GenerateCPPCode();
+			didModify = didModify || cppGenModified;
 		}
 
 		if (parseParams.m_compileShaders &&
@@ -77,11 +77,11 @@ namespace droid
 				!glslOutputNewer ||
 				!commonSrcNewer))
 		{
-			parseDB.GenerateShaderCode();
-			didModify = true;
+			bool shaderGenModified = parseDB.GenerateShaderCode();
+			didModify = didModify || shaderGenModified;
 
-			parseDB.CompileShaders();
-			didModify = true;
+			bool compileModified = parseDB.CompileShaders();
+			didModify = didModify || compileModified;
 
 			// Write the build configuration marker files:
 			util::SetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir, parseParams.m_buildConfiguration);
