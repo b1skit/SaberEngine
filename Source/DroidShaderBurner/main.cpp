@@ -285,15 +285,23 @@ int main(int argc, char* argv[])
 		}
 		if (doBuild)
 		{
-			result = droid::DoParsingAndCodeGen(parseParams);
+			try {
+				droid::DoParsingAndCodeGen(parseParams);
+				std::cout << "\nDroid resource burning completed successfully\n";
+				return 0;
+			}
+			catch (droid::NoModificationResult const& e) {
+				std::cout << "\nDroid resource burning completed with no modification needed\n";
+				return 1;
+			}
+			catch (droid::DroidException const& e) {
+				std::cout << "\nDroid resource burning failed: " << e.what() << "\n";
+				return -1;
+			}
 		}
 	}
 
-	std::cout << std::format(
-		"\nDroid resource burning {} with code \"{}\"\n",
-		result >= 0 ? "completed" : "failed",
-		droid::ErrorCodeToCStr(result)).c_str();
-
-	return result >= 0 ? droid::ErrorCode::Success : result;
+	std::cout << "\nDroid resource burning completed successfully\n";
+	return 0;
 }
 

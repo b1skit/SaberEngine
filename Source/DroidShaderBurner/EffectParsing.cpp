@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "ParseDB.h"
 
@@ -24,7 +24,7 @@ namespace droid
 	}
 
 
-	ErrorCode DoParsingAndCodeGen(ParseParams const& parseParams)
+	void DoParsingAndCodeGen(ParseParams const& parseParams)
 	{
 		const bool isSameBuildConfig =
 			(util::GetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir) == parseParams.m_buildConfiguration) &&
@@ -67,28 +67,18 @@ namespace droid
 			glslOutputNewer &&
 			commonSrcNewer)
 		{
-			return droid::ErrorCode::NoModification;
+			throw droid::NoModificationResult("No modification needed");
 		}
 
 		ParseDB parseDB(parseParams);
 
-		droid::ErrorCode result = droid::ErrorCode::Success;
-
-		result = parseDB.Parse();
-		if (result < 0)
-		{
-			return result;
-		}
+		parseDB.Parse();
 		
 		if (parseParams.m_doCppCodeGen &&
 			(!isSameBuildConfig ||
 			!cppGenDirNewer))
 		{
-			result = parseDB.GenerateCPPCode();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateCPPCode();
 		}
 
 		if (parseParams.m_compileShaders &&
@@ -99,23 +89,12 @@ namespace droid
 				!glslOutputNewer ||
 				!commonSrcNewer))
 		{
-			result = parseDB.GenerateShaderCode();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateShaderCode();
 
-			result = parseDB.CompileShaders();
-			if (result < 0)
-			{
-				return result;
-			}
-
+			parseDB.CompileShaders();
 			// Write the build configuration marker files:
 			util::SetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir, parseParams.m_buildConfiguration);
 			util::SetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir, parseParams.m_buildConfiguration);
 		}
-
-		return result;
 	}
 }
