@@ -378,7 +378,7 @@ namespace re
 
 	void RenderManager::ProcessDeferredDeletions(uint64_t frameNum)
 	{
-		const uint8_t numFramesInFlight = this->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = GetNumFramesInFlight();
 		{
 			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
