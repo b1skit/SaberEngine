@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchPool.h"
 #include "Context.h"
@@ -103,7 +103,6 @@ namespace re
 		core::Inventory* m_inventory;
 
 		host::Window* m_windowCache; // Passed to the m_context at creation
-		std::unique_ptr<re::Context> m_context;
 
 	public:
 		void SetWindow(host::Window*);
@@ -152,13 +151,7 @@ namespace re
 		std::vector<core::InvPtr<T>> const& GetNewResources() const;
 
 
-	private: // API resource management:
-		void CreateAPIResources();
-		void ClearNewObjectCache();
-
-		void SwapNewResourceDoubleBuffers();
-		void DestroyNewResourceDoubleBuffers();
-
+	protected: // API resource management - accessible to derived classes:
 		static constexpr size_t k_newObjectReserveAmount = 128;
 		util::NBufferedVector<core::InvPtr<re::Shader>> m_newShaders;
 		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
@@ -168,10 +161,19 @@ namespace re
 		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
 		util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>> m_newShaderBindingTables;
 		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;		
-
+		
+		std::unique_ptr<re::Context> m_context;
+		
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
 		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
 		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
+
+	private:
+		void CreateAPIResources();
+		void ClearNewObjectCache();
+
+		void SwapNewResourceDoubleBuffers();
+		void DestroyNewResourceDoubleBuffers();
 
 
 	private:
@@ -194,6 +196,14 @@ namespace re
 		void Initialize();
 
 		virtual void Render() = 0;
+		
+		// Platform-specific pure virtual functions:
+		virtual void PlatformInitialize() = 0;
+		virtual void PlatformShutdown() = 0;
+		virtual void PlatformCreateAPIResources() = 0;
+		virtual void PlatformBeginFrame(uint64_t frameNum) = 0;
+		virtual void PlatformEndFrame() = 0;
+		virtual uint8_t PlatformGetNumFramesInFlight() const = 0;
 
 		void BeginFrame(uint64_t frameNum);
 		void EndFrame();

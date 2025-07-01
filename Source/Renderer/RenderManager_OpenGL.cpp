@@ -49,43 +49,43 @@ namespace opengl
 	}
 
 
-	void RenderManager::Initialize(re::RenderManager& renderManager)
+	void RenderManager::PlatformInitialize()
 	{
 		//
 	}
 
 
-	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	void RenderManager::PlatformCreateAPIResources()
 	{
-		SEBeginCPUEvent("RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("RenderManager::PlatformCreateAPIResources");
 		
 		// Note: We've already obtained the read lock on all new resources by this point
 
 		// Textures:
-		if (renderManager.m_newTextures.HasReadData())
+		if (m_newTextures.HasReadData())
 		{
 			SEBeginCPUEvent("Create textures");
-			for (auto const& newObject : renderManager.m_newTextures.GetReadData())
+			for (auto const& newObject : m_newTextures.GetReadData())
 			{
 				platform::Texture::CreateAPIResource(newObject, nullptr);
 			}
 			SEEndCPUEvent(); // "Create Textures"
 		}
 		// Samplers:
-		if (renderManager.m_newSamplers.HasReadData())
+		if (m_newSamplers.HasReadData())
 		{
 			SEBeginCPUEvent("Create samplers");
-			for (auto& newObject : renderManager.m_newSamplers.GetReadData())
+			for (auto& newObject : m_newSamplers.GetReadData())
 			{
 				opengl::Sampler::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create Samplers"
 		}
 		// Texture Target Sets:
-		if (renderManager.m_newTargetSets.HasReadData())
+		if (m_newTargetSets.HasReadData())
 		{
 			SEBeginCPUEvent("Create texture target sets");
-			for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
+			for (auto& newObject : m_newTargetSets.GetReadData())
 			{
 				newObject->Commit();
 				opengl::TextureTargetSet::CreateColorTargets(*newObject);
@@ -94,37 +94,37 @@ namespace opengl
 			SEEndCPUEvent(); // "Create texture target sets"
 		}
 		// Shaders:
-		if (renderManager.m_newShaders.HasReadData())
+		if (m_newShaders.HasReadData())
 		{
 			SEBeginCPUEvent("Create shaders");
-			for (auto& newObject : renderManager.m_newShaders.GetReadData())
+			for (auto& newObject : m_newShaders.GetReadData())
 			{
 				opengl::Shader::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create shaders"
 		}
 		// Vertex streams:
-		if (renderManager.m_newVertexStreams.HasReadData())
+		if (m_newVertexStreams.HasReadData())
 		{
 			SEBeginCPUEvent("Create vertex streams");
-			for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
+			for (auto& vertexStream : m_newVertexStreams.GetReadData())
 			{
 				vertexStream->CreateBuffers(vertexStream);
 			}
 			SEEndCPUEvent(); // "Create vertex streams"
 		}
 
-		SEEndCPUEvent(); // "RenderManager::CreateAPIResources"
+		SEEndCPUEvent(); // "RenderManager::PlatformCreateAPIResources"
 	}
 
 
-	void RenderManager::BeginFrame(re::RenderManager&, uint64_t frameNum)
+	void RenderManager::PlatformBeginFrame(uint64_t frameNum)
 	{
 		//
 	}
 
 
-	void RenderManager::EndFrame(re::RenderManager&)
+	void RenderManager::PlatformEndFrame()
 	{
 		//
 	}
@@ -497,7 +497,7 @@ namespace opengl
 	}
 
 
-	void RenderManager::Shutdown(re::RenderManager& renderManager)
+	void RenderManager::PlatformShutdown()
 	{
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
 		// re::RenderManager::Shutdown ordering
