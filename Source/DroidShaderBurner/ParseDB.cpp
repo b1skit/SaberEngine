@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
@@ -15,7 +15,7 @@
 
 namespace
 {
-	droid::ErrorCode ParseDrawStylesBlock(
+	void ParseDrawStylesBlock(
 		droid::ParseDB& parseDB, std::string const& effectName, auto const& drawStylesBlock)
 	{
 		// Parse the contents of a "DrawStyles" []:
@@ -25,7 +25,7 @@ namespace
 				!drawstyleEntry.contains(key_technique))
 			{
 				std::cout << "Error: Invalid DrawStyles block\n";
-				return droid::ErrorCode::JSONError;
+				throw droid::JSONException("Invalid DrawStyles block");
 			}
 
 			droid::ParseDB::DrawStyleTechnique drawStyleTechnique{};
@@ -39,7 +39,7 @@ namespace
 					condition.at(key_mode).empty())
 				{
 					std::cout << "Error: Invalid Conditions block\n";
-					return droid::ErrorCode::JSONError;
+					throw droid::JSONException("Invalid Conditions block");
 				}
 
 				// "Rule":
@@ -56,12 +56,10 @@ namespace
 
 			parseDB.AddEffectDrawStyleTechnique(effectName, std::move(drawStyleTechnique));
 		}
-
-		return droid::ErrorCode::Success;
 	}
 
 
-	droid::ErrorCode ParseVertexStreamsEntry(droid::ParseDB& parseDB, auto const& vertexStreamsEntry)
+	void ParseVertexStreamsEntry(droid::ParseDB& parseDB, auto const& vertexStreamsEntry)
 	{
 		uint8_t numStreams = 0;
 
@@ -84,15 +82,13 @@ namespace
 			if (numStreams > re::VertexStream::k_maxVertexStreams)
 			{
 				std::cout << "Error: Trying to add too many vertex streams\n";
-				return droid::ErrorCode::JSONError;
+				throw droid::JSONException("Too many vertex streams");
 			}
 		}
-
-		return droid::ErrorCode::Success;
 	}
 
 
-	droid::ErrorCode ParseTechniquesBlock(
+	void ParseTechniquesBlock(
 		droid::ParseDB& parseDB,
 		std::string const& owningEffectName,
 		auto const& techniquesBlock,
@@ -111,7 +107,7 @@ namespace
 				{
 					std::cout << "Error: Parent \"" << parentName.c_str() << "\" not found in Effect \"" << 
 						owningEffectName.c_str() << "\"\n";
-					return droid::ErrorCode::JSONError;
+					throw droid::JSONException("Parent technique not found: " + parentName);
 				}
 
 				droid::TechniqueDesc const& parent = parseDB.GetTechnique(owningEffectName, parentName);
@@ -125,14 +121,8 @@ namespace
 				newTechnique.ExcludedPlatforms.emplace(std::move(effectExcludedPlatform));
 			}
 
-			const droid::ErrorCode result = parseDB.AddTechnique(owningEffectName, std::move(newTechnique));
-			if (result != droid::ErrorCode::Success)
-			{
-				return result;
-			}
+			parseDB.AddTechnique(owningEffectName, std::move(newTechnique));
 		}
-		
-		return droid::ErrorCode::Success;
 	}
 
 
@@ -172,7 +162,7 @@ namespace droid
 	}
 
 
-	droid::ErrorCode ParseDB::Parse()
+	void ParseDB::Parse()
 	{
 		std::string const& effectManifestPath = std::format("{}{}",
 			m_parseParams.m_effectSourceDir,
@@ -184,11 +174,9 @@ namespace droid
 		if (!effectManifestInputStream.is_open())
 		{
 			std::cout << "Error: Failed to open effect manifest input stream\n";
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to open effect manifest: " + effectManifestPath);
 		}
 		std::cout << "Successfully opened effect manifest \"" << effectManifestPath.c_str() << "\"!\n\n";
-
-		droid::ErrorCode result = droid::ErrorCode::Success;
 
 		std::vector<std::string> effectNames;
 		nlohmann::json effectManifestJSON;
@@ -212,11 +200,7 @@ namespace droid
 			effectManifestInputStream.close();
 
 			// Finally, write the runtime version of the manifest file out:
-			result = WriteRuntimeEffectFile(effectManifestJSON, m_parseParams.m_effectManifestFileName);
-			if (result != droid::ErrorCode::Success)
-			{
-				return result;
-			}
+			WriteRuntimeEffectFile(effectManifestJSON, m_parseParams.m_effectManifestFileName);
 		}
 		catch (nlohmann::json::exception parseException)
 		{
@@ -227,24 +211,18 @@ namespace droid
 
 			effectManifestInputStream.close();
 
-			result = ErrorCode::JSONError;
+			throw droid::JSONException("Failed to parse effect manifest: " + std::string(parseException.what()));
 		}
 
 		// Parse the effect files listed in the manifest:
 		for (auto const& effectName : effectNames)
 		{
-			result = ParseEffectFile(effectName, m_parseParams);
-			if (result != droid::ErrorCode::Success)
-			{
-				break;
-			}
+			ParseEffectFile(effectName, m_parseParams);
 		}
-
-		return result;
 	}
 
 
-	droid::ErrorCode ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
+	void ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
 	{
 		std::cout << "Parsing Effect \"" << effectName.c_str() << "\":\n";
 		
@@ -255,11 +233,9 @@ namespace droid
 		if (!effectInputStream.is_open())
 		{
 			std::cout << "Error: Failed to open Effect file at \"" << effectFilePath << "\"\n";
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to open effect file: " + effectFilePath);
 		}
 		std::cout << "Successfully opened effect file \"" << effectFilePath.c_str() << "\"!\n\n";
-
-		droid::ErrorCode result = droid::ErrorCode::Success;
 
 		nlohmann::json effectJSON;
 		try
