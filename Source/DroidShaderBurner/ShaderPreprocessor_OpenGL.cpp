@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "ParseHelpers.h"
 #include "ShaderPreprocessor_OpenGL.h"
 
@@ -245,7 +245,7 @@ namespace droid
 	}
 
 
-	droid::ErrorCode BuildShaderFile_GLSL(
+	void BuildShaderFile_GLSL(
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
 		uint64_t variantID,
@@ -275,8 +275,7 @@ namespace droid
 
 		if (shaderText.empty())
 		{
-			std::cout << "Error: Failed to load GLSL shader text \"" << extensionlessSrcFilename.c_str() << "\"\n";
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to load GLSL shader text \"" + extensionlessSrcFilename + "\"");
 		}
 
 		// Add our preambles:
@@ -294,8 +293,7 @@ namespace droid
 		const bool result = InsertIncludeText(includeDirectories, shaderText, shaderTextStrings);
 		if (!result)
 		{
-			std::cout << "Error: Failed while attempting to insert include text\n";
-			return droid::ErrorCode::ShaderError;
+			throw droid::ShaderException("Failed while attempting to insert include text");
 		}
 
 
@@ -320,13 +318,11 @@ namespace droid
 		outputStream.open(combinedFilePath);
 		if (!outputStream.is_open())
 		{
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to open GLSL output file: " + combinedFilePath);
 		}
 
 		outputStream << shaderText.c_str();
 
 		outputStream.close();
-
-		return droid::ErrorCode::Success;
 	}
 }

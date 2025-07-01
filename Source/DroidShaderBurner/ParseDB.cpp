@@ -438,7 +438,7 @@ namespace droid
 
 						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
-							result = BuildShaderFile_GLSL(
+							BuildShaderFile_GLSL(
 								glslIncludeDirectories,
 								technique.second._Shader[shaderTypeIdx],
 								technique.second.m_shaderVariantIDs[shaderTypeIdx],
@@ -446,11 +446,6 @@ namespace droid
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 								technique.second._Defines[shaderTypeIdx],
 								m_parseParams.m_glslShaderOutputDir);
-
-							if (result != droid::ErrorCode::Success)
-							{
-								return result;
-							}
 
 							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
@@ -467,15 +462,10 @@ namespace droid
 			{
 				if (m_parseParams.m_directXCompilerExePath.empty())
 				{
-					std::cout << "DXC C++ API is disabled, but no DXC.exe compiler path received" << "\n";
-					result = droid::ErrorCode::ConfigurationError;
+					throw droid::ConfigurationException("DXC C++ API is disabled, but no DXC.exe compiler path received");
 				}
 
-				result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
-				if (result != droid::ErrorCode::Success)
-				{
-					return result;
-				}
+				PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
 			}
 
 			// Start by clearing out any previously generated code:
@@ -534,7 +524,7 @@ namespace droid
 				};
 			}
 			break;
-			default: result = droid::ErrorCode::ConfigurationError;
+			default: throw droid::ConfigurationException("Configuration error");
 			}
 			if (result != droid::ErrorCode::Success)
 			{
@@ -554,25 +544,21 @@ namespace droid
 				m_parseParams.m_dependenciesDir,
 			};
 
-			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> droid::ErrorCode
+			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> void
 				{
-					droid::ErrorCode result = droid::ErrorCode::Success;
-
 					WaitForSingleObject(processInfo.hProcess, INFINITE); // Wait until the process is done
 
 					DWORD exitCode = 0;
 					GetExitCodeProcess(processInfo.hProcess, &exitCode);
 					if (exitCode != 0)
 					{
-						std::cout << "HLSL compiler returned " << exitCode << "\n";
-						result = droid::ErrorCode::ShaderError;
+						std::string message = "HLSL compiler returned " + std::to_string(exitCode);
+						throw droid::ShaderException(message);
 					}
 
 					// Close process and thread handles
 					CloseHandle(processInfo.hProcess);
 					CloseHandle(processInfo.hThread);
-
-					return result;
 				};
 
 			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
@@ -705,15 +691,9 @@ namespace droid
 	}
 
 
-	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
+	void ParseDB::GenerateCPPCode_Drawstyle() const
 	{
 		FileWriter filewriter(m_parseParams.m_cppCodeGenOutputDir, m_drawstyleHeaderFilename);
-
-		droid::ErrorCode result = filewriter.GetStatus();
-		if (result != droid::ErrorCode::Success)
-		{
-			return filewriter.GetStatus();
-		}
 
 		filewriter.WriteLine("#pragma once");
 		filewriter.EmptyLine();
@@ -739,8 +719,8 @@ namespace droid
 			}
 			if (bitIdx >= 64)
 			{
-				std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
-				result = droid::ErrorCode::GenerationError;
+				std::string message = std::to_string(bitIdx) + " is too many drawstyle rules to fit in a 64-bit bitmask";
+				throw droid::GenerationException(message);
 			}
 		}
 
