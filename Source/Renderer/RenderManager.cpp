@@ -1,10 +1,9 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
-#include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
@@ -35,9 +34,9 @@ namespace re
 	}
 
 
-	uint8_t RenderManager::GetNumFramesInFlight()
+	uint8_t RenderManager::GetNumFramesInFlight() const
 	{
-		return platform::RenderManager::GetNumFramesInFlight();
+		return PlatformGetNumFramesInFlight();
 	}
 
 
@@ -244,8 +243,8 @@ namespace re
 
 		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
 
-		SEBeginCPUEvent("platform::RenderManager::Initialize");
-		platform::RenderManager::Initialize(*this);
+		SEBeginCPUEvent("RenderManager::PlatformInitialize");
+		PlatformInitialize();
 		SEEndCPUEvent();
 
 		// Process any render commands added so far (e.g. adding RenderSystems)
@@ -275,7 +274,7 @@ namespace re
 		
 		m_renderCommandManager.SwapBuffers();
 
-		platform::RenderManager::BeginFrame(*this, frameNum);
+		PlatformBeginFrame(frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -365,7 +364,7 @@ namespace re
 		m_newShaderBindingTables.ClearReadData();
 		m_newTargetSets.ClearReadData();
 
-		platform::RenderManager::EndFrame(*this);
+		PlatformEndFrame();
 
 		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
 	}
@@ -406,7 +405,7 @@ namespace re
 		LOG("Render manager shutting down...");
 
 		// Flush any remaining render work:
-		platform::RenderManager::Shutdown(*this);
+		PlatformShutdown();
 
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
@@ -513,7 +512,7 @@ namespace re
 		}
 
 		// Create the resources:
-		platform::RenderManager::CreateAPIResources(*this);
+		PlatformCreateAPIResources();
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();

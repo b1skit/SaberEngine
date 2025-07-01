@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchPool.h"
 #include "Context.h"
@@ -65,7 +65,7 @@ namespace re
 
 
 	public: // Platform wrappers:
-		static uint8_t GetNumFramesInFlight();
+		uint8_t GetNumFramesInFlight() const;
 		static float GetWindowAspectRatio();
 
 
@@ -194,6 +194,14 @@ namespace re
 		void Initialize();
 
 		virtual void Render() = 0;
+
+		// Platform-specific pure virtual methods:
+		virtual void PlatformInitialize() = 0;
+		virtual void PlatformShutdown() = 0;
+		virtual void PlatformCreateAPIResources() = 0;
+		virtual void PlatformBeginFrame(uint64_t frameNum) = 0;
+		virtual void PlatformEndFrame() = 0;
+		virtual uint8_t PlatformGetNumFramesInFlight() const = 0;
 
 		void BeginFrame(uint64_t frameNum);
 		void EndFrame();
