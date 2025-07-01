@@ -11,7 +11,7 @@ namespace platform
 {
 	void platform::Shader::CreatePlatformObject(re::Shader& shader)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

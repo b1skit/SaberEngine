@@ -478,7 +478,7 @@ namespace grutil
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
-		platform::RenderingAPI const& api = re::RenderManager::Get()->GetRenderingAPI();
+		platform::RenderingAPI const& api = gr::RenderManager::Get()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:

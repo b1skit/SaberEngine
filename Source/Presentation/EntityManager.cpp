@@ -128,7 +128,7 @@ namespace fr
 	template<typename RenderDataType, typename CmptType, typename... OtherCmpts>
 	void EntityManager::EnqueueRenderUpdateHelper()
 	{
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		auto componentsView = m_registry.view<fr::RenderDataComponent, DirtyMarker<CmptType>, CmptType, OtherCmpts...>();
 		for (auto entity : componentsView)
@@ -148,7 +148,7 @@ namespace fr
 
 	void EntityManager::EnqueueRenderUpdates()
 	{
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		// ECS_CONVERSION TODO: Move each of these isolated tasks to a thread
 		// -> Use entt::organizer
@@ -498,7 +498,7 @@ namespace fr
 	{
 		SEBeginCPUEvent("EntityManager::ExecuteDeferredDeletions");
 
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		if (!m_deferredDeleteQueue.empty())
 		{

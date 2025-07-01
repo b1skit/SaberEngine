@@ -12,7 +12,7 @@ namespace re
 {
 	core::InvPtr<re::Sampler> Sampler::GetSampler(util::HashKey const& samplerNameHash)
 	{
-		return re::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
+		return gr::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
 	}
 
 
@@ -24,7 +24,7 @@ namespace re
 			{
 				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
 
-				re::RenderManager::Get()->RegisterForCreate(newSampler); // API-layer creation
+				gr::RenderManager::Get()->RegisterForCreate(newSampler); // API-layer creation
 			}
 
 			std::unique_ptr<re::Sampler> Load(core::InvPtr<re::Sampler>&) override
@@ -42,7 +42,7 @@ namespace re
 		samplerLoadContext->m_samplerName = name;
 		samplerLoadContext->m_samplerDesc = samplerDesc;
 
-		return re::RenderManager::Get()->GetInventory()->Get(
+		return gr::RenderManager::Get()->GetInventory()->Get(
 				util::HashKey(name), 
 				static_pointer_cast<core::ILoadContext<re::Sampler>>(samplerLoadContext));
 	}

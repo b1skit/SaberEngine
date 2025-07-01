@@ -25,7 +25,7 @@ namespace opengl
 		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
 
 		// Setup OpenGL ImGui backend:
-		host::Window* window = re::RenderManager::Get()->GetContext()->GetWindow();
+		host::Window* window = gr::RenderManager::Get()->GetContext()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatObj* windowPlatObj =
@@ -72,7 +72,7 @@ namespace opengl
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
 		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+			gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		SEAssert(imGuiStage && payload && imGuiLibrary, "A critical resource is null");
 

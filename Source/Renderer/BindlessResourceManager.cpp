@@ -21,7 +21,7 @@ namespace re
 	BindlessResourceManager::BindlessResourceManager()
 		: m_platObj(platform::BindlessResourceManager::CreatePlatformObject())
 		, m_mustReinitialize(true)
-		, m_numFramesInFlight(re::RenderManager::Get()->GetNumFramesInFlight())
+		, m_numFramesInFlight(gr::RenderManager::Get()->GetNumFramesInFlight())
 	{
 		// Initialize the free index queue:
 		uint32_t curIdx = 0;
@@ -169,6 +169,6 @@ namespace re
 
 		m_freeIndexes = {};
 
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+		gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 	}
 }

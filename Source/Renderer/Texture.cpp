@@ -134,7 +134,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
 				
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				re::RenderManager::Get()->RegisterForCreate(newTex); 
+				gr::RenderManager::Get()->RegisterForCreate(newTex); 
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -170,7 +170,7 @@ namespace re
 		loadContext->m_texParams = params;
 		loadContext->m_initialDataBytes = std::move(initialData);
 
-		core::InvPtr<re::Texture> const& newTexture = re::RenderManager::Get()->GetInventory()->Get(
+		core::InvPtr<re::Texture> const& newTexture = gr::RenderManager::Get()->GetInventory()->Get(
 			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
@@ -189,7 +189,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				re::RenderManager::Get()->RegisterForCreate(newTex);
+				gr::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 			
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -221,7 +221,7 @@ namespace re
 		loadContext->m_texParams = params;
 		loadContext->m_fillColor = fillColor;
 
-		return re::RenderManager::Get()->GetInventory()->Get(
+		return gr::RenderManager::Get()->GetInventory()->Get(
 			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}
@@ -236,7 +236,7 @@ namespace re
 				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				re::RenderManager::Get()->RegisterForCreate(newTex);
+				gr::RenderManager::Get()->RegisterForCreate(newTex);
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -265,7 +265,7 @@ namespace re
 
 		loadContext->m_texParams = params;
 
-		return re::RenderManager::Get()->GetInventory()->Get(
+		return gr::RenderManager::Get()->GetInventory()->Get(
 			util::HashKey(runtimeName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}
@@ -275,7 +275,7 @@ namespace re
 	{
 		if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			if (brm)
 			{
 				if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
@@ -382,22 +382,22 @@ namespace re
 
 		platform::Texture::Destroy(*this);
 
-		re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+		gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_srvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
 		if (m_uavResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			brm->UnregisterResource(m_uavResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_uavResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 	}
 

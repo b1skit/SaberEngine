@@ -13,7 +13,7 @@ namespace platform
 {
 	void Sampler::CreatePlatformObject(re::Sampler& sampler)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

@@ -264,7 +264,7 @@
       <Filter>Header Files\re\DX12\Libraries</Filter>
     </ClInclude>
     <ClInclude Include="RenderManager.h">
-      <Filter>Header Files\re</Filter>
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="RenderManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
@@ -764,7 +764,7 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="RenderManager.cpp">
-      <Filter>Source Files\re</Filter>
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="RenderPipeline.cpp">
       <Filter>Source Files\re</Filter>

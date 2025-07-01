@@ -10,7 +10,7 @@ namespace platform
 {
 	void Texture::CreatePlatformObject(re::Texture& texture)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

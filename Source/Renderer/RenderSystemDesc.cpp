@@ -14,7 +14,7 @@ namespace gr
 {
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{
-		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
+		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(gr::RenderManager::Get()->GetRenderingAPI());
 
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformStr)](auto entry) -> bool
 			{

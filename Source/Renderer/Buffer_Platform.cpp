@@ -15,7 +15,7 @@ namespace platform
 		SEAssert(buffer.GetPlatformObject() == nullptr,
 			"Attempting to create platform object for a buffer that already exists");
 
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

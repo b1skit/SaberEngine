@@ -40,7 +40,7 @@ namespace
 	{
 		dx12::Buffer::ReadbackResource readbackResource;
 
-		dx12::HeapManager& heapMgr = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 		readbackResource.m_readbackGPUResource = heapMgr.CreateResource(
 			dx12::ResourceDesc{
@@ -231,7 +231,7 @@ namespace dx12
 		SEAssert(!platObj->m_isCreated, "Buffer is already created");
 		platObj->m_isCreated = true;
 
-		const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 
@@ -245,7 +245,7 @@ namespace dx12
 			!needsUAV)
 		{
 			dx12::BufferAllocator* bufferAllocator =
-				dynamic_cast<dx12::BufferAllocator*>(re::RenderManager::Get()->GetContext()->GetBufferAllocator());
+				dynamic_cast<dx12::BufferAllocator*>(gr::RenderManager::Get()->GetContext()->GetBufferAllocator());
 
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
@@ -276,7 +276,7 @@ namespace dx12
 
 			std::wstring const& debugName = CreateDebugName(buffer);
 
-			platObj->m_gpuResource = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
+			platObj->m_gpuResource = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = bufferDesc,
 					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
@@ -424,7 +424,7 @@ namespace dx12
 	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
-		re::RenderManager const* renderManager = re::RenderManager::Get();
+		gr::RenderManager const* renderManager = gr::RenderManager::Get();
 
 		const uint32_t bufferSize = buffer.GetTotalBytes();
 
@@ -441,7 +441,7 @@ namespace dx12
 				platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 
 			dx12::CommandQueue& resourceCopyQueue =
-				re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
+				gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
 
 			resourceCopyQueue.CPUWait(platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 		}
@@ -467,7 +467,7 @@ namespace dx12
 	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
-		re::RenderManager const* renderManager = re::RenderManager::Get();
+		gr::RenderManager const* renderManager = gr::RenderManager::Get();
 
 		// Compute the index of the readback resource we're unmapping:
 		SEAssert(renderManager->GetCurrentRenderFrameNum() >= platObj->m_currentMapFrameLatency,

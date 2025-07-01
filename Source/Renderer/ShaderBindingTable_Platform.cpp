@@ -8,7 +8,7 @@ namespace platform
 {
 	std::unique_ptr<re::ShaderBindingTable::PlatObj> platform::ShaderBindingTable::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

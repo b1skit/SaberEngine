@@ -49,13 +49,13 @@ namespace dx12
 
 		re::BufferAllocator::Initialize(currentFrame);
 
-		const uint8_t numBuffers = re::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numBuffers = gr::RenderManager::Get()->GetNumFramesInFlight();
 		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBufferResources[i].resize(numBuffers);
 		}
 
-		dx12::HeapManager& heapMgr = re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 		// Note: We must start in the common state to ensure all command list types are able to transition the resource
 		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_COMMON;
@@ -95,7 +95,7 @@ namespace dx12
 	{
 		if (!dirtyBuffersForPlatformUpdate.empty())
 		{
-			dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+			dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
 			SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(),
@@ -107,7 +107,7 @@ namespace dx12
 			re::GPUTimer::Handle copyTimer = context->GetGPUTimer().StartCopyTimer(
 				copyCommandList->GetD3DCommandList().Get(),
 				"Copy buffers",
-				re::RenderManager::k_GPUFrameTimerName);
+				gr::RenderManager::k_GPUFrameTimerName);
 
 			// Allocate a single intermediate resource for all buffer uploads:
 			uint64_t totalAlignedBytes = 0;

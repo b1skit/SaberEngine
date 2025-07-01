@@ -257,7 +257,7 @@ namespace re
 				AccelerationStructure::Type::BLAS, 
 				std::move(blasParams)));
 
-		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
+		gr::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
@@ -275,7 +275,7 @@ namespace re
 			name, AccelerationStructure::Type::TLAS, std::move(tlasParams)));
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		SEAssert(brm, "Failed to get BindlessResourceManager");
 		
 		re::AccelerationStructure::TLASParams* newTLASParams =
@@ -292,7 +292,7 @@ namespace re
 		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
 
 		// Register for API creation:
-		re::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
+		gr::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
@@ -320,13 +320,13 @@ namespace re
 	{
 		if (m_platObj)
 		{
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		if (m_type == re::AccelerationStructure::Type::TLAS &&
 			GetResourceHandle() != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			re::AccelerationStructure::TLASParams* tlasParams =
@@ -335,7 +335,7 @@ namespace re
 
 			brm->UnregisterResource(
 				tlasParams->m_srvTLASResourceHandle,
-				re::RenderManager::Get()->GetCurrentRenderFrameNum());
+				gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 
 			tlasParams->m_sbt->Destroy();
 			tlasParams->m_sbt = nullptr;

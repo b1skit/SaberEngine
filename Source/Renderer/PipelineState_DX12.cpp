@@ -351,7 +351,7 @@ namespace dx12
 	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
 		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 		
 		Microsoft::WRL::ComPtr<ID3D12Device2> device2;
 		HRESULT hr = device.As(&device2);

@@ -23,7 +23,7 @@ namespace
 		if (entry.contains(key_excludedPlatforms))
 		{
 			std::string const& currentPlatformVal =
-				platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
+				platform::RenderingAPIToCStr(gr::RenderManager::Get()->GetRenderingAPI());
 
 			for (auto const& excludedPlatform : entry[key_excludedPlatforms])
 			{

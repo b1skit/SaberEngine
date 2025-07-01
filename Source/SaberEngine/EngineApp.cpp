@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 #include "Platform.h"
 
@@ -113,7 +113,7 @@ namespace app
 		constexpr bool k_allowDragAndDrop = true; // Allways allowed, for now
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 		fr::EntityManager* entityMgr = fr::EntityManager::Get();
 		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
 		fr::UIManager* uiMgr = fr::UIManager::Get();
@@ -160,7 +160,7 @@ namespace app
 		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		fr::SceneManager* sceneManager = fr::SceneManager::Get();
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 		fr::UIManager* uiManager = fr::UIManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
@@ -276,7 +276,7 @@ namespace app
 		// anything it might be using.
 		// Note: The RenderManager destroys the Inventory via the pointer we gave it to ensure render objects are
 		// destroyed on the main render thread (as required by OpenGL)
-		re::RenderManager::Get()->ThreadShutdown();
+		gr::RenderManager::Get()->ThreadShutdown();
 
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();

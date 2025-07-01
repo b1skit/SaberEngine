@@ -135,7 +135,7 @@ namespace re
 
 				newPlatformParams->m_isCreated = false;
 
-				re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+				gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 
 				m_platObj = std::move(newPlatformParams);
 			}

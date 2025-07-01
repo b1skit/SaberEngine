@@ -15,7 +15,7 @@ namespace platform
 {
 	bool RLibrary::RegisterPlatformLibraries()
 	{
-		const platform::RenderingAPI& api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		bool result = true;
 
@@ -73,7 +73,7 @@ namespace platform
 		case gr::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(
+				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(
 					platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
 		}
 		break;

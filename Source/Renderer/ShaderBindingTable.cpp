@@ -29,7 +29,7 @@ namespace re
 
 		// Finally, register our SBT for API creation. This needs to be done to ensure any shaders we access have
 		// already been created (as we'll need their shader blobs etc)
-		re::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
+		gr::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
 
 		return newSBT;
 	}
@@ -56,7 +56,7 @@ namespace re
 		// Guarantee the lifetime of any in-flight resources:
 		if (m_platObj)
 		{
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		m_rayGenShaders.clear();
@@ -74,7 +74,7 @@ namespace re
 		m_platObj = platform::ShaderBindingTable::CreatePlatformObject();
 
 		// Resolve our shaders:
-		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+		effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
 
 		auto ResolveShaders = [&effectDB](
 			std::set<ShaderID>& seenShaders,

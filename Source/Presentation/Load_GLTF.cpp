@@ -583,7 +583,7 @@ namespace
 		void OnLoadBegin(core::InvPtr<re::Texture>& loadingTexPtr) override
 		{
 			LOG(std::format("Creating texture \"{}\" from GLTF", m_texName).c_str());
-			re::RenderManager::Get()->RegisterForCreate(loadingTexPtr);
+			gr::RenderManager::Get()->RegisterForCreate(loadingTexPtr);
 		}
 
 		std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override

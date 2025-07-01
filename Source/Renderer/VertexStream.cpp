@@ -108,7 +108,7 @@ namespace re
 		const util::HashKey streamDataHash =
 			ComputeVertexStreamDataHash(streamDesc, data.data().data(), data.GetTotalNumBytes());
 
-		core::Inventory* inventory = re::RenderManager::Get()->GetInventory();
+		core::Inventory* inventory = gr::RenderManager::Get()->GetInventory();
 		if (inventory->Has<re::VertexStream>(streamDataHash))
 		{
 			return inventory->Get<re::VertexStream>(streamDataHash);
@@ -119,7 +119,7 @@ namespace re
 		{
 			std::unique_ptr<re::VertexStream> Load(core::InvPtr<re::VertexStream>& newVertexStream) override
 			{
-				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+				gr::RenderManager::Get()->RegisterForCreate(newVertexStream);
 
 				return std::unique_ptr<re::VertexStream>(
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
@@ -179,7 +179,7 @@ namespace re
 		m_deferredBufferCreateParams = nullptr;
 
 		// Create the bindless resource handle after we're released the deferred buffer create params to avoid an assert
-		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			vertexStream->m_srvResourceHandle = brm->RegisterResource(
@@ -265,10 +265,10 @@ namespace re
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
 			re::BindlessResourceManager* brm =
-				re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+				gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_srvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 	}
 

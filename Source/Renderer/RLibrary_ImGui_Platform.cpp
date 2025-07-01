@@ -17,7 +17,7 @@ namespace platform
 		SEAssert(imguiLibrary.GetPlatformObject() == nullptr,
 			"Attempting to create platform object for a buffer that already exists");
 
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -58,7 +58,7 @@ namespace platform
 
 	void RLibraryImGui::ConfigureScaling(RLibraryImGui& imguiLibrary)
 	{
-		host::Window* window = re::RenderManager::Get()->GetContext()->GetWindow();
+		host::Window* window = gr::RenderManager::Get()->GetContext()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatObj* windowPlatObj =

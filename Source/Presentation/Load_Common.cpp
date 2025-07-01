@@ -43,7 +43,7 @@ namespace load
 		LOG(std::format("Creating texture from file path \"{}\"", m_filePath).c_str());
 
 		// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-		re::RenderManager::Get()->RegisterForCreate(newTex);
+		gr::RenderManager::Get()->RegisterForCreate(newTex);
 	}
 
 
@@ -462,7 +462,7 @@ namespace load
 		std::unique_ptr<re::Texture> result = load::TextureFromFilePath<re::Texture>::Load(newIBL);
 
 		// Register for API-layer creation now that we've loaded the (typically large amount of) data
-		re::RenderManager::Get()->RegisterForCreate(newIBL);
+		gr::RenderManager::Get()->RegisterForCreate(newIBL);
 
 		return std::move(result);
 	}
@@ -545,7 +545,7 @@ namespace load
 			.m_yFOV = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFOVKey),			
 			.m_near = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultNearKey),
 			.m_far = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFarKey),
-			.m_aspectRatio = re::RenderManager::Get()->GetWindowAspectRatio(),
+			.m_aspectRatio = gr::RenderManager::Get()->GetWindowAspectRatio(),
 		};	
 
 		fr::CameraComponent::CreateCameraConcept(

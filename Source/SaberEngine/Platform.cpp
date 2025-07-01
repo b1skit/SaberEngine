@@ -67,7 +67,7 @@ namespace platform
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		LOG("Configuring API-specific platform bindings...");
 

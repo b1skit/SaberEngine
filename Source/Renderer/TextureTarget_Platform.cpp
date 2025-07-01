@@ -11,7 +11,7 @@ namespace platform
 {
 	void TextureTarget::CreatePlatformObject(re::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -35,7 +35,7 @@ namespace platform
 
 	void TextureTargetSet::CreatePlatformObject(re::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

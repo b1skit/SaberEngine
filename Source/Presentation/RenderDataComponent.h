@@ -136,7 +136,7 @@ namespace fr
 	{
 		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
 		
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
 	}
@@ -179,7 +179,7 @@ namespace fr
 	{
 		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
 
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
 	}

@@ -10,7 +10,7 @@ namespace platform
 {
 	void SwapChain::CreatePlatformObject(re::SwapChain& swapChain)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

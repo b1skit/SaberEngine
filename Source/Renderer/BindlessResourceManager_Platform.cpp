@@ -9,7 +9,7 @@ namespace platform
 	std::unique_ptr<re::BindlessResourceManager::PlatObj>
 		BindlessResourceManager::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

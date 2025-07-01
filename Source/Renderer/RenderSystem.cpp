@@ -28,7 +28,7 @@ namespace
 
 		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
-		re::RenderManager* renderMgr = re::RenderManager::Get();
+		gr::RenderManager* renderMgr = gr::RenderManager::Get();
 
 		// Initialize everything with a default in case the input doesn't exist for some reason
 		for (auto const& input : dstGS->GetTextureInputs())
@@ -345,7 +345,7 @@ namespace
 		const bool singleThreadGSExecutionCmdReceived = 
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
-		switch (re::RenderManager::Get()->GetRenderingAPI())
+		switch (gr::RenderManager::Get()->GetRenderingAPI())
 		{
 		case platform::RenderingAPI::DX12: return singleThreadGSExecutionCmdReceived;
 		case platform::RenderingAPI::OpenGL: return true;

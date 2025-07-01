@@ -154,7 +154,7 @@ namespace fr
 	{
 		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
 
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
 		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
@@ -181,7 +181,7 @@ namespace fr
 	{
 		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
 
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.DestroyObject(cmdPtr->m_renderDataID);
 	}
@@ -209,7 +209,7 @@ namespace fr
 	{
 		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 	}

@@ -56,8 +56,10 @@ namespace re
 	class AccelerationStructure;
 	class ShaderBindingTable;
 	class VertexStream;
+}
 
-
+namespace gr
+{
 	class RenderManager
 		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual core::IEventListener
 	{
@@ -248,7 +250,7 @@ namespace re
 	private:
 		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
 		RenderManager(platform::RenderingAPI);
-		[[nodiscard]] static std::unique_ptr<re::RenderManager> Create();
+		[[nodiscard]] static std::unique_ptr<gr::RenderManager> Create();
 
 
 	private: // Friends		

@@ -22,7 +22,7 @@ namespace re
 {
 	std::unique_ptr<re::BufferAllocator> BufferAllocator::Create()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -90,7 +90,7 @@ namespace re
 	void BufferAllocator::Initialize(uint64_t currentFrame)
 	{
 		m_currentFrameNum = currentFrame;
-		m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 		m_isValid = true;
 
 		m_singleFrameGPUWriteIdx = 0;

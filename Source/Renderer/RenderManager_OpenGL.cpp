@@ -44,7 +44,7 @@ namespace
 namespace opengl
 {
 	RenderManager::RenderManager()
-		: re::RenderManager(platform::RenderingAPI::OpenGL)
+		: gr::RenderManager(platform::RenderingAPI::OpenGL)
 	{
 	}
 
@@ -500,6 +500,6 @@ namespace opengl
 	void RenderManager::Shutdown_Platform()
 	{
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
-		// re::RenderManager::Shutdown ordering
+		// gr::RenderManager::Shutdown ordering
 	}
 }

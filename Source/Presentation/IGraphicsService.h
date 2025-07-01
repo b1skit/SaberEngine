@@ -19,7 +19,7 @@ namespace fr
 	public:
 		virtual ~IGraphicsService() = default;
 
-		void Initialize(re::RenderManager*);
+		void Initialize(gr::RenderManager*);
 
 
 	protected:
@@ -38,10 +38,10 @@ namespace fr
 	};
 
 
-	inline void IGraphicsService::Initialize(re::RenderManager* renderManager)
+	inline void IGraphicsService::Initialize(gr::RenderManager* renderManager)
 	{
 		SEAssert(renderManager != nullptr, "RenderManager must not be null");
-		m_commandQueue = renderManager->GetRenderCommandManager(ACCESS_KEY(re::RenderManager::CommandManagerAccessKey));
+		m_commandQueue = renderManager->GetRenderCommandManager(ACCESS_KEY(gr::RenderManager::CommandManagerAccessKey));
 
 		DoInitialize();
 	}

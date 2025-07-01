@@ -197,12 +197,12 @@ namespace fr
 		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
 		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
 
-		re::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
+		gr::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
 				constexpr char const* k_debugUIPipelineFilename = "UI.json";
 
 				gr::RenderSystem const* debugUIRenderSystem = 
-					re::RenderManager::Get()->CreateAddRenderSystem(k_debugUIPipelineFilename);
+					gr::RenderManager::Get()->CreateAddRenderSystem(k_debugUIPipelineFilename);
 
 				gr::GraphicsSystemManager const& gsm = debugUIRenderSystem->GetGraphicsSystemManager();
 
@@ -231,8 +231,8 @@ namespace fr
 		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 
 		// Service initialization:
-		m_cullingGraphicsService.Initialize(re::RenderManager::Get());
-		m_debugGraphicsService.Initialize(re::RenderManager::Get());
+		m_cullingGraphicsService.Initialize(gr::RenderManager::Get());
+		m_debugGraphicsService.Initialize(gr::RenderManager::Get());
 	}
 
 
@@ -682,10 +682,10 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				re::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
-				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
-				re::RenderManager::Get()->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
-				re::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
+				gr::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
+				gr::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
+				gr::RenderManager::Get()->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
+				gr::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
 				
 			};
 		if (m_show[Show::RenderMgrDbg] ||
