@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 #include "Platform.h"
 
@@ -20,7 +20,6 @@
 #include "Presentation/SceneManager.h"
 #include "Presentation/UIManager.h"
 
-#include "Renderer/Context.h"
 #include "Renderer/RenderManager.h"
 
 
