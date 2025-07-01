@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "ParseDB.h"
 
@@ -7,24 +7,7 @@
 
 namespace droid
 {
-	constexpr char const* ErrorCodeToCStr(ErrorCode errorCode)
-	{
-		switch (errorCode)
-		{
-		case ErrorCode::Success: return "Success";
-		case ErrorCode::NoModification: return "NoModification";
-		case ErrorCode::FileError: return "FileError";
-		case ErrorCode::JSONError: return "JSONError";
-		case ErrorCode::ShaderError: return "ShaderError";
-		case ErrorCode::GenerationError: return "GenerationError";
-		case ErrorCode::ConfigurationError: return "ConfigurationError";
-		case ErrorCode::DependencyError: return "DependencyError";
-		default: return "INVALID_ERROR_CODE";
-		}
-	}
-
-
-	ErrorCode DoParsingAndCodeGen(ParseParams const& parseParams)
+	void DoParsingAndCodeGen(ParseParams const& parseParams)
 	{
 		const bool isSameBuildConfig =
 			(util::GetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir) == parseParams.m_buildConfiguration) &&
@@ -67,28 +50,18 @@ namespace droid
 			glslOutputNewer &&
 			commonSrcNewer)
 		{
-			return droid::ErrorCode::NoModification;
+			throw NoModificationResult();
 		}
 
 		ParseDB parseDB(parseParams);
 
-		droid::ErrorCode result = droid::ErrorCode::Success;
-
-		result = parseDB.Parse();
-		if (result < 0)
-		{
-			return result;
-		}
+		parseDB.Parse();
 		
 		if (parseParams.m_doCppCodeGen &&
 			(!isSameBuildConfig ||
 			!cppGenDirNewer))
 		{
-			result = parseDB.GenerateCPPCode();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateCPPCode();
 		}
 
 		if (parseParams.m_compileShaders &&
@@ -99,23 +72,12 @@ namespace droid
 				!glslOutputNewer ||
 				!commonSrcNewer))
 		{
-			result = parseDB.GenerateShaderCode();
-			if (result < 0)
-			{
-				return result;
-			}
-
-			result = parseDB.CompileShaders();
-			if (result < 0)
-			{
-				return result;
-			}
+			parseDB.GenerateShaderCode();
+			parseDB.CompileShaders();
 
 			// Write the build configuration marker files:
 			util::SetBuildConfigurationMarker(parseParams.m_hlslShaderOutputDir, parseParams.m_buildConfiguration);
 			util::SetBuildConfigurationMarker(parseParams.m_glslShaderOutputDir, parseParams.m_buildConfiguration);
 		}
-
-		return result;
 	}
 }

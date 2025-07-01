@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "ParseHelpers.h"
 
@@ -66,11 +66,11 @@ namespace droid
 
 
 	public:
-		droid::ErrorCode Parse();
+		void Parse();
 
-		droid::ErrorCode GenerateCPPCode() const;
-		droid::ErrorCode GenerateShaderCode() const;
-		droid::ErrorCode CompileShaders() const;
+		void GenerateCPPCode() const;
+		void GenerateShaderCode() const;
+		void CompileShaders() const;
 
 
 	public:
@@ -90,17 +90,17 @@ namespace droid
 		};
 		void AddVertexStreamSlot(std::string const& streamBlockName, VertexStreamSlotDesc&&);
 
-		droid::ErrorCode AddTechnique(std::string const& owningEffectName, TechniqueDesc&&);
+		void AddTechnique(std::string const& owningEffectName, TechniqueDesc&&);
 		bool HasTechnique(std::string const& effectName, std::string const& techniqueName) const;
 		TechniqueDesc const& GetTechnique(std::string const& effectName, std::string const& techniqueName) const;
 
 
 	private: // Parsing:
-		droid::ErrorCode ParseEffectFile(std::string const& effectName, ParseParams const&);
+		void ParseEffectFile(std::string const& effectName, ParseParams const&);
 
-		droid::ErrorCode PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName);
+		void PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName);
 
-		droid::ErrorCode WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName);
+		void WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName);
 
 
 		// Helper: Add an entry to the unique rule -> mode mapping (m_drawStyleRuleToModes)
@@ -120,10 +120,10 @@ namespace droid
 
 	private: // Code gen:
 		static constexpr char const* m_drawstyleHeaderFilename = "DrawStyles.h";
-		droid::ErrorCode GenerateCPPCode_Drawstyle() const;
+		void GenerateCPPCode_Drawstyle() const;
 
 		static constexpr char const* m_vertexStreamsFilenamePrefex = "VertexStreams_"; // e.g. VertexStreams_Default.hlsli
-		droid::ErrorCode GenerateShaderCode_VertexStreams() const;
+		void GenerateShaderCode_VertexStreams() const;
 	};
 
 
@@ -181,7 +181,7 @@ namespace droid
 	}
 
 
-	inline droid::ErrorCode ParseDB::AddTechnique(std::string const& owningEffectName, TechniqueDesc&& techniqueDesc)
+	inline void ParseDB::AddTechnique(std::string const& owningEffectName, TechniqueDesc&& techniqueDesc)
 	{
 		if (!m_effectTechniqueDescs.contains(owningEffectName))
 		{
@@ -189,16 +189,14 @@ namespace droid
 		}
 		else if (m_effectTechniqueDescs.at(owningEffectName).contains(techniqueDesc.Name))
 		{
-			std::cout << "Error: Adding Technique " << techniqueDesc.Name.c_str() << ", and a Technique with that name "
-				"already exists. Technique names must be unique per Effect.\n";
-			return droid::ErrorCode::JSONError;
+			std::string message = "Adding Technique " + techniqueDesc.Name + ", and a Technique with that name "
+				"already exists. Technique names must be unique per Effect.";
+			throw droid::JSONException(message);
 		}
 
 		std::cout << "Adding Technique \"" << techniqueDesc.Name.c_str() << "\"\n";
 
 		m_effectTechniqueDescs.at(owningEffectName).emplace(techniqueDesc.Name, std::move(techniqueDesc));
-
-		return droid::ErrorCode::Success;
 	}
 
 

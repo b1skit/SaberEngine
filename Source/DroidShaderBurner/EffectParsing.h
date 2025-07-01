@@ -1,25 +1,77 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
+
+
+// Â© 2024 Adam Badke. All rights reserved.
+#pragma once
+#include <stdexcept>
+#include <string>
 
 
 namespace droid
 {
-	enum ErrorCode : int
+	// Base exception class for all DroidShaderBurner errors
+	class DroidException : public std::exception
 	{
-		Success = 0,
-		NoModification = 1,
-
-		FileError			= -1,	// E.g. Can't find/open a file
-		JSONError			= -2,	// E.g. JSON contains a structural error
-		ShaderError			= -3,	// E.g. HLSL compiler returned an error code
-		GenerationError		= -4,	// E.g. Bitmask overflow: Generated data is bad
-		ConfigurationError	= -5,	// E.g. Bad command line arg
-		DependencyError		= -6,	// E.g. Error invoking an external process, or the process returned an error
-		ComError			= -7,	// E.g. COM interface error when using DXC API
+	public:
+		explicit DroidException(std::string const& message) : m_message(message) {}
+		char const* what() const noexcept override { return m_message.c_str(); }
+		
+	private:
+		std::string m_message;
 	};
-	extern constexpr char const* ErrorCodeToCStr(ErrorCode);
+
+	// Specific exception types for different error categories
+	class FileException : public DroidException
+	{
+	public:
+		explicit FileException(std::string const& message) : DroidException("File Error: " + message) {}
+	};
+
+	class JSONException : public DroidException
+	{
+	public:
+		explicit JSONException(std::string const& message) : DroidException("JSON Error: " + message) {}
+	};
+
+	class ShaderException : public DroidException
+	{
+	public:
+		explicit ShaderException(std::string const& message) : DroidException("Shader Error: " + message) {}
+	};
+
+	class GenerationException : public DroidException
+	{
+	public:
+		explicit GenerationException(std::string const& message) : DroidException("Generation Error: " + message) {}
+	};
+
+	class ConfigurationException : public DroidException
+	{
+	public:
+		explicit ConfigurationException(std::string const& message) : DroidException("Configuration Error: " + message) {}
+	};
+
+	class DependencyException : public DroidException
+	{
+	public:
+		explicit DependencyException(std::string const& message) : DroidException("Dependency Error: " + message) {}
+	};
+
+	class ComException : public DroidException
+	{
+	public:
+		explicit ComException(std::string const& message) : DroidException("COM Error: " + message) {}
+	};
+
+	// Special result type for successful completion without modification
+	class NoModificationResult : public std::exception
+	{
+	public:
+		char const* what() const noexcept override { return "No modification required"; }
+	};
 
 
 	struct ParseParams;
-	ErrorCode DoParsingAndCodeGen(ParseParams const&);
+	void DoParsingAndCodeGen(ParseParams const&);
 }

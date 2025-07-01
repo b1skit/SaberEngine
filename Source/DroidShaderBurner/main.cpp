@@ -34,8 +34,6 @@ int main(int argc, char* argv[])
 	std::cout << droid::k_logHeader;
 	std::cout << "Launching...\n";
 
-	droid::ErrorCode result = droid::ErrorCode::Success;
-
 	droid::ParseParams parseParams{
 		// Paths:
 		.m_projectRootDir = "PROJECT_ROOT_DIRECTORY_NOT_SET", // Mandatory command line arg
@@ -72,153 +70,148 @@ int main(int argc, char* argv[])
 		.m_buildConfiguration = util::BuildConfiguration::Invalid, // Mandatory command line arg
 	};
 
-	// Handle command line args:
-	bool doClean = false;
-	bool doBuild = true;
-	bool shadersOnly = false;
-	bool projectRootDirReceived = false;
-	bool buildConfigArgReceived = false;
-	if (argc > 0)
+	try
 	{
-		std::string commandLineArgs;
-		for (int i = 1; i < argc; ++i)
+		// Handle command line args:
+		bool doClean = false;
+		bool doBuild = true;
+		bool shadersOnly = false;
+		bool projectRootDirReceived = false;
+		bool buildConfigArgReceived = false;
+		if (argc > 0)
 		{
-			auto AppendArg = [&commandLineArgs, i, argc](char const* currentArg)
-				{
-					commandLineArgs += currentArg;
-					if (i + 1 < argc)
+			std::string commandLineArgs;
+			for (int i = 1; i < argc; ++i)
+			{
+				auto AppendArg = [&commandLineArgs, i, argc](char const* currentArg)
 					{
-						commandLineArgs += " ";
+						commandLineArgs += currentArg;
+						if (i + 1 < argc)
+						{
+							commandLineArgs += " ";
+						}
+					};
+				AppendArg(argv[i]);
+
+				std::string currentArg = argv[i];
+				std::transform(
+					currentArg.begin(),
+					currentArg.end(),
+					currentArg.begin(),
+					[](unsigned char c) {return std::tolower(c); });
+
+				if (currentArg == k_disallowJSONExceptionsCmdLineArg)
+				{
+					parseParams.m_allowJSONExceptions = false;
+				}
+				else if (currentArg == k_disallowJSONCommentsCmdLineArg)
+				{
+					parseParams.m_ignoreJSONComments = false;
+				}
+				else if (currentArg == k_cleanCmdLineArg)
+				{
+					doClean = true;
+					doBuild = false;
+				}
+				else if (currentArg == k_cleanAndRebuildCmdLineArg)
+				{
+					doClean = true;
+					doBuild = true;
+				}
+				else if (currentArg == k_shadersOnlyCmdLineArg)
+				{
+					shadersOnly = true;
+
+					parseParams.m_doCppCodeGen = false;
+					parseParams.m_compileShaders = true;
+				}
+				else if (currentArg == k_projectRootCmdLineArg)
+				{
+					if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+					{
+						projectRootDirReceived = true;
+						parseParams.m_projectRootDir = argv[i + 1];
+						AppendArg(argv[i + 1]);
+						++i;
 					}
-				};
-			AppendArg(argv[i]);
-
-			std::string currentArg = argv[i];
-			std::transform(
-				currentArg.begin(),
-				currentArg.end(),
-				currentArg.begin(),
-				[](unsigned char c) {return std::tolower(c); });
-
-			if (currentArg == k_disallowJSONExceptionsCmdLineArg)
-			{
-				parseParams.m_allowJSONExceptions = false;
-			}
-			else if (currentArg == k_disallowJSONCommentsCmdLineArg)
-			{
-				parseParams.m_ignoreJSONComments = false;
-			}
-			else if (currentArg == k_cleanCmdLineArg)
-			{
-				doClean = true;
-				doBuild = false;
-			}
-			else if (currentArg == k_cleanAndRebuildCmdLineArg)
-			{
-				doClean = true;
-				doBuild = true;
-			}
-			else if (currentArg == k_shadersOnlyCmdLineArg)
-			{
-				shadersOnly = true;
-
-				parseParams.m_doCppCodeGen = false;
-				parseParams.m_compileShaders = true;
-			}
-			else if (currentArg == k_projectRootCmdLineArg)
-			{
-				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+					else
+					{
+						throw droid::ConfigurationException("Project root argument provided without value");
+					}
+				}
+				else if (currentArg == k_dx12ShaderCompilerCmdLineArg)
 				{
-					projectRootDirReceived = true;
-					parseParams.m_projectRootDir = argv[i + 1];
-					AppendArg(argv[i + 1]);
-					++i;
+					if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+					{
+						parseParams.m_directXCompilerExePath = argv[i + 1];
+						AppendArg(argv[i + 1]);
+						++i;
+
+						parseParams.m_useDXCApi = false; // Disable the DXC C++ API
+					}
+					else
+					{
+						throw droid::ConfigurationException("DX12 shader compiler argument provided without value");
+					}
+				}
+				else if (currentArg == k_dx12TargetProfileArg)
+				{
+					if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+					{
+						parseParams.m_dx12TargetProfile = argv[i + 1];
+						AppendArg(argv[i + 1]);
+						++i;
+					}
+					else
+					{
+						throw droid::ConfigurationException("DX12 target profile argument provided without value");
+					}
+				}
+				else if (currentArg == k_buildConfigCmdLineArg)
+				{
+					if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
+					{
+						buildConfigArgReceived = true;
+						parseParams.m_buildConfiguration = util::CStrToBuildConfiguration(argv[i + 1]);
+						AppendArg(argv[i + 1]);
+						++i;
+					}
+					else
+					{
+						throw droid::ConfigurationException("Build configuration argument provided without value");
+					}
 				}
 				else
 				{
-					result = droid::ErrorCode::ConfigurationError;
-					break;
+					std::string message = "Invalid command line argument: " + currentArg;
+					throw droid::ConfigurationException(message);
 				}
 			}
-			else if (currentArg == k_dx12ShaderCompilerCmdLineArg)
-			{
-				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
-				{
-					parseParams.m_directXCompilerExePath = argv[i + 1];
-					AppendArg(argv[i + 1]);
-					++i;
 
-					parseParams.m_useDXCApi = false; // Disable the DXC C++ API
-				}
-				else
-				{
-					result = droid::ErrorCode::ConfigurationError;
-					break;
-				}
-			}
-			else if (currentArg == k_dx12TargetProfileArg)
+			if (!commandLineArgs.empty())
 			{
-				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
-				{
-					parseParams.m_dx12TargetProfile = argv[i + 1];
-					AppendArg(argv[i + 1]);
-					++i;
-				}
-				else
-				{
-					result = droid::ErrorCode::ConfigurationError;
-					break;
-				}
+				std::cout << "Recieved command line args: " << commandLineArgs.c_str() << "\n";
 			}
-			else if (currentArg == k_buildConfigCmdLineArg)
+			if (!projectRootDirReceived)
 			{
-				if (i + 1 < argc && argv[i + 1][0] != *k_delimiterChar)
-				{
-					buildConfigArgReceived = true;
-					parseParams.m_buildConfiguration = util::CStrToBuildConfiguration(argv[i + 1]);
-					AppendArg(argv[i + 1]);
-					++i;
-				}
-				else
-				{
-					result = droid::ErrorCode::ConfigurationError;
-					break;
-				}
+				std::string message = "Project root path not received. Supply \"" + std::string(k_projectRootCmdLineArg) + 
+					" X:\\Path\\To\\SaberEngine\\\" and relaunch.";
+				throw droid::ConfigurationException(message);
 			}
-			else
+			if (parseParams.m_directXCompilerExePath.empty() && parseParams.m_useDXCApi == false)
 			{
-				std::cout << "Invalid command line argument: " << currentArg.c_str() << "\n";
-				result = droid::ErrorCode::ConfigurationError;
+				std::string message = "DX12 shader compiler path not received. Supply \"" + std::string(k_dx12ShaderCompilerCmdLineArg) +
+					" X:\\Path\\To\\dxc.exe\" and relaunch.";
+				throw droid::ConfigurationException(message);
+			}
+			if (!buildConfigArgReceived || parseParams.m_buildConfiguration == util::BuildConfiguration::Invalid)
+			{
+				std::string message = "Build configuration argument not received. Supply \"" + std::string(k_buildConfigCmdLineArg) +
+					" <config>, with <config> = Debug/DebugRelease/Profile/Release and relaunch.";
+				throw droid::ConfigurationException(message);
 			}
 		}
 
-		if (!commandLineArgs.empty())
-		{
-			std::cout << "Recieved command line args: " << commandLineArgs.c_str() << "\n";
-		}
-		if (!projectRootDirReceived)
-		{
-			std::cout << "Project root path not received. Supply \"" << k_projectRootCmdLineArg << 
-				" X:\\Path\\To\\SaberEngine\\\" and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
-		}
-		if (parseParams.m_directXCompilerExePath.empty() && parseParams.m_useDXCApi == false)
-		{
-			std::cout << "DX12 shader compiler path not received. Supply \"" << k_dx12ShaderCompilerCmdLineArg <<
-				" X:\\Path\\To\\dxc.exe\" and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
-		}
-		if (!buildConfigArgReceived || parseParams.m_buildConfiguration == util::BuildConfiguration::Invalid)
-		{
-			std::cout << "Build configuration argument not received. Supply \"" << k_buildConfigCmdLineArg <<
-				" <config>, with <config> = Debug/DebugRelease/Profile/Release and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
-		}
-	}
-
-
-	if (result == droid::ErrorCode::Success)
-	{
 		// Convert paths from relative to absolute:
 		parseParams.m_effectSourceDir = parseParams.m_projectRootDir + parseParams.m_effectSourceDir;
 
@@ -287,15 +280,26 @@ int main(int argc, char* argv[])
 		}
 		if (doBuild)
 		{
-			result = droid::DoParsingAndCodeGen(parseParams);
+			droid::DoParsingAndCodeGen(parseParams);
 		}
+
+		std::cout << "\nDroid resource burning completed successfully!\n";
+		return 0;
 	}
-
-	std::cout << std::format(
-		"\nDroid resource burning {} with code \"{}\"\n",
-		result >= 0 ? "completed" : "failed",
-		droid::ErrorCodeToCStr(result)).c_str();
-
-	return result >= 0 ? droid::ErrorCode::Success : result;
+	catch (droid::NoModificationResult const& e)
+	{
+		std::cout << std::format("\nDroid resource burning completed with message: \"{}\"\n", e.what()).c_str();
+		return 1; // Return positive value for no modification (same as before)
+	}
+	catch (droid::DroidException const& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed: {}\n", e.what()).c_str();
+		return -1;
+	}
+	catch (std::exception const& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with unexpected error: {}\n", e.what()).c_str();
+		return -1;
+	}
 }
 
