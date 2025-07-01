@@ -116,10 +116,12 @@ namespace fr
 
 	void EntityManager::ProcessEntityCommands()
 	{
+		SEBeginCPUEvent("EntityManager::ProcessEntityCommands");
 		{
 			m_entityCommands.SwapBuffers();
 			m_entityCommands.Execute();
 		}
+		SEEndCPUEvent();
 	}
 
 
@@ -494,6 +496,8 @@ namespace fr
 
 	void EntityManager::ExecuteDeferredDeletions()
 	{
+		SEBeginCPUEvent("EntityManager::ExecuteDeferredDeletions");
+
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		if (!m_deferredDeleteQueue.empty())
@@ -586,11 +590,14 @@ namespace fr
 
 			m_deferredDeleteQueue.clear();
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::HandleEvents()
 	{
+		SEBeginCPUEvent("EntityManager::HandleEvents");
 		while (HasEvents())
 		{
 			core::EventManager::EventInfo const& eventInfo = GetEvent();
@@ -606,6 +613,7 @@ namespace fr
 				break;
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
@@ -647,6 +655,8 @@ namespace fr
 
 	void EntityManager::UpdateCameraController(double stepTimeMs)
 	{
+		SEBeginCPUEvent("EntityManager::UpdateCameraController");
+
 		const entt::entity mainCamera = GetMainCamera();
 
 		if (mainCamera != entt::null &&
@@ -676,11 +686,13 @@ namespace fr
 				GetComponent<fr::TransformComponent>(mainCamera).GetTransform(),
 				stepTimeMs);
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateBounds()
 	{
+		SEBeginCPUEvent("EntityManager::UpdateBounds");
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
@@ -760,11 +772,13 @@ namespace fr
 				}				
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateAnimationControllers(double stepTimeMs)
 	{
+		SEBeginCPUEvent("EntityManager::UpdateAnimationControllers");
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
@@ -786,11 +800,13 @@ namespace fr
 				fr::AnimationComponent::ApplyAnimation(animationComponent, transformComponent);
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateAnimations(double stepTimeMs)
 	{
+		SEBeginCPUEvent("EntityManager::UpdateAnimations");
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
@@ -814,11 +830,14 @@ namespace fr
 				fr::SkinningComponent::UpdateSkinMatrices(*this, entity, skinCmpt, static_cast<float>(stepTimeMs));
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateTransforms()
 	{
+		SEBeginCPUEvent("EntityManager::UpdateTransforms");
+
 		// Use the number of root transforms during the last update 
 		static size_t prevNumRootTransforms = 1;
 
@@ -848,11 +867,14 @@ namespace fr
 		{
 			taskFuture.wait();
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateMaterials()
 	{
+		SEBeginCPUEvent("EntityManager::UpdateMaterials");
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
@@ -867,14 +889,18 @@ namespace fr
 				}
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateLightsAndShadows()
 	{
+		SEBeginCPUEvent("EntityManager::UpdateLightsAndShadows");
+
 		const entt::entity mainCameraEntity = GetMainCamera();
 		if (mainCameraEntity == entt::null)
 		{
+			SEEndCPUEvent();
 			return;
 		}
 
@@ -955,11 +981,15 @@ namespace fr
 					entity, shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force);
 			}
 		}
+
+		SEEndCPUEvent();
 	}
 
 
 	void EntityManager::UpdateCameras()
 	{
+		SEBeginCPUEvent("EntityManager::UpdateCameras");
+
 		// Check for dirty cameras, or cameras with dirty transforms
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
@@ -977,6 +1007,7 @@ namespace fr
 				}
 			}
 		}
+		SEEndCPUEvent();
 	}
 
 
