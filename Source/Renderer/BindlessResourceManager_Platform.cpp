@@ -1,7 +1,8 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "BindlessResourceManager_DX12.h"
 #include "BindlessResourceManager_Platform.h"
-#include "RenderManager.h"
+
+#include "Core/Config.h"
 
 
 namespace platform
@@ -9,7 +10,8 @@ namespace platform
 	std::unique_ptr<re::BindlessResourceManager::PlatObj>
 		BindlessResourceManager::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

@@ -1,15 +1,18 @@
 // © 2025 Adam Badke. All rights reserved.
+#include "EnumTypes.h"
 #include "GPUTimer_DX12.h"
 #include "GPUTimer_OpenGL.h"
 #include "GPUTimer_Platform.h"
-#include "RenderManager.h"
+
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	std::unique_ptr<re::GPUTimer::PlatObj> platform::GPUTimer::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

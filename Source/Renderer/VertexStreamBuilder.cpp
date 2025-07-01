@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "RenderManager.h"
 #include "VertexStreamBuilder.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 #include "Core/Logger.h"
 
 #include "mikktspace.c" // LNK2019 otherwise...
@@ -478,7 +478,8 @@ namespace grutil
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
-		platform::RenderingAPI const& api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:

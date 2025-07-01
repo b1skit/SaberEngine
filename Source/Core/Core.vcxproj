@@ -115,6 +115,7 @@
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
+    <ClInclude Include="ForwardDeclarations.h" />
     <ClInclude Include="Host\Dialog.h" />
     <ClInclude Include="Host\Dialog_Platform.h" />
     <ClInclude Include="Host\Dialog_Win32.h" />

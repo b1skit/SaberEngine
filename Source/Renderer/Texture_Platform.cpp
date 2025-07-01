@@ -1,16 +1,18 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 #include "Texture_DX12.h"
+
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	void Texture::CreatePlatformObject(re::Texture& texture)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

@@ -2,7 +2,6 @@
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
-#include "RenderManager.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -23,7 +22,8 @@ namespace
 		if (entry.contains(key_excludedPlatforms))
 		{
 			std::string const& currentPlatformVal =
-				platform::RenderingAPIToCStr(re::RenderManager::Get()->GetRenderingAPI());
+				platform::RenderingAPIToCStr(
+					core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
 
 			for (auto const& excludedPlatform : entry[key_excludedPlatforms])
 			{

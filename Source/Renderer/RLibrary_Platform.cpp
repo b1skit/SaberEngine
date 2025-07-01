@@ -8,6 +8,7 @@
 #include "RLibrary_ImGui_Platform.h"
 #include "Stage.h"
 
+#include "Core/Config.h"
 #include "Core/Logger.h"
 
 
@@ -15,7 +16,8 @@ namespace platform
 {
 	bool RLibrary::RegisterPlatformLibraries()
 	{
-		const platform::RenderingAPI& api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		bool result = true;
 

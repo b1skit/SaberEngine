@@ -10,7 +10,7 @@ namespace re
 	class BindlessResourceManager;
 	class BufferInput;
 	struct RWTextureInput;
-	struct re::TextureAndSamplerInput;
+	struct TextureAndSamplerInput;
 }
 
 namespace dx12

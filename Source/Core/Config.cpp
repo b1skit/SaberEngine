@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "EventManager.h"
 
+#include "Definitions/ConfigKeys.h"
 #include "Definitions/EventKeys.h"
 #include "Definitions/KeyConfiguration.h"
 

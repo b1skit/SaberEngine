@@ -1,6 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "BindlessResource.h"
 #include "BindlessResource_Platform.h"
+#include "Texture.h"
 
 
 namespace re

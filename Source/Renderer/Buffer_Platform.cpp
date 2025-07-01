@@ -3,9 +3,9 @@
 #include "Buffer.h"
 #include "Buffer_OpenGL.h"
 #include "Buffer_DX12.h"
-#include "RenderManager.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
@@ -15,7 +15,8 @@ namespace platform
 		SEAssert(buffer.GetPlatformObject() == nullptr,
 			"Attempting to create platform object for a buffer that already exists");
 
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

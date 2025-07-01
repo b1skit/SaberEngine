@@ -5,13 +5,15 @@
 #include "Shader_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	void platform::Shader::CreatePlatformObject(re::Shader& shader)
 	{
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

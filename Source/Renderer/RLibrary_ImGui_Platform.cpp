@@ -5,6 +5,8 @@
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RLibrary_ImGui_Platform.h"
 
+#include "Core/Config.h"
+
 #include "Core/Definitions/ConfigKeys.h"
 
 #include "Core/Host/Window_Win32.h"
@@ -17,7 +19,8 @@ namespace platform
 		SEAssert(imguiLibrary.GetPlatformObject() == nullptr,
 			"Attempting to create platform object for a buffer that already exists");
 
-		const platform::RenderingAPI api = re::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{
