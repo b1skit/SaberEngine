@@ -4,6 +4,7 @@
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
+#include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
@@ -31,12 +32,6 @@ namespace re
 	{
 		static std::unique_ptr<re::RenderManager> instance = std::move(re::RenderManager::Create());
 		return instance.get();
-	}
-
-
-	uint8_t RenderManager::GetNumFramesInFlight()
-	{
-		return re::RenderManager::Get()->GetNumFramesInFlight();
 	}
 
 
@@ -206,7 +201,7 @@ namespace re
 		LOG("RenderManager starting...");
 		
 		// Create the context:
-		m_context = Context::CreatePlatformContext(m_renderingAPI, GetNumFramesInFlight(), m_windowCache);
+		m_context = Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");
 
 		m_context->Create(m_renderFrameNum);
@@ -241,7 +236,7 @@ namespace re
 
 		m_effectDB.LoadEffectManifest();
 
-		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
+		m_batchPool = std::make_unique<gr::BatchPool>(this->GetNumFramesInFlight());
 
 		SEBeginCPUEvent("RenderManager::Initialize");
 		Initialize();
@@ -384,7 +379,7 @@ namespace re
 
 	void RenderManager::ProcessDeferredDeletions(uint64_t frameNum)
 	{
-		const uint8_t numFramesInFlight = GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = this->GetNumFramesInFlight();
 		{
 			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
@@ -487,7 +482,7 @@ namespace re
 
 	void RenderManager::CreateAPIResources()
 	{
-		SEBeginCPUEvent("RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
 
 		// Make our write buffer the new read buffer:
 		SwapNewResourceDoubleBuffers();

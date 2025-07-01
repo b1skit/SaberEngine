@@ -16,7 +16,7 @@ namespace dx12
 		static uint8_t GetFrameOffsetIdx(); // Get an index in [0, NumFramesInFight)
 
 
-	public: // re::RenderManager virtual interface:
+	public: // Platform-specific virtual interface implementation:
 		void Initialize() override;
 		void Shutdown() override;
 		void CreateAPIResources() override;
@@ -34,9 +34,15 @@ namespace dx12
 	};
 
 
+	inline uint8_t RenderManager::GetNumFramesInFlight()
+	{
+		return m_numFrames;
+	}
+
+
 	inline uint8_t RenderManager::GetFrameOffsetIdx()
 	{
 		re::RenderManager const* renderMgr = re::RenderManager::Get();
-		return renderMgr->GetCurrentRenderFrameNum() % static_cast<dx12::RenderManager const*>(renderMgr)->m_numFrames;
+		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
 	}
 }

@@ -12,7 +12,7 @@ namespace opengl
 		~RenderManager() override = default;
 
 
-	public: // re::RenderManager virtual interface:
+	public: // Platform-specific virtual interface implementation:
 		void Initialize() override;
 		void Shutdown() override;
 		void CreateAPIResources() override;
@@ -25,4 +25,10 @@ namespace opengl
 		void Render() override;
 	};
 
+
+	inline uint8_t RenderManager::GetNumFramesInFlight()
+	{
+		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
+		return k_numFrames;
+	}
 }

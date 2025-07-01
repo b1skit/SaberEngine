@@ -28,12 +28,6 @@ namespace dx12
 	}
 
 
-	uint8_t RenderManager::GetNumFramesInFlight()
-	{
-		return m_numFrames;
-	}
-
-
 	void RenderManager::Initialize()
 	{
 		// Prepend DX12-specific render systems:
@@ -56,13 +50,13 @@ namespace dx12
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
 
 		// Textures:
-		if (m_newTextures.HasReadData())
+		if (renderManager.m_newTextures.HasReadData())
 		{
-			auto CreateTextures = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateTextures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create textures");
 
-					dx12::Context* context = GetContext()->As<dx12::Context*>();
+					dx12::Context* context = renderManager.GetContext()->As<dx12::Context*>();
 
 					dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
@@ -79,15 +73,15 @@ namespace dx12
 
 					if (!singleThreaded)
 					{
-						m_newTextures.AquireReadLock();
+						renderManager.m_newTextures.AquireReadLock();
 					}
-					for (auto& texture : m_newTextures.GetReadData())
+					for (auto& texture : renderManager.m_newTextures.GetReadData())
 					{
 						platform::Texture::CreateAPIResource(texture, copyCommandList.get());
 					}
 					if (!singleThreaded)
 					{
-						m_newTextures.ReleaseReadLock();
+						renderManager.m_newTextures.ReleaseReadLock();
 					}
 
 					texCopyTimer.StopTimer(copyCommandList->GetD3DCommandList().Get());
@@ -109,23 +103,23 @@ namespace dx12
 			}
 		}
 		// Samplers:
-		if (m_newSamplers.HasReadData())
+		if (renderManager.m_newSamplers.HasReadData())
 		{
-			auto CreateSamplers = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateSamplers = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create samplers");
 
 					if (!singleThreaded)
 					{
-						m_newSamplers.AquireReadLock();
+						renderManager.m_newSamplers.AquireReadLock();
 					}
-					for (auto& newObject : m_newSamplers.GetReadData())
+					for (auto& newObject : renderManager.m_newSamplers.GetReadData())
 					{
 						dx12::Sampler::Create(*newObject);
 					}
 					if (!singleThreaded)
 					{
-						m_newSamplers.ReleaseReadLock();
+						renderManager.m_newSamplers.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create Samplers"
@@ -142,17 +136,17 @@ namespace dx12
 			
 		}
 		// Texture Target Sets:
-		if (m_newTargetSets.HasReadData())
+		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			auto CreateTextureTargetSets = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateTextureTargetSets = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create texture target sets");
 
 					if (!singleThreaded)
 					{
-						m_newTargetSets.AquireReadLock();
+						renderManager.m_newTargetSets.AquireReadLock();
 					}
-					for (auto& newObject : m_newTargetSets.GetReadData())
+					for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
 					{
 						newObject->Commit();
 						dx12::TextureTargetSet::CreateColorTargets(*newObject);
@@ -160,7 +154,7 @@ namespace dx12
 					}
 					if (!singleThreaded)
 					{
-						m_newTargetSets.ReleaseReadLock();
+						renderManager.m_newTargetSets.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create texture target sets"
@@ -177,23 +171,23 @@ namespace dx12
 		}
 		// Shaders:
 		size_t shaderTasksIdx = k_invalidCreateTaskIdx;
-		if (m_newShaders.HasReadData())
+		if (renderManager.m_newShaders.HasReadData())
 		{
-			auto CreateShaders = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateShaders = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create shaders");
 
 					if (!singleThreaded)
 					{
-						m_newShaders.AquireReadLock();
+						renderManager.m_newShaders.AquireReadLock();
 					}
-					for (auto& shader : m_newShaders.GetReadData())
+					for (auto& shader : renderManager.m_newShaders.GetReadData())
 					{
 						dx12::Shader::Create(*shader);
 					}
 					if (!singleThreaded)
 					{
-						m_newShaders.ReleaseReadLock();
+						renderManager.m_newShaders.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create shaders"
@@ -210,23 +204,23 @@ namespace dx12
 			}
 		}
 		// Vertex streams:
-		if (m_newVertexStreams.HasReadData())
+		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			auto CreateVertexStreams = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateVertexStreams = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create vertex streams");
 
 					if (!singleThreaded)
 					{
-						m_newVertexStreams.AquireReadLock();
+						renderManager.m_newVertexStreams.AquireReadLock();
 					}
-					for (auto& vertexStream : m_newVertexStreams.GetReadData())
+					for (auto& vertexStream : renderManager.m_newVertexStreams.GetReadData())
 					{
 						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)
 					{
-						m_newVertexStreams.ReleaseReadLock();
+						renderManager.m_newVertexStreams.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create vertex streams"
@@ -242,23 +236,23 @@ namespace dx12
 			}
 		}
 		// Acceleration structures:
-		if (m_newAccelerationStructures.HasReadData())
+		if (renderManager.m_newAccelerationStructures.HasReadData())
 		{
-			auto CreateAccelerationStructures = [this, singleThreaded = singleThreadResourceCreate]()
+			auto CreateAccelerationStructures = [&renderManager, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create acceleration structures");
 
 					if (!singleThreaded)
 					{
-						m_newAccelerationStructures.AquireReadLock();
+						renderManager.m_newAccelerationStructures.AquireReadLock();
 					}
-					for (auto& accelStructure : m_newAccelerationStructures.GetReadData())
+					for (auto& accelStructure : renderManager.m_newAccelerationStructures.GetReadData())
 					{
 						platform::AccelerationStructure::Create(*accelStructure);
 					}
 					if (!singleThreaded)
 					{
-						m_newAccelerationStructures.ReleaseReadLock();
+						renderManager.m_newAccelerationStructures.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create acceleration structures"
@@ -274,10 +268,10 @@ namespace dx12
 			}
 		}
 		// Shader binding tables:
-		if (m_newShaderBindingTables.HasReadData())
+		if (renderManager.m_newShaderBindingTables.HasReadData())
 		{
 			auto CreateShaderBindingTables =
-				[this, &createTasks, shaderTasksIdx, singleThreaded = singleThreadResourceCreate]()
+				[&renderManager, &createTasks, shaderTasksIdx, singleThreaded = singleThreadResourceCreate]()
 				{
 					SEBeginCPUEvent("Create shader binding tables");
 
@@ -291,15 +285,15 @@ namespace dx12
 
 					if (!singleThreaded)
 					{
-						m_newShaderBindingTables.AquireReadLock();
+						renderManager.m_newShaderBindingTables.AquireReadLock();
 					}
-					for (auto& sbt : m_newShaderBindingTables.GetReadData())
+					for (auto& sbt : renderManager.m_newShaderBindingTables.GetReadData())
 					{
 						dx12::ShaderBindingTable::Create(*sbt);
 					}
 					if (!singleThreaded)
 					{
-						m_newShaderBindingTables.ReleaseReadLock();
+						renderManager.m_newShaderBindingTables.ReleaseReadLock();
 					}
 
 					SEEndCPUEvent(); // "Create shader binding tables"
