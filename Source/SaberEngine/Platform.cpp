@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Platform.h"
 
 #include "Renderer/AccelerationStructure_DX12.h"
@@ -20,7 +20,6 @@
 
 #include "Renderer/RenderManager_DX12.h"
 #include "Renderer/RenderManager_OpenGL.h"
-#include "Renderer/RenderManager_Platform.h"
 
 #include "Renderer/RLibrary_Platform.h"
 
@@ -117,14 +116,6 @@ namespace platform
 			platform::GPUTimer::StartTimer	= &opengl::GPUTimer::StartTimer;
 			platform::GPUTimer::StopTimer	= &opengl::GPUTimer::StopTimer;
 
-			// Render manager:
-			platform::RenderManager::Initialize				= &opengl::RenderManager::Initialize;
-			platform::RenderManager::Shutdown				= &opengl::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
-			platform::RenderManager::BeginFrame				= &opengl::RenderManager::BeginFrame;
-			platform::RenderManager::EndFrame				= &opengl::RenderManager::EndFrame;
-			platform::RenderManager::GetNumFramesInFlight	= &opengl::RenderManager::GetNumFramesInFlight;
-
 			// Shader:
 			platform::Shader::Create	= &opengl::Shader::Create;
 			platform::Shader::Destroy	= &opengl::Shader::Destroy;
@@ -193,14 +184,6 @@ namespace platform
 			platform::GPUTimer::StartTimer	= &dx12::GPUTimer::StartTimer;
 			platform::GPUTimer::StopTimer	= &dx12::GPUTimer::StopTimer;
 			
-			// Render manager:
-			platform::RenderManager::Initialize				= &dx12::RenderManager::Initialize;
-			platform::RenderManager::Shutdown				= &dx12::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources		= &dx12::RenderManager::CreateAPIResources;
-			platform::RenderManager::BeginFrame				= &dx12::RenderManager::BeginFrame;
-			platform::RenderManager::EndFrame				= &dx12::RenderManager::EndFrame;
-			platform::RenderManager::GetNumFramesInFlight	= &dx12::RenderManager::GetNumFramesInFlight;
-
 			// Shader:
 			platform::Shader::Create	= &dx12::Shader::Create;
 			platform::Shader::Destroy	= &dx12::Shader::Destroy;

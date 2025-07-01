@@ -317,9 +317,6 @@
     <ClInclude Include="TextureTarget_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Sampler_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
@@ -647,9 +644,6 @@
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Buffer_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderManager_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
     <ClCompile Include="Sampler_Platform.cpp">

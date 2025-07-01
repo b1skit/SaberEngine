@@ -1,10 +1,9 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
-#include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
@@ -37,7 +36,7 @@ namespace re
 
 	uint8_t RenderManager::GetNumFramesInFlight()
 	{
-		return platform::RenderManager::GetNumFramesInFlight();
+		return re::RenderManager::Get()->GetNumFramesInFlight();
 	}
 
 
@@ -244,8 +243,8 @@ namespace re
 
 		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
 
-		SEBeginCPUEvent("platform::RenderManager::Initialize");
-		platform::RenderManager::Initialize(*this);
+		SEBeginCPUEvent("RenderManager::Initialize");
+		Initialize();
 		SEEndCPUEvent();
 
 		// Process any render commands added so far (e.g. adding RenderSystems)
@@ -275,7 +274,7 @@ namespace re
 		
 		m_renderCommandManager.SwapBuffers();
 
-		platform::RenderManager::BeginFrame(*this, frameNum);
+		BeginFrame(frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -365,7 +364,7 @@ namespace re
 		m_newShaderBindingTables.ClearReadData();
 		m_newTargetSets.ClearReadData();
 
-		platform::RenderManager::EndFrame(*this);
+		EndFrame();
 
 		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
 	}
@@ -406,7 +405,7 @@ namespace re
 		LOG("Render manager shutting down...");
 
 		// Flush any remaining render work:
-		platform::RenderManager::Shutdown(*this);
+		Shutdown();
 
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
@@ -488,7 +487,7 @@ namespace re
 
 	void RenderManager::CreateAPIResources()
 	{
-		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("RenderManager::CreateAPIResources");
 
 		// Make our write buffer the new read buffer:
 		SwapNewResourceDoubleBuffers();
@@ -513,7 +512,7 @@ namespace re
 		}
 
 		// Create the resources:
-		platform::RenderManager::CreateAPIResources(*this);
+		CreateAPIResources();
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();
