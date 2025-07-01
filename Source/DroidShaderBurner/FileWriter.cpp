@@ -1,4 +1,4 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #include "FileWriter.h"
 #include "TextStrings.h"
 
@@ -6,7 +6,8 @@
 namespace droid
 {
 	FileWriter::FileWriter(std::string const& outputFilepath, std::string const& outputFileName)
-		: m_curIndentLevel(0)
+		: m_currentStatus(droid::ErrorCode::Success)
+		, m_curIndentLevel(0)
 	{
 		if (!std::filesystem::exists(outputFilepath))
 		{
@@ -18,7 +19,7 @@ namespace droid
 		m_outputStream.open(combinedFilePath);
 		if (!m_outputStream.is_open())
 		{
-			throw droid::FileException("Failed to open file for writing: " + combinedFilePath);
+			m_currentStatus = droid::ErrorCode::FileError;
 		}
 
 		// Put the current year into the copyright notice:

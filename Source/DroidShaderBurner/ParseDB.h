@@ -189,9 +189,7 @@ namespace droid
 		}
 		else if (m_effectTechniqueDescs.at(owningEffectName).contains(techniqueDesc.Name))
 		{
-			std::string message = "Adding Technique " + techniqueDesc.Name + ", and a Technique with that name "
-				"already exists. Technique names must be unique per Effect.";
-			throw droid::JSONException(message);
+			throw droid::JSONException("Adding Technique " + techniqueDesc.Name + ", and a Technique with that name already exists. Technique names must be unique per Effect.");
 		}
 
 		std::cout << "Adding Technique \"" << techniqueDesc.Name.c_str() << "\"\n";

@@ -1,11 +1,11 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Renderer/Shader.h"
 
 
 namespace droid
 {
-	void BuildShaderFile_GLSL(
+	droid::ErrorCode BuildShaderFile_GLSL(
 		std::vector<std::string> const& shaderSrcDirs,
 		std::string const& extensionlessSrcFilename,
 		uint64_t variantID,

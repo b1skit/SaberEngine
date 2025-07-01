@@ -1,4 +1,4 @@
-// ï¿½ 2024 Adam Badke. All rights reserved.
+// © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "EffectParsing.h"
 
@@ -10,6 +10,8 @@ namespace droid
 	public:
 		FileWriter(std::string const& outputFilepath, std::string const& outputFileName);
 		~FileWriter();
+
+		droid::ErrorCode GetStatus() const noexcept;
 
 		void OpenNamespace(char const*);
 		void OpenNamespace(std::string const&);
@@ -31,8 +33,15 @@ namespace droid
 
 
 	private:
+		droid::ErrorCode m_currentStatus;
 		std::ofstream m_outputStream;
 
 		uint8_t m_curIndentLevel;
 	};
+
+
+	inline droid::ErrorCode FileWriter::GetStatus() const noexcept
+	{
+		return m_currentStatus;
+	}
 }

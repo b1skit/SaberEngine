@@ -102,8 +102,7 @@ namespace
 
 				if (!parseDB.HasTechnique(owningEffectName, parentName))
 				{
-					std::string message = "Parent \"" + parentName + "\" not found in Effect \"" + owningEffectName + "\"";
-					throw droid::JSONException(message);
+					throw droid::JSONException("Parent \"" + parentName + "\" not found in Effect \"" + owningEffectName + "\"");
 				}
 
 				droid::TechniqueDesc const& parent = parseDB.GetTechnique(owningEffectName, parentName);
@@ -169,7 +168,7 @@ namespace droid
 		std::ifstream effectManifestInputStream(effectManifestPath);
 		if (!effectManifestInputStream.is_open())
 		{
-			throw droid::FileException("Failed to open effect manifest input stream: " + effectManifestPath);
+			throw droid::FileException("Failed to open effect manifest input stream");
 		}
 		std::cout << "Successfully opened effect manifest \"" << effectManifestPath.c_str() << "\"!\n\n";
 
@@ -197,15 +196,16 @@ namespace droid
 			// Finally, write the runtime version of the manifest file out:
 			WriteRuntimeEffectFile(effectManifestJSON, m_parseParams.m_effectManifestFileName);
 		}
-		catch (nlohmann::json::exception const& parseException)
+		catch (nlohmann::json::exception parseException)
 		{
-			effectManifestInputStream.close();
-			
-			std::string message = std::format(
-				"Failed to parse the Effect manifest file \"{}\": {}",
+			std::cout << std::format(
+				"Failed to parse the Effect manifest file \"{}\"\n{}",
 				effectManifestPath,
-				parseException.what());
-			throw droid::JSONException(message);
+				parseException.what()).c_str();
+
+			effectManifestInputStream.close();
+
+			throw droid::JSONException("Failed to parse effect manifest: " + std::string(parseException.what()));
 		}
 
 		// Parse the effect files listed in the manifest:
@@ -216,7 +216,7 @@ namespace droid
 	}
 
 
-	void ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
+	droid::ErrorCode ParseDB::ParseEffectFile(std::string const& effectName, ParseParams const& parseParams)
 	{
 		std::cout << "Parsing Effect \"" << effectName.c_str() << "\":\n";
 		
@@ -226,9 +226,12 @@ namespace droid
 		std::ifstream effectInputStream(effectFilePath);
 		if (!effectInputStream.is_open())
 		{
-			throw droid::FileException("Failed to open Effect file at \"" + effectFilePath + "\"");
+			std::cout << "Error: Failed to open Effect file at \"" << effectFilePath << "\"\n";
+			return droid::ErrorCode::FileError;
 		}
 		std::cout << "Successfully opened effect file \"" << effectFilePath.c_str() << "\"!\n\n";
+
+		droid::ErrorCode result = droid::ErrorCode::Success;
 
 		nlohmann::json effectJSON;
 		try
@@ -248,20 +251,25 @@ namespace droid
 				// "Name":
 				if (!effectBlock.contains(key_name))
 				{
-					throw droid::JSONException("Effect block has no \"Name\" entry");
+					std::cout << "Error: Effect block has no \"Name\" entry\n";
+					return droid::ErrorCode::JSONError;
 				}
 				std::string const& effectBlockName = effectBlock.at(key_name).template get<std::string>();
 				if (effectBlockName != effectName)
 				{
-					std::string message = "Effect block \"Name\" : \"" + effectBlockName + "\" does not match "
-						"extensionless Effect file name \"" + effectName + "\" found in the manifest";
-					throw droid::JSONException(message);
+					std::cout << "Error: Effect block \"Name\" : \"" << effectBlockName.c_str() << "\" does not match "
+						"extensionless Effect file name \" "<< effectName.c_str() << "\" found in the manifest\n";
+					return droid::ErrorCode::JSONError;
 				}
 
 				// "DrawStyles":
 				if (effectBlock.contains(key_drawStyles))
 				{
-					ParseDrawStylesBlock(*this, effectBlockName, effectBlock.at(key_drawStyles));
+					result = ParseDrawStylesBlock(*this, effectBlockName, effectBlock.at(key_drawStyles));
+				}
+				if (result != droid::ErrorCode::Success)
+				{
+					return result;
 				}
 
 				// "ExcludedPlatforms": We'll propagate these to all Techniques in the Effect
@@ -278,8 +286,12 @@ namespace droid
 				// "Techniques":
 				if (effectBlock.contains(key_techniques))
 				{
-					ParseTechniquesBlock(
+					result = ParseTechniquesBlock(
 						*this, effectBlockName, effectBlock.at(key_techniques), std::move(excludedPlatforms));
+					if (result != droid::ErrorCode::Success)
+					{
+						return result;
+					}
 				}
 			}
 
@@ -288,7 +300,11 @@ namespace droid
 			{
 				for (auto const& vertexStreamEntry : effectJSON.at(key_vertexStreams))
 				{
-					ParseVertexStreamsEntry(*this, vertexStreamEntry);
+					result = ParseVertexStreamsEntry(*this, vertexStreamEntry);
+					if (result != droid::ErrorCode::Success)
+					{
+						return result;
+					}
 				}
 			}
 
@@ -298,29 +314,33 @@ namespace droid
 			PostProcessEffectTechniques(effectJSON, effectName);
 
 			// Finally, write the runtime version of the file out:
-			WriteRuntimeEffectFile(effectJSON, effectFileName);
+			result = WriteRuntimeEffectFile(effectJSON, effectFileName);
+			if (result != droid::ErrorCode::Success)
+			{
+				return result;
+			}
 		}
-		catch (nlohmann::json::exception const& parseException)
+		catch (nlohmann::json::exception parseException)
 		{
-			effectInputStream.close();
-			
-			std::string message = std::format(
-				"Failed to parse the Effect file \"{}\": {}",
+			std::cout << std::format(
+				"Failed to parse the Effect file \"{}\"\n{}",
 				effectName,
-				parseException.what());
-			throw droid::JSONException(message);
+				parseException.what()).c_str();
+
+			result = ErrorCode::JSONError;
 		}
 
 		effectInputStream.close();
+		return result;
 	}
 
 
-	void ParseDB::PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName)
+	droid::ErrorCode ParseDB::PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName)
 	{
 		if (!m_effectTechniqueDescs.contains(effectName) || 
 			!effectJSON.contains(key_effectBlock))
 		{
-			return; // Nothing to do
+			return droid::ErrorCode::Success; // Nothing to do
 		}
 
 		// "Effect":
@@ -347,10 +367,12 @@ namespace droid
 			// Our ParseTypes.h::to_json function will automatically resolve Techniques for runtime use
 			effectBlock[key_techniques] = resolvedTechniques;
 		}
+
+		return droid::ErrorCode::Success;
 	}
 
 
-	void ParseDB::WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName)
+	droid::ErrorCode ParseDB::WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName)
 	{
 		if (!std::filesystem::exists(m_parseParams.m_runtimeEffectsDir))
 		{
@@ -361,27 +383,37 @@ namespace droid
 		std::ofstream runtimeEffectOut(runtimeEffectFilePath);
 		if (!runtimeEffectOut.is_open())
 		{
-			throw droid::FileException("Failed to open runtime Effect directory: " + runtimeEffectFilePath);
+			std::cout << "Error: Failed to open runtime Effect directory\n";
+			return droid::ErrorCode::FileError;
 		}
 
 		runtimeEffectOut << std::setw(4) << effectJSON << std::endl;
 
 		runtimeEffectOut.close();
+
+		return droid::ErrorCode::Success;
 	}
 
 
-	void ParseDB::GenerateCPPCode() const
+	droid::ErrorCode ParseDB::GenerateCPPCode() const
 	{
 		std::cout << "Generating C++ code...\n";
 
 		// Start by clearing out any previously generated code:
 		droid::CleanDirectory(m_parseParams.m_cppCodeGenOutputDir.c_str());
 
-		GenerateCPPCode_Drawstyle();
+		droid::ErrorCode result = droid::ErrorCode::Success;
+			
+		if (result == droid::ErrorCode::Success)
+		{
+			result = GenerateCPPCode_Drawstyle();
+		}
+		
+		return result;
 	}
 
 
-	void ParseDB::GenerateShaderCode() const
+	droid::ErrorCode ParseDB::GenerateShaderCode() const
 	{
 		std::cout << "Generating shader code...\n";
 
@@ -389,12 +421,20 @@ namespace droid
 		droid::CleanDirectory(m_parseParams.m_hlslCodeGenOutputDir.c_str());
 		droid::CleanDirectory(m_parseParams.m_glslCodeGenOutputDir.c_str());
 
-		GenerateShaderCode_VertexStreams();
+		droid::ErrorCode result = droid::ErrorCode::Success;
+
+		if (result == droid::ErrorCode::Success)
+		{
+			result = GenerateShaderCode_VertexStreams();
+		}
+
+		return result;
 	}
 
 
-	void ParseDB::CompileShaders() const
+	droid::ErrorCode ParseDB::CompileShaders() const
 	{
+		droid::ErrorCode result = droid::ErrorCode::Success;
 
 		// GLSL:
 		{
@@ -438,7 +478,7 @@ namespace droid
 
 						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
-							BuildShaderFile_GLSL(
+							result = BuildShaderFile_GLSL(
 								glslIncludeDirectories,
 								technique.second._Shader[shaderTypeIdx],
 								technique.second.m_shaderVariantIDs[shaderTypeIdx],
@@ -446,6 +486,11 @@ namespace droid
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 								technique.second._Defines[shaderTypeIdx],
 								m_parseParams.m_glslShaderOutputDir);
+
+							if (result != droid::ErrorCode::Success)
+							{
+								return result;
+							}
 
 							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
@@ -462,10 +507,15 @@ namespace droid
 			{
 				if (m_parseParams.m_directXCompilerExePath.empty())
 				{
-					throw droid::ConfigurationException("DXC C++ API is disabled, but no DXC.exe compiler path received");
+					std::cout << "DXC C++ API is disabled, but no DXC.exe compiler path received" << "\n";
+					result = droid::ErrorCode::ConfigurationError;
 				}
 
-				PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
+				result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
+				if (result != droid::ErrorCode::Success)
+				{
+					return result;
+				}
 			}
 
 			// Start by clearing out any previously generated code:
@@ -524,7 +574,7 @@ namespace droid
 				};
 			}
 			break;
-			default: throw droid::ConfigurationException("Configuration error");
+			default: result = droid::ErrorCode::ConfigurationError;
 			}
 			if (result != droid::ErrorCode::Success)
 			{
@@ -544,21 +594,25 @@ namespace droid
 				m_parseParams.m_dependenciesDir,
 			};
 
-			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> void
+			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> droid::ErrorCode
 				{
+					droid::ErrorCode result = droid::ErrorCode::Success;
+
 					WaitForSingleObject(processInfo.hProcess, INFINITE); // Wait until the process is done
 
 					DWORD exitCode = 0;
 					GetExitCodeProcess(processInfo.hProcess, &exitCode);
 					if (exitCode != 0)
 					{
-						std::string message = "HLSL compiler returned " + std::to_string(exitCode);
-						throw droid::ShaderException(message);
+						std::cout << "HLSL compiler returned " << exitCode << "\n";
+						result = droid::ErrorCode::ShaderError;
 					}
 
 					// Close process and thread handles
 					CloseHandle(processInfo.hProcess);
 					CloseHandle(processInfo.hThread);
+
+					return result;
 				};
 
 			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
@@ -691,9 +745,15 @@ namespace droid
 	}
 
 
-	void ParseDB::GenerateCPPCode_Drawstyle() const
+	droid::ErrorCode ParseDB::GenerateCPPCode_Drawstyle() const
 	{
 		FileWriter filewriter(m_parseParams.m_cppCodeGenOutputDir, m_drawstyleHeaderFilename);
+
+		droid::ErrorCode result = filewriter.GetStatus();
+		if (result != droid::ErrorCode::Success)
+		{
+			return filewriter.GetStatus();
+		}
 
 		filewriter.WriteLine("#pragma once");
 		filewriter.EmptyLine();
@@ -719,8 +779,8 @@ namespace droid
 			}
 			if (bitIdx >= 64)
 			{
-				std::string message = std::to_string(bitIdx) + " is too many drawstyle rules to fit in a 64-bit bitmask";
-				throw droid::GenerationException(message);
+				std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
+				result = droid::ErrorCode::GenerationError;
 			}
 		}
 
@@ -846,5 +906,7 @@ namespace droid
 			hlslWriter.WriteLine(std::format("#endif // {}", hlslIncludeGuard));
 			glslWriter.WriteLine(std::format("#endif // {}", glslIncludeGuard));
 		}
+
+		return result;
 	}
 }
