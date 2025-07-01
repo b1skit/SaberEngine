@@ -1,10 +1,9 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
-#include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
@@ -32,12 +31,6 @@ namespace re
 	{
 		static std::unique_ptr<re::RenderManager> instance = std::move(re::RenderManager::Create());
 		return instance.get();
-	}
-
-
-	uint8_t RenderManager::GetNumFramesInFlight()
-	{
-		return platform::RenderManager::GetNumFramesInFlight();
 	}
 
 
@@ -207,7 +200,7 @@ namespace re
 		LOG("RenderManager starting...");
 		
 		// Create the context:
-		m_context = Context::CreatePlatformContext(m_renderingAPI, GetNumFramesInFlight(), m_windowCache);
+		m_context = Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");
 
 		m_context->Create(m_renderFrameNum);
@@ -242,10 +235,10 @@ namespace re
 
 		m_effectDB.LoadEffectManifest();
 
-		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
+		m_batchPool = std::make_unique<gr::BatchPool>(this->GetNumFramesInFlight());
 
-		SEBeginCPUEvent("platform::RenderManager::Initialize");
-		platform::RenderManager::Initialize(*this);
+		SEBeginCPUEvent("RenderManager::Initialize_Platform");
+		Initialize_Platform();
 		SEEndCPUEvent();
 
 		// Process any render commands added so far (e.g. adding RenderSystems)
@@ -275,7 +268,7 @@ namespace re
 		
 		m_renderCommandManager.SwapBuffers();
 
-		platform::RenderManager::BeginFrame(*this, frameNum);
+		BeginFrame_Platform(frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -365,7 +358,7 @@ namespace re
 		m_newShaderBindingTables.ClearReadData();
 		m_newTargetSets.ClearReadData();
 
-		platform::RenderManager::EndFrame(*this);
+		EndFrame_Platform();
 
 		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
 	}
@@ -406,7 +399,7 @@ namespace re
 		LOG("Render manager shutting down...");
 
 		// Flush any remaining render work:
-		platform::RenderManager::Shutdown(*this);
+		Shutdown_Platform();
 
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
@@ -513,7 +506,7 @@ namespace re
 		}
 
 		// Create the resources:
-		platform::RenderManager::CreateAPIResources(*this);
+		CreateAPIResources_Platform();
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();

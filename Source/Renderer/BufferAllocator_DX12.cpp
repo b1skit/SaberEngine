@@ -49,7 +49,7 @@ namespace dx12
 
 		re::BufferAllocator::Initialize(currentFrame);
 
-		const uint8_t numBuffers = re::RenderManager::GetNumFramesInFlight();
+		const uint8_t numBuffers = re::RenderManager::Get()->GetNumFramesInFlight();
 		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBufferResources[i].resize(numBuffers);

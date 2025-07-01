@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 
@@ -16,14 +16,14 @@ namespace dx12
 		static uint8_t GetFrameOffsetIdx(); // Get an index in [0, NumFramesInFight)
 
 
-	public: // Platform PIMPL:
-		static void Initialize(re::RenderManager&);
-		static void Shutdown(re::RenderManager&);
-		static void CreateAPIResources(re::RenderManager&);
-		static void BeginFrame(re::RenderManager&, uint64_t frameNum);
-		static void EndFrame(re::RenderManager&);
+	public: // Platform-specific virtual interface implementation:
+		void Initialize_Platform() override;
+		void Shutdown_Platform() override;
+		void CreateAPIResources_Platform() override;
+		void BeginFrame_Platform(uint64_t frameNum) override;
+		void EndFrame_Platform() override;
 
-		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
+		uint8_t GetNumFramesInFlight() const override;
 
 
 	private: // re::RenderManager interface:
@@ -35,15 +35,15 @@ namespace dx12
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight()
+	inline uint8_t RenderManager::GetNumFramesInFlight() const
 	{
-		return dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->m_numFrames;
+		return m_numFrames;
 	}
 
 
 	inline uint8_t RenderManager::GetFrameOffsetIdx()
 	{
-		re::RenderManager const* renderMgr = re::RenderManager::Get();
+		dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(re::RenderManager::Get());
 		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
 	}
 }

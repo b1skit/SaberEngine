@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 
@@ -12,14 +12,14 @@ namespace opengl
 		~RenderManager() override = default;
 
 
-	public: // Platform PIMPL:
-		static void Initialize(re::RenderManager&);
-		static void Shutdown(re::RenderManager&);
-		static void CreateAPIResources(re::RenderManager&);
-		static void BeginFrame(re::RenderManager&, uint64_t frameNum);
-		static void EndFrame(re::RenderManager&);
+	public: // Platform-specific virtual interface implementation:
+		void Initialize_Platform() override;
+		void Shutdown_Platform() override;
+		void CreateAPIResources_Platform() override;
+		void BeginFrame_Platform(uint64_t frameNum) override;
+		void EndFrame_Platform() override;
 
-		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
+		uint8_t GetNumFramesInFlight() const override;
 
 
 	private: // re::RenderManager interface:
@@ -27,7 +27,7 @@ namespace opengl
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight()
+	inline uint8_t RenderManager::GetNumFramesInFlight() const
 	{
 		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
 		return k_numFrames;
