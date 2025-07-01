@@ -202,7 +202,7 @@ namespace gr
 		SEAssert((*m_batchHandle).GetType() == re::Batch::BatchType::Raster,
 			"Trying to get a vertex stream from a non-raster batch type. This is unexpected");
 
-		return m_vertexBuffers[slotIdx];
+		return m_resolvedVertexBuffers[slotIdx];
 	}
 
 
@@ -254,52 +254,58 @@ namespace gr
 				m_batchShader->GetRasterizationState()->GetPrimitiveTopologyType()),
 			"Raster topology mode is incompatible with shader pipeline state topology type");
 
-
 		// Resolve vertex input slots now that we've decided which shader will be used:
 		if ((*m_batchHandle).GetType() == re::Batch::BatchType::Raster)
 		{
 #if defined(_DEBUG)
-			for (auto& entry : m_vertexBuffers)
+			// Validate the resolved vertex buffers are unpopulated:
+			for (auto& entry : m_resolvedVertexBuffers)
 			{
 				SEAssert(entry.first == nullptr && entry.second == re::VertexBufferInput::k_invalidSlotIdx,
 					"Found uninitialized resolved vertex buffers");
 			}
 #endif
 
+			// Get the vertex buffers from the batch, choosing the overrides if available:
 			re::Batch::RasterParams const& rasterParams = (*m_batchHandle).GetRasterParams();
+
+			std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> const& vertexBuffers =
+				rasterParams.m_vertexStreamOverrides ? 
+					*rasterParams.m_vertexStreamOverrides :
+					rasterParams.m_vertexBuffers;
 
 			uint8_t numVertexStreams = 0;
 			bool needsRepacking = false;
 			for (uint8_t i = 0; i < re::VertexStream::k_maxVertexStreams; ++i)
 			{
 				// We assume vertex streams will be tightly packed, with streams of the same type stored consecutively
-				if (rasterParams.m_vertexBuffers[i].GetStream() == nullptr)
+				if (vertexBuffers[i].GetStream() == nullptr)
 				{
 					break;
 				}
 
-				const re::VertexStream::Type curStreamType = rasterParams.m_vertexBuffers[i].m_view.m_streamView.m_type;
+				const re::VertexStream::Type curStreamType = vertexBuffers[i].m_view.m_streamView.m_type;
 
 				// Find consecutive streams with the same type, and resolve the final vertex slot from the shader
 				uint8_t semanticIdx = 0; // Start at 0 to ensure we process the current stream
 				while (i + semanticIdx < re::VertexStream::k_maxVertexStreams &&
-					rasterParams.m_vertexBuffers[i + semanticIdx].GetStream() &&
-					rasterParams.m_vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
+					vertexBuffers[i + semanticIdx].GetStream() &&
+					vertexBuffers[i + semanticIdx].m_view.m_streamView.m_type == curStreamType)
 				{
 					const uint8_t vertexAttribSlot = m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					if (vertexAttribSlot != re::VertexStreamMap::k_invalidSlotIdx)
 					{
 						// Copy the stream:
-						m_vertexBuffers[i + semanticIdx].first = &rasterParams.m_vertexBuffers[i + semanticIdx];
+						m_resolvedVertexBuffers[i + semanticIdx].first = &vertexBuffers[i + semanticIdx];
 
 						// Update the bind slot:
-						m_vertexBuffers[i + semanticIdx].second =
+						m_resolvedVertexBuffers[i + semanticIdx].second =
 							m_batchShader->GetVertexAttributeSlot(curStreamType, semanticIdx);
 					}
 					else
 					{
-						m_vertexBuffers[i + semanticIdx].first = nullptr;
-						m_vertexBuffers[i + semanticIdx].second = re::VertexBufferInput::k_invalidSlotIdx;
+						m_resolvedVertexBuffers[i + semanticIdx].first = nullptr;
+						m_resolvedVertexBuffers[i + semanticIdx].second = re::VertexBufferInput::k_invalidSlotIdx;
 						needsRepacking = true;
 					}
 					++semanticIdx;
@@ -316,19 +322,19 @@ namespace gr
 				uint8_t numValidStreams = 0;
 				for (uint8_t i = 0; i < numVertexStreams; ++i)
 				{
-					if (m_vertexBuffers[i].first == nullptr)
+					if (m_resolvedVertexBuffers[i].first == nullptr)
 					{
 						uint8_t nextValidIdx = i + 1;
 						while (nextValidIdx < numVertexStreams &&
-							m_vertexBuffers[nextValidIdx].first == nullptr)
+							m_resolvedVertexBuffers[nextValidIdx].first == nullptr)
 						{
 							++nextValidIdx;
 						}
 						if (nextValidIdx < numVertexStreams &&
-							m_vertexBuffers[nextValidIdx].first != nullptr)
+							m_resolvedVertexBuffers[nextValidIdx].first != nullptr)
 						{
-							m_vertexBuffers[i] = m_vertexBuffers[nextValidIdx];
-							m_vertexBuffers[nextValidIdx] = { nullptr, re::VertexBufferInput::k_invalidSlotIdx };
+							m_resolvedVertexBuffers[i] = m_resolvedVertexBuffers[nextValidIdx];
+							m_resolvedVertexBuffers[nextValidIdx] = { nullptr, re::VertexBufferInput::k_invalidSlotIdx };
 							++numValidStreams;
 						}
 						else if (nextValidIdx == numVertexStreams)
@@ -343,7 +349,7 @@ namespace gr
 				}
 			}
 
-			ValidateVertexStreams(m_vertexBuffers); // _DEBUG only
+			ValidateVertexStreams(m_resolvedVertexBuffers); // _DEBUG only
 		}
 
 		SEEndCPUEvent(); // "StageBatchHandle::Resolve"

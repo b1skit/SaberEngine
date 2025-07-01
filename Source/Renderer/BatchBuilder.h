@@ -392,7 +392,7 @@ namespace gr
 	{
 		SEAssert(vertexStreamOverrides, "vertexStreamOverrides is null");
 
-		m_batch.m_rasterParams.m_vertexBuffers = *vertexStreamOverrides;
+		m_batch.m_rasterParams.m_vertexStreamOverrides = vertexStreamOverrides;
 		return std::move(*this);
 	}
 

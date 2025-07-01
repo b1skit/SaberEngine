@@ -317,9 +317,16 @@ namespace re
 				AddDataBytesToHash(m_rasterParams.m_indexBuffer.GetStream()->GetDataHash());
 			}
 
+			if (m_rasterParams.m_vertexStreamOverrides)
+			{
+				// Hash the pointer to differentiate batches with overrides (e.g. animated verts) of otherwise seemingly
+				// identical vertex stream data
+				AddDataBytesToHash(m_rasterParams.m_vertexStreamOverrides);
+			}
+
 			AddDataBytesToHash(m_rasterParams.m_materialUniqueID);
 
-			SEStaticAssert(sizeof(Batch::RasterParams) == 968, "Must update this if RasterParams size has changed");
+			SEStaticAssert(sizeof(Batch::RasterParams) == 976, "Must update this if RasterParams size has changed");
 		}
 		break;
 		case BatchType::Compute:

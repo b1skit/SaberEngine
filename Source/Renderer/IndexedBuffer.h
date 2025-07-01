@@ -439,6 +439,7 @@ namespace gr
 		if (numRenderDataElements == 0)
 		{
 			const bool didClear = Clear();
+			SEEndCPUEvent();
 			return didClear;
 		}
 		
@@ -630,7 +631,6 @@ namespace gr
 			"Indexes are out of sync");
 
 		SEEndCPUEvent();
-
 		return didReallocate;
 	}
 
@@ -716,7 +716,7 @@ namespace gr
 			ImGui::Indent();
 
 			if (ImGui::CollapsingHeader(
-				std::format("{} registered RenderDataIDs##", m_idToBufferIdx.size(), buffer->GetUniqueID()).c_str()))
+				std::format("{} registered IDs##", m_idToBufferIdx.size(), buffer->GetUniqueID()).c_str()))
 			{
 				ImGui::Indent();
 
@@ -725,15 +725,36 @@ namespace gr
 
 				constexpr int k_numCols = 2;
 				if (ImGui::BeginTable(
-					std::format("Registered RenderDataIDs##{}", buffer->GetUniqueID()).c_str(), k_numCols, k_flags))
+					std::format("Registered IDs##{}", buffer->GetUniqueID()).c_str(), k_numCols, k_flags))
 				{
-					// Headers:				
-					ImGui::TableSetupColumn("RenderObjectID");
+					// Sort the IDs for consistent viewing:
+					std::vector<std::pair<gr::IDType, IndexType>> sortedIDs;
+					sortedIDs.reserve(m_idToBufferIdx.size());
+					for (auto const& entry : m_idToBufferIdx)
+					{
+						sortedIDs.emplace_back(entry);
+					}
+					std::sort(sortedIDs.begin(), sortedIDs.end(),
+						[](std::pair<gr::IDType, IndexType> const& a, std::pair<gr::IDType, IndexType> const& b)
+						{
+							return a.first < b.first;
+						});
+
+					// Headers:
+					if constexpr (std::is_same_v<RenderDataType, gr::Transform::RenderData>)
+					{
+						ImGui::TableSetupColumn("TransformID");
+					}
+					else
+					{
+						ImGui::TableSetupColumn("RenderDataID");
+					}
+					
 					ImGui::TableSetupColumn("Buffer index");
 
 					ImGui::TableHeadersRow();
 
-					for (auto const& entry : m_idToBufferIdx)
+					for (auto const& entry : sortedIDs)
 					{
 						const IDType id = entry.first;
 						const IndexType index = entry.second;
@@ -878,7 +899,7 @@ namespace gr
 			else if (requiredSize > initialLUTData.size() &&
 				requiredSize >= k_defaultLUTBufferArraySize)
 			{
-				initialLUTData.resize(requiredSize);
+				initialLUTData.resize(util::RoundUpToNearestMultiple(requiredSize, k_defaultLUTBufferArraySize));
 			}
 			else if (initialLUTData.size() < k_defaultLUTBufferArraySize) // Ensure a minimum size
 			{

@@ -124,7 +124,7 @@ namespace gr
 
 		std::vector<re::BufferInput> m_singleFrameBuffers; // E.g. Instanced buffers
 
-		ResolvedVertexBuffers m_vertexBuffers{};
+		ResolvedVertexBuffers m_resolvedVertexBuffers{};
 
 		uint32_t m_instanceCount;
 
@@ -161,7 +161,7 @@ namespace gr
 		, m_instanceCount(0)
 		, m_isResolved(false)
 	{
-		for (auto& entry : m_vertexBuffers)
+		for (auto& entry : m_resolvedVertexBuffers)
 		{
 			entry = { nullptr, re::VertexBufferInput::k_invalidSlotIdx }; // Initialize as invalid
 		}
@@ -212,6 +212,6 @@ namespace gr
 	inline gr::StageBatchHandle::ResolvedVertexBuffers const& StageBatchHandle::GetResolvedVertexBuffers() const
 	{
 		SEAssert(m_isResolved, "StageBatchHandle has not been resolved");
-		return m_vertexBuffers;
+		return m_resolvedVertexBuffers;
 	}
 }

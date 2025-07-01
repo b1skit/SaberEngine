@@ -242,7 +242,8 @@ namespace re
 
 	void VertexStream::ComputeDataHash()
 	{
-		AddDataBytesToHash(m_streamDesc);
+		SEAssertF("This function is not used: Vertex streams use a data hash as their ID(to allow sharing / reuse)."
+			"Thus, we must compute it before we can make a decision about whether to actually create the stream or not");
 	}
 
 

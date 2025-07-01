@@ -24,6 +24,11 @@ namespace grutil
 		std::move(batchBuilder).SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
 		std::move(batchBuilder).SetPrimitiveTopology(meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology);
 
+		if (vertexStreamOverrides)
+		{
+			std::move(batchBuilder).SetVertexStreamOverrides(vertexStreamOverrides);
+		}
+
 		// We assume the MeshPrimitive's vertex streams are ordered such that identical stream types are tightly
 		// packed, and in the correct channel order corresponding to the final shader slots (e.g. uv0, uv1, etc)
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_numVertexStreams); slotIdx++)
@@ -33,14 +38,9 @@ namespace grutil
 				break;
 			}
 
-			if (vertexStreamOverrides)
-			{
-				std::move(batchBuilder).SetVertexBuffer(slotIdx, (*vertexStreamOverrides)[slotIdx]);
-			}
-			else
-			{
-				std::move(batchBuilder).SetVertexBuffer(slotIdx, re::VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]));
-			}
+			std::move(batchBuilder).SetVertexBuffer(
+				slotIdx,
+				re::VertexBufferInput(meshPrimRenderData.m_vertexStreams[slotIdx]));
 		}
 		std::move(batchBuilder).SetIndexBuffer(meshPrimRenderData.m_indexStream);
 

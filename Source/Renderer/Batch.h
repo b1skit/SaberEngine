@@ -69,6 +69,7 @@ namespace re
 		};
 		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
+		using VertexStreamOverride = std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>;
 		struct RasterParams final
 		{
 		private:
@@ -81,6 +82,10 @@ namespace re
 			std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
 
 			VertexBufferInput m_indexBuffer{};
+
+		protected:
+			// Optional overrides for vertex streams (e.g. animation)
+			re::Batch::VertexStreamOverride const* m_vertexStreamOverrides = nullptr;
 
 
 		public:
@@ -97,7 +102,6 @@ namespace re
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
 			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
 		};
-		using VertexStreamOverride = std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>;
 
 		struct ComputeParams final
 		{

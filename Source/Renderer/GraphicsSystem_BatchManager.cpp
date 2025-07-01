@@ -13,10 +13,6 @@
 
 #include "Core/ProfilingMarkers.h"
 
-#include "Renderer/Shaders/Common/InstancingParams.h"
-#include "Renderer/Shaders/Common/MaterialParams.h"
-#include "Renderer/Shaders/Common/TransformParams.h"
-
 
 namespace gr
 {

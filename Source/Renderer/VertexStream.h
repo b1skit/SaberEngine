@@ -122,8 +122,8 @@ namespace re
 		void ShowImGuiWindow() const;
 
 
-	protected:
-		void ComputeDataHash() override;
+	private:
+		void ComputeDataHash() override; // Unused
 		
 
 	protected:
