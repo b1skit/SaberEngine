@@ -327,9 +327,9 @@ namespace re
 		m_context->Update(frameNum);
 
 		// API-specific rendering loop virtual implementations:
-		SEBeginCPUEvent("platform::RenderManager::Render");
+		SEBeginCPUEvent("re::RenderManager::Render");
 		Render();
-		SEEndCPUEvent(); // "platform::RenderManager::Render"
+		SEEndCPUEvent(); // "re::RenderManager::Render"
 
 		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
