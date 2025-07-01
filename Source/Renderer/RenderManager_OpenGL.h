@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 
@@ -13,12 +13,13 @@ namespace opengl
 
 
 	public: // Platform-specific virtual interface implementation:
-		void Initialize() override;
-		void Shutdown() override;
-		void CreateAPIResources() override;
-		void BeginFrame(uint64_t frameNum) override;
-		void EndFrame() override;
-		uint8_t GetNumFramesInFlight() override;
+		void Initialize_Platform() override;
+		void Shutdown_Platform() override;
+		void CreateAPIResources_Platform() override;
+		void BeginFrame_Platform(uint64_t frameNum) override;
+		void EndFrame_Platform() override;
+
+		uint8_t GetNumFramesInFlight() const override;
 
 
 	private: // re::RenderManager interface:
@@ -26,7 +27,7 @@ namespace opengl
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight()
+	inline uint8_t RenderManager::GetNumFramesInFlight() const
 	{
 		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
 		return k_numFrames;

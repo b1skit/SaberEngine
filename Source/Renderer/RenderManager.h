@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "BatchPool.h"
 #include "Context.h"
@@ -84,14 +84,20 @@ namespace re
 		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 
-		// Platform-specific virtual interface:
-		virtual void Initialize() = 0;
-		virtual void Shutdown() = 0;
-		virtual void CreateAPIResources() = 0;
-		virtual void BeginFrame(uint64_t frameNum) = 0;
-		virtual void EndFrame() = 0;
-		virtual uint8_t GetNumFramesInFlight() = 0;
 
+		// Platform-specific virtual interface:
+	private:
+		virtual void Initialize_Platform() = 0;
+		virtual void Shutdown_Platform() = 0;
+		virtual void CreateAPIResources_Platform() = 0;
+		virtual void BeginFrame_Platform(uint64_t frameNum) = 0;
+		virtual void EndFrame_Platform() = 0;
+
+	public:
+		virtual uint8_t GetNumFramesInFlight() const = 0;
+
+
+	public:
 		gr::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
 		std::vector<std::unique_ptr<gr::RenderSystem>> const& GetRenderSystems() const;
 		gr::RenderSystem* GetRenderSystem(util::HashKey const&);

@@ -1,10 +1,9 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
-#include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "ShaderBindingTable.h"
@@ -238,8 +237,8 @@ namespace re
 
 		m_batchPool = std::make_unique<gr::BatchPool>(this->GetNumFramesInFlight());
 
-		SEBeginCPUEvent("RenderManager::Initialize");
-		Initialize();
+		SEBeginCPUEvent("RenderManager::Initialize_Platform");
+		Initialize_Platform();
 		SEEndCPUEvent();
 
 		// Process any render commands added so far (e.g. adding RenderSystems)
@@ -269,7 +268,7 @@ namespace re
 		
 		m_renderCommandManager.SwapBuffers();
 
-		BeginFrame(frameNum);
+		BeginFrame_Platform(frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -359,7 +358,7 @@ namespace re
 		m_newShaderBindingTables.ClearReadData();
 		m_newTargetSets.ClearReadData();
 
-		EndFrame();
+		EndFrame_Platform();
 
 		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
 	}
@@ -400,7 +399,7 @@ namespace re
 		LOG("Render manager shutting down...");
 
 		// Flush any remaining render work:
-		Shutdown();
+		Shutdown_Platform();
 
 		// Process any remaining render commands (i.e. delete platform objects)
 		m_renderCommandManager.SwapBuffers();
@@ -507,7 +506,7 @@ namespace re
 		}
 
 		// Create the resources:
-		CreateAPIResources();
+		CreateAPIResources_Platform();
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();

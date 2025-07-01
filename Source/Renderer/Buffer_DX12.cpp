@@ -231,7 +231,7 @@ namespace dx12
 		SEAssert(!platObj->m_isCreated, "Buffer is already created");
 		platObj->m_isCreated = true;
 
-		const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
 
 		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 

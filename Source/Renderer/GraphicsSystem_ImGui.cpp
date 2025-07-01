@@ -8,7 +8,7 @@ namespace gr
 	ImGuiGraphicsSystem::ImGuiGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
-		, m_perFrameCommands(k_imGuiCommandBufferSize, re::RenderManager::GetNumFramesInFlight())
+		, m_perFrameCommands(k_imGuiCommandBufferSize, re::RenderManager::Get()->GetNumFramesInFlight())
 	{
 	}
 

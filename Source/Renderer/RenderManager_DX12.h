@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 
@@ -17,12 +17,13 @@ namespace dx12
 
 
 	public: // Platform-specific virtual interface implementation:
-		void Initialize() override;
-		void Shutdown() override;
-		void CreateAPIResources() override;
-		void BeginFrame(uint64_t frameNum) override;
-		void EndFrame() override;
-		uint8_t GetNumFramesInFlight() override;
+		void Initialize_Platform() override;
+		void Shutdown_Platform() override;
+		void CreateAPIResources_Platform() override;
+		void BeginFrame_Platform(uint64_t frameNum) override;
+		void EndFrame_Platform() override;
+
+		uint8_t GetNumFramesInFlight() const override;
 
 
 	private: // re::RenderManager interface:
@@ -34,7 +35,7 @@ namespace dx12
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight()
+	inline uint8_t RenderManager::GetNumFramesInFlight() const
 	{
 		return m_numFrames;
 	}
@@ -42,7 +43,7 @@ namespace dx12
 
 	inline uint8_t RenderManager::GetFrameOffsetIdx()
 	{
-		re::RenderManager const* renderMgr = re::RenderManager::Get();
+		dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(re::RenderManager::Get());
 		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
 	}
 }

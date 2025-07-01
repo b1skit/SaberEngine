@@ -49,22 +49,15 @@ namespace opengl
 	}
 
 
-	uint8_t RenderManager::GetNumFramesInFlight()
-	{
-		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
-		return k_numFrames;
-	}
-
-
-	void RenderManager::Initialize()
+	void RenderManager::Initialize_Platform()
 	{
 		//
 	}
 
 
-	void RenderManager::CreateAPIResources()
+	void RenderManager::CreateAPIResources_Platform()
 	{
-		SEBeginCPUEvent("RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("RenderManager::CreateAPIResources_Platform");
 		
 		// Note: We've already obtained the read lock on all new resources by this point
 
@@ -121,17 +114,17 @@ namespace opengl
 			SEEndCPUEvent(); // "Create vertex streams"
 		}
 
-		SEEndCPUEvent(); // "RenderManager::CreateAPIResources"
+		SEEndCPUEvent(); // "RenderManager::CreateAPIResources_Platform"
 	}
 
 
-	void RenderManager::BeginFrame(uint64_t frameNum)
+	void RenderManager::BeginFrame_Platform(uint64_t frameNum)
 	{
 		//
 	}
 
 
-	void RenderManager::EndFrame()
+	void RenderManager::EndFrame_Platform()
 	{
 		//
 	}
@@ -504,7 +497,7 @@ namespace opengl
 	}
 
 
-	void RenderManager::Shutdown()
+	void RenderManager::Shutdown_Platform()
 	{
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
 		// re::RenderManager::Shutdown ordering
