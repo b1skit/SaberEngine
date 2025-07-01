@@ -326,9 +326,9 @@ namespace re
 		m_context->Update(frameNum);
 
 		// API-specific rendering loop virtual implementations:
-		SEBeginCPUEvent("platform::RenderManager::Render");
+		SEBeginCPUEvent("RenderManager::Render");
 		Render();
-		SEEndCPUEvent(); // "platform::RenderManager::Render"
+		SEEndCPUEvent(); // "RenderManager::Render"
 
 		// Present the finished frame:
 		SEBeginCPUEvent("re::Context::Present");
@@ -487,7 +487,7 @@ namespace re
 
 	void RenderManager::CreateAPIResources()
 	{
-		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("RenderManager::PlatformCreateAPIResources");
 
 		// Make our write buffer the new read buffer:
 		SwapNewResourceDoubleBuffers();
