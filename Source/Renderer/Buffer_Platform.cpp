@@ -1,11 +1,11 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Buffer_Platform.h"
 #include "Buffer.h"
 #include "Buffer_OpenGL.h"
 #include "Buffer_DX12.h"
-#include "RenderManager.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
@@ -15,7 +15,8 @@ namespace platform
 		SEAssert(buffer.GetPlatformObject() == nullptr,
 			"Attempting to create platform object for a buffer that already exists");
 
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

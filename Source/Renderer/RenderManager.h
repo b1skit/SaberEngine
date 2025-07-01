@@ -83,7 +83,6 @@ namespace gr
 		// IEventListener interface:
 		void HandleEvents() override;
 
-		platform::RenderingAPI GetRenderingAPI() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 
 
@@ -265,11 +264,6 @@ namespace gr
 		RenderManager& operator=(RenderManager&&) noexcept = delete;
 	};
 
-	
-	inline platform::RenderingAPI RenderManager::GetRenderingAPI() const
-	{
-		return m_renderingAPI;
-	}
 
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{

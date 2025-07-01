@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 
-#include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Logger.h"
 
 #include "Core/Host/Window_Win32.h"
 

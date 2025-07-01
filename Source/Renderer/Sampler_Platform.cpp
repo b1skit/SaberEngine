@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderManager.h"
 #include "Sampler.h"
@@ -7,13 +7,15 @@
 #include "Sampler_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	void Sampler::CreatePlatformObject(re::Sampler& sampler)
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

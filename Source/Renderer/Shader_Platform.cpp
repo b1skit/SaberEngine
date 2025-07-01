@@ -1,17 +1,19 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "RenderManager.h"
 #include "Shader_DX12.h"
 #include "Shader_OpenGL.h"
 #include "Shader_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	void platform::Shader::CreatePlatformObject(re::Shader& shader)
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

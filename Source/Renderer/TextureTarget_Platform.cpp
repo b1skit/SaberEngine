@@ -1,17 +1,19 @@
-// © 2022 Adam Badke. All rights reserved.
-#include "Core/Assert.h"
-#include "RenderManager.h"
+// Â© 2022 Adam Badke. All rights reserved.
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "TextureTarget_DX12.h"
+
+#include "Core/Assert.h"
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	void TextureTarget::CreatePlatformObject(re::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{
@@ -35,7 +37,8 @@ namespace platform
 
 	void TextureTargetSet::CreatePlatformObject(re::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

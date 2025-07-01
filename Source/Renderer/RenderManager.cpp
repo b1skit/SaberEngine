@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
-#include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
@@ -65,6 +64,9 @@ namespace gr
 		{
 			renderingAPI = platform::RenderingAPI::DX12; // Default when no "-platform <API>" override received
 		}
+
+		// Update the config:
+		config->SetValue(core::configkeys::k_renderingAPIKey, renderingAPI, core::Config::SettingType::Runtime);
 
 		std::unique_ptr<gr::RenderManager> newRenderManager = nullptr;
 

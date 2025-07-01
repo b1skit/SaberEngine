@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "BufferAllocator.h"
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
@@ -22,7 +22,8 @@ namespace re
 {
 	std::unique_ptr<re::BufferAllocator> BufferAllocator::Create()
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

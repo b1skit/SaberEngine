@@ -46,6 +46,7 @@
 #include "Renderer/Texture_OpenGL.h"
 #include "Renderer/Texture_Platform.h"
 
+#include "Core/Config.h"
 #include "Core/Logger.h"
 
 #include "Core/EventManager_Platform.h"
@@ -67,7 +68,8 @@ namespace platform
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		LOG("Configuring API-specific platform bindings...");
 

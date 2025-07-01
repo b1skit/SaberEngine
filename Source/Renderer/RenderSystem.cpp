@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// Â© 2023 Adam Badke. All rights reserved.
 #include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
@@ -345,7 +345,9 @@ namespace
 		const bool singleThreadGSExecutionCmdReceived = 
 			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
 
-		switch (gr::RenderManager::Get()->GetRenderingAPI())
+		const platform::RenderingAPI api =
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+		switch (api)
 		{
 		case platform::RenderingAPI::DX12: return singleThreadGSExecutionCmdReceived;
 		case platform::RenderingAPI::OpenGL: return true;

@@ -1,6 +1,5 @@
 #pragma once
 #include "EnumTypes.h"
-#include "RenderManager.h"
 #include "RenderSystemDesc.h"
 
 #include "Core/Assert.h"
@@ -14,7 +13,8 @@ namespace gr
 {
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{
-		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(gr::RenderManager::Get()->GetRenderingAPI());
+		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
 
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformStr)](auto entry) -> bool
 			{

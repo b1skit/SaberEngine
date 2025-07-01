@@ -210,6 +210,9 @@
     <ClInclude Include="SystemLocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ForwardDeclarations.h">
+      <Filter>Header Files\Definitions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">

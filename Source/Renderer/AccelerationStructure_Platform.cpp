@@ -1,14 +1,16 @@
-// © 2025 Adam Badke. All rights reserved.
+// Â© 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "AccelerationStructure_Platform.h"
-#include "RenderManager.h"
+
+#include "Core/Config.h"
 
 
 namespace platform
 {
 	std::unique_ptr<re::AccelerationStructure::PlatObj> platform::AccelerationStructure::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = gr::RenderManager::Get()->GetRenderingAPI();
+    const platform::RenderingAPI api = 
+			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

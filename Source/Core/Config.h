@@ -2,8 +2,7 @@
 #pragma once
 #include "Assert.h"
 #include "Logger.h"
-
-#include "Definitions/ConfigKeys.h"
+#include "Definitions/ForwardDeclarations.h"
 
 #include "Util/CHashKey.h"
 
@@ -70,7 +69,7 @@ namespace core
 		
 
 	private:
-		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string>;
+		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string, platform::RenderingAPI>;
 		std::unordered_map<util::CHashKey, std::pair<ConfigValue, SettingType>> m_configValues;
 		mutable std::shared_mutex m_configValuesMutex;
 		bool m_isDirty; // Marks whether we need to save the config file or not

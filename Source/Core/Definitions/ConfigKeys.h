@@ -73,6 +73,7 @@ namespace core::configkeys
 	constexpr util::CHashKey k_commandLineArgsValueKey = "commandLineArgs"; // Get the entire command line arg string
 
 	// Dynamic engine defaults:
+	constexpr util::CHashKey k_renderingAPIKey		= "renderingapi";
 	constexpr util::CHashKey k_shaderDirectoryKey	= "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
 	// System:
@@ -91,27 +92,27 @@ namespace core::configkeys
 	constexpr util::CHashKey k_defaultDirectionalLightMinShadowBiasKey	= "defaultDirectionalLightMinShadowBias";
 	constexpr util::CHashKey k_defaultDirectionalLightMaxShadowBiasKey	= "defaultDirectionalLightMaxShadowBias";
 	constexpr util::CHashKey k_defaultDirectionalLightShadowSoftnessKey	= "defaultDirectionalLightShadowSoftness";
-	constexpr util::CHashKey k_defaultPointLightMinShadowBiasKey			= "defaultPointLightMinShadowBias";
-	constexpr util::CHashKey k_defaultPointLightMaxShadowBiasKey			= "defaultPointLightMaxShadowBias";
+	constexpr util::CHashKey k_defaultPointLightMinShadowBiasKey		= "defaultPointLightMinShadowBias";
+	constexpr util::CHashKey k_defaultPointLightMaxShadowBiasKey		= "defaultPointLightMaxShadowBias";
 	constexpr util::CHashKey k_defaultPointLightShadowSoftnessKey		= "defaultPointLightMaxShadowSoftness";
 	constexpr util::CHashKey k_defaultSpotLightMinShadowBiasKey			= "defaultSpotLightMinShadowBias";
 	constexpr util::CHashKey k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
-	constexpr util::CHashKey k_defaultSpotLightShadowSoftnessKey			= "defaultSpotLightMaxShadowSoftness";
+	constexpr util::CHashKey k_defaultSpotLightShadowSoftnessKey		= "defaultSpotLightMaxShadowSoftness";
 
 	// Camera:
-	constexpr util::CHashKey k_defaultFOVKey			= "defaultyCameraFOV";
+	constexpr util::CHashKey k_defaultFOVKey		= "defaultyCameraFOV";
 	constexpr util::CHashKey k_defaultNearKey		= "defaultCameraNear";
-	constexpr util::CHashKey k_defaultFarKey			= "defaultCameraFar";
+	constexpr util::CHashKey k_defaultFarKey		= "defaultCameraFar";
 
 	// Quality:
-	constexpr util::CHashKey k_brdfLUTWidthHeightKey						= "brdfLUTWidthHeight";
+	constexpr util::CHashKey k_brdfLUTWidthHeightKey					= "brdfLUTWidthHeight";
 	constexpr util::CHashKey k_iemTexWidthHeightKey						= "iemWidthHeight";
 	constexpr util::CHashKey k_iemNumSamplesKey							= "iemNumSamples";
 	constexpr util::CHashKey k_pmremTexWidthHeightKey					= "pmremWidthHeight";
 	constexpr util::CHashKey k_pmremNumSamplesKey						= "pmremNumSamples";
 	constexpr util::CHashKey k_defaultDirectionalShadowMapResolutionKey	= "defaultDirectionalShadowMapRes";
-	constexpr util::CHashKey k_defaultShadowCubeMapResolutionKey			= "defaultShadowCubeMapRes";
-	constexpr util::CHashKey k_defaultSpotShadowMapResolutionKey			= "defaultSpotShadowMapRes";
+	constexpr util::CHashKey k_defaultShadowCubeMapResolutionKey		= "defaultShadowCubeMapRes";
+	constexpr util::CHashKey k_defaultSpotShadowMapResolutionKey		= "defaultSpotShadowMapRes";
 
 	// Data processing:
 	constexpr util::CHashKey k_doCPUVertexStreamNormalizationKey = "cpunormalizevertexstreams";
