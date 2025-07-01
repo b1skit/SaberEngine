@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "VertexStreamBuilder.h"
 
 #include "Core/Assert.h"
@@ -480,6 +480,7 @@ namespace grutil
 
 		const platform::RenderingAPI api =
 			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:

@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// Â© 2023 Adam Badke. All rights reserved.
 #include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
@@ -28,7 +28,7 @@ namespace
 
 		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
 
-		re::RenderManager* renderMgr = re::RenderManager::Get();
+		gr::RenderManager* renderMgr = gr::RenderManager::Get();
 
 		// Initialize everything with a default in case the input doesn't exist for some reason
 		for (auto const& input : dstGS->GetTextureInputs())
@@ -347,7 +347,6 @@ namespace
 
 		const platform::RenderingAPI api =
 			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
-
 		switch (api)
 		{
 		case platform::RenderingAPI::DX12: return singleThreadGSExecutionCmdReceived;

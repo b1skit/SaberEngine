@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "EngineApp.h"
 #include "Platform.h"
 
@@ -20,7 +20,6 @@
 #include "Presentation/SceneManager.h"
 #include "Presentation/UIManager.h"
 
-#include "Renderer/Context.h"
 #include "Renderer/RenderManager.h"
 
 
@@ -84,7 +83,7 @@ namespace app
 
 		// Create the RenderManager immediately after processing the command line args, as it needs to set the
 		// platform::RenderingAPI in the Config before we bind the platform functions
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		// Register our API-specific bindings before anything attempts to call them:
 		if (!platform::RegisterPlatformFunctions())
@@ -163,7 +162,7 @@ namespace app
 		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		fr::SceneManager* sceneManager = fr::SceneManager::Get();
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 		fr::UIManager* uiManager = fr::UIManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
@@ -279,7 +278,7 @@ namespace app
 		// anything it might be using.
 		// Note: The RenderManager destroys the Inventory via the pointer we gave it to ensure render objects are
 		// destroyed on the main render thread (as required by OpenGL)
-		re::RenderManager::Get()->ThreadShutdown();
+		gr::RenderManager::Get()->ThreadShutdown();
 
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();

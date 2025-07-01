@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Å  2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "RenderManager.h"
 #include "RLibrary_ImGui_DX12.h"
@@ -61,7 +61,7 @@ namespace platform
 
 	void RLibraryImGui::ConfigureScaling(RLibraryImGui& imguiLibrary)
 	{
-		host::Window* window = re::RenderManager::Get()->GetContext()->GetWindow();
+		host::Window* window = gr::RenderManager::Get()->GetContext()->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatObj* windowPlatObj =

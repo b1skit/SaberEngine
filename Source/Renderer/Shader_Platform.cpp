@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "RenderManager.h"
 #include "Shader_DX12.h"
 #include "Shader_OpenGL.h"

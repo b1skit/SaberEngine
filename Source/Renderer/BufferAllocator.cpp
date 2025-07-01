@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "BufferAllocator.h"
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
@@ -91,7 +91,7 @@ namespace re
 	void BufferAllocator::Initialize(uint64_t currentFrame)
 	{
 		m_currentFrameNum = currentFrame;
-		m_numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 		m_isValid = true;
 
 		m_singleFrameGPUWriteIdx = 0;

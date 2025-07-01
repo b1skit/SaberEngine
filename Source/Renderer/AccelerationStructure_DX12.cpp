@@ -381,7 +381,7 @@ namespace
 			util::ToWideString(tlas.GetName()).c_str());
 
 		// Create an SRV to describe the TLAS:
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		platObj->m_tlasSRV = context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(1);
 		
 		const D3D12_SHADER_RESOURCE_VIEW_DESC tlasSRVDesc{
@@ -589,7 +589,7 @@ namespace dx12
 {
 	AccelerationStructure::PlatObj::PlatObj()
 	{
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		m_heapManager = &context->GetHeapManager();
 		

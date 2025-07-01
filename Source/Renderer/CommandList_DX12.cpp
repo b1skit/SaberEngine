@@ -543,7 +543,7 @@ namespace dx12
 		commandList4->SetPipelineState1(sbtPlatObj->m_rayTracingStateObject.Get());
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
-			sbt, threadDimensions, re::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
+			sbt, threadDimensions, gr::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
 
 		commandList4->DispatchRays(&dispatchRaysDesc);
 	}
@@ -1173,7 +1173,7 @@ namespace dx12
 		SetComputeRootSignature(dx12::BindlessResourceManager::GetRootSignature(brm));
 
 		ID3D12DescriptorHeap* brmDescriptorHeap = 
-			dx12::BindlessResourceManager::GetDescriptorHeap(brm, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			dx12::BindlessResourceManager::GetDescriptorHeap(brm, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 
 		SetDescriptorHeap(brmDescriptorHeap);
 
@@ -1397,7 +1397,7 @@ namespace dx12
 			texSamplerInputs,
 			this,
 			m_gpuCbvSrvUavDescriptorHeap.get(),
-			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 	}
 
 

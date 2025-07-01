@@ -5,7 +5,7 @@
 
 namespace dx12
 {
-	class RenderManager final : public virtual re::RenderManager
+	class RenderManager final : public virtual gr::RenderManager
 	{
 	public:
 		RenderManager();
@@ -26,7 +26,7 @@ namespace dx12
 		uint8_t GetNumFramesInFlight() const override;
 
 
-	private: // re::RenderManager interface:
+	private: // gr::RenderManager interface:
 		void Render() override;
 		
 
@@ -43,7 +43,7 @@ namespace dx12
 
 	inline uint8_t RenderManager::GetFrameOffsetIdx()
 	{
-		dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(re::RenderManager::Get());
+		dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(gr::RenderManager::Get());
 		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
 	}
 }

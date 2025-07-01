@@ -27,7 +27,7 @@ namespace dx12
 
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
 
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
@@ -89,7 +89,7 @@ namespace dx12
 		else
 		{
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -124,7 +124,7 @@ namespace dx12
 		else
 		{
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -159,7 +159,7 @@ namespace dx12
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector); // Avoid recursive call in Allocate()
 
 		// Copy the descriptor in:
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const uint32_t numDescriptors = 1;
@@ -175,7 +175,7 @@ namespace dx12
 
 		// Record the allocation in the deferred delete queue: Temporary allocations are valid for a single frame only
 		m_deferredDescriptorDelete.emplace(
-			re::RenderManager::Get()->GetCurrentRenderFrameNum(),
+			gr::RenderManager::Get()->GetCurrentRenderFrameNum(),
 			TempDescriptorAllocation{ 
 				cpuDstOut, 
 				gpuDstOut });
@@ -199,7 +199,7 @@ namespace dx12
 		}
 
 		// Defer deletion by numFramesInFlight
-		const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 		while (!m_deferredDescriptorDelete.empty() &&
 			m_deferredDescriptorDelete.front().first + numFramesInFlight < currentFrame)
@@ -225,15 +225,15 @@ namespace dx12
 		dx12::RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(newLibrary.get());
 		platform::RLibraryImGui::CreateInternal(*dx12ImGuiLibrary);
 
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		re::SwapChain& swapChain = context->GetSwapChain();
 
 		// Setup ImGui platform/Renderer backends:
-		SEAssert(re::RenderManager::Get()->GetContext()->GetWindow(), "Window pointer cannot be null");
+		SEAssert(gr::RenderManager::Get()->GetContext()->GetWindow(), "Window pointer cannot be null");
 		win32::Window::PlatObj* windowPlatObj =
-			re::RenderManager::Get()->GetContext()->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
+			gr::RenderManager::Get()->GetContext()->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		dx12::Texture::PlatObj const* backbufferColorTarget0PlatObj =
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()
@@ -251,7 +251,7 @@ namespace dx12
 		// ImGui DX12 backend initialization:
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 
-		const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 		ImGui_ImplDX12_InitInfo initInfo{};
 		initInfo.Device = device.Get();
@@ -284,7 +284,7 @@ namespace dx12
 	{
 		SEBeginCPUEvent("RLibraryImGui::CopyTempDescriptorToImGuiHeap");
 
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
@@ -311,7 +311,7 @@ namespace dx12
 
 		// Clean up our ImGui descriptor heap:
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+			gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		dx12::RLibraryImGui::PlatObj* platObj =
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();
@@ -334,7 +334,7 @@ namespace dx12
 		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = 
 			dynamic_cast<RLibraryImGui*>(context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
@@ -402,7 +402,7 @@ namespace dx12
 		}
 
 		// Descriptor deferred delete queue:
-		platObj->FreeTempDescriptors(re::RenderManager::Get()->GetCurrentRenderFrameNum());
+		platObj->FreeTempDescriptors(gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 
 		SEEndCPUEvent(); // "RLibraryImGui::Execute"
 	}

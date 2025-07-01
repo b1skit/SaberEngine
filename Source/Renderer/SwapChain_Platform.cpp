@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "SwapChain_DX12.h"
 #include "SwapChain_OpenGL.h"
 #include "SwapChain_Platform.h"

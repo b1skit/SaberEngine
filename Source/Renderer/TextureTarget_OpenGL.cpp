@@ -761,7 +761,7 @@ namespace opengl
 				"Can only copy to the backbuffer from textures with identical dimensions");
 
 			re::TextureTargetSet const* backbufferTargetSet = opengl::SwapChain::GetBackBufferTargetSet(
-				re::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain()).get();
+				gr::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain()).get();
 			
 			opengl::TextureTargetSet::PlatObj const* backbufferPlatObj =
 				backbufferTargetSet->GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
@@ -800,7 +800,7 @@ namespace opengl
 
 			// Get the backbuffer to read its dimensions
 			std::shared_ptr<re::TextureTargetSet> const& backbufferTargets = 
-				opengl::SwapChain::GetBackBufferTargetSet(re::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain());
+				opengl::SwapChain::GetBackBufferTargetSet(gr::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain());
 
 			glBlitNamedFramebuffer(
 				srcFBO,										// GLuint readFramebuffer

@@ -34,7 +34,7 @@ namespace dx12
 			"Descriptor heap must have a type that is not bound directly to a command list");
 		
 		m_deviceCache =
-			re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
+			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 		m_elementSize = m_deviceCache->GetDescriptorHandleIncrementSize(m_heapType);
 		SEAssert(m_elementSize > 0, "Invalid element size");
@@ -95,7 +95,7 @@ namespace dx12
 		// (which is guaranteed to result in undefined behavior) so something MUST be set
 		m_unsetInlineDescriptors = 0;
 
-		dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		for (auto const& rootParam : rootParams)
 		{

@@ -500,11 +500,11 @@ namespace dx12
 
 			if (brmPlatObj->m_isCreated == false) // First initialization: 
 			{
-				const uint8_t numFramesInFlight = re::RenderManager::Get()->GetNumFramesInFlight();
+				const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 				brmPlatObj->m_cpuDescriptorCache.resize(numFramesInFlight);
 
-				dx12::Context* ctx = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+				dx12::Context* ctx = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 				brmPlatObj->m_deviceCache = ctx->GetDevice().GetD3DDevice().Get();
 
@@ -533,7 +533,7 @@ namespace dx12
 				std::make_unique<dx12::BindlessResourceManager::PlatObj>();
 
 			paramsToDelete->m_gpuDescriptorHeaps = std::move(brmPlatObj->m_gpuDescriptorHeaps);
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(paramsToDelete));
+			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(paramsToDelete));
 			brmPlatObj->m_gpuDescriptorHeaps.resize(brmPlatObj->m_numFramesInFlight);
 
 			// Initialize/grow our non-frame-indexed cache vectors (No-op if old size == new size)

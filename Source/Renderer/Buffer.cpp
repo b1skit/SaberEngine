@@ -87,7 +87,7 @@ namespace re
 		platform::Buffer::CreatePlatformObject(*this);
 
 #if defined(_DEBUG)
-		m_creationFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
+		m_creationFrameNum = gr::RenderManager::Get()->GetCurrentRenderFrameNum();
 #endif
 	}
 
@@ -101,7 +101,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			if (HasUsageBit(re::Buffer::Usage::Constant, *newBuffer))
@@ -195,38 +195,38 @@ namespace re
 
 #if defined(_DEBUG)
 		SEAssert(m_bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
-			m_creationFrameNum == re::RenderManager::Get()->GetCurrentRenderFrameNum(),
+			m_creationFrameNum == gr::RenderManager::Get()->GetCurrentRenderFrameNum(),
 			"Single frame buffer created on frame %llu being destroyed on frame %llu. Does something still hold the "
 			"buffer beyond its lifetime? E.g. Has a single-frame batch been added to a stage, but the stage is not "
 			"added to the pipeline (thus has not been cleared)?",
 			m_creationFrameNum,
-			re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 #endif
 
 		// Free bindless resource handles:
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
-			brm->UnregisterResource(m_srvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_srvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
 		if (m_cbvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = re::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
-			brm->UnregisterResource(m_cbvResourceHandle, re::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_cbvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 
 		if (m_platObj->m_isCreated)
 		{
 			s_bufferAllocator->Deallocate(GetUniqueID());
 
-			re::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
 	}
 
@@ -236,7 +236,7 @@ namespace re
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPURead, m_bufferParams), "CPU reads are not enabled");
 		SEAssert(!m_isCurrentlyMapped, "Buffer is already mapped. Did you forget to unmap it during an earlier frame?");
 
-		re::RenderManager const* renderManager = re::RenderManager::Get();
+		gr::RenderManager const* renderManager = gr::RenderManager::Get();
 
 		// Convert the default frame latency value:
 		if (frameLatency == re::Buffer::k_maxFrameLatency)

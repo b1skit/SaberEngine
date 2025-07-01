@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"

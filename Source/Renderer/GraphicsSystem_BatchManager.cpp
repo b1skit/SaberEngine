@@ -222,7 +222,7 @@ namespace gr
 			std::vector<gr::BatchHandle>& viewBatches = m_viewBatches[curView];
 			viewBatches.reserve(renderDataIDs.size());
 
-			effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+			effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
 
 			for (gr::RenderDataID renderDataID : renderDataIDs)
 			{

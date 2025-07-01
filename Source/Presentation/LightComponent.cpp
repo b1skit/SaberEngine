@@ -705,7 +705,7 @@ namespace fr
 	{
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderDataMgr = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		switch (cmdPtr->m_type)
 		{
@@ -759,7 +759,7 @@ namespace fr
 	{
 		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderDataMgr = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderDataMgr = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		switch (cmdPtr->m_type)
 		{

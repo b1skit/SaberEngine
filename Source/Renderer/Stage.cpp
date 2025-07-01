@@ -276,7 +276,7 @@ namespace gr
 		SEAssert(stageParams->m_effectID != 0, "Invalid EffectID");
 
 		m_screenAlignedQuad = 
-			gr::meshfactory::CreateFullscreenQuad(re::RenderManager::Get()->GetInventory(), stageParams->m_zLocation);
+			gr::meshfactory::CreateFullscreenQuad(gr::RenderManager::Get()->GetInventory(), stageParams->m_zLocation);
 
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 
@@ -421,7 +421,7 @@ namespace gr
 		}
 		else
 		{
-			re::SwapChain const& swapchain = re::RenderManager::Get()->GetContext()->GetSwapChain();
+			re::SwapChain const& swapchain = gr::RenderManager::Get()->GetContext()->GetSwapChain();
 			glm::uvec2 const& swapchainDims = platform::SwapChain::GetBackbufferDimensions(swapchain);
 
 			SEAssert(m_src->Width() == swapchainDims.x && m_src->Height() == swapchainDims.y,

@@ -599,7 +599,7 @@ namespace dx12
 		SEAssert(m_descriptorType != DescriptorType::DescriptorType_Count, "Invalid descriptor type");
 
 		m_deviceCache =
-			re::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
+			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 	}
 
 
@@ -658,7 +658,7 @@ namespace dx12
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
 			{
-				dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+				dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
@@ -737,7 +737,7 @@ namespace dx12
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
 			{
-				dx12::Context* context = re::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+				dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 				CacheEntry newCacheEntry{
 					bufViewHash,

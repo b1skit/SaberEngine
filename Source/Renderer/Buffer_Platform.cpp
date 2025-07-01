@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Buffer_Platform.h"
 #include "Buffer.h"
 #include "Buffer_OpenGL.h"

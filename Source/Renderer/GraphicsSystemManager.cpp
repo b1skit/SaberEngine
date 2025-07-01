@@ -38,7 +38,7 @@ namespace gr
 	{
 		SEAssert(m_isCreated == false, "GSM already created");
 
-		re::RenderManager* renderManager = re::RenderManager::Get();
+		gr::RenderManager* renderManager = gr::RenderManager::Get();
 
 		m_renderData = &renderManager->GetRenderDataManager();
 

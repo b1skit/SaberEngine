@@ -141,7 +141,7 @@ namespace fr
 	{
 		UpdateTransformDataRenderCommand* cmdPtr = reinterpret_cast<UpdateTransformDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderData = re::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
 		renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);
 	}

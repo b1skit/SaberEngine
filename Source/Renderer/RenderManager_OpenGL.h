@@ -5,7 +5,7 @@
 
 namespace opengl
 {
-	class RenderManager final : public virtual re::RenderManager
+	class RenderManager final : public virtual gr::RenderManager
 	{
 	public:
 		RenderManager();
@@ -22,7 +22,7 @@ namespace opengl
 		uint8_t GetNumFramesInFlight() const override;
 
 
-	private: // re::RenderManager interface:
+	private: // gr::RenderManager interface:
 		void Render() override;
 	};
 

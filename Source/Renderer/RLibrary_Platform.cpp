@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #include "Core/Assert.h"
 #include "Context.h"
 #include "RenderManager.h"
@@ -75,7 +75,7 @@ namespace platform
 		case gr::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				re::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(
+				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(
 					platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
 		}
 		break;

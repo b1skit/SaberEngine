@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// Â© 2025 Adam Badke. All rights reserved.
 #include "EnumTypes.h"
 #include "GPUTimer_DX12.h"
 #include "GPUTimer_OpenGL.h"

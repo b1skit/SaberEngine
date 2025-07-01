@@ -91,7 +91,7 @@ namespace
 		re::AccelerationStructure::TLASParams const* tlasParams =
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
 
-		effect::EffectDB const& effectDB = re::RenderManager::Get()->GetEffectDB();
+		effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
 
 		const ResourceHandle transformBufferHandle = 
 			ibm.GetIndexedBuffer(TransformData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);

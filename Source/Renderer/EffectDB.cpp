@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// Â© 2024 Adam Badke. All rights reserved.
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
@@ -21,8 +21,7 @@ namespace
 	{
 		if (entry.contains(key_excludedPlatforms))
 		{
-			std::string const& currentPlatformVal =
-				platform::RenderingAPIToCStr(
+			std::string const& currentPlatformVal =	platform::RenderingAPIToCStr(
 					core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
 
 			for (auto const& excludedPlatform : entry[key_excludedPlatforms])

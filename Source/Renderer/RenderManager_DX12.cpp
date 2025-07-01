@@ -21,7 +21,7 @@
 namespace dx12
 {
 	RenderManager::RenderManager()
-		: re::RenderManager(platform::RenderingAPI::DX12)
+		: gr::RenderManager(platform::RenderingAPI::DX12)
 		, m_numFrames(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
 		SEAssert(m_numFrames >= 2 && m_numFrames <= 3, "Invalid number of frames in flight");
@@ -1094,7 +1094,7 @@ namespace dx12
 	void RenderManager::Shutdown_Platform()
 	{
 		// Note: Shutdown order matters. Make sure any work performed here plays nicely with the 
-		// re::RenderManager::Shutdown ordering
+		// gr::RenderManager::Shutdown ordering
 		dx12::Context* ctx = m_context->As<dx12::Context*>();
 		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
 		{

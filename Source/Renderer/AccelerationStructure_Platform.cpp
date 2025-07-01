@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// Â© 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "AccelerationStructure_Platform.h"
 
@@ -9,7 +9,7 @@ namespace platform
 {
 	std::unique_ptr<re::AccelerationStructure::PlatObj> platform::AccelerationStructure::CreatePlatformObject()
 	{
-		const platform::RenderingAPI api = 
+    const platform::RenderingAPI api = 
 			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)

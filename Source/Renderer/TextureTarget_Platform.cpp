@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"

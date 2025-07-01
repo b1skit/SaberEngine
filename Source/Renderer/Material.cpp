@@ -17,7 +17,7 @@ namespace gr
 	Material::MaterialID Material::EffectIDToMaterialID(EffectID effectID)
 	{
 		util::CHashKey matEffectHashKey =
-			util::CHashKey::Create(re::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
+			util::CHashKey::Create(gr::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
 
 		switch (matEffectHashKey.GetHash())
 		{

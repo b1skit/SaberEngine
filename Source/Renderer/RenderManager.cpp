@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "Context.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
@@ -21,14 +22,14 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace re
+namespace gr
 {
 	constexpr char const* k_renderThreadLogName = "Render thread";
 
 
 	RenderManager* RenderManager::Get()
 	{
-		static std::unique_ptr<re::RenderManager> instance = std::move(re::RenderManager::Create());
+		static std::unique_ptr<gr::RenderManager> instance = std::move(gr::RenderManager::Create());
 		return instance.get();
 	}
 
@@ -42,7 +43,7 @@ namespace re
 	}
 
 
-	std::unique_ptr<re::RenderManager> RenderManager::Create()
+	std::unique_ptr<gr::RenderManager> RenderManager::Create()
 	{
 		core::Config* config = core::Config::Get();
 
@@ -68,7 +69,7 @@ namespace re
 		// Update the config:
 		config->SetValue(core::configkeys::k_renderingAPIKey, renderingAPI, core::Config::SettingType::Runtime);
 
-		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
+		std::unique_ptr<gr::RenderManager> newRenderManager = nullptr;
 
 		switch (renderingAPI)
 		{
@@ -197,12 +198,12 @@ namespace re
 
 	void RenderManager::Startup()
 	{
-		SEBeginCPUEvent("re::RenderManager::Startup");
+		SEBeginCPUEvent("gr::RenderManager::Startup");
 
 		LOG("RenderManager starting...");
 		
 		// Create the context:
-		m_context = Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
+		m_context = re::Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");
 
 		m_context->Create(m_renderFrameNum);
@@ -225,7 +226,7 @@ namespace re
 	
 	void RenderManager::Initialize()
 	{
-		SEBeginCPUEvent("re::RenderManager::Initialize");
+		SEBeginCPUEvent("gr::RenderManager::Initialize");
 
 		LOG("RenderManager Initializing...");
 		host::PerformanceTimer timer;
@@ -266,7 +267,7 @@ namespace re
 
 	void RenderManager::BeginFrame(uint64_t frameNum)
 	{
-		SEBeginCPUEvent("re::RenderManager::BeginFrame");
+		SEBeginCPUEvent("gr::RenderManager::BeginFrame");
 		
 		m_renderCommandManager.SwapBuffers();
 
@@ -278,12 +279,12 @@ namespace re
 
 	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		SEBeginCPUEvent("re::RenderManager::Update");
+		SEBeginCPUEvent("gr::RenderManager::Update");
 
 		HandleEvents();
 		if (m_quitEventRecieved)
 		{
-			SEEndCPUEvent(); // "re::RenderManager::Update"
+			SEEndCPUEvent(); // "gr::RenderManager::Update"
 			return; // Early-out: Prevents issues related to queued ImGui commands referring to now-destroyed data
 		}
 		
@@ -331,13 +332,13 @@ namespace re
 		m_context->Present();
 		SEEndCPUEvent(); // "re::Context::Present"
 
-		SEEndCPUEvent(); // "re::RenderManager::Update"
+		SEEndCPUEvent(); // "gr::RenderManager::Update"
 	}
 
 
 	void RenderManager::EndFrame()
 	{
-		SEBeginCPUEvent("re::RenderManager::EndFrame");
+		SEBeginCPUEvent("gr::RenderManager::EndFrame");
 
 		SEBeginCPUEvent("Process render systems");
 		{
@@ -362,7 +363,7 @@ namespace re
 
 		EndFrame_Platform();
 
-		SEEndCPUEvent(); // "re::RenderManager::EndFrame"
+		SEEndCPUEvent(); // "gr::RenderManager::EndFrame"
 	}
 
 
@@ -396,7 +397,7 @@ namespace re
 
 	void RenderManager::Shutdown()
 	{
-		SEBeginCPUEvent("re::RenderManager::Shutdown");
+		SEBeginCPUEvent("gr::RenderManager::Shutdown");
 
 		LOG("Render manager shutting down...");
 
@@ -451,7 +452,7 @@ namespace re
 
 	void RenderManager::HandleEvents()
 	{
-		SEBeginCPUEvent("re::RenderManager::HandleEvents");
+		SEBeginCPUEvent("gr::RenderManager::HandleEvents");
 
 		while (HasEvents())
 		{
