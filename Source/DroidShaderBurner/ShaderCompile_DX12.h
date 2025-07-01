@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "EffectParsing.h"
 
@@ -25,13 +25,13 @@ namespace droid
 	// Add new struct to hold async compilation task
 	struct AsyncCompilationTask
 	{
-		std::future<droid::ErrorCode> future;
+		std::future<void> future;
 		std::string shaderName;
 	};
 
 
 	// Compile HLSL shaders using the DXC C++ API
-	droid::ErrorCode CompileShader_HLSL_DXC_API(
+	void CompileShader_HLSL_DXC_API(
 		HLSLCompileOptions const& compileOptions,
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
@@ -44,7 +44,7 @@ namespace droid
 
 
 	// Compile HLSL shaders using the DXC command line tool
-	droid::ErrorCode CompileShader_HLSL_DXC_CMDLINE(
+	void CompileShader_HLSL_DXC_CMDLINE(
 		std::string const& directXCompilerExePath,
 		PROCESS_INFORMATION&,
 		HLSLCompileOptions const&,
@@ -56,5 +56,5 @@ namespace droid
 		std::vector<std::string> const& defines,
 		std::string const& outputDir);
 
-	droid::ErrorCode PrintHLSLCompilerVersion(std::string const& directXCompilerExePath);
+	void PrintHLSLCompilerVersion(std::string const& directXCompilerExePath);
 }
