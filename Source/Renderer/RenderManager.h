@@ -4,6 +4,10 @@
 #include "Context.h"
 #include "EffectDB.h"
 #include "RenderSystem.h"
+#include "Sampler.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "TextureTarget.h"
 
 #include "Core/AccessKey.h"
 #include "Core/InvPtr.h"

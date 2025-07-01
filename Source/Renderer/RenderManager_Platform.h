@@ -20,9 +20,5 @@ namespace platform
 		static void (*EndFrame)(re::RenderManager&);
 
 		static uint8_t (*GetNumFramesInFlight)();
-
-		// ImgGui:
-		static void (*StartImGuiFrame)();
-		static void (*RenderImGui)();
 	};
 }

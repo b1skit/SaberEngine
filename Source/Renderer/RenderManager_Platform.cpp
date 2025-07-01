@@ -11,8 +11,4 @@ namespace platform
 	void (*RenderManager::EndFrame)(re::RenderManager&) = nullptr;
 
 	uint8_t(*RenderManager::GetNumFramesInFlight)() = nullptr;
-
-	// ImGui:
-	void (*RenderManager::StartImGuiFrame)() = nullptr;
-	void (*RenderManager::RenderImGui)() = nullptr;
 }
