@@ -103,7 +103,7 @@ namespace gr
 
 
 	void TransparencyGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies,
 		DataDependencies const& dataDependencies)

@@ -159,7 +159,7 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::CreateSingleFrameBRDFPreIntegrationStage(gr::StagePipeline& pipeline)
 	{
 		gr::Stage::ComputeStageParams computeStageParams;
 		std::shared_ptr<gr::Stage> brdfStage =
@@ -214,7 +214,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulateIEMTex(
-		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
+		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
 	{
 		const uint32_t iemTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
@@ -283,7 +283,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::PopulatePMREMTex(
-		re::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
+		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
 	{
 		const uint32_t pmremTexWidthHeight =
 			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
@@ -369,7 +369,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitializeResourceGenerationStages(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_resourceCreationStagePipeline = &pipeline;
 
@@ -433,7 +433,7 @@ namespace gr
 
 
 	void DeferredLightingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies,
 		DataDependencies const& dataDependencies)

@@ -36,7 +36,7 @@ namespace gr
 
 
 	void SkyboxGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		gr::Stage::FullscreenQuadParams fsqParams;
 		fsqParams.m_zLocation = gr::meshfactory::ZLocation::Far;

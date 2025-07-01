@@ -5,7 +5,7 @@
 #include "Core/ProfilingMarkers.h"
 
 
-namespace re
+namespace gr
 {
 	/******************************************** StagePipeline********************************************/
 
@@ -32,7 +32,7 @@ namespace re
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
 
-		StagePipelineItr newStageItr = m_stages.emplace(next, std::move(stage));
+		StagePipelineItr newStageItr = m_stages.emplace(next, stage);
 
 		return newStageItr;
 	}
@@ -45,7 +45,7 @@ namespace re
 		SEAssert(stage->GetStageLifetime() == re::Lifetime::SingleFrame,
 			"Incorrect stage lifetime");
 
-		m_stages.emplace_back(std::move(stage));
+		m_stages.emplace_back(std::forward<std::shared_ptr<gr::Stage>>(stage));
 
 		const StagePipelineItr lastItem = std::prev(m_stages.end());
 
@@ -69,12 +69,12 @@ namespace re
 		StagePipelineItr newSingleFrameStageItr;
 		if (next == m_stages.end())
 		{
-			m_stages.emplace_back(std::move(stage));
+			m_stages.emplace_back(std::forward<std::shared_ptr<gr::Stage>>(stage));
 			newSingleFrameStageItr = std::prev(m_stages.end());
 		}
 		else
 		{
-			newSingleFrameStageItr = m_stages.emplace(next, std::move(stage));
+			newSingleFrameStageItr = m_stages.emplace(next, std::forward<std::shared_ptr<gr::Stage>>(stage));
 		}
 
 		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);

@@ -14,7 +14,7 @@ namespace gr
 
 
 	void ImGuiGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		// Create a library stage:
 		gr::Stage::LibraryStageParams imGuiLibraryParams(

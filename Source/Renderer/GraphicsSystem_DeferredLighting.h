@@ -57,17 +57,17 @@ namespace gr
 		~DeferredLightingGraphicsSystem() override = default;
 
 		void InitializeResourceGenerationStages(
-			re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void InitPipeline(
-			re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 
 
 	private:
 		// BRDF Pre-integration:
-		void CreateSingleFrameBRDFPreIntegrationStage(re::StagePipeline&);
+		void CreateSingleFrameBRDFPreIntegrationStage(gr::StagePipeline&);
 		core::InvPtr<re::Texture> m_BRDF_integrationMap;
 
 
@@ -76,10 +76,10 @@ namespace gr
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
 		void PopulateIEMTex(
-			re::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const;
+			gr::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const;
 
 		void PopulatePMREMTex(
-			re::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const;
+			gr::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const;
 
 	private: // Ambient lights:
 		struct AmbientLightRenderData
@@ -104,8 +104,8 @@ namespace gr
 		re::BufferInput m_ambientParams;
 		core::InvPtr<re::Texture> m_ssaoTex;
 
-		re::StagePipeline* m_resourceCreationStagePipeline;
-		re::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
+		gr::StagePipeline* m_resourceCreationStagePipeline;
+		gr::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
 
 		// For rendering into a cube map (IEM/PMREM generation)
 		core::InvPtr<gr::MeshPrimitive> m_cubeMeshPrimitive;

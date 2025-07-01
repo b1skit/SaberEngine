@@ -45,7 +45,7 @@ namespace gr
 		BatchManagerGraphicsSystem(gr::GraphicsSystemManager*);
 
 		void InitPipeline(
-			re::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+			gr::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
 

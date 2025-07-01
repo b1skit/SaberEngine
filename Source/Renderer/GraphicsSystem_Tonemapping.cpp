@@ -41,7 +41,7 @@ namespace gr
 
 
 	void TonemappingGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		m_tonemappingStage = gr::Stage::CreateComputeStage("Tonemapping stage", gr::Stage::ComputeStageParams{});
 

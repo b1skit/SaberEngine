@@ -190,13 +190,13 @@ namespace opengl
 		// Process RenderPiplines of each RenderSystem in turn:
 		for (std::unique_ptr<gr::RenderSystem> const& renderSystem : m_renderSystems)
 		{
-			re::RenderPipeline const& renderPipeline = renderSystem->GetRenderPipeline();
+			gr::RenderPipeline const& renderPipeline = renderSystem->GetRenderPipeline();
 
 			re::GPUTimer::Handle renderPipelineTimer = 
 				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), k_GPUFrameTimerName);
 
 			// Render each stage in the RenderSystem's RenderPipeline:			
-			for (re::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
+			for (gr::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				re::GPUTimer::Handle stagePipelineTimer;
 				bool isNewStagePipeline = true;			

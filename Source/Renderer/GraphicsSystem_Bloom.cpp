@@ -65,7 +65,7 @@ namespace gr
 
 
 	void BloomGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
 		core::InvPtr<re::Sampler> const& bloomSampler = re::Sampler::GetSampler("ClampMinMagMipLinear");
 

@@ -33,7 +33,7 @@ namespace gr
 		SkyboxGraphicsSystem(gr::GraphicsSystemManager*);
 		~SkyboxGraphicsSystem() = default;
 
-		void InitPipeline(re::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
 
 		void ShowImGuiWindow() override;

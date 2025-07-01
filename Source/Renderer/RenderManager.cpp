@@ -11,11 +11,9 @@
 #include "TextureTarget.h"
 #include "VertexStream.h"
 
-#include "Core/AccessKey.h"
 #include "Core/Config.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
-#include "Core/SystemLocator.h"
 
 #include "Core/Definitions/EventKeys.h"
 

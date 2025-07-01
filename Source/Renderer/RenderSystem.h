@@ -47,7 +47,7 @@ namespace gr
 		gr::GraphicsSystemManager& GetGraphicsSystemManager();
 		gr::GraphicsSystemManager const& GetGraphicsSystemManager() const;
 
-		re::RenderPipeline& GetRenderPipeline();
+		gr::RenderPipeline& GetRenderPipeline();
 
 		void ShowImGuiWindow();
 
@@ -55,7 +55,7 @@ namespace gr
 	private:
 		gr::GraphicsSystemManager m_graphicsSystemManager;
 
-		re::RenderPipeline m_renderPipeline;
+		gr::RenderPipeline m_renderPipeline;
 		std::function<void(gr::RenderSystem*)> m_creationPipeline;
 		std::function<void(gr::RenderSystem*)> m_initPipeline;
 
@@ -95,7 +95,7 @@ namespace gr
 	}
 
 
-	inline re::RenderPipeline& RenderSystem::GetRenderPipeline()
+	inline gr::RenderPipeline& RenderSystem::GetRenderPipeline()
 	{
 		return m_renderPipeline;
 	}

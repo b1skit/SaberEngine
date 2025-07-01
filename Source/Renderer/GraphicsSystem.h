@@ -38,7 +38,7 @@ namespace gr
 		// -------------------------
 		// GraphicsSystems intentionally have a flexible interface with minimal required virtual functionality.
 		// Typically, a Raster System will require 1 or more of the following functions:
-		// - InitPipeline(re::StagePipeline&) method(s): Used to attach a sequence of Stages to a StagePipeline
+		// - InitPipeline(gr::StagePipeline&) method(s): Used to attach a sequence of Stages to a StagePipeline
 		// - PreRender() method(s): Called every frame to update the GraphicsSystem before platform-level rendering
 		// 
 		// ------------------------
@@ -54,7 +54,7 @@ namespace gr
 		struct RuntimeBindings
 		{
 			using InitPipelineFn = std::function<void(
-				re::StagePipeline&,
+				gr::StagePipeline&,
 				TextureDependencies const&,
 				BufferDependencies const&,
 				DataDependencies const&)>;

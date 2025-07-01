@@ -14,7 +14,7 @@ namespace gr
 	class IndexedBufferManager;
 }
 
-namespace re
+namespace gr
 {
 	class StagePipeline final : public virtual core::INamedObject
 	{
@@ -82,10 +82,10 @@ namespace re
 
 
 	public:
-		StagePipeline& AddNewStagePipeline(std::string const& stagePipelineName);
+		gr::StagePipeline& AddNewStagePipeline(std::string const& stagePipelineName);
 
-		std::vector<StagePipeline>& GetStagePipeline();
-		std::vector<StagePipeline> const& GetStagePipeline() const;
+		std::vector<gr::StagePipeline>& GetStagePipeline();
+		std::vector<gr::StagePipeline> const& GetStagePipeline() const;
 
 		size_t GetNumberOfGraphicsSystems() const;
 
@@ -99,7 +99,7 @@ namespace re
 		//   *   *
 		//   |
 		//   *
-		std::vector<StagePipeline> m_stagePipeline;
+		std::vector<gr::StagePipeline> m_stagePipeline;
 
 
 	private:
@@ -109,13 +109,13 @@ namespace re
 	};
 
 
-	inline size_t StagePipeline::GetNumberOfStages() const
+	inline size_t gr::StagePipeline::GetNumberOfStages() const
 	{
 		return m_stages.size();
 	}
 
 
-	inline std::list<std::shared_ptr<gr::Stage>> const& StagePipeline::GetStages() const
+	inline std::list<std::shared_ptr<gr::Stage>> const& gr::StagePipeline::GetStages() const
 	{
 		return m_stages;
 	}

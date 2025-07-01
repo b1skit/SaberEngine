@@ -101,7 +101,7 @@ namespace gr
 
 
 	void SceneAccelerationStructureGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const&, 
 		BufferDependencies const&, 
 		DataDependencies const& dataDependencies)
@@ -310,7 +310,7 @@ namespace gr
 		}
 
 		// If we're about to build or update an AS, add a single-frame stage to hold the work:
-		re::StagePipeline::StagePipelineItr singleFrameBlasCreateStageItr;
+		gr::StagePipeline::StagePipelineItr singleFrameBlasCreateStageItr;
 		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			singleFrameBlasCreateStageItr = m_stagePipeline->AppendSingleFrameStage(m_rtParentStageItr,

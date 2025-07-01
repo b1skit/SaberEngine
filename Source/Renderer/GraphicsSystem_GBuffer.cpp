@@ -28,7 +28,7 @@ namespace gr
 
 
 	void GBufferGraphicsSystem::InitPipeline(
-		re::StagePipeline& pipeline,
+		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)

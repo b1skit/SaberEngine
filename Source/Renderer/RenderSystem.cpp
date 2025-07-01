@@ -428,7 +428,7 @@ namespace gr
 		{
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 
-			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
+			gr::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 
 			// Build up our log message so it's printed in a single block
 			std::string initOrderLog = 

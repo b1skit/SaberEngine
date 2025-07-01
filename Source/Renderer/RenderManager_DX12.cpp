@@ -414,8 +414,8 @@ namespace dx12
 		// A WorkRange spans a contiguous subset of the Stages within a single StagePipeline
 		struct WorkRange
 		{
-			re::RenderPipeline const* m_renderPipeline;
-			std::vector<re::StagePipeline>::const_iterator m_stagePipelineItr;
+			gr::RenderPipeline const* m_renderPipeline;
+			std::vector<gr::StagePipeline>::const_iterator m_stagePipelineItr;
 			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageBeginItr;
 			std::list<std::shared_ptr<gr::Stage>>::const_iterator m_stageEndItr;
 		};
@@ -529,8 +529,8 @@ namespace dx12
 				default: SEAssertF("Unexpected command list type");
 				}
 
-				re::RenderPipeline const* lastSeenRenderPipeline = nullptr;
-				re::StagePipeline const* lastSeenStagePipeline = nullptr;
+				gr::RenderPipeline const* lastSeenRenderPipeline = nullptr;
+				gr::StagePipeline const* lastSeenStagePipeline = nullptr;
 
 				re::GPUTimer& gpuTimer = context->GetGPUTimer();
 				re::GPUTimer::Handle renderPipelineTimer;
@@ -544,7 +544,7 @@ namespace dx12
 
 					const bool isLastWorkEntry = std::next(workRangeItr) == workRange.end();
 
-					re::RenderPipeline const* renderPipeline = workRangeItr->m_renderPipeline;
+					gr::RenderPipeline const* renderPipeline = workRangeItr->m_renderPipeline;
 					const bool isNewRenderPipeline = lastSeenRenderPipeline != renderPipeline;
 					if (isNewRenderPipeline)
 					{
@@ -561,7 +561,7 @@ namespace dx12
 					const bool isLastOfRenderSystem = isLastWorkEntry ||
 						lastSeenRenderPipeline != std::next(workRangeItr)->m_renderPipeline;
 
-					re::StagePipeline const& stagePipeline = (*workRangeItr->m_stagePipelineItr);
+					gr::StagePipeline const& stagePipeline = (*workRangeItr->m_stagePipelineItr);
 
 					const bool isNewStagePipeline = lastSeenStagePipeline != &(*workRangeItr->m_stagePipelineItr);
 					if (isNewStagePipeline)
@@ -965,7 +965,7 @@ namespace dx12
 		auto renderSystemItr = m_renderSystems.begin();
 		while (renderSystemItr != m_renderSystems.end())
 		{
-			re::RenderPipeline& renderPipeline = (*renderSystemItr)->GetRenderPipeline();
+			gr::RenderPipeline& renderPipeline = (*renderSystemItr)->GetRenderPipeline();
 
 			auto stagePipelineItr = renderPipeline.GetStagePipeline().begin();
 			while (stagePipelineItr != renderPipeline.GetStagePipeline().end())
