@@ -347,15 +347,6 @@
     <ClInclude Include="RenderObjectIDs.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPipeline.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSystem.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderSystemDesc.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
@@ -543,6 +534,15 @@
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="Stage.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystemDesc.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPipeline.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
@@ -766,15 +766,6 @@
     <ClCompile Include="RenderManager.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPipeline.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderSystem.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderSystemDesc.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
     <ClCompile Include="Sampler.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -902,6 +893,15 @@
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Stage.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSystemDesc.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPipeline.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
