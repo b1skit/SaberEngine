@@ -258,24 +258,20 @@ namespace droid
 				if (!effectBlock.contains(key_name))
 				{
 					std::cout << "Error: Effect block has no \"Name\" entry\n";
-					return droid::ErrorCode::JSONError;
+					throw droid::JSONException("Effect block has no \"Name\" entry");
 				}
 				std::string const& effectBlockName = effectBlock.at(key_name).template get<std::string>();
 				if (effectBlockName != effectName)
 				{
 					std::cout << "Error: Effect block \"Name\" : \"" << effectBlockName.c_str() << "\" does not match "
 						"extensionless Effect file name \" "<< effectName.c_str() << "\" found in the manifest\n";
-					return droid::ErrorCode::JSONError;
+					throw droid::JSONException("Effect block name does not match file name: " + effectBlockName + " vs " + effectName);
 				}
 
 				// "DrawStyles":
 				if (effectBlock.contains(key_drawStyles))
 				{
-					result = ParseDrawStylesBlock(*this, effectBlockName, effectBlock.at(key_drawStyles));
-				}
-				if (result != droid::ErrorCode::Success)
-				{
-					return result;
+					ParseDrawStylesBlock(*this, effectBlockName, effectBlock.at(key_drawStyles));
 				}
 
 				// "ExcludedPlatforms": We'll propagate these to all Techniques in the Effect
@@ -292,12 +288,8 @@ namespace droid
 				// "Techniques":
 				if (effectBlock.contains(key_techniques))
 				{
-					result = ParseTechniquesBlock(
+					ParseTechniquesBlock(
 						*this, effectBlockName, effectBlock.at(key_techniques), std::move(excludedPlatforms));
-					if (result != droid::ErrorCode::Success)
-					{
-						return result;
-					}
 				}
 			}
 
@@ -306,11 +298,7 @@ namespace droid
 			{
 				for (auto const& vertexStreamEntry : effectJSON.at(key_vertexStreams))
 				{
-					result = ParseVertexStreamsEntry(*this, vertexStreamEntry);
-					if (result != droid::ErrorCode::Success)
-					{
-						return result;
-					}
+					ParseVertexStreamsEntry(*this, vertexStreamEntry);
 				}
 			}
 
@@ -320,11 +308,7 @@ namespace droid
 			PostProcessEffectTechniques(effectJSON, effectName);
 
 			// Finally, write the runtime version of the file out:
-			result = WriteRuntimeEffectFile(effectJSON, effectFileName);
-			if (result != droid::ErrorCode::Success)
-			{
-				return result;
-			}
+			WriteRuntimeEffectFile(effectJSON, effectFileName);
 		}
 		catch (nlohmann::json::exception parseException)
 		{
@@ -333,20 +317,21 @@ namespace droid
 				effectName,
 				parseException.what()).c_str();
 
-			result = ErrorCode::JSONError;
+			effectInputStream.close();
+			throw droid::JSONException("Failed to parse effect file: " + effectName + " - " + parseException.what());
 		}
 
 		effectInputStream.close();
-		return result;
+		// Function completes successfully - no return value needed
 	}
 
 
-	droid::ErrorCode ParseDB::PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName)
+	void ParseDB::PostProcessEffectTechniques(nlohmann::json& effectJSON, std::string const& effectName)
 	{
 		if (!m_effectTechniqueDescs.contains(effectName) || 
 			!effectJSON.contains(key_effectBlock))
 		{
-			return droid::ErrorCode::Success; // Nothing to do
+			return; // Nothing to do
 		}
 
 		// "Effect":
@@ -374,11 +359,11 @@ namespace droid
 			effectBlock[key_techniques] = resolvedTechniques;
 		}
 
-		return droid::ErrorCode::Success;
+		// Function completes successfully - no return value needed
 	}
 
 
-	droid::ErrorCode ParseDB::WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName)
+	void ParseDB::WriteRuntimeEffectFile(auto const& effectJSON, std::string const& effectFileName)
 	{
 		if (!std::filesystem::exists(m_parseParams.m_runtimeEffectsDir))
 		{
@@ -390,14 +375,14 @@ namespace droid
 		if (!runtimeEffectOut.is_open())
 		{
 			std::cout << "Error: Failed to open runtime Effect directory\n";
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to open runtime Effect directory");
 		}
 
 		runtimeEffectOut << std::setw(4) << effectJSON << std::endl;
 
 		runtimeEffectOut.close();
 
-		return droid::ErrorCode::Success;
+		// Function completes successfully - no return value needed
 	}
 
 
@@ -428,8 +413,6 @@ namespace droid
 
 	bool ParseDB::CompileShaders() const
 	{
-		droid::ErrorCode result = droid::ErrorCode::Success;
-
 		// GLSL:
 		{
 			std::cout << "Building GLSL shader texts...\n";
@@ -472,7 +455,7 @@ namespace droid
 
 						if (!variants.contains(technique.second.m_shaderVariantIDs[shaderTypeIdx]))
 						{
-							result = BuildShaderFile_GLSL(
+							BuildShaderFile_GLSL(
 								glslIncludeDirectories,
 								technique.second._Shader[shaderTypeIdx],
 								technique.second.m_shaderVariantIDs[shaderTypeIdx],
@@ -480,11 +463,6 @@ namespace droid
 								static_cast<re::Shader::ShaderType>(shaderTypeIdx),
 								technique.second._Defines[shaderTypeIdx],
 								m_parseParams.m_glslShaderOutputDir);
-
-							if (result != droid::ErrorCode::Success)
-							{
-								return result;
-							}
 
 							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
@@ -502,14 +480,10 @@ namespace droid
 				if (m_parseParams.m_directXCompilerExePath.empty())
 				{
 					std::cout << "DXC C++ API is disabled, but no DXC.exe compiler path received" << "\n";
-					result = droid::ErrorCode::ConfigurationError;
+					throw droid::ConfigurationException("DXC C++ API is disabled, but no DXC.exe compiler path received");
 				}
 
-				result = PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
-				if (result != droid::ErrorCode::Success)
-				{
-					return result;
-				}
+				PrintHLSLCompilerVersion(m_parseParams.m_directXCompilerExePath);
 			}
 
 			// Start by clearing out any previously generated code:
@@ -568,11 +542,7 @@ namespace droid
 				};
 			}
 			break;
-			default: result = droid::ErrorCode::ConfigurationError;
-			}
-			if (result != droid::ErrorCode::Success)
-			{
-				return result;
+			default: throw droid::ConfigurationException("Invalid build configuration");
 			}
 
 			if (!m_parseParams.m_dx12TargetProfile.empty())
@@ -588,10 +558,8 @@ namespace droid
 				m_parseParams.m_dependenciesDir,
 			};
 
-			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> droid::ErrorCode
+			auto CloseProcess = [](PROCESS_INFORMATION const& processInfo) -> void
 				{
-					droid::ErrorCode result = droid::ErrorCode::Success;
-
 					WaitForSingleObject(processInfo.hProcess, INFINITE); // Wait until the process is done
 
 					DWORD exitCode = 0;
@@ -599,14 +567,12 @@ namespace droid
 					if (exitCode != 0)
 					{
 						std::cout << "HLSL compiler returned " << exitCode << "\n";
-						result = droid::ErrorCode::ShaderError;
+						throw droid::ShaderException("HLSL compiler returned non-zero exit code: " + std::to_string(exitCode));
 					}
 
 					// Close process and thread handles
 					CloseHandle(processInfo.hProcess);
 					CloseHandle(processInfo.hThread);
-
-					return result;
 				};
 
 			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
@@ -648,7 +614,7 @@ namespace droid
 								{
 									// Async API compilation
 									droid::AsyncCompilationTask& asyncTask = asyncTasks.emplace_back();
-									result = CompileShader_HLSL_DXC_API(
+									CompileShader_HLSL_DXC_API(
 										compileOptions,
 										hlslIncludeDirectories,
 										extensionlessShaderName,
@@ -662,7 +628,7 @@ namespace droid
 								else
 								{
 									// Sync API compilation
-									result = CompileShader_HLSL_DXC_API(
+									CompileShader_HLSL_DXC_API(
 										compileOptions,
 										hlslIncludeDirectories,
 										extensionlessShaderName,
@@ -677,7 +643,7 @@ namespace droid
 							{
 								PROCESS_INFORMATION& processInfo = processInfos.emplace_back();
 
-								result = CompileShader_HLSL_DXC_CMDLINE(
+								CompileShader_HLSL_DXC_CMDLINE(
 									m_parseParams.m_directXCompilerExePath,
 									processInfo,
 									compileOptions,
@@ -691,23 +657,13 @@ namespace droid
 
 								if (compileOptions.m_multithreadedCompilation == false)
 								{
-									result = CloseProcess(processInfo);
+									CloseProcess(processInfo);
 									processInfos.pop_back();
 								}
 							}
 
-							if (result != droid::ErrorCode::Success)
-							{
-								break;
-							}
-
 							variants.emplace(technique.second.m_shaderVariantIDs[shaderTypeIdx]);
 						}
-					}
-
-					if (result != droid::ErrorCode::Success)
-					{
-						break;
 					}
 				}
 			}
@@ -715,52 +671,18 @@ namespace droid
 			 // Wait for async API compilation tasks to complete
 			for (auto& asyncTask : asyncTasks)
 			{
-				const droid::ErrorCode taskResult = asyncTask.future.get();
-
-				if (taskResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
-				{
-					result = taskResult;
-				}
+				asyncTask.future.get(); // This will throw if the async compilation failed
 			}
 
 			// Check our exit codes for command line processes:
 			// Will be empty if the C++ DXC API is used, or if using the command line compiler with threading disabled
 			for (auto const& processInfo : processInfos) 
 			{
-				const droid::ErrorCode processCloseResult = CloseProcess(processInfo);
-				if (processCloseResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
-				{
-					result = processCloseResult;
-				}
+				CloseProcess(processInfo); // This will throw if the process failed
 			}
 		}		
 
-		// Convert ErrorCode result to bool or exception
-		if (result == droid::ErrorCode::Success)
-		{
-			return true; // Compilation was performed successfully
-		}
-		else if (result == droid::ErrorCode::NoModification)
-		{
-			return false; // No compilation was needed
-		}
-		else
-		{
-			// Throw appropriate exception based on error type
-			switch (result)
-			{
-			case droid::ErrorCode::FileError:
-				throw droid::FileException("Shader compilation failed due to file error");
-			case droid::ErrorCode::ShaderError:
-				throw droid::ShaderException("Shader compilation failed");
-			case droid::ErrorCode::ConfigurationError:
-				throw droid::ConfigurationException("Shader compilation failed due to configuration error");
-			case droid::ErrorCode::DependencyError:
-				throw droid::DependencyException("Shader compilation failed due to dependency error");
-			default:
-				throw droid::GenerationException("Shader compilation failed");
-			}
-		}
+		return true; // Compilation was performed successfully
 	}
 
 
@@ -794,8 +716,8 @@ namespace droid
 			}
 			if (bitIdx >= 64)
 			{
-				std::cout << "Error: " << " is too many drawstyle rules to fit in a 64-bit bitmask\n";
-				result = droid::ErrorCode::GenerationError;
+				std::cout << "Error: Too many drawstyle rules to fit in a 64-bit bitmask\n";
+				throw droid::GenerationException("Too many drawstyle rules to fit in a 64-bit bitmask");
 			}
 		}
 

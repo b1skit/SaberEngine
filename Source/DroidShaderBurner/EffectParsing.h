@@ -47,21 +47,6 @@ namespace droid
 		explicit ComException(const std::string& message) : std::runtime_error(message) {}
 	};
 
-	// Internal ErrorCode enum for backward compatibility with existing implementation
-	// Public interfaces use bool return values and exceptions
-	enum class ErrorCode
-	{
-		Success = 0,
-		NoModification = 1,
-		FileError = -1,
-		JSONError = -2,
-		ShaderError = -3,
-		GenerationError = -4,
-		ConfigurationError = -5,
-		DependencyError = -6,
-		ComError = -7
-	};
-
 	struct ParseParams;
 	bool DoParsingAndCodeGen(ParseParams const&);
 }
