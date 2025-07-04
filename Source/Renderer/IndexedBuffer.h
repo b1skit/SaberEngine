@@ -782,9 +782,9 @@ namespace gr
 			ImGui::NewLine();
 
 			ImGui::Text(std::format("Buffer CBV resource handle: {}", 
-				buffer->GetBindlessResourceHandle(re::ViewType::CBV)).c_str());
+				buffer->GetResourceHandle(re::ViewType::CBV)).c_str());
 			ImGui::Text(std::format("Buffer SRV resource handle: {}", 
-				buffer->GetBindlessResourceHandle(re::ViewType::SRV)).c_str());
+				buffer->GetResourceHandle(re::ViewType::SRV)).c_str());
 
 			ImGui::NewLine();
 

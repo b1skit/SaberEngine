@@ -94,11 +94,11 @@ namespace
 		effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
 
 		const ResourceHandle transformBufferHandle = 
-			ibm.GetIndexedBuffer(TransformData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
+			ibm.GetIndexedBuffer(TransformData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 		const ResourceHandle unlitMaterialBufferHandle = 
-			ibm.GetIndexedBuffer(UnlitData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
+			ibm.GetIndexedBuffer(UnlitData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 		const ResourceHandle pbrMetRoughMaterialBufferHandle = 
-			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetBindlessResourceHandle(re::ViewType::SRV);
+			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 
 		std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
 	
@@ -220,10 +220,10 @@ namespace gr
 
 			// Descriptor indexes buffer:
 			std::shared_ptr<re::Buffer> const& descriptorIndexes = CreateDescriptorIndexesBuffer(
-				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
-				indexedBufferLUT.GetBuffer()->GetBindlessResourceHandle(re::ViewType::SRV),
-				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetBindlessResourceHandle(re::ViewType::CBV),
-				m_rtTarget->GetBindlessResourceHandle(re::ViewType::UAV));
+				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetResourceHandle(re::ViewType::SRV),
+				indexedBufferLUT.GetBuffer()->GetResourceHandle(re::ViewType::SRV),
+				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetResourceHandle(re::ViewType::CBV),
+				m_rtTarget->GetResourceHandle(re::ViewType::UAV));
 
 			rtBatch.SetSingleFrameBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);
 			rtBatch.SetSingleFrameBuffer(indexedBufferLUT);
@@ -239,15 +239,15 @@ namespace gr
 			m_rtStage->AddSingleFrameBuffer(re::BufferInput("TraceRayParams", traceRayParams));
 
 			SEAssert((*m_sceneTLAS)->GetResourceHandle() != INVALID_RESOURCE_IDX &&
-				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
-				descriptorIndexes->GetBindlessResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
+				traceRayParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
+				descriptorIndexes->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
 				"Invalid resource handle detected");
 
 			// Set root constants for the frame:
 			glm::uvec4 rootConstants(
 				(*m_sceneTLAS)->GetResourceHandle(),								// SceneBVH[]
-				traceRayParams->GetBindlessResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
-				descriptorIndexes->GetBindlessResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
+				traceRayParams->GetResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
+				descriptorIndexes->GetResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
 				0);																	// unused
 			
 			m_rtStage->SetRootConstant("GlobalConstants", &rootConstants, re::DataType::UInt4);

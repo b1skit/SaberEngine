@@ -56,7 +56,7 @@ namespace gr
 				0,
 				0),
 			.g_bindlessTextureIndexes0 = glm::uvec4(
-				m_texSlots[BaseColor].m_texture->GetBindlessResourceHandle(re::ViewType::SRV),
+				m_texSlots[BaseColor].m_texture->GetResourceHandle(re::ViewType::SRV),
 				0,
 				0,
 				0),

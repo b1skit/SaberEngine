@@ -154,7 +154,7 @@ namespace re
 
 		// Bindless:
 	public:
-		ResourceHandle GetBindlessResourceHandle(re::ViewType) const;
+		ResourceHandle GetResourceHandle(re::ViewType) const;
 
 
 		// CPU readback:
@@ -439,7 +439,7 @@ namespace re
 	}
 
 
-	inline ResourceHandle Buffer::GetBindlessResourceHandle(re::ViewType viewType) const
+	inline ResourceHandle Buffer::GetResourceHandle(re::ViewType viewType) const
 	{
 		switch (viewType)
 		{

@@ -263,7 +263,7 @@ namespace re
 
 		bool HasUsageBit(Usage) const;
 
-		ResourceHandle GetBindlessResourceHandle(re::ViewType) const;
+		ResourceHandle GetResourceHandle(re::ViewType) const;
 
 		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&);
 
@@ -374,7 +374,7 @@ namespace re
 	}
 
 
-	inline ResourceHandle Texture::GetBindlessResourceHandle(re::ViewType viewType) const
+	inline ResourceHandle Texture::GetResourceHandle(re::ViewType viewType) const
 	{
 		switch (viewType)
 		{

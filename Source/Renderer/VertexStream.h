@@ -115,7 +115,7 @@ namespace re
 		re::Buffer const* GetBuffer() const;
 		std::shared_ptr<re::Buffer> const& GetBufferSharedPtr() const;
 
-		ResourceHandle GetBindlessResourceHandle() const;
+		ResourceHandle GetResourceHandle() const;
 
 
 	public:
@@ -178,7 +178,7 @@ namespace re
 	}
 
 
-	inline ResourceHandle VertexStream::GetBindlessResourceHandle() const
+	inline ResourceHandle VertexStream::GetResourceHandle() const
 	{
 		return m_srvResourceHandle;
 	}

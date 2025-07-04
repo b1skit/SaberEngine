@@ -96,7 +96,7 @@ namespace re
 		core::InvPtr<re::VertexStream> const& vertexStream, bool forceReplace /*= false*/)
 	{
 		RegisterResourceInternal(
-			vertexStream->GetBindlessResourceHandle(),
+			vertexStream->GetResourceHandle(),
 			vertexStream->GetType(),
 			vertexStream->GetDataType(),
 			forceReplace);
@@ -107,7 +107,7 @@ namespace re
 		re::VertexBufferInput const& vertexBufferInput, bool forceReplace /*= false*/)
 	{
 		RegisterResourceInternal(
-			vertexBufferInput.GetStream()->GetBindlessResourceHandle(),
+			vertexBufferInput.GetStream()->GetResourceHandle(),
 			vertexBufferInput.GetStream()->GetType(),
 			vertexBufferInput.GetStream()->GetDataType(),
 			forceReplace);

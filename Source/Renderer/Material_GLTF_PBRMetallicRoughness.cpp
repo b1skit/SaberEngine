@@ -45,21 +45,21 @@ namespace gr
 			// DX12 only:
 			.g_bindlessTextureIndexes0 = glm::uvec4(
 				m_texSlots[BaseColor].m_texture ?
-					m_texSlots[BaseColor].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					m_texSlots[BaseColor].m_texture->GetResourceHandle(re::ViewType::SRV)
 					: INVALID_RESOURCE_IDX,
 				m_texSlots[MetallicRoughness].m_texture?
-					m_texSlots[MetallicRoughness].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					m_texSlots[MetallicRoughness].m_texture->GetResourceHandle(re::ViewType::SRV)
 					: INVALID_RESOURCE_IDX,
 				m_texSlots[Normal].m_texture?
-					m_texSlots[Normal].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					m_texSlots[Normal].m_texture->GetResourceHandle(re::ViewType::SRV)
 					: INVALID_RESOURCE_IDX,
 				m_texSlots[Occlusion].m_texture ?
-					m_texSlots[Occlusion].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					m_texSlots[Occlusion].m_texture->GetResourceHandle(re::ViewType::SRV)
 					: INVALID_RESOURCE_IDX),
 
 			.g_bindlessTextureIndexes1 = glm::uvec4(
 				m_texSlots[Emissive].m_texture ? 
-					m_texSlots[Emissive].m_texture->GetBindlessResourceHandle(re::ViewType::SRV)
+					m_texSlots[Emissive].m_texture->GetResourceHandle(re::ViewType::SRV)
 					: INVALID_RESOURCE_IDX,
 				0,
 				0,
