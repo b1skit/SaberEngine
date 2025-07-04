@@ -94,9 +94,12 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
+xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
 xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -119,10 +122,12 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
-xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
-</Command>
+xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
+xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
+xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -145,9 +150,12 @@ xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)Source\Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y
+xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
+xcopy "$(OutDirFullPath)D3D12\" "$(SolutionDir)SaberEngine\D3D12\" /y /s
+xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s
 xcopy "$(OutDir)dxcompiler.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y
-xcopy "$(SolutionDir)Source\Dependencies\RenderDoc\renderdoc.dll" "$(SolutionDir)SaberEngine" /y</Command>
+xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
