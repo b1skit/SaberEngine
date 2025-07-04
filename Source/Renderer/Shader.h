@@ -31,6 +31,16 @@ namespace re
 	class Shader final : public virtual core::INamedObject
 	{
 	public:
+		enum class PipelineType
+		{
+			Rasterization,
+			Mesh,
+			Compute,
+			RayTracing,
+
+			Invalid
+		};
+
 		enum ShaderType : uint8_t
 		{
 			// Rasterization pipeline:
@@ -66,14 +76,7 @@ namespace re
 		static constexpr bool IsRayTracingType(ShaderType);
 		static constexpr bool IsRayTracingHitGroupType(ShaderType);
 		static constexpr bool IsSamePipelineType(ShaderType, ShaderType);
-
-		enum class PipelineType
-		{
-			Rasterization,
-			Mesh,
-			Compute,
-			RayTracing
-		};
+		static constexpr PipelineType ShaderTypeToPipelineType(ShaderType shaderType);
 
 
 	public:
@@ -262,6 +265,29 @@ namespace re
 		default: return false;
 		}
 		SEStaticAssert(re::Shader::ShaderType::ShaderType_Count == 14, "Updated this if shader type count has changed");
+	}
+
+
+	inline constexpr Shader::PipelineType Shader::ShaderTypeToPipelineType(ShaderType shaderType)
+	{
+		if (IsRasterizationType(shaderType))
+		{
+			return PipelineType::Rasterization;
+		}
+		else if (IsMeshShadingType(shaderType))
+		{
+			return PipelineType::Mesh;
+		}
+		else if (IsComputeType(shaderType))
+		{
+			return PipelineType::Compute;
+		}
+		else if (IsRayTracingType(shaderType))
+		{
+			return PipelineType::RayTracing;
+		}
+		SEAssertF("Invalid shader type received");
+		return PipelineType::Invalid;
 	}
 
 

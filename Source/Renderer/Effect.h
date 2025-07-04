@@ -99,4 +99,10 @@ namespace effect
 		SEAssert(bufferNameHash != 0, "Invalid buffer name hash");
 		return m_requestedBufferShaderNames.contains(bufferNameHash);
 	}
+
+
+	inline std::map<util::HashKey, std::string> const& Effect::GetRequestedBufferShaderNames() const
+	{
+		return m_requestedBufferShaderNames;
+	}
 }

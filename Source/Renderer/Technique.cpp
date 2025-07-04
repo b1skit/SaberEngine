@@ -3,6 +3,8 @@
 #include "Technique.h"
 #include "VertexStreamMap.h"
 
+#include "Core/InvPtr.h"
+
 
 namespace effect
 {
@@ -17,6 +19,7 @@ namespace effect
 		, m_rasterizationState(rasterizationState)
 		, m_vertexStreamMap(vertexStreamMap)
 	{
+		SEAssert(!m_shaderMetadata.empty(), "No shader metadata received");
 	}
 
 
@@ -28,7 +31,7 @@ namespace effect
 		}
 		bool isSame = GetNameHash() == rhs.GetNameHash();
 
-#if defined(DEBUG)
+#if defined(_DEBUG)
 		isSame &= m_shaderMetadata.size() == rhs.m_shaderMetadata.size();
 		if (isSame)
 		{
