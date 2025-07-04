@@ -175,36 +175,35 @@ namespace dx12
 {
 	bool CheckHResult(HRESULT hr, char const* msg)
 	{
-		switch (hr)
-		{
-		case S_OK:
+		if (hr == S_OK)
 		{
 			return true;
 		}
-		break;
+
+		const _com_error hrAsComError(hr);
+		std::string const& errorMessage = std::format("{}: {}", msg, util::FromWideCString(hrAsComError.ErrorMessage()));
+
+		switch (hr)
+		{
 		case S_FALSE:
 		case DXGI_STATUS_OCCLUDED: // 0x087a0001
 		{
-			SEAssertF(
-				"Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
+			SEAssertF("Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead");
 		}
 		break;
-		case DXGI_ERROR_DEVICE_REMOVED: LOG_ERROR("%s: Device removed", msg); break;
-		case E_ABORT:					LOG_ERROR("%s: Operation aborted", msg); break;
-		case E_ACCESSDENIED:			LOG_ERROR("%s: General access denied error", msg); break;
-		case E_FAIL:					LOG_ERROR("%s: Unspecified failure", msg); break;
-		case E_HANDLE:					LOG_ERROR("%s: Handle that is not valid", msg); break;
-		case E_INVALIDARG:				LOG_ERROR("%s: One or more arguments are invalid", msg); break;
-		case E_NOINTERFACE:				LOG_ERROR("%s: No such interface supported", msg); break;
-		case E_NOTIMPL:					LOG_ERROR("%s: Not implemented", msg); break;
-		case E_OUTOFMEMORY:				LOG_ERROR("%s: Failed to allocate necessary memory", msg); break;
-		case E_POINTER:					LOG_ERROR("%s: Pointer that is not valid", msg); break;
-		case E_UNEXPECTED:				LOG_ERROR("%s: Unexpected failure", msg); break;
-		case ERROR_FILE_NOT_FOUND:		LOG_ERROR("File not found: %s", msg); break;
-		default:
-		{
-			LOG_ERROR(msg);
-		}
+		case DXGI_ERROR_DEVICE_REMOVED: LOG_ERROR("%s: Device removed", errorMessage.c_str()); break;
+		case E_ABORT:					LOG_ERROR("%s: Operation aborted", errorMessage.c_str()); break;
+		case E_ACCESSDENIED:			LOG_ERROR("%s: General access denied error", errorMessage.c_str()); break;
+		case E_FAIL:					LOG_ERROR("%s: Unspecified failure", errorMessage.c_str()); break;
+		case E_HANDLE:					LOG_ERROR("%s: Handle that is not valid", errorMessage.c_str()); break;
+		case E_INVALIDARG:				LOG_ERROR("%s: One or more arguments are invalid", errorMessage.c_str()); break;
+		case E_NOINTERFACE:				LOG_ERROR("%s: No such interface supported", errorMessage.c_str()); break;
+		case E_NOTIMPL:					LOG_ERROR("%s: Not implemented", errorMessage.c_str()); break;
+		case E_OUTOFMEMORY:				LOG_ERROR("%s: Failed to allocate necessary memory", errorMessage.c_str()); break;
+		case E_POINTER:					LOG_ERROR("%s: Pointer that is not valid", errorMessage.c_str()); break;
+		case E_UNEXPECTED:				LOG_ERROR("%s: Unexpected failure", errorMessage.c_str()); break;
+		case ERROR_FILE_NOT_FOUND:		LOG_ERROR("File not found: %s", errorMessage.c_str()); break;
+		default:						LOG_ERROR(errorMessage.c_str());
 		}
 
 		// DRED reporting:
@@ -213,9 +212,6 @@ namespace dx12
 		{
 			HandleDRED();
 		}
-
-		const _com_error hrAsComError(hr);
-		std::string const& errorMessage = std::format("{}: {}", msg, util::FromWideCString(hrAsComError.ErrorMessage()));
 
 #if defined(_DEBUG)
 		SEAssertF(errorMessage.c_str());
