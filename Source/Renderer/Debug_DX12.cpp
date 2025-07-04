@@ -214,10 +214,13 @@ namespace dx12
 			HandleDRED();
 		}
 
+		const _com_error hrAsComError(hr);
+		std::string const& errorMessage = std::format("{}: {}", msg, util::FromWideCString(hrAsComError.ErrorMessage()));
+
 #if defined(_DEBUG)
-		SEAssertF(msg);
+		SEAssertF(errorMessage.c_str());
 #else
-		throw std::exception(); // Throw an exception here; asserts are disabled in release mode
+		throw std::runtime_error(errorMessage.c_str()); // Throw an exception here; asserts are disabled in release mode
 #endif
 
 		return false;

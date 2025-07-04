@@ -93,7 +93,7 @@ namespace dx12
 			if (m_pixCPUCaptureModule == nullptr)
 			{
 				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-				CheckHResult(hr, "Failed to create PIX GPU capture module");
+				CheckHResult(hr, "Failed to create PIX CPU capture module");
 			}
 		}
 
