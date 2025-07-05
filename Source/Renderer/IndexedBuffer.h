@@ -129,7 +129,7 @@ namespace gr
 				BufferDataType(*createBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
 				char const* bufferName,
 				re::Buffer::MemoryPoolPreference memPoolPreference,
-				re::Buffer::AccessMask accessMask,
+				re::Buffer::Access accessMask,
 				bool(*FilterCallback)(RenderDataType const*) = nullptr,
 				RenderObjectFeature featureBits = RenderObjectFeature::None);
 
@@ -182,7 +182,7 @@ namespace gr
 
 			// Buffer create params:
 			re::Buffer::MemoryPoolPreference m_memPoolPreference;
-			re::Buffer::AccessMask m_accessMask;
+			re::Buffer::Access m_accessMask;
 
 			static constexpr uint32_t k_arraySizeAlignment = 16; // Buffer sizes are rounded up to nearest multiple
 			static constexpr float k_shrinkFactor = 2.f; // How much smaller before shrinking the Buffer?
@@ -367,7 +367,7 @@ namespace gr
 		BufferDataType(*createBufferData)(RenderDataType const&, IDType, gr::RenderDataManager const&),
 		char const* bufferName,
 		re::Buffer::MemoryPoolPreference memPoolPreference,
-		re::Buffer::AccessMask accessMask,
+		re::Buffer::Access accessMask,
 		bool(*FilterCallback)(RenderDataType const*) /*= nullptr*/,
 		RenderObjectFeature featureBits /*= RenderObjectFeature::None*/)
 		: IIndexedBufferInternal(ibm)
@@ -809,7 +809,7 @@ namespace gr
 	{
 		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
-		re::Buffer::AccessMask access = re::Buffer::Access::GPURead;
+		re::Buffer::Access access = re::Buffer::Access::GPURead;
 		if (memPool == re::Buffer::MemoryPoolPreference::UploadHeap)
 		{
 			access |= re::Buffer::Access::CPUWrite;

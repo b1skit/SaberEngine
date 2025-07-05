@@ -23,7 +23,7 @@ namespace dx12
 
 	public: // DX12-specific functionality:
 		void GetSubAllocation(
-			re::Buffer::UsageMask,
+			re::Buffer::Usage,
 			uint64_t alignedSize,
 			uint64_t& heapOffsetOut,
 			ID3D12Resource*& resourcePtrOut);

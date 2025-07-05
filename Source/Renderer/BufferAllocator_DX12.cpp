@@ -14,7 +14,7 @@
 namespace dx12
 {
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::UsageMask usageMask,
+		re::Buffer::Usage usageMask,
 		uint64_t alignedSize, 
 		uint64_t& baseByteOffsetOut,
 		ID3D12Resource*& resourcePtrOut)

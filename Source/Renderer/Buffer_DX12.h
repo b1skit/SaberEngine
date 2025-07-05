@@ -113,7 +113,7 @@ namespace dx12
 
 	public: // Helper accessors: Prefer using the PlatObj helpers over these
 		static D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(re::Buffer const*); // Convenience wrapper for PlatObj::GetGPUVirtualAddress()
-		static uint64_t GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize);
+		static uint64_t GetAlignedSize(re::Buffer::Usage usageMask, uint32_t bufferSize);
 		static constexpr uint32_t GetAlignment(re::BufferAllocator::AllocationPool);
 
 		static bool IsInSharedHeap(re::Buffer const*);

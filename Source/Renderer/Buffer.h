@@ -36,10 +36,10 @@ namespace re
 			Structured		= 1 << 1,
 			Raw				= 1 << 2, // 16B aligned data (E.g. Vertex/index buffers, byte address buffers, etc)
 
-			Invalid			= 0
+			Invalid			= 0,
+			None			= 0, // Convenience/readability: For when no extra usage bits are needed
 		};
-		using UsageMask = uint8_t;
-		static bool HasUsageBit(Usage, UsageMask);
+		static bool HasUsageBit(Usage usageBit, Usage usageMask);
 		static bool HasUsageBit(Usage, re::Buffer::BufferParams const&);
 		static bool HasUsageBit(Usage, re::Buffer const&);
 
@@ -58,19 +58,17 @@ namespace re
 			CPUWrite	= 1 << 3,	// CPU-mappable for writing. Upload heap only
 			//ReBAR		= 1 << 4,	// TODO
 		};
-		using AccessMask = uint8_t;
-		static bool HasAccessBit(Access, AccessMask);
+		static bool HasAccessBit(Access accessBit, Access accessMask);
 		static bool HasAccessBit(Access, re::Buffer::BufferParams const&);
 		static bool HasAccessBit(Access, re::Buffer const&);
-
 
 		struct BufferParams final
 		{
 			re::Lifetime m_lifetime = re::Lifetime::Permanent;
 			StagingPool m_stagingPool = StagingPool::StagingPool_Invalid;
 			MemoryPoolPreference m_memPoolPreference = MemoryPoolPreference::DefaultHeap;
-			AccessMask m_accessMask = Access::GPURead;
-			UsageMask m_usageMask = Usage::Invalid;
+			Access m_accessMask = Access::GPURead;
+			Usage m_usageMask = Usage::Invalid;
 
 			// Array size != 1 is only valid for Usage types with operator[] (e.g Structured, Raw)
 			uint32_t m_arraySize = 1; // Must be 1 for constant buffers
@@ -142,7 +140,7 @@ namespace re
 		uint32_t GetTotalBytes() const;
 		uint32_t GetStride() const;
 		StagingPool GetStagingPool() const;
-		uint8_t GetUsageMask() const;
+		Usage GetUsageMask() const;
 		re::Lifetime GetLifetime() const;
 
 		uint32_t GetArraySize() const; // Instanced buffers: How many instances of data does the buffer hold?
@@ -218,39 +216,39 @@ namespace re
 	};
 
 
-	inline bool Buffer::HasUsageBit(Usage usage, UsageMask usageMask)
+	inline bool Buffer::HasUsageBit(Usage usageBit, Usage usageMask)
 	{
-		return (usageMask & usage);
+		return (usageBit & usageMask);
 	}
 
 
-	inline bool Buffer::HasUsageBit(Usage usage, re::Buffer::BufferParams const& bufferParams)
+	inline bool Buffer::HasUsageBit(Usage usageBit, re::Buffer::BufferParams const& bufferParams)
 	{
-		return HasUsageBit(usage, bufferParams.m_usageMask);
+		return HasUsageBit(usageBit, bufferParams.m_usageMask);
 	}
 
 
-	inline bool Buffer::HasUsageBit(Usage usage, re::Buffer const& buffer)
+	inline bool Buffer::HasUsageBit(Usage usageBit, re::Buffer const& buffer)
 	{
-		return HasUsageBit(usage, buffer.GetBufferParams());
+		return HasUsageBit(usageBit, buffer.GetBufferParams());
 	}
 
 
-	inline bool Buffer::HasAccessBit(Access accessBits, AccessMask accessMask)
+	inline bool Buffer::HasAccessBit(Access accessBit, Access accessMask)
 	{
-		return (accessBits & accessMask);
+		return (accessBit & accessMask);
 	}
 
 
-	inline bool Buffer::HasAccessBit(Access access, re::Buffer::BufferParams const& bufferParams)
+	inline bool Buffer::HasAccessBit(Access accessBit, re::Buffer::BufferParams const& bufferParams)
 	{
-		return HasAccessBit(access, bufferParams.m_accessMask);
+		return HasAccessBit(accessBit, bufferParams.m_accessMask);
 	}
 
 
-	inline bool Buffer::HasAccessBit(Access access, re::Buffer const& buffer)
+	inline bool Buffer::HasAccessBit(Access accessBit, re::Buffer const& buffer)
 	{
-		return HasAccessBit(access, buffer.GetBufferParams());
+		return HasAccessBit(accessBit, buffer.GetBufferParams());
 	}
 
 
@@ -415,7 +413,7 @@ namespace re
 	}
 
 
-	inline uint8_t Buffer::GetUsageMask() const
+	inline Buffer::Usage Buffer::GetUsageMask() const
 	{
 		return m_bufferParams.m_usageMask;
 	}
@@ -458,4 +456,46 @@ namespace re
 		}
 		return INVALID_RESOURCE_IDX; // This should never happen
 	}
+}
+
+
+namespace
+{
+	inline re::Buffer::Usage operator|(re::Buffer::Usage lhs, re::Buffer::Usage rhs)
+	{
+		return static_cast<re::Buffer::Usage>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+	}
+	inline re::Buffer::Usage& operator|=(re::Buffer::Usage& lhs, re::Buffer::Usage rhs)
+	{
+		return lhs = lhs | rhs;
+	};
+	inline re::Buffer::Usage operator&(re::Buffer::Usage lhs, re::Buffer::Usage rhs)
+	{
+		return static_cast<re::Buffer::Usage>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
+	}
+	inline re::Buffer::Usage& operator&=(re::Buffer::Usage& lhs, re::Buffer::Usage rhs)
+	{
+		return lhs = lhs & rhs;
+	};
+
+
+	// ---
+
+
+	inline re::Buffer::Access operator|(re::Buffer::Access lhs, re::Buffer::Access rhs)
+	{
+		return static_cast<re::Buffer::Access>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+	}
+	inline re::Buffer::Access& operator|=(re::Buffer::Access& lhs, re::Buffer::Access rhs)
+	{
+		return lhs = lhs | rhs;
+	};
+	inline re::Buffer::Access operator&(re::Buffer::Access lhs, re::Buffer::Access rhs)
+	{
+		return static_cast<re::Buffer::Access>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
+	}
+	inline re::Buffer::Access& operator&=(re::Buffer::Access& lhs, re::Buffer::Access rhs)
+	{
+		return lhs = lhs & rhs;
+	};
 }

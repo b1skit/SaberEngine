@@ -64,7 +64,7 @@ namespace re
 
 			AllocationPool_Count
 		};
-		static AllocationPool BufferUsageMaskToAllocationPool(re::Buffer::UsageMask);
+		static AllocationPool BufferUsageMaskToAllocationPool(re::Buffer::Usage);
 
 	protected:
 		uint32_t AdvanceBaseIdx(AllocationPool, uint32_t alignedSize);
@@ -194,7 +194,7 @@ namespace re
 	}
 
 
-	inline BufferAllocator::AllocationPool BufferAllocator::BufferUsageMaskToAllocationPool(re::Buffer::UsageMask mask)
+	inline BufferAllocator::AllocationPool BufferAllocator::BufferUsageMaskToAllocationPool(re::Buffer::Usage mask)
 	{
 		SEAssert(mask != re::Buffer::Usage::Invalid, "Invalid usage mask");
 

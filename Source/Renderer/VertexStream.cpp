@@ -101,7 +101,7 @@ namespace re
 	core::InvPtr<re::VertexStream> VertexStream::Create(
 		StreamDesc const& streamDesc,
 		util::ByteVector&& data,
-		re::Buffer::UsageMask extraUsageBits /*= 0*/)
+		re::Buffer::Usage extraUsageBits /*= re::Buffer::Usage::None*/)
 	{		
 		// Vertex streams use a data hash as their ID (to allow sharing/reuse). Thus, we must compute it before we can
 		// make a decision about whether to actually create the stream or not
@@ -129,7 +129,7 @@ namespace re
 
 			StreamDesc m_streamDesc;
 			util::ByteVector m_data;
-			re::Buffer::UsageMask m_extraUsageBits = 0;
+			re::Buffer::Usage m_extraUsageBits = re::Buffer::Usage::None;
 		};
 		std::shared_ptr<VertexStreamLoadContext> loadContext = std::make_shared<VertexStreamLoadContext>();
 
@@ -160,7 +160,7 @@ namespace re
 		std::string const& bufferName =
 			std::format("VertexStream_{}_{}", TypeToCStr(m_streamDesc.m_type), GetDataHash());
 
-		const re::Buffer::UsageMask bufferUsage =
+		const re::Buffer::Usage bufferUsage =
 			re::Buffer::Raw | m_deferredBufferCreateParams->m_extraUsageBits;
 
 		m_streamBuffer = re::Buffer::Create(
@@ -192,7 +192,7 @@ namespace re
 		StreamDesc const& streamDesc,
 		util::ByteVector&& data,
 		util::HashKey dataHash,
-		re::Buffer::UsageMask extraUsageBits)
+		re::Buffer::Usage extraUsageBits)
 		: m_streamDesc(streamDesc)
 		, m_srvResourceHandle(INVALID_RESOURCE_IDX)
 	{

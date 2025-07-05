@@ -9,7 +9,7 @@
 
 namespace opengl
 {
-	uint32_t BufferAllocator::GetAlignedSize(uint32_t bufferByteSize, re::Buffer::UsageMask usageMask)
+	uint32_t BufferAllocator::GetAlignedSize(uint32_t bufferByteSize, re::Buffer::Usage usageMask)
 	{
 		const re::BufferAllocator::AllocationPool allocationPool =
 			re::BufferAllocator::BufferUsageMaskToAllocationPool(usageMask);
@@ -48,7 +48,7 @@ namespace opengl
 
 	
 	void BufferAllocator::GetSubAllocation(
-		re::Buffer::UsageMask usageMask, 
+		re::Buffer::Usage usageMask, 
 		uint32_t size, 
 		GLuint& bufferNameOut,
 		GLintptr& baseOffsetOut)

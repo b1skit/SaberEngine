@@ -87,13 +87,13 @@ namespace re
 			std::vector<MorphData> m_morphTargetData; // 1 entry per displacement
 
 			// TODO: Should this be part of the data hash (and if so, moved to the StreamDesc)?
-			re::Buffer::UsageMask m_extraUsageBits = 0; // Logically OR'd with our default vertex/index flags
+			re::Buffer::Usage m_extraUsageBits = re::Buffer::Usage::None; // Logically OR'd with our default vertex/index flags
 		};
 
 
 	public:
 		[[nodiscard]] static core::InvPtr<re::VertexStream> Create(
-			StreamDesc const&, util::ByteVector&&, re::Buffer::UsageMask extraUsageBits = 0);
+			StreamDesc const&, util::ByteVector&&, re::Buffer::Usage extraUsageBits = re::Buffer::Usage::None);
 
 		[[nodiscard]] static core::InvPtr<re::VertexStream> Create(CreateParams&&);
 
@@ -143,7 +143,7 @@ namespace re
 		struct DeferredBufferCreateParams final
 		{
 			util::ByteVector m_data;
-			re::Buffer::UsageMask m_extraUsageBits;
+			re::Buffer::Usage m_extraUsageBits;
 		};
 		std::unique_ptr<DeferredBufferCreateParams> m_deferredBufferCreateParams;
 
@@ -151,7 +151,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(StreamDesc const&, util::ByteVector&& data, util::HashKey, re::Buffer::UsageMask extraUsageBits);
+		VertexStream(StreamDesc const&, util::ByteVector&& data, util::HashKey, re::Buffer::Usage extraUsageBits);
 
 
 	private: // No copying allowed

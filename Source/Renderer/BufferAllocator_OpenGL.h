@@ -8,7 +8,7 @@ namespace opengl
 	class BufferAllocator final : public virtual re::BufferAllocator
 	{
 	public:
-		static uint32_t GetAlignedSize(uint32_t bufferByteSize, re::Buffer::UsageMask);
+		static uint32_t GetAlignedSize(uint32_t bufferByteSize, re::Buffer::Usage);
 
 
 	public:
@@ -23,7 +23,7 @@ namespace opengl
 
 
 	public: // OpenGL-specific functionality:
-		void GetSubAllocation(re::Buffer::UsageMask, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
+		void GetSubAllocation(re::Buffer::Usage, uint32_t size, GLuint& bufferNameOut, GLintptr& baseOffsetOut);
 
 
 	private:

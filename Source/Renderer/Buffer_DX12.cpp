@@ -485,7 +485,7 @@ namespace dx12
 	}
 
 
-	uint64_t Buffer::GetAlignedSize(re::Buffer::UsageMask usageMask, uint32_t bufferSize)
+	uint64_t Buffer::GetAlignedSize(re::Buffer::Usage usageMask, uint32_t bufferSize)
 	{
 		return util::RoundUpToNearestMultiple<uint64_t>(
 			bufferSize,
