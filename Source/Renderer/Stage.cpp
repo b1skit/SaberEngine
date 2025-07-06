@@ -325,7 +325,7 @@ namespace gr
 		core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex != nullptr, "Invalid texture");
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
 
 #if defined(_DEBUG)
@@ -359,7 +359,7 @@ namespace gr
 		core::InvPtr<re::Texture> const& tex, re::TextureView const& texView)
 	{
 		SEAssert(tex != nullptr, "Invalid texture");
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
 
 #if defined(_DEBUG)
@@ -740,8 +740,8 @@ namespace gr
 	{
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(tex != nullptr, "Invalid texture");
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 &&
-			(tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0 &&
+			(tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
 
 #if defined(_DEBUG)
@@ -787,8 +787,8 @@ namespace gr
 	{
 		SEAssert(shaderName, "Shader name cannot be null");
 		SEAssert(tex != nullptr, "Invalid texture");
-		SEAssert((tex->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 &&
-			(tex->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0 &&
+			(tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
 
 #if defined(_DEBUG)

@@ -808,7 +808,7 @@ namespace gr
 		// Default cube map texture fallbacks:
 		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
 		{
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 			.m_dimension = re::Texture::Dimension::TextureCube,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = re::Texture::ColorSpace::Linear,

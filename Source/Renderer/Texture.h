@@ -8,6 +8,8 @@
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "Core/Util/CastUtils.h"
+
 #include "Renderer/Shaders/Common/ResourceCommon.h"
 
 
@@ -370,7 +372,7 @@ namespace re
 
 	inline bool Texture::HasUsageBit(Texture::Usage usage) const
 	{
-		return m_texParams.m_usage & usage;
+		return (m_texParams.m_usage & usage) != 0;
 	}
 
 
@@ -465,3 +467,38 @@ namespace re
 }
 
 
+namespace
+{
+	inline re::Texture::Usage operator|(re::Texture::Usage lhs, re::Texture::Usage rhs)
+	{
+		return static_cast<re::Texture::Usage>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+	}
+	inline re::Texture::Usage& operator|=(re::Texture::Usage& lhs, re::Texture::Usage rhs)
+	{
+		return lhs = lhs | rhs;
+	};
+	inline re::Texture::Usage operator&(re::Texture::Usage lhs, re::Texture::Usage rhs)
+	{
+		return static_cast<re::Texture::Usage>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
+	}
+	inline re::Texture::Usage& operator&=(re::Texture::Usage& lhs, re::Texture::Usage rhs)
+	{
+		return lhs = lhs & rhs;
+	};
+	inline bool operator!(re::Texture::Usage usage)
+	{
+		return static_cast<uint8_t>(usage) == 0;
+	}
+	inline bool operator==(re::Texture::Usage lhs, re::Texture::Usage rhs)
+	{
+		return static_cast<uint8_t>(lhs) == static_cast<uint8_t>(rhs);
+	}
+	inline bool operator!=(re::Texture::Usage lhs, re::Texture::Usage rhs)
+	{
+		return static_cast<uint8_t>(lhs) != static_cast<uint8_t>(rhs);
+	}
+	inline bool operator!=(re::Texture::Usage lhs, int rhs)
+	{
+		return static_cast<uint8_t>(lhs) != util::CheckedCast<uint8_t>(rhs);
+	}
+}

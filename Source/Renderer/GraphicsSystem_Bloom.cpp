@@ -109,8 +109,7 @@ namespace gr
 		re::Texture::TextureParams bloomTargetTexParams;
 		bloomTargetTexParams.m_width = bloomTargetWidthHeight.x;
 		bloomTargetTexParams.m_height = bloomTargetWidthHeight.y;
-		bloomTargetTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
+		bloomTargetTexParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
 		bloomTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		bloomTargetTexParams.m_format = deferredLightTargetTex->GetTextureParams().m_format;
 		bloomTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;

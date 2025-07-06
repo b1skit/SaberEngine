@@ -39,7 +39,7 @@ namespace gr
 		const re::Texture::TextureParams RGBA8Params{
 			.m_width = util::CheckedCast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
 			.m_height = util::CheckedCast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc),
+			.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = re::Texture::ColorSpace::Linear,

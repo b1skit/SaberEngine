@@ -198,7 +198,7 @@ namespace gr
 			.m_width = m_xRes,
 			.m_height = m_yRes,
 			.m_numMips = 5, // Mips [0,4]
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc),
+			.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::R16F,
 			.m_colorSpace = re::Texture::ColorSpace::Linear,

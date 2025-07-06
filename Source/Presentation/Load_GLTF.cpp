@@ -659,7 +659,7 @@ namespace
 				texParams = re::Texture::TextureParams{
 					.m_width = 2,
 					.m_height = 2,
-					.m_usage = static_cast<re::Texture::Usage>(re::Texture::ColorSrc | re::Texture::ColorTarget),
+					.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 					.m_dimension = re::Texture::Dimension::Texture2D,
 					.m_format = m_formatFallback,
 					.m_colorSpace = m_colorSpace,

@@ -147,7 +147,7 @@ namespace load
 
 		// Modify default TextureParams to be suitable for a generic error texture:
 		texParamsOut = re::Texture::TextureParams{
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 			.m_dimension = (totalFaces == 1 ?
 				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCube),
 			.m_format = re::Texture::Format::RGBA8_UNORM,
@@ -312,7 +312,7 @@ namespace load
 
 		// Modify default TextureParams to be suitable for a generic error texture:
 		texParamsOut = re::Texture::TextureParams{
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+			.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::RGBA8_UNORM,
 			.m_colorSpace = colorSpace

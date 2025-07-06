@@ -174,8 +174,7 @@ namespace gr
 		re::Texture::TextureParams brdfParams;
 		brdfParams.m_width = brdfTexWidthHeight;
 		brdfParams.m_height = brdfTexWidthHeight;
-		brdfParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
+		brdfParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
 		brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
 		brdfParams.m_format = re::Texture::Format::RGBA16F;
 		brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -223,7 +222,7 @@ namespace gr
 		{
 			.m_width = iemTexWidthHeight,
 			.m_height = iemTexWidthHeight,
-			.m_usage = static_cast<re::Texture::Usage>(re::Texture::ColorTarget | re::Texture::ColorSrc),
+			.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
 			.m_dimension = re::Texture::Dimension::TextureCube,
 			.m_format = re::Texture::Format::RGBA16F,
 			.m_colorSpace = re::Texture::ColorSpace::Linear,
@@ -487,8 +486,7 @@ namespace gr
 		re::Texture::TextureParams lightTargetTexParams;
 		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
 		lightTargetTexParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
-		lightTargetTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
+		lightTargetTexParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
 		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
 		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;

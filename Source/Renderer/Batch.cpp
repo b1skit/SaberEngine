@@ -472,7 +472,7 @@ namespace re
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(sampler.IsValid(), "Invalid sampler");
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
-		SEAssert((texture->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0, "Invalid usage");
+		SEAssert((texture->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0, "Invalid usage");
 
 #if defined(_DEBUG)
 		for (auto const& existingTexAndSamplerInput : m_batchTextureSamplerInputs)
@@ -500,8 +500,8 @@ namespace re
 		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension_Invalid, "Invalid view dimension");
-		SEAssert((texture->GetTextureParams().m_usage & re::Texture::ColorSrc) != 0 && 
-			(texture->GetTextureParams().m_usage & re::Texture::ColorTarget) != 0,
+		SEAssert((texture->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0 && 
+			(texture->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
 
 #if defined(_DEBUG)
