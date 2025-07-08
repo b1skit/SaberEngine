@@ -402,10 +402,7 @@ namespace dx12
 					m_gpuCbvSrvUavDescriptorHeap->SetInlineCBV(
 						rootParam->m_index, bufferPlatObj->GetGPUVirtualAddress(bufferInput));
 
-					toState = (m_type == dx12::CommandListType::Compute ?
-						D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE : 
-							(isInSharedHeap ? 
-								D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+					toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 				}
 				break;
 				case RootSignature::RootParameter::Type::SRV:
@@ -452,10 +449,7 @@ namespace dx12
 					{
 						tableDescriptor = dx12::Buffer::GetCBV(bufferInput.GetBuffer(), bufView);
 
-						toState = (m_type == dx12::CommandListType::Compute ?
-							D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE :
-							(isInSharedHeap ?
-								D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE));
+						toState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 					}
 					break;
 					case dx12::RootSignature::DescriptorType::SRV:

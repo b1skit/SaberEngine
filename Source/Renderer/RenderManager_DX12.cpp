@@ -596,7 +596,7 @@ namespace dx12
 							stagePipeline.GetName().c_str());
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
-						cmdList->RecordStageName(stage->GetName());
+						cmdList->RecordStageName((*stageItr)->GetName());
 #endif
 
 						const gr::Stage::Type curStageType = (*stageItr)->GetStageType();

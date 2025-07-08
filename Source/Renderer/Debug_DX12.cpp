@@ -236,6 +236,13 @@ namespace dx12
 			dx12::CheckHResult(hr, "Failed to get debug interface");
 			debugInterface->EnableDebugLayer();
 
+			// Enable legacy barrier validation:
+			ComPtr<ID3D12Debug6> debugInterface6;
+			hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface6));
+			CheckHResult(hr, "Failed to get query interface");
+			
+			debugInterface6->SetForceLegacyBarrierValidation(true);
+
 			LOG("Debug level %d: Enabled D3D12 debug layer", debugLevel);
 		}
 
@@ -246,6 +253,7 @@ namespace dx12
 			HRESULT hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
 			CheckHResult(hr, "Failed to get query interface");
 			debugInterface1->SetEnableGPUBasedValidation(true);
+			debugInterface1->SetEnableSynchronizedCommandQueueValidation(true); // Should be enabled by default...
 
 			LOG("Debug level %d: Enabled D3D12 GPU-based validation", debugLevel);
 		}

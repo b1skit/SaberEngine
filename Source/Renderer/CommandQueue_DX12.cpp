@@ -83,7 +83,8 @@ namespace
 
 			return state == D3D12_RESOURCE_STATE_COMMON ||
 				state == D3D12_RESOURCE_STATE_UNORDERED_ACCESS ||
-				state == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+				state == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE ||
+				state == D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 		}
 		break;
 		case dx12::CommandListType::Copy:
@@ -110,7 +111,7 @@ namespace
 		// https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html#command-queue-layout-compatibility
 		// https://microsoft.github.io/DirectX-Specs/d3d/CPUEfficiency.html#state-support-by-command-list-type
 
-		SEAssert(currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+		SEAssert(currentGlobalState != D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 			"Invalid state for transition");
 
 		// If the previous and current command list type are the same, we know they'll support the same transition
@@ -156,7 +157,7 @@ namespace
 		D3D12_RESOURCE_STATES afterState,
 		uint32_t subresourceIdx,
 		std::vector<D3D12_RESOURCE_BARRIER>& barriers,
-		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE)
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE)
 	{
 #if defined(CHECK_TRANSITION_BARRIER_COMMAND_LIST_COMPATIBILITY)
 		SEAssert(CommandListTypeSupportsState(cmdListType, beforeState) &&
@@ -418,8 +419,7 @@ namespace dx12
 				nextFenceValue = copyQueue.GetNextFenceValue();
 			}
 			break;
-			default:
-				SEAssertF("Invalid/unsupported command list type");
+			default: SEAssertF("Invalid/unsupported command list type");
 			}
 		};
 
@@ -436,13 +436,13 @@ namespace dx12
 				lastCmdListType,
 				resource,
 				before,
-				D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+				D3D12_RESOURCE_STATE_COMMON,
 				subresourceIdx,
 				*targetBarriers);
 
 			globalResourceStates.SetResourceState(
 				resource,
-				D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+				D3D12_RESOURCE_STATE_COMMON,
 				subresourceIdx,
 				nextFenceValue);
 		};
@@ -470,10 +470,7 @@ namespace dx12
 						globalResourceStates.GetResourceState(currentResource);
 					
 					const dx12::CommandListType lastCmdListType = globalResourceState.GetLastCommandListType();
-					if (lastCmdListType == dx12::CommandListType::CommandListType_Invalid)
-					{
-						continue; // Resource not used yet
-					}
+					const bool isFirstUse = lastCmdListType == dx12::CommandListType::CommandListType_Invalid;
 
 					// Here, we check for (sub)resources in the pending list that have an incompatible BEFORE state in
 					// the global state tracker. If we find any, we transition them to common so the next transitions
@@ -494,11 +491,27 @@ namespace dx12
 						const D3D12_RESOURCE_STATES globalAllSubresourceState = 
 							globalResourceState.GetState(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
-						if (NeedsCommonTransition(globalAllSubresourceState, lastCmdListType, m_type))
+						if (isFirstUse)
+						{
+							if (CommandListTypeSupportsState(m_type, globalAllSubresourceState) == false)
+							{
+								std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
+								uint64_t nextFenceValue = 0;
+								ConfigureTransitionPtrs(dx12::CommandListType::Direct, targetBarriers, nextFenceValue);
+
+								AddCommonTransitionAndUpdateGlobalState(
+									dx12::CommandListType::Direct,
+									currentResource,
+									targetBarriers,
+									nextFenceValue,
+									globalAllSubresourceState,
+									D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+							}
+						}
+						else if (NeedsCommonTransition(globalAllSubresourceState, lastCmdListType, m_type))
 						{
 							std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
 							uint64_t nextFenceValue = 0;
-
 							ConfigureTransitionPtrs(lastCmdListType, targetBarriers, nextFenceValue);
 
 							AddCommonTransitionAndUpdateGlobalState(
@@ -531,12 +544,28 @@ namespace dx12
 							const D3D12_RESOURCE_STATES globalD3DState = globalState.second;
 
 							// Handle individual subresources that are in an incompatible state for the current queue:
-							if (NeedsCommonTransition(globalD3DState, lastCmdListType, m_type))
+							if (isFirstUse)
+							{
+								if (CommandListTypeSupportsState(m_type, globalD3DState) == false)
+								{
+									std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
+									uint64_t nextFenceValue = 0;
+									ConfigureTransitionPtrs(dx12::CommandListType::Direct, targetBarriers, nextFenceValue);
+
+									AddCommonTransitionAndUpdateGlobalState(
+										dx12::CommandListType::Direct,
+										currentResource,
+										targetBarriers,
+										nextFenceValue,
+										globalD3DState,
+										globalStateSubresourceIdx);
+								}
+							}
+							else if (NeedsCommonTransition(globalD3DState, lastCmdListType, m_type))
 							{
 								// Transition the resource from its current global state to common:
 								std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
 								uint64_t nextFenceValue = 0;
-
 								ConfigureTransitionPtrs(lastCmdListType, targetBarriers, nextFenceValue);
 
 								AddCommonTransitionAndUpdateGlobalState(
@@ -570,11 +599,36 @@ namespace dx12
 
 							// As any remaining subresources are resolved by the ALL subresources record, we only need
 							// to record more transitions if the ALL state is compatible with the current queue
-							if (NeedsCommonTransition(globalAllState, lastCmdListType, m_type))
+							if (isFirstUse)
+							{
+								if (CommandListTypeSupportsState(m_type, globalAllState) == false)
+								{
+									std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
+									uint64_t nextFenceValue = 0;
+									ConfigureTransitionPtrs(dx12::CommandListType::Direct, targetBarriers, nextFenceValue);
+
+									// Handle any remaining individual subresources that have a global state covered by the ALL 
+									// subresources record
+									for (uint32_t subresourceIdx = 0; subresourceIdx < numSubresources; subresourceIdx++)
+									{
+										const bool didProcessSubresource = processedSubresourceIdxs[subresourceIdx];
+										if (!didProcessSubresource)
+										{
+											AddCommonTransitionAndUpdateGlobalState(
+												dx12::CommandListType::Direct,
+												currentResource,
+												targetBarriers,
+												nextFenceValue,
+												globalAllState,
+												subresourceIdx);
+										}
+									}
+								}
+							}
+							else if (NeedsCommonTransition(globalAllState, lastCmdListType, m_type))
 							{
 								std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
 								uint64_t nextFenceValue = 0;
-
 								ConfigureTransitionPtrs(lastCmdListType, targetBarriers, nextFenceValue);
 
 								// Handle any remaining individual subresources that have a global state covered by the ALL 
@@ -912,7 +966,7 @@ namespace dx12
 				dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 				(i + 1),
 				finalCommandLists.size(),
-				dx12::GetDebugName(finalCommandLists[i]->GetD3DCommandList().Get()).c_str()).c_str());
+				dx12::GetDebugName(finalCommandLists[i]->GetD3DCommandList().Get())).c_str());
 #endif
 
 			finalCommandLists[i]->Close();

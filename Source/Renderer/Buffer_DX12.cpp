@@ -276,11 +276,13 @@ namespace dx12
 
 			std::wstring const& debugName = CreateDebugName(buffer);
 
+			// Note: Resources created in a D3D12_HEAP_TYPE_UPLOAD heap must have a D3D12_RESOURCE_STATE_GENERIC_READ
+			// initial state
 			platObj->m_gpuResource = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = bufferDesc,
 					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
-					.m_initialState = D3D12_RESOURCE_STATE_COMMON,
+					.m_initialState = D3D12_RESOURCE_STATE_GENERIC_READ,
 				},
 				debugName.c_str());
 

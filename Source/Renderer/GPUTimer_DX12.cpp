@@ -5,6 +5,7 @@
 #include "RenderManager.h"
 #include "SysInfo_DX12.h"
 
+#include "Core/Config.h"
 #include "Core/PerfLogger.h"
 
 
@@ -96,7 +97,12 @@ namespace dx12
 		D3D12_FEATURE_DATA_D3D12_OPTIONS3 const* options3 = static_cast<D3D12_FEATURE_DATA_D3D12_OPTIONS3 const*>(
 			dx12::SysInfo::GetD3D12FeatureSupportData(D3D12_FEATURE_D3D12_OPTIONS3));
 
-		platObj->m_copyQueriesSupported = options3->CopyQueueTimestampQueriesSupported;
+		// Note: There is currently a bug in the D3D12 runtime that causes a GPU-based-validation error if we try and
+		// use copy queue timestamp queries, even though it is valid and supported (MS bug 58278860, 
+		// Agility SDK v1.616.1). For now, just disable copy queue timestamp queries when GBV is enabled
+		const bool debugEnabled = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0;
+
+		platObj->m_copyQueriesSupported = options3->CopyQueueTimestampQueriesSupported && !debugEnabled;
 		if (platObj->m_copyQueriesSupported)
 		{
 			CreateQueryResources(

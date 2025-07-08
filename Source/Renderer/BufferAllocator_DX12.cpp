@@ -57,8 +57,9 @@ namespace dx12
 
 		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
-		// Note: We must start in the common state to ensure all command list types are able to transition the resource
-		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_COMMON;
+		// Note: Resources created in a D3D12_HEAP_TYPE_UPLOAD heap must have a D3D12_RESOURCE_STATE_GENERIC_READ
+		// initial state
+		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
 
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{	

@@ -8,7 +8,7 @@ namespace
 	// Enable any of these:
 //#define DEBUG_CMD_QUEUE_RESOURCE_TRANSITIONS
 //#define DEBUG_CMD_LIST_RESOURCE_TRANSITIONS
-//#define DEBUG_CMD_LIST_LOG_STAGE_NAMES
+//#define DEBUG_CMD_LIST_LOG_STAGE_NAMES // Warning: May overflow maximum allowed log buffer sizes
 //#define DEBUG_STATE_TRACKER_RESOURCE_TRANSITIONS
 
 

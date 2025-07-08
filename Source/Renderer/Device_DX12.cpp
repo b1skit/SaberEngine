@@ -160,8 +160,6 @@ namespace
 			std::vector<D3D12_MESSAGE_ID> denyIds =
 			{
 				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, // Intentional usage
-				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
-				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
 			};
 
 			if (core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false)

@@ -490,6 +490,16 @@ namespace
 			(resourceDesc.m_resourceDesc.SampleDesc.Count > 0 &&
 				s_supportsMSAA),
 			"Resource is misconfigured, or MSAA is not supported");
+
+		SEAssert(resourceDesc.m_heapType != D3D12_HEAP_TYPE_UPLOAD || 
+			resourceDesc.m_initialState == D3D12_RESOURCE_STATE_GENERIC_READ,
+			"Placed resource created in the D3D12_HEAP_TYPE_UPLOAD heap must have a D3D12_RESOURCE_STATE_GENERIC_READ "
+			"initial state");
+
+		SEAssert(resourceDesc.m_heapType != D3D12_HEAP_TYPE_READBACK ||
+			resourceDesc.m_initialState == D3D12_RESOURCE_STATE_COPY_DEST,
+			"Placed resource created in the D3D12_HEAP_TYPE_READBACK heap must have a D3D12_RESOURCE_STATE_COPY_DEST "
+			"initial state");
 #endif
 	}
 }
