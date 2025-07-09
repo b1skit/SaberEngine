@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "ParseHelpers.h"
 #include "ShaderCompile_DX12.h"
 
@@ -151,7 +151,7 @@ namespace
 
 
 	// Helper function to perform the actual compilation work
-	static droid::ErrorCode CompileShader_HLSL_DXC_API_Internal(
+	static void CompileShader_HLSL_DXC_API_Internal(
 		droid::HLSLCompileOptions const& compileOptions,
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
@@ -192,7 +192,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ComError;
+			throw droid::ComException("Failed to create IDxcUtils instance with HRESULT: 0x" + std::to_string(hr));
 		}
 
 		hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
@@ -202,7 +202,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ComError;
+			throw droid::ComException("Failed to create IDxcCompiler instance with HRESULT: 0x" + std::to_string(hr));
 		}
 
 		// Load source file
@@ -214,7 +214,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to find shader source file: " + extensionlessSrcFilename + ".hlsl");
 		}
 
 		Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
@@ -227,7 +227,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to load shader source file: " + inputPath);
 		}
 
 		// Build arguments vector
@@ -324,7 +324,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ComError;
+			throw droid::ComException("Failed to create IDxcUtils instance with HRESULT: 0x" + std::to_string(hr));
 		}
 
 		// Create include handler
@@ -337,7 +337,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ComError;
+			throw droid::ComException("Failed to create IDxcIncludeHandler with HRESULT: 0x" + std::to_string(hr));
 		}
 
 		// Compile:
@@ -361,7 +361,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ShaderError;
+			throw droid::ShaderException("DXC compilation failed with HRESULT: 0x" + std::to_string(hr));
 		}
 
 		// Check compilation status
@@ -383,7 +383,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ShaderError;
+			throw droid::ShaderException("Shader compilation failed with errors");
 		}
 
 		// Get compiled shader blob
@@ -396,7 +396,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::ShaderError;
+			throw droid::ShaderException("Failed to get compiled shader blob");
 		}
 
 		// Write output file
@@ -414,7 +414,7 @@ namespace
 			{
 				CoUninitialize();
 			}
-			return droid::ErrorCode::FileError;
+			throw droid::FileException("Failed to create output file: " + combinedFilePath);
 		}
 
 		outFile.write(static_cast<const char*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize());
@@ -424,13 +424,13 @@ namespace
 		{
 			CoUninitialize();
 		}
-		return droid::ErrorCode::Success;
+		// Function completes successfully - no return value needed
 	}
 }
 
 namespace droid
 {
-	droid::ErrorCode CompileShader_HLSL_DXC_API(
+	void CompileShader_HLSL_DXC_API(
 		HLSLCompileOptions const& compileOptions,
 		std::vector<std::string> const& includeDirectories,
 		std::string const& extensionlessSrcFilename,
@@ -457,12 +457,12 @@ namespace droid
 				defines,
 				outputDir);
 			
-			return droid::ErrorCode::Success;
+			// No return value needed for void function
 		}
 		else
 		{
 			// Singlethreaded compilation:
-			return CompileShader_HLSL_DXC_API_Internal(
+			CompileShader_HLSL_DXC_API_Internal(
 				compileOptions,
 				includeDirectories,
 				extensionlessSrcFilename,
@@ -475,7 +475,7 @@ namespace droid
 	}
 
 
-	droid::ErrorCode CompileShader_HLSL_DXC_CMDLINE(
+	void CompileShader_HLSL_DXC_CMDLINE(
 		std::string const& directXCompilerExePath,
 		PROCESS_INFORMATION& processInfo,
 		HLSLCompileOptions const& compileOptions,
@@ -502,8 +502,6 @@ namespace droid
 			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
 		std::cout << outputMsg.c_str();
-
-		droid::ErrorCode result = droid::ErrorCode::Success;
 
 		// Build our wstrigns:
 		std::wstring const& directXCompilerExePathW = util::ToWideString(directXCompilerExePath);
@@ -587,7 +585,7 @@ namespace droid
 		{
 			std::cout << "Command line for dxc.exe is too large: \"" << 
 				util::FromWideString(dxcCommandLineArgsW).c_str() << "\"\n";
-			return droid::ErrorCode::ConfigurationError;
+			throw droid::ConfigurationException("Command line for dxc.exe is too large");
 		}
 
 		// Copy the assembled command lines into a non-const array, as the unicode CreateProcessW may modify it
@@ -619,14 +617,14 @@ namespace droid
 
 		if (!dxcProcessCreated)
 		{
-			return droid::ErrorCode::DependencyError;
+			throw droid::DependencyException("Failed to create DXC compiler process");
 		}
 
-		return result;
+		// Function completes successfully - no return value needed
 	}
 
 
-	droid::ErrorCode PrintHLSLCompilerVersion(std::string const& directXCompilerExePath)
+	void PrintHLSLCompilerVersion(std::string const& directXCompilerExePath)
 	{
 		std::wstring const& directXCompilerExePathW = util::ToWideString(directXCompilerExePath);
 
@@ -664,7 +662,7 @@ namespace droid
 
 		if (!dxcProcessCreated)
 		{
-			return droid::ErrorCode::DependencyError;
+			throw droid::DependencyException("Failed to create DXC compiler process for version check");
 		}
 
 		WaitForSingleObject(processInfo.hProcess, INFINITE); // Wait until the process is done to maintain log ordering
@@ -673,6 +671,6 @@ namespace droid
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);
 
-		return droid::ErrorCode::Success;
+		// Function completes successfully - no return value needed
 	}
 }

@@ -1,25 +1,52 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 
 
 namespace droid
 {
-	enum ErrorCode : int
+	// Exception classes for different error types
+	class FileException : public std::runtime_error
 	{
-		Success = 0,
-		NoModification = 1,
-
-		FileError			= -1,	// E.g. Can't find/open a file
-		JSONError			= -2,	// E.g. JSON contains a structural error
-		ShaderError			= -3,	// E.g. HLSL compiler returned an error code
-		GenerationError		= -4,	// E.g. Bitmask overflow: Generated data is bad
-		ConfigurationError	= -5,	// E.g. Bad command line arg
-		DependencyError		= -6,	// E.g. Error invoking an external process, or the process returned an error
-		ComError			= -7,	// E.g. COM interface error when using DXC API
+	public:
+		explicit FileException(const std::string& message) : std::runtime_error(message) {}
 	};
-	extern constexpr char const* ErrorCodeToCStr(ErrorCode);
 
+	class JSONException : public std::runtime_error
+	{
+	public:
+		explicit JSONException(const std::string& message) : std::runtime_error(message) {}
+	};
+
+	class ShaderException : public std::runtime_error
+	{
+	public:
+		explicit ShaderException(const std::string& message) : std::runtime_error(message) {}
+	};
+
+	class GenerationException : public std::runtime_error
+	{
+	public:
+		explicit GenerationException(const std::string& message) : std::runtime_error(message) {}
+	};
+
+	class ConfigurationException : public std::runtime_error
+	{
+	public:
+		explicit ConfigurationException(const std::string& message) : std::runtime_error(message) {}
+	};
+
+	class DependencyException : public std::runtime_error
+	{
+	public:
+		explicit DependencyException(const std::string& message) : std::runtime_error(message) {}
+	};
+
+	class ComException : public std::runtime_error
+	{
+	public:
+		explicit ComException(const std::string& message) : std::runtime_error(message) {}
+	};
 
 	struct ParseParams;
-	ErrorCode DoParsingAndCodeGen(ParseParams const&);
+	bool DoParsingAndCodeGen(ParseParams const&);
 }

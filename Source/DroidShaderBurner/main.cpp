@@ -34,7 +34,8 @@ int main(int argc, char* argv[])
 	std::cout << droid::k_logHeader;
 	std::cout << "Launching...\n";
 
-	droid::ErrorCode result = droid::ErrorCode::Success;
+	std::string errorMessage;
+	bool hasConfigurationError = false;
 
 	droid::ParseParams parseParams{
 		// Paths:
@@ -136,7 +137,8 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					result = droid::ErrorCode::ConfigurationError;
+					hasConfigurationError = true;
+					errorMessage = "Missing argument for project root";
 					break;
 				}
 			}
@@ -152,7 +154,8 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					result = droid::ErrorCode::ConfigurationError;
+					hasConfigurationError = true;
+					errorMessage = "Missing argument for DX12 shader compiler";
 					break;
 				}
 			}
@@ -166,7 +169,8 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					result = droid::ErrorCode::ConfigurationError;
+					hasConfigurationError = true;
+					errorMessage = "Missing argument for DX12 target profile";
 					break;
 				}
 			}
@@ -181,14 +185,16 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					result = droid::ErrorCode::ConfigurationError;
+					hasConfigurationError = true;
+					errorMessage = "Missing argument for build configuration";
 					break;
 				}
 			}
 			else
 			{
 				std::cout << "Invalid command line argument: " << currentArg.c_str() << "\n";
-				result = droid::ErrorCode::ConfigurationError;
+				hasConfigurationError = true;
+				errorMessage = "Invalid command line argument: " + currentArg;
 			}
 		}
 
@@ -200,24 +206,33 @@ int main(int argc, char* argv[])
 		{
 			std::cout << "Project root path not received. Supply \"" << k_projectRootCmdLineArg << 
 				" X:\\Path\\To\\SaberEngine\\\" and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
+			hasConfigurationError = true;
+			errorMessage = "Project root path not received";
 		}
 		if (parseParams.m_directXCompilerExePath.empty() && parseParams.m_useDXCApi == false)
 		{
 			std::cout << "DX12 shader compiler path not received. Supply \"" << k_dx12ShaderCompilerCmdLineArg <<
 				" X:\\Path\\To\\dxc.exe\" and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
+			hasConfigurationError = true;
+			errorMessage = "DX12 shader compiler path not received";
 		}
 		if (!buildConfigArgReceived || parseParams.m_buildConfiguration == util::BuildConfiguration::Invalid)
 		{
 			std::cout << "Build configuration argument not received. Supply \"" << k_buildConfigCmdLineArg <<
 				" <config>, with <config> = Debug/DebugRelease/Profile/Release and relaunch.\n";
-			result = droid::ErrorCode::ConfigurationError;
+			hasConfigurationError = true;
+			errorMessage = "Build configuration argument not received";
 		}
 	}
 
 
-	if (result == droid::ErrorCode::Success)
+	// Check for configuration errors before proceeding
+	if (hasConfigurationError)
+	{
+		throw droid::ConfigurationException(errorMessage);
+	}
+
+	try
 	{
 		// Convert paths from relative to absolute:
 		parseParams.m_effectSourceDir = parseParams.m_projectRootDir + parseParams.m_effectSourceDir;
@@ -287,15 +302,57 @@ int main(int argc, char* argv[])
 		}
 		if (doBuild)
 		{
-			result = droid::DoParsingAndCodeGen(parseParams);
+			bool didModify = droid::DoParsingAndCodeGen(parseParams);
+			std::cout << std::format(
+				"\nDroid resource burning completed{}.\n",
+				didModify ? " with modifications" : " with no modifications");
 		}
+		else
+		{
+			std::cout << "\nDroid resource burning completed (clean only).\n";
+		}
+
+		return 0;
 	}
-
-	std::cout << std::format(
-		"\nDroid resource burning {} with code \"{}\"\n",
-		result >= 0 ? "completed" : "failed",
-		droid::ErrorCodeToCStr(result)).c_str();
-
-	return result >= 0 ? droid::ErrorCode::Success : result;
+	catch (const droid::FileException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with FileException: \"{}\"\n", e.what());
+		return -1;
+	}
+	catch (const droid::JSONException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with JSONException: \"{}\"\n", e.what());
+		return -2;
+	}
+	catch (const droid::ShaderException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with ShaderException: \"{}\"\n", e.what());
+		return -3;
+	}
+	catch (const droid::GenerationException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with GenerationException: \"{}\"\n", e.what());
+		return -4;
+	}
+	catch (const droid::ConfigurationException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with ConfigurationException: \"{}\"\n", e.what());
+		return -5;
+	}
+	catch (const droid::DependencyException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with DependencyException: \"{}\"\n", e.what());
+		return -6;
+	}
+	catch (const droid::ComException& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with ComException: \"{}\"\n", e.what());
+		return -7;
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << std::format("\nDroid resource burning failed with exception: \"{}\"\n", e.what());
+		return -99;
+	}
 }
 
