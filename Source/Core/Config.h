@@ -27,7 +27,7 @@ namespace core
 
 	public:
 		Config();
-		~Config();
+		~Config() = default;
 
 		Config(Config&&) noexcept = default;
 		Config& operator=(Config&&) noexcept = default;

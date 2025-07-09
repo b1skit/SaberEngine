@@ -175,6 +175,10 @@ namespace dx12
 			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
 		CheckHResult(hr, "Failed to create command list");
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.CreateCommandListContextHandle(m_commandList.Get());
+#endif
+
 		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
@@ -255,6 +259,10 @@ namespace dx12
 		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
 		SEAssert(pipelineState, "Pipeline state is null. This is unexpected");
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetPipelineState", false);
+#endif
+
 		m_commandList->SetPipelineState(pipelineState);
 	}
 
@@ -274,6 +282,10 @@ namespace dx12
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetGraphicsRootSignature", false);
+#endif
 
 		m_commandList->SetGraphicsRootSignature(rootSignature);
 	}
@@ -295,6 +307,10 @@ namespace dx12
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert(rootSignature, "Root signature is null. This is unexpected");
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetComputeRootSignature", false);
+#endif
 
 		m_commandList->SetComputeRootSignature(rootSignature);
 	}
@@ -328,6 +344,9 @@ namespace dx12
 				{
 				case dx12::CommandListType::Direct:
 				{
+#if defined(USE_NSIGHT_AFTERMATH)
+					aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetGraphicsRoot32BitConstants", false);
+#endif
 					m_commandList->SetGraphicsRoot32BitConstants(
 						rootIdx,
 						num32BitValues,
@@ -337,6 +356,9 @@ namespace dx12
 				break;
 				case dx12::CommandListType::Compute:
 				{
+#if defined(USE_NSIGHT_AFTERMATH)
+					aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetComputeRoot32BitConstants", false);
+#endif
 					m_commandList->SetComputeRoot32BitConstants(
 						rootIdx,
 						num32BitValues,
@@ -521,6 +543,10 @@ namespace dx12
 
 		CommitGPUDescriptors();
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "Dispatch", false);
+#endif
+
 		m_commandList->Dispatch(threadDimensions.x, threadDimensions.y, threadDimensions.z);
 	}
 
@@ -539,12 +565,18 @@ namespace dx12
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
 			sbt, threadDimensions, gr::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "DispatchRays", false);
+#endif
+
 		commandList4->DispatchRays(&dispatchRaysDesc);
 	}
 
 
 	void CommandList::DrawBatchGeometry(gr::StageBatchHandle const& batch)
 	{
+		CommitGPUDescriptors();
+
 		// Set the geometry for the draw:		
 		re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
 
@@ -561,8 +593,10 @@ namespace dx12
 
 			SetIndexBuffer(batch.GetIndexBuffer());
 
-			CommitGPUDescriptors();
-			
+#if defined(USE_NSIGHT_AFTERMATH)
+			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "DrawIndexedInstanced", false);
+#endif
+
 			m_commandList->DrawIndexedInstanced(
 				batch.GetIndexBuffer().m_view.m_streamView.m_numElements,		// Index count, per instance
 				batch.GetInstanceCount(),										// Instance count
@@ -578,7 +612,9 @@ namespace dx12
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
 
-			CommitGPUDescriptors();
+#if defined(USE_NSIGHT_AFTERMATH)
+			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "DrawInstanced", false);
+#endif
 
 			m_commandList->DrawInstanced(
 				batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_numElements,	// VertexCountPerInstance
@@ -670,6 +706,9 @@ namespace dx12
 				// Flush the list we've built so far
 				if (!streamViews.empty())
 				{
+#if defined(USE_NSIGHT_AFTERMATH)
+					aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "IASetVertexBuffers", false);
+#endif
 					m_commandList->IASetVertexBuffers(
 						startSlotIdx,
 						static_cast<uint32_t>(streamViews.size()), 
@@ -704,6 +743,9 @@ namespace dx12
 		dx12::Buffer::PlatObj* streamBufferPlatObj =
 			indexBuffer.GetBuffer()->GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "IASetIndexBuffer", false);
+#endif
 		m_commandList->IASetIndexBuffer(
 			dx12::Buffer::GetOrCreateIndexBufferView(*indexBuffer.GetBuffer(), indexBuffer.m_view));
 
@@ -747,6 +789,9 @@ namespace dx12
 				const D3D12_CPU_DESCRIPTOR_HANDLE targetDescriptor =
 					dx12::Texture::GetRTV(colorTargetTex, colorTargetParams.m_textureView);
 
+#if defined(USE_NSIGHT_AFTERMATH)
+				aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearRenderTargetView", false);
+#endif
 				m_commandList->ClearRenderTargetView(
 					targetDescriptor,
 					&clearVal.r,
@@ -864,6 +909,9 @@ namespace dx12
 			clearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
 		}
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearDepthStencilView", false);
+#endif
 		m_commandList->ClearDepthStencilView(
 			targetDescriptor,
 			clearFlags,
@@ -887,6 +935,9 @@ namespace dx12
 			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
 				m_gpuCbvSrvUavDescriptorHeap->CommitToGPUVisibleHeap({ texDescriptor });
 
+#if defined(USE_NSIGHT_AFTERMATH)
+			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearUnorderedAccessViewFloat", false);
+#endif
 			m_commandList->ClearUnorderedAccessViewFloat(
 				gpuVisibleTexDescriptor, 
 				texDescriptor,
@@ -911,6 +962,9 @@ namespace dx12
 			D3D12_GPU_DESCRIPTOR_HANDLE const& gpuVisibleTexDescriptor =
 				m_gpuCbvSrvUavDescriptorHeap->CommitToGPUVisibleHeap({ texDescriptor });
 
+#if defined(USE_NSIGHT_AFTERMATH)
+			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearUnorderedAccessViewUint", false);
+#endif
 			m_commandList->ClearUnorderedAccessViewUint(
 				gpuVisibleTexDescriptor,
 				texDescriptor,
@@ -974,6 +1028,10 @@ namespace dx12
 		}
 
 		const uint32_t numColorTargets = targetSet.GetNumColorTargets();
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "OMSetRenderTargets", false);
+#endif
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
@@ -1061,6 +1119,10 @@ namespace dx12
 		dx12::TextureTargetSet::PlatObj* targetSetParams =
 			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "RSSetViewports", false);
+#endif
+
 		const uint32_t numViewports = 1;
 		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
 
@@ -1073,6 +1135,10 @@ namespace dx12
 	{
 		dx12::TextureTargetSet::PlatObj* targetSetParams =
 			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "RSSetScissorRects", false);
+#endif
 
 		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
 		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
@@ -1171,6 +1237,10 @@ namespace dx12
 
 		SetDescriptorHeap(brmDescriptorHeap);
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetComputeRootDescriptorTable", false);
+#endif
+
 		m_commandList->SetComputeRootDescriptorTable(
 			0,
 			brmDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
@@ -1263,6 +1333,10 @@ namespace dx12
 			D3D12_RESOURCE_STATE_COMMON, // Legacy D3D12 barriers: Copy queue subresources used MUST be in COMMON
 			{ D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "CopyBufferRegion", false);
+#endif
+
 		m_commandList->CopyBufferRegion(
 			bufferPlatformParams->GetGPUResource(),	// pDstBuffer
 			dstOffset,								// DstOffset
@@ -1283,6 +1357,10 @@ namespace dx12
 
 		TransitionResourceInternal(srcResource, srcState, { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
 		TransitionResourceInternal(dstResource, dstState, { D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES });
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "CopyResource", false);
+#endif
 
 		m_commandList->CopyResource(dstResource, srcResource);
 	}
@@ -1625,12 +1703,20 @@ namespace dx12
 	{
 		SEAssert(numBarriers > 0, "Attempting to submit 0 barriers");
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ResourceBarrier", false);
+#endif
+
 		m_commandList->ResourceBarrier(numBarriers, barriers);
 	}
 
 
 	void CommandList::SetDescriptorHeap(ID3D12DescriptorHeap* descriptorHeap)
 	{
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "SetDescriptorHeaps", false);
+#endif
+
 		m_commandList->SetDescriptorHeaps(1, &descriptorHeap);
 
 		m_currentDescriptorHeapSource = descriptorHeap == m_gpuCbvSrvUavDescriptorHeap->GetD3DDescriptorHeap() ? 

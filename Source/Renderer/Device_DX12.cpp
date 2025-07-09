@@ -112,6 +112,25 @@ namespace
 			featureLevelIdx++;
 		}
 
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		{
+			constexpr uint32_t k_aftermathFlags =
+				GFSDK_Aftermath_FeatureFlags_EnableMarkers |				// Enable event marker tracking.
+				GFSDK_Aftermath_FeatureFlags_EnableResourceTracking |		// Enable tracking of resources.
+				GFSDK_Aftermath_FeatureFlags_CallStackCapturing |			// Capture call stacks for all draw calls, compute dispatches, and resource copies.
+				GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo |		// Generate debug information for shaders.
+				GFSDK_Aftermath_FeatureFlags_EnableShaderErrorReporting;	// Capture runtime errors in shaders
+
+			// Initialize Nsight Aftermath for the device:
+			AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_Initialize(
+				GFSDK_Aftermath_Version_API,
+				k_aftermathFlags,
+				device.Get()));
+	}
+#endif
+
 		return device;
 	}
 

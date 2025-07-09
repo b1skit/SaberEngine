@@ -65,6 +65,10 @@
           "Command": "-debuglevel 2"
         },
         {
+          "Id": "44171192-1a4c-40ec-b9a1-c5d23e48c1de",
+          "Command": "-aftermath"
+        },
+        {
           "Id": "35be5c82-80fa-421b-ad5d-05df0d9477bd",
           "Command": "-strictshaderbinding"
         },

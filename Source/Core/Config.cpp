@@ -30,12 +30,6 @@ namespace core
 	}
 
 
-	Config::~Config()
-	{
-		SaveConfigFile();
-	}
-
-
 	void Config::SetCommandLineArgs(int argc, char** argv)
 	{
 		m_argc = argc;

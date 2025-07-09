@@ -80,3 +80,39 @@ namespace dx12
 	extern constexpr char const* D3D12ResourceBindingTierToCStr(D3D12_RESOURCE_BINDING_TIER);
 	extern constexpr char const* D3D12ResourceHeapTierToCStr(D3D12_RESOURCE_HEAP_TIER);
 }
+
+
+// Enable this for Aftermath support:
+//#define USE_NSIGHT_AFTERMATH
+#if defined(USE_NSIGHT_AFTERMATH)
+
+#include "NsightAftermathHelpers.h"
+#include "NsightAftermathGpuCrashTracker.h"
+
+namespace aftermath
+{
+	static class Aftermath
+	{
+	public:
+		Aftermath();
+
+		void InitializeGPUCrashTracker();
+		void CreateCommandListContextHandle(ID3D12CommandList*);
+
+		void SetAftermathEventMarker(ID3D12CommandList*, std::string const& markerData, bool appManagedMarker);
+
+
+	private:
+		GpuCrashTracker::MarkerMap m_markerMap; // App-managed marker functionality
+
+		// Nsight Aftermath instrumentation:
+		std::unordered_map<ID3D12CommandList const*, GFSDK_Aftermath_ContextHandle> m_aftermathCmdListContexts;
+		GpuCrashTracker m_gpuCrashTracker;
+
+		const bool m_isEnabled;
+
+		std::mutex m_aftermathMutex;
+	} s_instance;
+}
+
+#endif

@@ -206,6 +206,41 @@ namespace dx12
 		default:						LOG_ERROR(errorMessage.c_str());
 		}
 
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		{
+			// DXGI_ERROR error notification is asynchronous to the NVIDIA display driver's GPU crash handling. Give the
+			// Nsight Aftermath GPU crash dump thread some time to do its work before terminating the process:
+			auto tdrTerminationTimeout = std::chrono::seconds(3);
+			auto tStart = std::chrono::steady_clock::now();
+			auto tElapsed = std::chrono::milliseconds::zero();
+
+			GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+			AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+			while (status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
+				status != GFSDK_Aftermath_CrashDump_Status_Finished &&
+				tElapsed < tdrTerminationTimeout)
+			{
+				// Sleep 50ms and poll the status again until timeout or Aftermath finished processing the crash dump.
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_GetCrashDumpStatus(&status));
+
+				auto tEnd = std::chrono::steady_clock::now();
+				tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+			}
+
+			if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
+			{
+				std::stringstream aftermathStatusMsg;
+				aftermathStatusMsg << "Unexpected crash dump status: " << status;
+				MessageBoxA(NULL, aftermathStatusMsg.str().c_str(), "Aftermath Error", MB_OK);
+			}
+		}
+#endif
+
+
 		// DRED reporting:
 		if (hr == DXGI_ERROR_DEVICE_REMOVED && 
 			core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 3)
@@ -216,7 +251,7 @@ namespace dx12
 #if defined(_DEBUG)
 		SEAssertF(errorMessage.c_str());
 #else
-		throw std::runtime_error(errorMessage.c_str()); // Throw an exception here; asserts are disabled in release mode
+		exit(-1); // Asserts are compiled out: exit on failure
 #endif
 
 		return false;
@@ -271,6 +306,22 @@ namespace dx12
 
 			LOG("D3D12 DRED enabled");
 		}
+
+		
+#if defined(USE_NSIGHT_AFTERMATH)	
+		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		{
+			SEAssert(core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) == 0,
+				"Aftermath requires the D3D12 debug layer to be disabled");
+
+			// Enable Nsight Aftermath GPU crash dump creation. Must be done before the D3D device is created.
+			aftermath::s_instance.InitializeGPUCrashTracker();
+		}
+#else
+		SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg) == false,
+			"\"-%s\" command line argument received, but USE_NSIGHT_AFTERMATH is not defined",
+			core::configkeys::k_enableAftermathCmdLineArg)
+#endif
 	}
 
 
@@ -376,3 +427,98 @@ namespace dx12
 		}
 	}
 }
+
+
+#if defined(USE_NSIGHT_AFTERMATH)
+namespace aftermath
+{
+	Aftermath::Aftermath()
+		: m_gpuCrashTracker(m_markerMap)
+		, m_isEnabled(core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+	{
+	}
+
+
+	void Aftermath::InitializeGPUCrashTracker()
+	{
+		// Enable Nsight Aftermath GPU crash dump creation. Must be done before the D3D device is created.
+		{
+			std::unique_lock<std::mutex> lock(m_aftermathMutex);
+
+			SEAssert(m_isEnabled, "Aftermath is not enabled");
+
+			m_gpuCrashTracker.Initialize();
+		}
+	}
+
+
+	void Aftermath::CreateCommandListContextHandle(ID3D12CommandList* cmdList)
+	{
+		if (!m_isEnabled)
+		{
+			return;
+		}
+
+		// Create an Nsight Aftermath context handle for setting Aftermath event markers in this command list
+		{
+			std::unique_lock<std::mutex> lock(m_aftermathMutex);
+
+			SEAssert(!m_aftermathCmdListContexts.contains(cmdList), "Command list context handle already created");
+
+			AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_DX12_CreateContextHandle(cmdList, &m_aftermathCmdListContexts[cmdList]));
+		}
+	}
+
+
+	void Aftermath::SetAftermathEventMarker(
+		ID3D12CommandList* cmdList, std::string const& markerData, bool appManagedMarker)
+	{
+		if (!m_isEnabled)
+		{
+			return;
+		}
+
+		{
+			std::unique_lock<std::mutex> lock(m_aftermathMutex);
+
+			SEAssert(m_aftermathCmdListContexts.contains(cmdList), "Command list context handle does not exist");
+
+			if (appManagedMarker)
+			{
+				// App is responsible for handling marker memory, and for resolving the memory at crash dump generation
+				// time. The actual "const void* markerData" passed to Aftermath in this case can be any uniquely
+				// identifying value that the app can resolve to the marker data later. For this sample, we will use
+				// this approach to generating a unique marker value:
+				// We keep a ringbuffer with a marker history of the last c_markerFrameHistory frames (currently 4).
+				uint32_t markerMapIndex = 
+					gr::RenderManager::Get()->GetCurrentRenderFrameNum() % GpuCrashTracker::c_markerFrameHistory;
+				auto& currentFrameMarkerMap = m_markerMap[markerMapIndex];
+
+				// Take the index into the ringbuffer, multiply by 10000, and add the total number of markers logged so
+				// far in the current frame, +1 to avoid a value of zero.
+				size_t markerID = markerMapIndex * 10000 + currentFrameMarkerMap.size() + 1;
+
+				// This value is the unique identifier we will pass to Aftermath and internally associate with the
+				// marker data in the map.
+				currentFrameMarkerMap[markerID] = markerData;
+				AFTERMATH_CHECK_ERROR(
+					GFSDK_Aftermath_SetEventMarker(m_aftermathCmdListContexts.at(cmdList), (void*)markerID, 0));
+				// For example, if we are on frame 625, markerMapIndex = 625 % 4 = 1...
+				// The first marker for the frame will have markerID = 1 * 10000 + 0 + 1 = 10001.
+				// The 15th marker for the frame will have markerID = 1 * 10000 + 14 + 1 = 10015.
+				// On the next frame, 626, markerMapIndex = 626 % 4 = 2.
+				// The first marker for this frame will have markerID = 2 * 10000 + 0 + 1 = 20001.
+				// The 15th marker for the frame will have markerID = 2 * 10000 + 14 + 1 = 20015.
+				// So with this scheme, we can safely have up to 10000 markers per frame, and can guarantee a unique
+				// markerID for each one.
+				// There are many ways to generate and track markers and unique marker identifiers!
+			}
+			else
+			{
+				AFTERMATH_CHECK_ERROR(GFSDK_Aftermath_SetEventMarker(
+					m_aftermathCmdListContexts.at(cmdList), (void*)markerData.c_str(), (unsigned int)markerData.size() + 1));
+			}
+		}
+	}
+}
+#endif

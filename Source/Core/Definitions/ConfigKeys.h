@@ -56,6 +56,7 @@ namespace core::configkeys
 	constexpr char const* k_platformCmdLineArg						= "platform";
 	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
 	constexpr char const* k_enableDredCmdLineArg					= "enabledred";
+	constexpr char const* k_enableAftermathCmdLineArg				= "aftermath";
 	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg	= "pixgpucapture";
 	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
 	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg	= "renderdoc";
