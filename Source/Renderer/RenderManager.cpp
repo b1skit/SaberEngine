@@ -5,6 +5,7 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
+#include "Texture.h"
 
 #include "Core/Config.h"
 #include "Core/PerfLogger.h"

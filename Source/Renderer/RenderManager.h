@@ -4,10 +4,6 @@
 #include "Context.h"
 #include "EffectDB.h"
 #include "RenderSystem.h"
-#include "Sampler.h"
-#include "Shader.h"
-#include "Texture.h"
-#include "TextureTarget.h"
 
 #include "Core/AccessKey.h"
 #include "Core/InvPtr.h"
@@ -16,7 +12,6 @@
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEngineThread.h"
 #include "Core/Interfaces/IEventListener.h"
-#include "Core/Interfaces/IPlatformObject.h"
 
 
 namespace host
@@ -31,7 +26,10 @@ namespace fr
 {
 	class IGraphicsService;
 }
-
+namespace re
+{
+	class Texture;
+}
 namespace gr
 {
 	class GraphicsSystem;
