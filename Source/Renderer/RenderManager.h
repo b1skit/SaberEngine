@@ -23,17 +23,10 @@ namespace host
 {
 	class Window;
 }
-
 namespace core
 {
 	class Inventory;
 }
-
-namespace dx12
-{
-	class RenderManager;
-}
-
 namespace fr
 {
 	class IGraphicsService;
@@ -42,22 +35,8 @@ namespace fr
 namespace gr
 {
 	class GraphicsSystem;
-}
 
-namespace opengl
-{
-	class RenderManager;
-}
 
-namespace re
-{
-	class AccelerationStructure;
-	class ShaderBindingTable;
-	class VertexStream;
-}
-
-namespace gr
-{
 	class RenderManager
 		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual core::IEventListener
 	{
@@ -111,6 +90,8 @@ namespace gr
 		core::Inventory* m_inventory;
 
 		host::Window* m_windowCache; // Passed to the m_context at creation
+
+	protected:
 		std::unique_ptr<re::Context> m_context;
 
 	public:
@@ -174,23 +155,20 @@ namespace gr
 		platform::RenderingAPI m_renderingAPI;
 
 
-	private:
+	protected:
 		std::vector<std::unique_ptr<gr::RenderSystem>> m_renderSystems;
 		
+
+	private:
 		uint64_t m_renderFrameNum;
 
 		bool m_quitEventRecieved; // Early-out on final frame(s)
 
 
-	private:
-		RenderManager() = delete; // Use the RenderManager::Get() singleton getter instead
+	protected:
+		RenderManager() = delete;
 		RenderManager(platform::RenderingAPI);
 		[[nodiscard]] static std::unique_ptr<gr::RenderManager> Create();
-
-
-	private: // Friends		
-		friend class opengl::RenderManager;
-		friend class dx12::RenderManager;
 
 
 	private:

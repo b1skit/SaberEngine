@@ -52,8 +52,7 @@ namespace dx12
 	{
 		SEBeginCPUEvent("dx12::RenderManager::EndFrame");
 
-		GetContext()->As<dx12::Context*>()->GetHeapManager().EndOfFrame(
-			m_renderFrameNum);
+		m_context->As<dx12::Context*>()->GetHeapManager().EndOfFrame(GetCurrentRenderFrameNum());
 
 		SEEndCPUEvent();
 	}
