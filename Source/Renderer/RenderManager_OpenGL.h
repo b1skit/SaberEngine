@@ -15,7 +15,6 @@ namespace opengl
 	public: // Platform-specific virtual interface implementation:
 		void Initialize_Platform() override;
 		void Shutdown_Platform() override;
-		void CreateAPIResources_Platform() override;
 		void BeginFrame_Platform(uint64_t frameNum) override;
 		void EndFrame_Platform() override;
 

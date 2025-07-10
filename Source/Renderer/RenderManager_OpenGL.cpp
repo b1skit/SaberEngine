@@ -55,69 +55,6 @@ namespace opengl
 	}
 
 
-	void RenderManager::CreateAPIResources_Platform()
-	{
-		SEBeginCPUEvent("RenderManager::CreateAPIResources_Platform");
-		
-		// Note: We've already obtained the read lock on all new resources by this point
-
-		// Textures:
-		if (m_newTextures.HasReadData())
-		{
-			SEBeginCPUEvent("Create textures");
-			for (auto const& newObject : m_newTextures.GetReadData())
-			{
-				platform::Texture::CreateAPIResource(newObject, nullptr);
-			}
-			SEEndCPUEvent(); // "Create Textures"
-		}
-		// Samplers:
-		if (m_newSamplers.HasReadData())
-		{
-			SEBeginCPUEvent("Create samplers");
-			for (auto& newObject : m_newSamplers.GetReadData())
-			{
-				opengl::Sampler::Create(*newObject);
-			}
-			SEEndCPUEvent(); // "Create Samplers"
-		}
-		// Texture Target Sets:
-		if (m_newTargetSets.HasReadData())
-		{
-			SEBeginCPUEvent("Create texture target sets");
-			for (auto& newObject : m_newTargetSets.GetReadData())
-			{
-				newObject->Commit();
-				opengl::TextureTargetSet::CreateColorTargets(*newObject);
-				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject);
-			}
-			SEEndCPUEvent(); // "Create texture target sets"
-		}
-		// Shaders:
-		if (m_newShaders.HasReadData())
-		{
-			SEBeginCPUEvent("Create shaders");
-			for (auto& newObject : m_newShaders.GetReadData())
-			{
-				opengl::Shader::Create(*newObject);
-			}
-			SEEndCPUEvent(); // "Create shaders"
-		}
-		// Vertex streams:
-		if (m_newVertexStreams.HasReadData())
-		{
-			SEBeginCPUEvent("Create vertex streams");
-			for (auto& vertexStream : m_newVertexStreams.GetReadData())
-			{
-				vertexStream->CreateBuffers(vertexStream);
-			}
-			SEEndCPUEvent(); // "Create vertex streams"
-		}
-
-		SEEndCPUEvent(); // "RenderManager::CreateAPIResources_Platform"
-	}
-
-
 	void RenderManager::BeginFrame_Platform(uint64_t frameNum)
 	{
 		//
@@ -138,7 +75,7 @@ namespace opengl
 
 		re::GPUTimer& gpuTimer = context->GetGPUTimer();
 
-		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, k_GPUFrameTimerName);
+		re::GPUTimer::Handle frameTimer = gpuTimer.StartTimer(nullptr, re::Context::k_GPUFrameTimerName);
 
 
 		auto SetDrawState = [&context](
@@ -193,7 +130,7 @@ namespace opengl
 			gr::RenderPipeline const& renderPipeline = renderSystem->GetRenderPipeline();
 
 			re::GPUTimer::Handle renderPipelineTimer = 
-				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), k_GPUFrameTimerName);
+				gpuTimer.StartTimer(nullptr, renderPipeline.GetName().c_str(), re::Context::k_GPUFrameTimerName);
 
 			// Render each stage in the RenderSystem's RenderPipeline:			
 			for (gr::StagePipeline const& stagePipeline : renderPipeline.GetStagePipeline())

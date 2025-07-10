@@ -1,11 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure_Platform.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
-#include "Shader.h"
+#include "Sampler_DX12.h"
+#include "ShaderBindingTable_DX12.h"
+#include "Shader_DX12.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
+#include "Texture_Platform.h"
+#include "TextureTarget_DX12.h"
+#include "VertexStream.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -188,6 +194,296 @@ namespace dx12
 		// Destroy the device:
 		dx12::SysInfo::s_device = nullptr;
 		m_device.Destroy();
+	}
+
+
+	void Context::CreateAPIResources_Platform()
+	{
+		SEBeginCPUEvent("RenderManager::CreateAPIResources_Platform");
+
+		// Note: We've already obtained the read lock on all new resources by this point
+
+		constexpr size_t k_invalidCreateTaskIdx = std::numeric_limits<size_t>::max();
+		constexpr size_t k_createTasksReserveAmt = 7;
+		std::vector<std::shared_future<void>> createTasks;
+		createTasks.reserve(k_createTasksReserveAmt);
+
+		static const bool singleThreadResourceCreate =
+			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
+
+		// Textures:
+		if (m_newTextures.HasReadData())
+		{
+			auto CreateTextures = [this, &singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create textures");
+
+					dx12::CommandQueue* copyQueue = &GetCommandQueue(dx12::CommandListType::Copy);
+
+					SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(),
+						perfmarkers::Type::CopyQueue,
+						"Copy Queue: Create API Resources");
+
+					std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
+
+					re::GPUTimer::Handle texCopyTimer = GetGPUTimer().StartCopyTimer(
+						copyCommandList->GetD3DCommandList().Get(),
+						"Copy textures",
+						k_GPUFrameTimerName);
+
+					if (!singleThreaded)
+					{
+						m_newTextures.AquireReadLock();
+					}
+					for (auto& texture : m_newTextures.GetReadData())
+					{
+						platform::Texture::CreateAPIResource(texture, copyCommandList.get());
+					}
+					if (!singleThreaded)
+					{
+						m_newTextures.ReleaseReadLock();
+					}
+
+					texCopyTimer.StopTimer(copyCommandList->GetD3DCommandList().Get());
+
+					copyQueue->Execute(1, &copyCommandList);
+
+					SEEndGPUEvent(copyQueue->GetD3DCommandQueue().Get());
+
+					SEEndCPUEvent(); // "Create Textures"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateTextures();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextures));
+			}
+		}
+		// Samplers:
+		if (m_newSamplers.HasReadData())
+		{
+			auto CreateSamplers = [this, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create samplers");
+
+					if (!singleThreaded)
+					{
+						m_newSamplers.AquireReadLock();
+					}
+					for (auto& newObject : m_newSamplers.GetReadData())
+					{
+						dx12::Sampler::Create(*newObject);
+					}
+					if (!singleThreaded)
+					{
+						m_newSamplers.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create Samplers"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateSamplers();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateSamplers));
+			}
+
+		}
+		// Texture Target Sets:
+		if (m_newTargetSets.HasReadData())
+		{
+			auto CreateTextureTargetSets = [this, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create texture target sets");
+
+					if (!singleThreaded)
+					{
+						m_newTargetSets.AquireReadLock();
+					}
+					for (auto& newObject : m_newTargetSets.GetReadData())
+					{
+						newObject->Commit();
+						dx12::TextureTargetSet::CreateColorTargets(*newObject);
+						dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject);
+					}
+					if (!singleThreaded)
+					{
+						m_newTargetSets.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create texture target sets"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateTextureTargetSets();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextureTargetSets));
+			}
+		}
+		// Shaders:
+		size_t shaderTasksIdx = k_invalidCreateTaskIdx;
+		if (m_newShaders.HasReadData())
+		{
+			auto CreateShaders = [this, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create shaders");
+
+					if (!singleThreaded)
+					{
+						m_newShaders.AquireReadLock();
+					}
+					for (auto& shader : m_newShaders.GetReadData())
+					{
+						dx12::Shader::Create(*shader);
+					}
+					if (!singleThreaded)
+					{
+						m_newShaders.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create shaders"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateShaders();
+			}
+			else
+			{
+				shaderTasksIdx = createTasks.size();
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaders));
+			}
+		}
+		// Vertex streams:
+		if (m_newVertexStreams.HasReadData())
+		{
+			auto CreateVertexStreams = [this, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create vertex streams");
+
+					if (!singleThreaded)
+					{
+						m_newVertexStreams.AquireReadLock();
+					}
+					for (auto& vertexStream : m_newVertexStreams.GetReadData())
+					{
+						vertexStream->CreateBuffers(vertexStream);
+					}
+					if (!singleThreaded)
+					{
+						m_newVertexStreams.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create vertex streams"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateVertexStreams();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateVertexStreams));
+			}
+		}
+		// Acceleration structures:
+		if (m_newAccelerationStructures.HasReadData())
+		{
+			auto CreateAccelerationStructures = [this, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create acceleration structures");
+
+					if (!singleThreaded)
+					{
+						m_newAccelerationStructures.AquireReadLock();
+					}
+					for (auto& accelStructure : m_newAccelerationStructures.GetReadData())
+					{
+						platform::AccelerationStructure::Create(*accelStructure);
+					}
+					if (!singleThreaded)
+					{
+						m_newAccelerationStructures.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create acceleration structures"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateAccelerationStructures();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateAccelerationStructures));
+			}
+		}
+		// Shader binding tables:
+		if (m_newShaderBindingTables.HasReadData())
+		{
+			auto CreateShaderBindingTables =
+				[this, &createTasks, shaderTasksIdx, singleThreaded = singleThreadResourceCreate]()
+				{
+					SEBeginCPUEvent("Create shader binding tables");
+
+					// Shader binding tables require shaders to have already been loaded (as they access their loaded
+					// blobs etc). We must wait for loading to be complete before proceeding
+					if (!singleThreaded &&
+						shaderTasksIdx != k_invalidCreateTaskIdx)
+					{
+						createTasks[shaderTasksIdx].wait();
+					}
+
+					if (!singleThreaded)
+					{
+						m_newShaderBindingTables.AquireReadLock();
+					}
+					for (auto& sbt : m_newShaderBindingTables.GetReadData())
+					{
+						dx12::ShaderBindingTable::Create(*sbt);
+					}
+					if (!singleThreaded)
+					{
+						m_newShaderBindingTables.ReleaseReadLock();
+					}
+
+					SEEndCPUEvent(); // "Create shader binding tables"
+				};
+
+			if (singleThreadResourceCreate)
+			{
+				CreateShaderBindingTables();
+			}
+			else
+			{
+				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaderBindingTables));
+			}
+		}
+
+		SEAssert(createTasks.size() <= k_createTasksReserveAmt,
+			"Too many create tasks, vector may have been reallocated: k_createTasksReserveAmt must be updated");
+
+		// Finally, wait for everything to complete:
+		SEBeginCPUEvent("Wait on task threads");
+		if (!singleThreadResourceCreate)
+		{
+			for (auto& createTask : createTasks)
+			{
+				createTask.wait();
+			}
+		}
+		SEEndCPUEvent(); // "Wait on task threads"
+
+		SEEndCPUEvent(); // "RenderManager::CreateAPIResources"
 	}
 
 

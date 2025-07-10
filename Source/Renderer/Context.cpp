@@ -3,9 +3,14 @@
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes.h"
+#include "Sampler.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "VertexStream.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Invptr.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 
@@ -42,7 +47,14 @@ namespace re
 
 
 	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
-		: m_window(window)
+		: m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newVertexStreams(util::NBufferedVector<core::InvPtr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newAccelerationStructures(util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newShaderBindingTables(util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_window(window)
 		, m_gpuTimer(core::PerfLogger::Get(), numFramesInFlight)
 		, m_numFramesInFlight(numFramesInFlight)
 		, m_renderDocApi(nullptr)
@@ -164,8 +176,27 @@ namespace re
 	}
 
 
+	void Context::EndFrame()
+	{
+		// Clear the new resource read data: This prevents any single frame resources held by the NBufferedVectors
+		// living into the next frame
+		m_newShaders.ClearReadData();
+		m_newTextures.ClearReadData();
+		m_newSamplers.ClearReadData();
+		m_newVertexStreams.ClearReadData();
+		m_newAccelerationStructures.ClearReadData();
+		m_newShaderBindingTables.ClearReadData();
+		m_newTargetSets.ClearReadData();
+	}
+
+
 	void Context::Destroy()
 	{
+		m_createdTextures.clear();
+
+		// Clear the new object queues:
+		DestroyNewResourceDoubleBuffers();
+
 		// Destroy any render libraries
 		for (size_t i = 0; i < m_renderLibraries.size(); i++)
 		{
@@ -188,5 +219,150 @@ namespace re
 			m_renderLibraries[type] = platform::RLibrary::Create(type);
 		}
 		return m_renderLibraries[type].get();
+	}
+
+
+	void Context::CreateAPIResources()
+	{
+		SEBeginCPUEvent("platform::Context::CreateAPIResources");
+
+		// Make our write buffer the new read buffer:
+		SwapNewResourceDoubleBuffers();
+
+		// Aquire read locks:
+		m_newShaders.AquireReadLock();
+		m_newTextures.AquireReadLock();
+		m_newSamplers.AquireReadLock();
+		m_newVertexStreams.AquireReadLock();
+		m_newAccelerationStructures.AquireReadLock();
+		m_newShaderBindingTables.AquireReadLock();
+		m_newTargetSets.AquireReadLock();
+
+
+		// Record newly created objects. This provides an convenient way to post-process new objects
+		{
+			m_createdTextures.reserve(m_createdTextures.size() + m_newTextures.GetReadData().size());
+			m_createdTextures.insert(
+				m_createdTextures.end(),
+				m_newTextures.GetReadData().begin(),
+				m_newTextures.GetReadData().end());
+		}
+
+		// Create the resources:
+		CreateAPIResources_Platform();
+
+		// Release read locks:
+		m_newShaders.ReleaseReadLock();
+		m_newTextures.ReleaseReadLock();
+		m_newSamplers.ReleaseReadLock();
+		m_newVertexStreams.ReleaseReadLock();
+		m_newAccelerationStructures.ReleaseReadLock();
+		m_newShaderBindingTables.ReleaseReadLock();
+		m_newTargetSets.ReleaseReadLock();
+
+		SEEndCPUEvent();
+	}
+
+
+	void Context::ClearNewObjectCache()
+	{
+		SEBeginCPUEvent("Context::ClearNewObjectCache");
+
+		// Clear the initial data of our new textures now that they have been buffered
+		for (auto const& newTexture : m_createdTextures)
+		{
+			newTexture->ClearTexelData();
+		}
+
+		// Clear any objects created during the frame. We do this each frame after the RenderSystem updates to
+		// ensure anything that needs to know about new objects being created (e.g. MIP generation GS) can see them
+		m_createdTextures.clear();
+
+		SEEndCPUEvent();
+	}
+
+
+	void Context::SwapNewResourceDoubleBuffers()
+	{
+		SEBeginCPUEvent("Context::SwapNewResourceDoubleBuffers");
+
+		// Swap our new resource double buffers:
+		m_newShaders.SwapAndClear();
+		m_newTextures.SwapAndClear();
+		m_newSamplers.SwapAndClear();
+		m_newVertexStreams.SwapAndClear();
+		m_newAccelerationStructures.SwapAndClear();
+		m_newShaderBindingTables.SwapAndClear();
+		m_newTargetSets.SwapAndClear();
+
+		SEEndCPUEvent();
+	}
+
+
+	void Context::DestroyNewResourceDoubleBuffers()
+	{
+		m_newShaders.Destroy();
+		m_newTextures.Destroy();
+		m_newSamplers.Destroy();
+		m_newVertexStreams.Destroy();
+		m_newAccelerationStructures.Destroy();
+		m_newShaderBindingTables.Destroy();
+		m_newTargetSets.Destroy();
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
+	{
+		m_newShaders.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
+	{
+		m_newTextures.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(core::InvPtr<re::Sampler> const& newObject)
+	{
+		m_newSamplers.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
+	{
+		m_newVertexStreams.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
+	{
+		m_newAccelerationStructures.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(std::shared_ptr<re::ShaderBindingTable> const& newObject)
+	{
+		m_newShaderBindingTables.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	void Context::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
+	{
+		m_newTargetSets.EmplaceBack(newObject);
+	}
+
+
+	template<>
+	std::vector<core::InvPtr<re::Texture>> const& Context::GetNewResources() const
+	{
+		return m_createdTextures;
 	}
 }

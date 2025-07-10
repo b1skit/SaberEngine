@@ -16,11 +16,11 @@ namespace core
 }
 namespace dx12
 {
-	class RenderManager;
+	class Context;
 }
 namespace opengl
 {
-	class RenderManager;
+	class Context;
 }
 namespace re
 {
@@ -127,8 +127,8 @@ namespace re
 		
 
 	protected:
-		friend class dx12::RenderManager;
-		friend class opengl::RenderManager;
+		friend class dx12::Context;
+		friend class opengl::Context;
 		void CreateBuffers(core::InvPtr<re::VertexStream> const&);
 
 

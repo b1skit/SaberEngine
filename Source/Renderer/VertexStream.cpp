@@ -119,7 +119,7 @@ namespace re
 		{
 			std::unique_ptr<re::VertexStream> Load(core::InvPtr<re::VertexStream>& newVertexStream) override
 			{
-				gr::RenderManager::Get()->RegisterForCreate(newVertexStream);
+				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newVertexStream);
 
 				return std::unique_ptr<re::VertexStream>(
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));

@@ -63,7 +63,8 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::PreRender()
 	{
-		std::vector<core::InvPtr<re::Texture>> const& newTextures = gr::RenderManager::Get()->GetNewResources<re::Texture>();
+		std::vector<core::InvPtr<re::Texture>> const& newTextures = 
+			gr::RenderManager::Get()->GetContext()->GetNewResources<re::Texture>();
 		if (newTextures.empty())
 		{
 			return;

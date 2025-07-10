@@ -29,7 +29,7 @@ namespace re
 
 		// Finally, register our SBT for API creation. This needs to be done to ensure any shaders we access have
 		// already been created (as we'll need their shader blobs etc)
-		gr::RenderManager::Get()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
 
 		return newSBT;
 	}

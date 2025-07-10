@@ -134,7 +134,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
 				
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->RegisterForCreate(newTex); 
+				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex); 
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -189,7 +189,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->RegisterForCreate(newTex);
+				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex);
 			}
 			
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -236,7 +236,7 @@ namespace re
 				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->RegisterForCreate(newTex);
+				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex);
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override

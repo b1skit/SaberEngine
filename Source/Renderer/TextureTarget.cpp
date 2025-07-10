@@ -164,7 +164,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
 		newTextureTargetSet.reset(new re::TextureTargetSet(name));
 
-		gr::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}
@@ -175,7 +175,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
 		newTextureTargetSet.reset(new re::TextureTargetSet(rhs, name));
 
-		gr::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}
@@ -196,7 +196,7 @@ namespace re
 			newTextureTargetSet->SetDepthStencilTarget(rhs.GetDepthStencilTarget().GetTexture(), overrideParams);
 		}
 
-		gr::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}

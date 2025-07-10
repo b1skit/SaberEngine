@@ -33,6 +33,10 @@ namespace opengl
 		re::BindlessResourceManager* GetBindlessResourceManager() override;
 
 
+	private:
+		void CreateAPIResources_Platform() override;
+
+
 	public: // OpenGL-specific interface:
 		void SetRasterizationState(re::RasterizationState const*);
 

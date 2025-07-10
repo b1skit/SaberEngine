@@ -257,7 +257,7 @@ namespace re
 				AccelerationStructure::Type::BLAS, 
 				std::move(blasParams)));
 
-		gr::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
@@ -292,7 +292,7 @@ namespace re
 		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
 
 		// Register for API creation:
-		gr::RenderManager::Get()->RegisterForCreate(newAccelerationStructure);
+		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}

@@ -9,6 +9,8 @@
 
 #include "Core/Host/Window.h"
 
+#include "Core/Util/NBufferedVector.h"
+
 #include "renderdoc_app.h"
 
 
@@ -26,8 +28,21 @@ namespace dx12
 }
 namespace re
 {
+	class AccelerationStructure;
+	class Shader;
+	class Texture;
+	class TextureTargetSet;
+	class Sampler;
+	class ShaderBindingTable;
+	class VertexStream;
+
+
 	class Context
 	{
+	public:
+		static constexpr char const* k_GPUFrameTimerName = "GPU Frame";
+
+
 	public:
 		static std::unique_ptr<re::Context> CreateContext_Platform(
 			platform::RenderingAPI, uint64_t currentFrameNum, uint8_t numFramesInFlight, host::Window*);
@@ -42,6 +57,8 @@ namespace re
 		void Create(uint64_t currentFrame);
 		void BeginFrame(uint64_t currentFrame);
 		void Update();
+		void EndFrame();
+
 		void Destroy();
 
 
@@ -53,6 +70,8 @@ namespace re
 		virtual void CreateInternal() = 0;
 		virtual void UpdateInternal() = 0;
 		virtual void DestroyInternal() = 0;
+
+		virtual void CreateAPIResources_Platform() = 0;
 
 
 	public:
@@ -67,6 +86,45 @@ namespace re
 		platform::RLibrary* GetOrCreateRenderLibrary(platform::RLibrary::Type);
 
 		re::GPUTimer& GetGPUTimer();
+
+
+	public:
+		// Deferred API-object creation queues. New resources can be constructed on other threads (e.g. loading
+		// data); We provide a thread-safe registration system that allows us to create the graphics API-side
+		// representations at the beginning of a new frame when they're needed
+		template<typename T>
+		void RegisterForCreate(std::shared_ptr<T> const&);
+
+		template<typename T>
+		void RegisterForCreate(core::InvPtr<T> const&);
+
+		// Resources created during CreateAPIResources() for the current frame
+		template<typename T>
+		std::vector<core::InvPtr<T>> const& GetNewResources() const;
+
+
+	public: // API resource management:
+		void CreateAPIResources();
+		void ClearNewObjectCache();
+
+
+	protected:
+		void SwapNewResourceDoubleBuffers();
+		void DestroyNewResourceDoubleBuffers();
+
+		static constexpr size_t k_newObjectReserveAmount = 128;
+		util::NBufferedVector<core::InvPtr<re::Shader>> m_newShaders;
+		util::NBufferedVector<core::InvPtr<re::Texture>> m_newTextures;
+		util::NBufferedVector<core::InvPtr<re::Sampler>> m_newSamplers;
+		util::NBufferedVector<core::InvPtr<re::VertexStream>> m_newVertexStreams;
+
+		util::NBufferedVector<std::shared_ptr<re::AccelerationStructure>> m_newAccelerationStructures;
+		util::NBufferedVector<std::shared_ptr<re::ShaderBindingTable>> m_newShaderBindingTables;
+		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
+
+		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
+		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
+		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
 
 
 	protected:

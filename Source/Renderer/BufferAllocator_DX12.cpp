@@ -107,7 +107,7 @@ namespace dx12
 			re::GPUTimer::Handle copyTimer = context->GetGPUTimer().StartCopyTimer(
 				copyCommandList->GetD3DCommandList().Get(),
 				"Copy buffers",
-				gr::RenderManager::k_GPUFrameTimerName);
+				re::Context::k_GPUFrameTimerName);
 
 			// Allocate a single intermediate resource for all buffer uploads:
 			uint64_t totalAlignedBytes = 0;

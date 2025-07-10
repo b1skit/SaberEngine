@@ -5,7 +5,11 @@
 #include "EnumTypes_OpenGL.h"
 #include "MeshPrimitive.h"
 #include "RasterizationState.h"
+#include "Sampler_OpenGL.h"
+#include "Shader_OpenGL.h"
 #include "SysInfo_OpenGL.h"
+#include "Texture_Platform.h"
+#include "TextureTarget_OpenGL.h"
 #include "VertexStream.h"
 
 #include "Core/Assert.h"
@@ -456,6 +460,69 @@ namespace opengl
 			}
 			m_VAOLibrary.clear();
 		}
+	}
+
+
+	void Context::CreateAPIResources_Platform()
+	{
+		SEBeginCPUEvent("RenderManager::CreateAPIResources_Platform");
+
+		// Note: We've already obtained the read lock on all new resources by this point
+
+		// Textures:
+		if (m_newTextures.HasReadData())
+		{
+			SEBeginCPUEvent("Create textures");
+			for (auto const& newObject : m_newTextures.GetReadData())
+			{
+				platform::Texture::CreateAPIResource(newObject, nullptr);
+			}
+			SEEndCPUEvent(); // "Create Textures"
+		}
+		// Samplers:
+		if (m_newSamplers.HasReadData())
+		{
+			SEBeginCPUEvent("Create samplers");
+			for (auto& newObject : m_newSamplers.GetReadData())
+			{
+				opengl::Sampler::Create(*newObject);
+			}
+			SEEndCPUEvent(); // "Create Samplers"
+		}
+		// Texture Target Sets:
+		if (m_newTargetSets.HasReadData())
+		{
+			SEBeginCPUEvent("Create texture target sets");
+			for (auto& newObject : m_newTargetSets.GetReadData())
+			{
+				newObject->Commit();
+				opengl::TextureTargetSet::CreateColorTargets(*newObject);
+				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject);
+			}
+			SEEndCPUEvent(); // "Create texture target sets"
+		}
+		// Shaders:
+		if (m_newShaders.HasReadData())
+		{
+			SEBeginCPUEvent("Create shaders");
+			for (auto& newObject : m_newShaders.GetReadData())
+			{
+				opengl::Shader::Create(*newObject);
+			}
+			SEEndCPUEvent(); // "Create shaders"
+		}
+		// Vertex streams:
+		if (m_newVertexStreams.HasReadData())
+		{
+			SEBeginCPUEvent("Create vertex streams");
+			for (auto& vertexStream : m_newVertexStreams.GetReadData())
+			{
+				vertexStream->CreateBuffers(vertexStream);
+			}
+			SEEndCPUEvent(); // "Create vertex streams"
+		}
+
+		SEEndCPUEvent(); // "RenderManager::CreateAPIResources_Platform"
 	}
 
 

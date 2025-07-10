@@ -24,7 +24,7 @@ namespace re
 			{
 				LOG(std::format("Creating sampler \"{}\"", m_samplerName).c_str());
 
-				gr::RenderManager::Get()->RegisterForCreate(newSampler); // API-layer creation
+				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newSampler); // API-layer creation
 			}
 
 			std::unique_ptr<re::Sampler> Load(core::InvPtr<re::Sampler>&) override

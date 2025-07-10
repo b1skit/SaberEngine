@@ -24,6 +24,9 @@ namespace dx12
 
 		re::BindlessResourceManager* GetBindlessResourceManager() override;
 
+	private:
+		void CreateAPIResources_Platform() override;
+
 
 	public: // DX12-specific interface:
 		dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
