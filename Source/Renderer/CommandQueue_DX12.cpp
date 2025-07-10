@@ -254,7 +254,7 @@ namespace dx12
 	}
 
 
-	void CommandQueue::Create(ComPtr<ID3D12Device> device, dx12::CommandListType type)
+	void CommandQueue::Create(ID3D12Device* device, dx12::CommandListType type)
 	{
 		m_type = type;
 		m_d3dType = CommandList::TranslateToD3DCommandListType(type);
@@ -346,7 +346,7 @@ namespace dx12
 			}
 			else
 			{
-				commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
+				commandList = std::make_shared<dx12::CommandList>(m_deviceCache, m_type);
 			}
 
 			commandList->Reset();

@@ -88,13 +88,15 @@ namespace re
 	}
 
 
-	void BufferAllocator::Initialize(uint64_t currentFrame)
+	void BufferAllocator::Initialize(uint64_t currentFrame, void* platformData)
 	{
 		m_currentFrameNum = currentFrame;
 		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 		m_isValid = true;
 
 		m_singleFrameGPUWriteIdx = 0;
+
+		InitializeInternal(currentFrame, platformData);
 	}
 
 

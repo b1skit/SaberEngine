@@ -210,7 +210,7 @@ namespace re
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
-			brm->UnregisterResource(m_srvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_srvResourceHandle);
 		}
 
 		if (m_cbvResourceHandle != INVALID_RESOURCE_IDX)
@@ -219,7 +219,7 @@ namespace re
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
-			brm->UnregisterResource(m_cbvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_cbvResourceHandle);
 		}
 
 		if (m_platObj->m_isCreated)

@@ -389,7 +389,7 @@ namespace re
 			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			brm->UnregisterResource(m_srvResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_srvResourceHandle);
 		}
 
 		if (m_uavResourceHandle != INVALID_RESOURCE_IDX)
@@ -397,7 +397,7 @@ namespace re
 			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
-			brm->UnregisterResource(m_uavResourceHandle, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(m_uavResourceHandle);
 		}
 	}
 

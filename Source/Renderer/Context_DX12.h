@@ -16,8 +16,8 @@ namespace dx12
 		~Context() override = default;
 
 		// Context interface:
-		void CreateInternal(uint64_t currentFrame) override;
-		void UpdateInternal(uint64_t currentFrame) override;
+		void CreateInternal() override;
+		void UpdateInternal() override;
 		void DestroyInternal() override;
 		
 		void Present() override;

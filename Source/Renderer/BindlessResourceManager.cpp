@@ -22,6 +22,7 @@ namespace re
 		: m_platObj(platform::BindlessResourceManager::CreatePlatformObject())
 		, m_mustReinitialize(true)
 		, m_numFramesInFlight(gr::RenderManager::Get()->GetNumFramesInFlight())
+		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 	{
 		// Initialize the free index queue:
 		uint32_t curIdx = 0;
@@ -32,13 +33,13 @@ namespace re
 	}
 
 
-	void BindlessResourceManager::Initialize(uint64_t frameNum)
+	void BindlessResourceManager::Initialize()
 	{
 		// Note: m_brmMutex must already be held
 
 		LOG("Initializing BindlessResourceManager to manage %d resources", m_platObj->m_currentMaxIndex);
 
-		platform::BindlessResourceManager::Initialize(*this, frameNum);
+		platform::BindlessResourceManager::Initialize(*this, m_currentFrameNum);
 	}
 
 
@@ -89,13 +90,13 @@ namespace re
 	}
 
 
-	void BindlessResourceManager::UnregisterResource(ResourceHandle& resourceIdx, uint64_t frameNum)
+	void BindlessResourceManager::UnregisterResource(ResourceHandle& resourceIdx)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_brmMutex);
 
 			m_unregistrations.emplace(UnregistrationMetadata{ 
-				.m_unregistrationFrameNum = frameNum,
+				.m_unregistrationFrameNum = m_currentFrameNum,
 				.m_resourceHandle = resourceIdx,
 			});
 
@@ -104,19 +105,31 @@ namespace re
 	}
 
 
-	void BindlessResourceManager::Update(uint64_t frameNum)
+	void BindlessResourceManager::BeginFrame(uint64_t frameNum)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_brmMutex);
+
+			SEAssert(frameNum == m_currentFrameNum + 1, "Frame numbers are out of sync");
+
+			m_currentFrameNum = frameNum;
+		}
+	}
+
+
+	void BindlessResourceManager::Update()
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_brmMutex);
 
 			if (m_mustReinitialize)
 			{
-				Initialize(frameNum);
+				Initialize();
 
 				m_mustReinitialize = false;
 			}
 
-			ProcessUnregistrations(frameNum);
+			ProcessUnregistrations(m_currentFrameNum);
 			ProcessRegistrations();
 		}
 	}

@@ -566,6 +566,9 @@ namespace dx12
 
 
 	// -----------------------------------------------------------------------------------------------------------------
+	
+
+	ID3D12Device* HeapPage::s_device = nullptr;
 
 
 	HeapPage::HeapPage(HeapDesc const& heapDesc, uint32_t pageSize, size_t pageIdx)
@@ -575,8 +578,7 @@ namespace dx12
 		, m_heap(nullptr)
 		, m_threadProtector(false)
 	{
-		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+		SEAssert(s_device, "Device is null");
 
 		// Create our heap:
 		const D3D12_HEAP_DESC pageHeapDesc{
@@ -591,7 +593,7 @@ namespace dx12
 			.Alignment = m_heapAlignment,
 			.Flags = heapDesc.m_heapFlags,
 		};
-		const HRESULT hr = device->CreateHeap(&pageHeapDesc, IID_PPV_ARGS(&m_heap));
+		const HRESULT hr = s_device->CreateHeap(&pageHeapDesc, IID_PPV_ARGS(&m_heap));
 		CheckHResult(hr, "Failed to create D3D12 heap for dx12::HeapPage");
 
 #if defined(_DEBUG)
@@ -1018,6 +1020,10 @@ namespace dx12
 
 
 	// -----------------------------------------------------------------------------------------------------------------
+	
+	
+	ID3D12Device* GPUResource::s_device = nullptr;
+	GlobalResourceStateTracker* GPUResource::s_globalResourceStateTracker = nullptr;
 
 
 	GPUResource::GPUResource(
@@ -1025,6 +1031,8 @@ namespace dx12
 		: m_resource(existingResource)
 		, m_heapManager(nullptr)
 	{
+		SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
+
 		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		m_heapManager = &context->GetHeapManager();
@@ -1033,21 +1041,22 @@ namespace dx12
 
 		D3D12_RESOURCE_DESC const& existingResourceDesc = existingResource->GetDesc();
 
-		context->GetGlobalResourceStates().RegisterResource(
+		s_globalResourceStateTracker->RegisterResource(
 			m_resource.Get(),
 			initialState,
 			GetNumberOfSubresources(existingResourceDesc));
 	}
 
 
-	GPUResource::GPUResource(HeapManager* heapMgr, ResourceDesc const& committedResourceDesc, wchar_t const* name, PrivateCTORToken)
+	GPUResource::GPUResource(
+		HeapManager* heapMgr, ResourceDesc const& committedResourceDesc, wchar_t const* name, PrivateCTORToken)
 		: m_resource(nullptr)
 		, m_heapManager(heapMgr)
 	{
-		// Create a committed GPU resource:
-		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+		SEAssert(s_device, "Device is null");
+		SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
 
+		// Create a committed GPU resource:
 		const CD3DX12_HEAP_PROPERTIES heapProperties(committedResourceDesc.m_heapType);
 
 		D3D12_CLEAR_VALUE const* clearVal = nullptr;
@@ -1058,7 +1067,7 @@ namespace dx12
 			clearVal = &committedResourceDesc.m_optimizedClearValue;
 		}
 
-		const HRESULT hr = device->CreateCommittedResource(
+		const HRESULT hr = s_device->CreateCommittedResource(
 			&heapProperties,					// Heap properties
 			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 			&committedResourceDesc.m_resourceDesc,		// Resource desc
@@ -1070,7 +1079,7 @@ namespace dx12
 		SetName(name);
 
 		// Register the resource with the state tracker:
-		gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
+		s_globalResourceStateTracker->RegisterResource(
 			m_resource.Get(),
 			committedResourceDesc.m_initialState,
 			GetNumberOfSubresources(committedResourceDesc.m_resourceDesc));
@@ -1088,6 +1097,8 @@ namespace dx12
 		, m_heapManager(owningHeapMgr)
 	{
 		SEAssert(m_heapAllocation.IsValid(), "Cannot construct a resource with an invalid heap allocation");
+		SEAssert(s_device, "Device is null");
+		SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
 
 		D3D12_CLEAR_VALUE const* clearVal = nullptr;
 		if (resourceDesc.m_resourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER &&
@@ -1097,10 +1108,7 @@ namespace dx12
 			clearVal = &resourceDesc.m_optimizedClearValue;
 		}
 
-		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
-
-		const HRESULT hr = device->CreatePlacedResource(
+		const HRESULT hr = s_device->CreatePlacedResource(
 			m_heapAllocation.GetHeap(),
 			m_heapAllocation.GetBaseOffset(),
 			&resourceDesc.m_resourceDesc,
@@ -1112,7 +1120,7 @@ namespace dx12
 		SetName(name);
 
 		// Register the resource with the state tracker:
-		gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().RegisterResource(
+		s_globalResourceStateTracker->RegisterResource(
 			m_resource.Get(),
 			resourceDesc.m_initialState,
 			GetNumberOfSubresources(resourceDesc.m_resourceDesc));
@@ -1160,10 +1168,11 @@ namespace dx12
 		}
 		else if (m_resource)
 		{
+			SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
+			
 			// If we're here, the resource is being destroyed from the HeapManager's deferred delete queue. Unregister
 			// our resource from the state tracker before we're destroyed
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
-				m_resource.Get());
+			s_globalResourceStateTracker->UnregisterResource(m_resource.Get());
 		}
 	}
 
@@ -1215,12 +1224,25 @@ namespace dx12
 			m_pagedHeaps.clear();
 			m_deferredGPUResourceDeletions = std::queue<std::pair<uint64_t, GPUResource>>();
 		}
+
+		HeapPage::s_device = nullptr;
+
+		GPUResource::s_device = nullptr;
+		GPUResource::s_globalResourceStateTracker = nullptr;
 	}
 
 	
-	void HeapManager::Initialize()
+	void HeapManager::Initialize(ID3D12Device* device, GlobalResourceStateTracker* globalResourceTracker)
 	{
-		m_device = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+		SEAssert(device && globalResourceTracker, "Dependencies cannot be null");
+
+		m_device = device;
+
+		HeapPage::s_device = m_device;
+		
+		GPUResource::s_device = m_device;
+		GPUResource::s_globalResourceStateTracker = globalResourceTracker;
+
 		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 		const D3D12_RESOURCE_HEAP_TIER heapTier = dx12::SysInfo::GetResourceHeapTier();
@@ -1283,7 +1305,7 @@ namespace dx12
 		const uint32_t visibleNodeMask = creationNodeMask; // Must be the creationNodeMask | optional extra bits
 
 		uint32_t resourceNumBytes, resourceAlignment;
-		GetResourceSizeAndAlignment(m_device.Get(), resourceDesc, resourceNumBytes, resourceAlignment);
+		GetResourceSizeAndAlignment(m_device, resourceDesc, resourceNumBytes, resourceAlignment);
 
 		SEAssert(resourceAlignment > 0 &&
 			glm::fmod(glm::log2(static_cast<float>(resourceAlignment)), 1.f) == 0,

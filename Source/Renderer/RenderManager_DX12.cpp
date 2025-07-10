@@ -9,6 +9,7 @@
 #include "Shader_DX12.h"
 #include "ShaderBindingTable_DX12.h"
 #include "Stage.h"
+#include "SysInfo_DX12.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_Platform.h"
@@ -30,6 +31,12 @@ namespace dx12
 
 	void RenderManager::Initialize_Platform()
 	{
+		LOG(std::format("D3D resource binding tier: {}",
+			dx12::D3D12ResourceBindingTierToCStr(dx12::SysInfo::GetResourceBindingTier())).c_str());
+
+		LOG(std::format("D3D heap tier: {}",
+			dx12::D3D12ResourceHeapTierToCStr(dx12::SysInfo::GetResourceHeapTier())).c_str());
+
 		// Prepend DX12-specific render systems:
 		CreateAddRenderSystem(core::configkeys::k_platformPipelineFileName_DX12);
 	}

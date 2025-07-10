@@ -4,6 +4,9 @@
 
 namespace dx12
 {
+	class Context;
+
+
 	class SysInfo
 	{
 	public: // Common platform:
@@ -30,5 +33,10 @@ namespace dx12
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
 		static uint32_t GetDeviceNodeMask();
 		static bool GPUUploadHeapSupported();
+
+
+	private:
+		friend class dx12::Context; // So it can set s_device
+		static ID3D12Device* s_device;
 	};
 }

@@ -42,12 +42,13 @@ namespace dx12
 	}
 
 
-	void BufferAllocator::Initialize(uint64_t currentFrame)
+	void BufferAllocator::InitializeInternal(uint64_t currentFrame, void* platformData)
 	{
+		dx12::HeapManager* heapMgr = static_cast<dx12::HeapManager*>(platformData);
+		SEAssert(heapMgr, "Received a null heap manager pointer");
+
 		SEStaticAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
 			"Fixed allocation size must match the default resource placement alignment");
-
-		re::BufferAllocator::Initialize(currentFrame);
 
 		const uint8_t numBuffers = gr::RenderManager::Get()->GetNumFramesInFlight();
 		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
@@ -55,15 +56,13 @@ namespace dx12
 			m_singleFrameBufferResources[i].resize(numBuffers);
 		}
 
-		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
-
 		// Note: Resources created in a D3D12_HEAP_TYPE_UPLOAD heap must have a D3D12_RESOURCE_STATE_GENERIC_READ
 		// initial state
 		constexpr D3D12_RESOURCE_STATES k_initialSharedResourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
 
 		for (uint8_t bufferIdx = 0; bufferIdx < m_numFramesInFlight; bufferIdx++)
 		{	
-			m_singleFrameBufferResources[re::BufferAllocator::Constant][bufferIdx] = heapMgr.CreateResource(
+			m_singleFrameBufferResources[re::BufferAllocator::Constant][bufferIdx] = heapMgr->CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
@@ -71,7 +70,7 @@ namespace dx12
 				},
 				util::ToWideString(std::format("Shared constant buffer committed resource {}", bufferIdx)).c_str() );
 
-			m_singleFrameBufferResources[re::BufferAllocator::Structured][bufferIdx] = heapMgr.CreateResource(
+			m_singleFrameBufferResources[re::BufferAllocator::Structured][bufferIdx] = heapMgr->CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,
@@ -79,7 +78,7 @@ namespace dx12
 				},
 				util::ToWideString(std::format("Shared structured buffer committed resource {}", bufferIdx)).c_str());
 
-			m_singleFrameBufferResources[re::BufferAllocator::Raw][bufferIdx] = heapMgr.CreateResource(
+			m_singleFrameBufferResources[re::BufferAllocator::Raw][bufferIdx] = heapMgr->CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize),
 					.m_heapType = D3D12_HEAP_TYPE_UPLOAD,

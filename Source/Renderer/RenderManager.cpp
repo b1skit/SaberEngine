@@ -203,11 +203,13 @@ namespace gr
 		LOG("RenderManager starting...");
 		
 		// Create the context:
-		m_context = re::Context::CreatePlatformContext(m_renderingAPI, this->GetNumFramesInFlight(), m_windowCache);
-		SEAssert(m_context, "Failed to create platform context.");
-
-		m_context->Create(m_renderFrameNum);
+		m_context = re::Context::CreateContext_Platform(
+			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache);
+		SEAssert(m_context, "Failed to create platform context.");	
 		
+		// The swap chain requires the context be fully created before it is created
+		m_context->GetSwapChain().Create(re::Texture::Format::RGBA8_UNORM, GetNumFramesInFlight(), m_context.get());
+
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
 		
@@ -287,6 +289,8 @@ namespace gr
 			SEEndCPUEvent(); // "gr::RenderManager::Update"
 			return; // Early-out: Prevents issues related to queued ImGui commands referring to now-destroyed data
 		}
+
+		m_context->BeginFrame(m_renderFrameNum);
 		
 		// Get the RenderDataManager ready for the new frame
 		m_renderData.BeginFrame(m_renderFrameNum);
@@ -296,8 +300,6 @@ namespace gr
 		m_renderData.Update(); // Post-render-command render data manager updates
 
 		m_batchPool->Update(m_renderFrameNum); // Update the batch pool for the current frame
-
-		m_context->GetGPUTimer().BeginFrame(m_renderFrameNum); // Platform layers internally call GPUTimer::EndFrame()
 
 		// We must create any API resources that were passed via render commands, as they may be required during GS
 		// updates (e.g. MeshPrimitive VertexStream Buffer members need to be created so we can set them on BufferInputs)
@@ -320,7 +322,7 @@ namespace gr
 		CreateAPIResources();
 
 		// Update context objects (Buffers, BindlessResourceManager, etc)
-		m_context->Update(frameNum);
+		m_context->Update();
 
 		// API-specific rendering loop virtual implementations:
 		SEBeginCPUEvent("platform::RenderManager::Render");

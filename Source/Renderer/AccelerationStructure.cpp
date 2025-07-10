@@ -333,9 +333,7 @@ namespace re
 				dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
 			SEAssert(tlasParams, "Failed to cast to TLASParams");
 
-			brm->UnregisterResource(
-				tlasParams->m_srvTLASResourceHandle,
-				gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			brm->UnregisterResource(tlasParams->m_srvTLASResourceHandle);
 
 			tlasParams->m_sbt->Destroy();
 			tlasParams->m_sbt = nullptr;

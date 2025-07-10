@@ -28,7 +28,7 @@ namespace dx12
 		static constexpr uint32_t k_numDescriptorsPerPage = 256;
 
 	public:
-		CPUDescriptorHeapManager(HeapType);
+		CPUDescriptorHeapManager(ID3D12Device*, HeapType);
 		CPUDescriptorHeapManager(CPUDescriptorHeapManager&&) noexcept;
 
 		~CPUDescriptorHeapManager();

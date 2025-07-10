@@ -29,8 +29,8 @@ namespace re
 	class Context
 	{
 	public:
-		static std::unique_ptr<re::Context> CreatePlatformContext(
-			platform::RenderingAPI, uint8_t numFramesInFlight, host::Window*);
+		static std::unique_ptr<re::Context> CreateContext_Platform(
+			platform::RenderingAPI, uint64_t currentFrameNum, uint8_t numFramesInFlight, host::Window*);
 		
 		template <typename T>
 		T As();
@@ -40,7 +40,8 @@ namespace re
 		virtual ~Context() = default;
 
 		void Create(uint64_t currentFrame);
-		void Update(uint64_t currentFrame);
+		void BeginFrame(uint64_t currentFrame);
+		void Update();
 		void Destroy();
 
 
@@ -49,8 +50,8 @@ namespace re
 
 		virtual re::BindlessResourceManager* GetBindlessResourceManager() = 0;
 	private:
-		virtual void CreateInternal(uint64_t currentFrame) = 0;
-		virtual void UpdateInternal(uint64_t currentFrame) = 0;
+		virtual void CreateInternal() = 0;
+		virtual void UpdateInternal() = 0;
 		virtual void DestroyInternal() = 0;
 
 
@@ -84,6 +85,7 @@ namespace re
 	protected:
 		re::GPUTimer m_gpuTimer;
 
+		uint64_t m_currentFrameNum;
 		uint8_t m_numFramesInFlight;
 
 

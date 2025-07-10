@@ -782,8 +782,7 @@ namespace dx12
 		// dx12::Texture::Create above
 		core::InvPtr<re::Texture> newTexture = re::Texture::Create(name, params);
 
-		dx12::Texture::PlatObj* texPlatObj = 
-			newTexture->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
+		dx12::Texture::PlatObj* texPlatObj = newTexture->GetPlatformObject()->As<dx12::Texture::PlatObj*>();
 		SEAssert(!texPlatObj->m_gpuResource, "Texture is already created");
 
 		texPlatObj->m_gpuResource = std::make_unique<dx12::GPUResource>(

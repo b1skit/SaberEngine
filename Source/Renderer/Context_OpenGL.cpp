@@ -267,7 +267,7 @@ namespace opengl
 	}
 
 
-	void Context::CreateInternal(uint64_t currentFrame)
+	void Context::CreateInternal()
 	{		
 		GetOpenGLExtensionProcessAddresses();
 
@@ -336,11 +336,7 @@ namespace opengl
 		SEAssert(glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck,
 			"Reported OpenGL version does not match the version set");
 
-		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
-
-		// Create the (implied) swap chain
-		GetSwapChain().Create(k_swapchainFormat, m_numFramesInFlight, this);
-		
+		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);	
 
 		// Initialize glew:
 		::glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
@@ -429,11 +425,11 @@ namespace opengl
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
-		m_bufferAllocator->Initialize(currentFrame);
+		m_bufferAllocator->Initialize(m_currentFrameNum, nullptr /*No platform object to supply in OpenGL*/);
 	}
 
 
-	void Context::UpdateInternal(uint64_t currentFrame)
+	void Context::UpdateInternal()
 	{
 		//
 	}

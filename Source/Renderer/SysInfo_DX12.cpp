@@ -8,6 +8,9 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
+	ID3D12Device* SysInfo::s_device = nullptr;
+
+
 	uint8_t SysInfo::GetMaxRenderTargets()
 	{
 		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
@@ -112,6 +115,8 @@ namespace dx12
 
 	void const* SysInfo::GetD3D12FeatureSupportData(D3D12_FEATURE d3d12Feature)
 	{
+		SEAssert(s_device, "Device is null");
+	
 		static std::mutex firstQueryMutex;
 
 		switch (d3d12Feature)
@@ -126,8 +131,7 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					const HRESULT hr =
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS,
 							&optionsData,
 							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
@@ -167,8 +171,7 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					const HRESULT hr =
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_FEATURE_LEVELS,
 							&featureLevels,
 							sizeof(D3D12_FEATURE_DATA_FEATURE_LEVELS));
@@ -225,12 +228,9 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					Microsoft::WRL::ComPtr<ID3D12Device> device = 
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
-
 					while(featureData.HighestVersion != D3D_ROOT_SIGNATURE_VERSION_1)
 					{
-						if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+						if (FAILED(s_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
 						{
 							featureData.HighestVersion = 
 								static_cast<D3D_ROOT_SIGNATURE_VERSION>(static_cast<uint8_t>(featureData.HighestVersion) - 1);
@@ -258,8 +258,7 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					const HRESULT hr =
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_ARCHITECTURE1,
 							&architectureData,
 							sizeof(D3D12_FEATURE_DATA_ARCHITECTURE1));
@@ -295,8 +294,7 @@ namespace dx12
 				std::lock_guard<std::mutex> lock(firstQueryMutex);
 				if (firstQuery)
 				{
-					const HRESULT hr =
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS3,
 							&optionsData,
 							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
@@ -337,8 +335,7 @@ namespace dx12
 				std::lock_guard<std::mutex> lock(firstQueryMutex);
 				if (firstQuery)
 				{
-					const HRESULT hr =
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS5,
 							&optionsData,
 							sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
@@ -430,8 +427,7 @@ namespace dx12
 
 				if (firstQuery)
 				{
-					const HRESULT hr = 
-						gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CheckFeatureSupport(
+					const HRESULT hr = s_device->CheckFeatureSupport(
 							D3D12_FEATURE_D3D12_OPTIONS16,
 							&options16,
 							sizeof(options16));
@@ -522,12 +518,12 @@ namespace dx12
 
 	uint32_t SysInfo::GetMaxMultisampleQualityLevel(DXGI_FORMAT format)
 	{
+		SEAssert(s_device, "Device is null");
+	
 		if (format == DXGI_FORMAT_UNKNOWN)
 		{
 			return 0;
 		}
-
-		Microsoft::WRL::ComPtr<ID3D12Device> device = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		uint32_t sampleCount = 16;
 
@@ -539,7 +535,7 @@ namespace dx12
 
 		while (sampleCount >= 1)
 		{
-			if (!FAILED(device->CheckFeatureSupport(
+			if (!FAILED(s_device->CheckFeatureSupport(
 					D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
 					&multisampleQualityLevels,
 					sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS))) &&

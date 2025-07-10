@@ -24,11 +24,10 @@ namespace dx12
 	}
 
 
-	CPUDescriptorHeapManager::CPUDescriptorHeapManager(HeapType type)
+	CPUDescriptorHeapManager::CPUDescriptorHeapManager(ID3D12Device* device, HeapType type)
 		: m_type(type)
 		, m_d3dType(TranslateHeapTypeToD3DHeapType(type))
-		, m_elementSize(gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()
-			->GetDescriptorHandleIncrementSize(TranslateHeapTypeToD3DHeapType(type)))
+		, m_elementSize(device->GetDescriptorHandleIncrementSize(TranslateHeapTypeToD3DHeapType(type)))
 	{
 	}
 

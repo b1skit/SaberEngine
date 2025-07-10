@@ -14,8 +14,8 @@
 
 namespace re
 {
-	std::unique_ptr<re::Context> Context::CreatePlatformContext(
-		platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+	std::unique_ptr<re::Context> Context::CreateContext_Platform(
+		platform::RenderingAPI api, uint64_t currentFrameNum, uint8_t numFramesInFlight, host::Window* window)
 	{
 		SEAssert(window, "Received a null window");
 
@@ -35,6 +35,8 @@ namespace re
 		default: SEAssertF("Invalid rendering API argument received");
 		}
 
+		newContext->Create(currentFrameNum);
+
 		return newContext;
 	}
 
@@ -44,6 +46,7 @@ namespace re
 		, m_gpuTimer(core::PerfLogger::Get(), numFramesInFlight)
 		, m_numFramesInFlight(numFramesInFlight)
 		, m_renderDocApi(nullptr)
+		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 	{
 		SEAssert(m_window, "Received a null window");
 
@@ -120,11 +123,29 @@ namespace re
 
 	void Context::Create(uint64_t currentFrame)
 	{
-		CreateInternal(currentFrame);
+		m_currentFrameNum = currentFrame;
+		CreateInternal();
 	}
 
 
-	void Context::Update(uint64_t currentFrame)
+	void Context::BeginFrame(uint64_t currentFrame)
+	{
+		SEAssert(m_currentFrameNum == 0 || // First frame: We already set m_currentFrameNum in Create()
+			currentFrame == m_currentFrameNum + 1,
+			"Frame numbers are out of sync");
+
+		m_currentFrameNum = currentFrame;
+
+		m_gpuTimer.BeginFrame(m_currentFrameNum);
+
+		if (re::BindlessResourceManager* brm = GetBindlessResourceManager())
+		{
+			brm->BeginFrame(m_currentFrameNum);
+		}
+	}
+
+
+	void Context::Update()
 	{
 		SEBeginCPUEvent("re::Context::Update");
 
@@ -133,11 +154,11 @@ namespace re
 
 		// Platform-level updates:
 		SEBeginCPUEvent("re::Context::UpdateInternal");
-		UpdateInternal(currentFrame);
+		UpdateInternal();
 		SEEndCPUEvent();
 
 		// Commit buffer data immediately before rendering
-		m_bufferAllocator->BufferData(currentFrame);
+		m_bufferAllocator->BufferData(m_currentFrameNum);
 
 		SEEndCPUEvent();
 	}

@@ -60,7 +60,7 @@ namespace dx12
 	}
 
 
-	void Context::CreateInternal(uint64_t currentFrame)
+	void Context::CreateInternal()
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
@@ -102,46 +102,37 @@ namespace dx12
 		EnableDebugLayer(); // Before we create a device
 
 		m_device.Create();
+		ID3D12Device* device = m_device.GetD3DDevice().Get();
 
-		LOG(std::format("D3D resource binding tier: {}",
-			dx12::D3D12ResourceBindingTierToCStr(dx12::SysInfo::GetResourceBindingTier())).c_str());
-
-		LOG(std::format("D3D heap tier: {}",
-			dx12::D3D12ResourceHeapTierToCStr(dx12::SysInfo::GetResourceHeapTier())).c_str());
+		// Give the SysInfo a copy of the device for convenience
+		dx12::SysInfo::s_device = device;
 
 		// Descriptor heap managers:
 		m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapManager::HeapType_Count));
 
-		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV);
-		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::RTV);
-		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::DSV);
+		m_cpuDescriptorHeapMgrs.emplace_back(device, CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV);
+		m_cpuDescriptorHeapMgrs.emplace_back(device, CPUDescriptorHeapManager::HeapType::RTV);
+		m_cpuDescriptorHeapMgrs.emplace_back(device, CPUDescriptorHeapManager::HeapType::DSV);
 
 		// Command Queues:
-		Microsoft::WRL::ComPtr<ID3D12Device> device = m_device.GetD3DDevice();
-
 		m_commandQueues[CommandListType::Direct].Create(device, CommandListType::Direct);
 		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
 		m_commandQueues[CommandListType::Copy].Create(device, CommandListType::Copy);
 
-		m_heapManager.Initialize();
-
-		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
-		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform object
-		re::SwapChain& swapChain = GetSwapChain();
-		swapChain.Create(re::Texture::Format::RGBA8_UNORM, m_numFramesInFlight, this);
+		m_heapManager.Initialize(device, &m_globalResourceStates);
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
-		m_bufferAllocator->Initialize(currentFrame);
+		m_bufferAllocator->Initialize(m_currentFrameNum, &m_heapManager);
 	}
 
 
-	void Context::UpdateInternal(uint64_t currentFrame)
+	void Context::UpdateInternal()
 	{
 		// Update the bindless resource manager.
 		// Note: At this point, any Buffers created by GS's and resources (e.g. VertexStreams) have had their platform
 		// objects created (although their data has not been buffered), and new resources have been API-created
-		m_bindlessResourceManager.Update(currentFrame);
+		m_bindlessResourceManager.Update();
 	}
 
 
@@ -194,6 +185,8 @@ namespace dx12
 		// The heap manager can only be destroyed after all GPUResources have been released
 		m_heapManager.Destroy();
 
+		// Destroy the device:
+		dx12::SysInfo::s_device = nullptr;
 		m_device.Destroy();
 	}
 

@@ -15,7 +15,7 @@ namespace opengl
 		BufferAllocator() = default;
 		~BufferAllocator() override = default;
 
-		void Initialize(uint64_t currentFrame) override;
+		void InitializeInternal(uint64_t currentFrame, void* unused) override;
 
 		void Destroy() override;
 

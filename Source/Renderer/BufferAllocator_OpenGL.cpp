@@ -95,10 +95,8 @@ namespace opengl
 	}
 
 
-	void BufferAllocator::Initialize(uint64_t currentFrame)
+	void BufferAllocator::InitializeInternal(uint64_t currentFrame, void* unused)
 	{
-		re::BufferAllocator::Initialize(currentFrame);
-
 		// Note: OpenGL only supports double-buffering via a front and back buffer. Thus we can fill one buffer while
 		// the other is in use, so long as we clear the buffer we're writing to at the beginning of each new frame
 		

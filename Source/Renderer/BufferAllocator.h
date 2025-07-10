@@ -23,7 +23,7 @@ namespace re
 
 
 	public:
-		virtual void Initialize(uint64_t currentFrame);
+		void Initialize(uint64_t currentFrame, void* platformData); // e.g. platformData == dx12::HeapManager*
 
 		virtual ~BufferAllocator();
 
@@ -40,6 +40,9 @@ namespace re
 		void ResetForNewFrame(uint64_t renderFrameNum);
 		void ClearTemporaryStaging();
 
+
+	private:
+		virtual void InitializeInternal(uint64_t currentFrame, void* platformData) = 0; // e.g. platformData == dx12::HeapManager*
 
 	protected:
 		BufferAllocator();

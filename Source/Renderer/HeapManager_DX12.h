@@ -9,6 +9,7 @@
 
 namespace dx12
 {
+	class GlobalResourceStateTracker;
 	class HeapManager;
 	class HeapPage;
 	struct HeapDesc;
@@ -113,6 +114,9 @@ namespace dx12
 
 		util::ThreadProtector m_threadProtector;
 
+	private:
+		friend class HeapManager;
+		static ID3D12Device* s_device;
 
 	private: // No copies allowed:
 		HeapPage() = delete;
@@ -247,6 +251,11 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_resource;
 		HeapManager* m_heapManager; // Note: Always be populated so GPUResources can all use the deferred delete queue
 
+	private:
+		friend class HeapManager;
+		static ID3D12Device* s_device;
+		static GlobalResourceStateTracker* s_globalResourceStateTracker;
+
 
 	private: // No copies allowed:
 		GPUResource(GPUResource const&) = delete;
@@ -267,7 +276,7 @@ namespace dx12
 
 
 	public:
-		void Initialize();
+		void Initialize(ID3D12Device*, GlobalResourceStateTracker*);
 
 		void EndOfFrame(uint64_t frameNum);
 
@@ -288,7 +297,7 @@ namespace dx12
 		std::queue<std::pair<uint64_t, GPUResource>> m_deferredGPUResourceDeletions;
 		std::recursive_mutex m_deferredGPUResourceDeletionsMutex;
 
-		Microsoft::WRL::ComPtr<ID3D12Device> m_device;
+		ID3D12Device* m_device;
 
 		uint8_t m_numFramesInFlight;
 

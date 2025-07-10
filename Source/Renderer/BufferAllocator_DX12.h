@@ -12,7 +12,7 @@ namespace dx12
 		BufferAllocator() = default;
 		~BufferAllocator() override = default;
 
-		void Initialize(uint64_t currentFrame) override;
+		void InitializeInternal(uint64_t currentFrame, void* heapManager) override;
 
 		void Destroy() override;
 

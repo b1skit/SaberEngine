@@ -58,12 +58,13 @@ namespace re
 
 
 	public:
-		void Update(uint64_t frameNum);
+		void BeginFrame(uint64_t frameNum); // Called at the very start of the frame
+		void Update();
 
 
 	public:
 		ResourceHandle RegisterResource(std::unique_ptr<IBindlessResource>&&);
-		void UnregisterResource(ResourceHandle&, uint64_t frameNum);
+		void UnregisterResource(ResourceHandle&);
 
 
 	public:
@@ -71,7 +72,7 @@ namespace re
 
 
 	private:
-		void Initialize(uint64_t frameNum);
+		void Initialize();
 		void IncreaseSetSize();
 
 		void ProcessRegistrations();
@@ -100,6 +101,8 @@ namespace re
 		std::vector<RegistrationMetadata> m_registrations;
 
 		std::unique_ptr<PlatObj> m_platObj;
+
+		uint64_t m_currentFrameNum;
 
 		bool m_mustReinitialize;
 		uint8_t m_numFramesInFlight;
