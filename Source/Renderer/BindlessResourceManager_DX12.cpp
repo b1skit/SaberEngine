@@ -533,7 +533,7 @@ namespace dx12
 				std::make_unique<dx12::BindlessResourceManager::PlatObj>();
 
 			paramsToDelete->m_gpuDescriptorHeaps = std::move(brmPlatObj->m_gpuDescriptorHeaps);
-			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(paramsToDelete));
+			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(paramsToDelete));
 			brmPlatObj->m_gpuDescriptorHeaps.resize(brmPlatObj->m_numFramesInFlight);
 
 			// Initialize/grow our non-frame-indexed cache vectors (No-op if old size == new size)

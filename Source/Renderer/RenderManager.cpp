@@ -331,41 +331,11 @@ namespace gr
 		}
 		SEEndCPUEvent(); // "Process render systems"
 		
-		ProcessDeferredDeletions(GetCurrentRenderFrameNum());
-
 		m_context->EndFrame();
 
 		EndFrame_Platform();
 
 		SEEndCPUEvent(); // "gr::RenderManager::EndFrame"
-	}
-
-
-	void RenderManager::RegisterForDeferredDelete(std::unique_ptr<core::IPlatObj>&& platObj)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
-
-			m_deletedPlatObjects.emplace(PlatformDeferredDelete{
-				.m_platObj = std::move(platObj),
-				.m_frameNum = GetCurrentRenderFrameNum() });
-		}
-	}
-
-
-	void RenderManager::ProcessDeferredDeletions(uint64_t frameNum)
-	{
-		const uint8_t numFramesInFlight = GetNumFramesInFlight();
-		{
-			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
-
-			while (!m_deletedPlatObjects.empty() &&
-				m_deletedPlatObjects.front().m_frameNum + numFramesInFlight < frameNum)
-			{
-				m_deletedPlatObjects.front().m_platObj->Destroy();
-				m_deletedPlatObjects.pop();
-			}
-		}
 	}
 
 
@@ -408,8 +378,6 @@ namespace gr
 
 		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatObj there
 		m_context->GetBufferAllocator()->Destroy();
-
-		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		// Need to do this here so the EngineApp's Window can be destroyed
 		m_context->Destroy();

@@ -382,7 +382,7 @@ namespace re
 
 		platform::Texture::Destroy(*this);
 
-		gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+		gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{

@@ -187,6 +187,8 @@ namespace re
 		m_newAccelerationStructures.ClearReadData();
 		m_newShaderBindingTables.ClearReadData();
 		m_newTargetSets.ClearReadData();
+
+		ProcessDeferredDeletions(m_currentFrameNum);
 	}
 
 
@@ -208,6 +210,8 @@ namespace re
 		}
 		m_gpuTimer.Destroy();
 		
+		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
+
 		DestroyInternal();
 	}
 
@@ -364,5 +368,33 @@ namespace re
 	std::vector<core::InvPtr<re::Texture>> const& Context::GetNewResources() const
 	{
 		return m_createdTextures;
+	}
+
+
+	void Context::RegisterForDeferredDelete(std::unique_ptr<core::IPlatObj>&& platObj)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
+
+			m_deletedPlatObjects.emplace(PlatformDeferredDelete{
+				.m_platObj = std::move(platObj),
+				.m_frameNum = m_currentFrameNum });
+		}
+	}
+
+
+	void Context::ProcessDeferredDeletions(uint64_t frameNum)
+	{
+		const uint8_t numFramesInFlight = m_numFramesInFlight;
+		{
+			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
+
+			while (!m_deletedPlatObjects.empty() &&
+				m_deletedPlatObjects.front().m_frameNum + numFramesInFlight < frameNum)
+			{
+				m_deletedPlatObjects.front().m_platObj->Destroy();
+				m_deletedPlatObjects.pop();
+			}
+		}
 	}
 }

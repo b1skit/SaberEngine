@@ -170,23 +170,6 @@ namespace gr
 		void EndFrame();
 
 
-	public:
-		void RegisterForDeferredDelete(std::unique_ptr<core::IPlatObj>&&);
-
-	private:
-		static constexpr uint64_t k_forceDeferredDeletionsFlag = std::numeric_limits<uint64_t>::max();
-
-		void ProcessDeferredDeletions(uint64_t frameNum);
-		
-		struct PlatformDeferredDelete
-		{
-			std::unique_ptr<core::IPlatObj> m_platObj;
-			uint64_t m_frameNum; // When the delete was recorded: Delete will happen after GetNumFramesInFlight() frames
-		};
-		std::queue<PlatformDeferredDelete> m_deletedPlatObjects;
-		std::mutex m_deletedPlatObjectsMutex;
-
-
 	protected:
 		platform::RenderingAPI m_renderingAPI;
 

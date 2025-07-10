@@ -226,7 +226,7 @@ namespace re
 		{
 			s_bufferAllocator->Deallocate(GetUniqueID());
 
-			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
 	}
 

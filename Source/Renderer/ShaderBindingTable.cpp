@@ -56,7 +56,7 @@ namespace re
 		// Guarantee the lifetime of any in-flight resources:
 		if (m_platObj)
 		{
-			gr::RenderManager::Get()->RegisterForDeferredDelete(std::move(m_platObj));
+			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		m_rayGenShaders.clear();

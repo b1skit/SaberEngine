@@ -127,6 +127,23 @@ namespace re
 		std::vector<core::InvPtr<re::Texture>> m_createdTextures;
 
 
+	public:
+		void RegisterForDeferredDelete(std::unique_ptr<core::IPlatObj>&&);
+
+	private:
+		static constexpr uint64_t k_forceDeferredDeletionsFlag = std::numeric_limits<uint64_t>::max();
+
+		void ProcessDeferredDeletions(uint64_t frameNum);
+
+		struct PlatformDeferredDelete
+		{
+			std::unique_ptr<core::IPlatObj> m_platObj;
+			uint64_t m_frameNum; // When the delete was recorded: Delete will happen after GetNumFramesInFlight() frames
+		};
+		std::queue<PlatformDeferredDelete> m_deletedPlatObjects;
+		std::mutex m_deletedPlatObjectsMutex;
+
+
 	protected:
 		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*);
 
