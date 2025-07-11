@@ -3,7 +3,6 @@
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
 #include "Effect.h"
-#include "RenderObjectIDs.h"
 #include "ShaderBindingTable.h"
 #include "VertexStream.h"
 
@@ -100,7 +99,7 @@ namespace re
 	public:
 		struct Geometry final
 		{
-			Geometry(gr::RenderDataID);
+			Geometry(uint32_t ownerID); // ownerID is an opaque ID (e.g. gr::RenderDataID) to associate the geometry source
 
 			void SetVertexPositions(re::VertexBufferInput const& positions);
 			re::VertexBufferInput const& GetVertexPositions() const;
@@ -111,7 +110,7 @@ namespace re
 			void SetGeometryFlags(GeometryFlags geometryFlags);
 			GeometryFlags GetGeometryFlags() const;
 			
-			gr::RenderDataID GetRenderDataID() const;
+			uint32_t GetOwnerID() const;
 
 			void SetEffectID(EffectID effectID);
 			EffectID GetEffectID() const;
@@ -151,7 +150,8 @@ namespace re
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
-			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
+			static constexpr uint32_t k_invalidOwnerID = std::numeric_limits<uint32_t>::max();
+			uint32_t m_ownerID = k_invalidOwnerID;
 
 			// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
 			EffectID m_effectID;
@@ -191,7 +191,7 @@ namespace re
 			ResourceHandle GetResourceHandle() const;
 			re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
-			std::vector<gr::RenderDataID> const& GetBLASGeometryRenderDataIDs() const;
+			std::vector<uint32_t> const& GetBLASGeometryOwnerIDs() const;
 
 			std::shared_ptr<re::ShaderBindingTable> const& GetShaderBindingTable() const;
 
@@ -201,7 +201,7 @@ namespace re
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
-			std::vector<gr::RenderDataID> m_blasGeoRenderDataIDs; // Flattened list of all BLAS geometry elements
+			std::vector<uint32_t> m_blasGeoOwnerIDs; // Flattened list of all BLAS geometry elements
 
 			std::shared_ptr<re::ShaderBindingTable> m_sbt; // TODO: Support multiple SBTs per TLAS
 
@@ -336,8 +336,8 @@ namespace re
 	// ---
 
 
-	inline AccelerationStructure::Geometry::Geometry(gr::RenderDataID renderDataID)
-		: m_renderDataID(renderDataID)
+	inline AccelerationStructure::Geometry::Geometry(uint32_t ownerID)
+		: m_ownerID(ownerID)
 	{
 	}
 
@@ -384,10 +384,10 @@ namespace re
 	}
 
 
-	inline gr::RenderDataID AccelerationStructure::Geometry::GetRenderDataID() const
+	inline uint32_t AccelerationStructure::Geometry::GetOwnerID() const
 	{
-		SEAssert(m_renderDataID != gr::k_invalidRenderDataID, "Invalid RenderDataID");
-		return m_renderDataID;
+		SEAssert(m_ownerID != k_invalidOwnerID, "Invalid owner ID");
+		return m_ownerID;
 	}
 
 
@@ -437,9 +437,9 @@ namespace re
 	}
 
 
-	inline std::vector<gr::RenderDataID> const& re::AccelerationStructure::TLASParams::GetBLASGeometryRenderDataIDs() const
+	inline std::vector<uint32_t> const& re::AccelerationStructure::TLASParams::GetBLASGeometryOwnerIDs() const
 	{
-		return m_blasGeoRenderDataIDs;
+		return m_blasGeoOwnerIDs;
 	};
 
 

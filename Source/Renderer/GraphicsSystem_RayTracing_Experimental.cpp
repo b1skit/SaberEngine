@@ -100,7 +100,7 @@ namespace
 		const ResourceHandle pbrMetRoughMaterialBufferHandle = 
 			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 
-		std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
+		std::vector<uint32_t> const& blasGeoIDs = tlasParams->GetBLASGeometryOwnerIDs();
 	
 		size_t geoIdx = 0;
 		std::vector<InstancedBufferLUTData> initialLUTData;
@@ -111,7 +111,7 @@ namespace
 
 			for (auto const& geometry : blasParams->m_geometry)
 			{
-				SEAssert(blasGeoIDs[geoIdx++] == geometry.GetRenderDataID(), "Geometry and IDs are out of sync");
+				SEAssert(blasGeoIDs[geoIdx++] == geometry.GetOwnerID(), "Geometry and IDs are out of sync");
 
 				effect::Effect const* geoEffect = effectDB.GetEffect(geometry.GetEffectID());
 				ResourceHandle materialResourceHandle = INVALID_RESOURCE_IDX;
@@ -363,7 +363,7 @@ namespace gr
 			re::AccelerationStructure::TLASParams const* tlasParams =
 				dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 
-			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
+			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryOwnerIDs();
 
 			std::vector<InstancedBufferLUTData> instancedBufferLUTData(blasGeoIDs.size());
 			m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager().GetLUTBufferData(

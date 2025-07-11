@@ -33,12 +33,12 @@ namespace
 
 
 	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances,
-		std::vector<gr::RenderDataID>& blasGeoRenderDataIDsOut)
+		std::vector<uint32_t>& blasGeoOwnerIDsOut)
 	{
 		const uint32_t geoCount = GetTotalGeometryCount(blasInstances);
 
-		blasGeoRenderDataIDsOut.clear();
-		blasGeoRenderDataIDsOut.reserve(geoCount);
+		blasGeoOwnerIDsOut.clear();
+		blasGeoOwnerIDsOut.reserve(geoCount);
 
 		std::vector<VertexStreamLUTData> vertexStreamLUTData;
 		vertexStreamLUTData.reserve(geoCount);
@@ -66,12 +66,12 @@ namespace
 					),
 				});
 
-				blasGeoRenderDataIDsOut.emplace_back(geometry.GetRenderDataID());
+				blasGeoOwnerIDsOut.emplace_back(geometry.GetOwnerID());
 			}
 		}
 		SEStaticAssert(sizeof(VertexStreamLUTData) == 32, "VertexStreamLUTData size has changed: This must be updated");
 
-		SEAssert(blasGeoRenderDataIDsOut.size() == geoCount && vertexStreamLUTData.size() == geoCount,
+		SEAssert(blasGeoOwnerIDsOut.size() == geoCount && vertexStreamLUTData.size() == geoCount,
 			"Unexpected size mismatch");
 
 		return re::BufferInput(
@@ -286,7 +286,7 @@ namespace re
 
 		// Create the bindless LUT buffer:
 		newTLASParams->m_bindlessResourceLUT =
-			CreateBindlessLUT(newTLASParams->m_blasInstances, newTLASParams->m_blasGeoRenderDataIDs);
+			CreateBindlessLUT(newTLASParams->m_blasInstances, newTLASParams->m_blasGeoOwnerIDs);
 
 		// Create the ShaderBindingTable:
 		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
