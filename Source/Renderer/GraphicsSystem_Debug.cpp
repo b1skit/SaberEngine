@@ -37,7 +37,7 @@ namespace
 			std::move(axisOriginPos));
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
-			.SetGeometryMode(re::Batch::GeometryMode::ArrayInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::ArrayInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
 			.SetVertexBuffer(0, axisPositionStream)
 			.SetEffectID(k_debugEffectID)
@@ -77,7 +77,7 @@ namespace
 			util::ByteVector::Create<uint16_t>({ 0, 1 }));
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
-			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
 			.SetVertexBuffers({ linePositionsStream, lineColorStream })
 			.SetIndexBuffer(lineIndexStream)
@@ -167,7 +167,7 @@ namespace
 			std::move(boxIndexes));
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
-			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
 			.SetVertexBuffer(0, boxPositionsStream)
 			.SetVertexBuffer(1, boxColorStream)
@@ -190,7 +190,7 @@ namespace
 		SEAssert((*existingBatch).GetRasterParams().HasVertexStream(re::VertexStream::Position),
 			"Existing Batch has no Position vertex stream. This should not be possible");
 
-		re::Batch::RasterParams const& rasterParams = (*existingBatch).GetRasterParams();
+		gr::Batch::RasterParams const& rasterParams = (*existingBatch).GetRasterParams();
 
 		SEAssert(
 			rasterParams.GetVertexStreamInput(re::VertexStream::Position)->GetStream()->GetDataType() == re::DataType::Float3 &&
@@ -198,7 +198,7 @@ namespace
 			"Unexpected position or normal data");
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder::CloneAndModify(existingBatch)
-			.SetGeometryMode(re::Batch::GeometryMode::ArrayInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::ArrayInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
 			.SetEffectID(k_debugEffectID)
 			.SetDrawstyleBitmask(effect::drawstyle::Debug_Normal)
@@ -272,7 +272,7 @@ namespace
 			std::move(frustumIndexes));
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
-			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
 			.SetVertexBuffer(0, frustumPositionsStream)
 			.SetVertexBuffer(1, frustumColorStream)
@@ -297,7 +297,7 @@ namespace
 		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
-			.SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced)
+			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
 			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::TriangleList)
 			.SetVertexBuffer(0, positionStream)
 			.SetIndexBuffer(indexStream)

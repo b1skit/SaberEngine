@@ -406,31 +406,31 @@ namespace dx12
 							{
 								gr::StageBatchHandle const& batch = batches[batchIdx];
 
-								re::Batch::RayTracingParams const& batchRTParams = (*batch)->GetRayTracingParams();
+								gr::Batch::RayTracingParams const& batchRTParams = (*batch)->GetRayTracingParams();
 								
 								SEAssert(batchRTParams.m_ASInput.m_accelerationStructure,
 									"AccelerationStructure is null");
 
 								switch (batchRTParams.m_operation)
 								{
-								case re::Batch::RayTracingParams::Operation::BuildAS:
+								case gr::Batch::RayTracingParams::Operation::BuildAS:
 								{
 									cmdList->BuildRaytracingAccelerationStructure(
 										*batchRTParams.m_ASInput.m_accelerationStructure, false);
 								}
 								break;
-								case re::Batch::RayTracingParams::Operation::UpdateAS:
+								case gr::Batch::RayTracingParams::Operation::UpdateAS:
 								{
 									cmdList->BuildRaytracingAccelerationStructure(
 										*batchRTParams.m_ASInput.m_accelerationStructure, true);
 								}
 								break;
-								case re::Batch::RayTracingParams::Operation::CompactAS:
+								case gr::Batch::RayTracingParams::Operation::CompactAS:
 								{
 									SEAssertF("TODO: Implement this");
 								}
 								break;
-								case re::Batch::RayTracingParams::Operation::DispatchRays:
+								case gr::Batch::RayTracingParams::Operation::DispatchRays:
 								{
 									SEAssert(!batchRTParams.m_ASInput.m_shaderName.empty(),
 										"Acceleration structure input shader name is empty");

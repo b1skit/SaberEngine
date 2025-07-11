@@ -122,9 +122,6 @@
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
-    <ClInclude Include="Batch.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
     <ClInclude Include="BoundsRenderData.h">
       <Filter>Header Files\gr\RenderData</Filter>
     </ClInclude>
@@ -557,6 +554,9 @@
     <ClInclude Include="..\Dependencies\Aftermath\include\NsightAftermathShaderDatabase.h">
       <Filter>Dependencies\Aftermath</Filter>
     </ClInclude>
+    <ClInclude Include="Batch.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -742,9 +742,6 @@
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="Batch.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
     <ClCompile Include="Buffer.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -921,6 +918,9 @@
     </ClCompile>
     <ClCompile Include="..\Dependencies\Aftermath\include\NsightAftermathShaderDatabase.cpp">
       <Filter>Dependencies\Aftermath</Filter>
+    </ClCompile>
+    <ClCompile Include="Batch.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

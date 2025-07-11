@@ -11,7 +11,7 @@ namespace grutil
 {
 	gr::RasterBatchBuilder&& BuildInstancedRasterBatch(
 		gr::RasterBatchBuilder&& batchBuilder,
-		re::Batch::VertexStreamOverride const* vertexStreamOverrides,
+		gr::Batch::VertexStreamOverride const* vertexStreamOverrides,
 		gr::RenderDataID renderDataID,
 		gr::RenderDataManager const& renderData)
 	{
@@ -21,7 +21,7 @@ namespace grutil
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 			renderData.GetObjectData<gr::MeshPrimitive::RenderData>(renderDataID);
 
-		std::move(batchBuilder).SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced);
 		std::move(batchBuilder).SetPrimitiveTopology(meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology);
 
 		if (vertexStreamOverrides)
@@ -71,10 +71,10 @@ namespace grutil
 
 			// Filter bits:
 			std::move(batchBuilder).SetFilterMaskBit(
-				re::Batch::Filter::AlphaBlended, materialInstanceData.m_alphaMode == gr::Material::AlphaMode::Blend);
+				gr::Batch::Filter::AlphaBlended, materialInstanceData.m_alphaMode == gr::Material::AlphaMode::Blend);
 
 			std::move(batchBuilder).SetFilterMaskBit(
-				re::Batch::Filter::ShadowCaster, materialInstanceData.m_isShadowCaster);
+				gr::Batch::Filter::ShadowCaster, materialInstanceData.m_isShadowCaster);
 
 			std::move(batchBuilder).SetDrawstyleBitmask(
 				gr::Material::MaterialInstanceRenderData::GetDrawstyleBits(&materialInstanceData));
@@ -92,7 +92,7 @@ namespace grutil
 		SEAssert(meshPrim->GetIndexStream() != nullptr,
 			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 
-		std::move(batchBuilder).SetGeometryMode(re::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced);
 		std::move(batchBuilder).SetPrimitiveTopology(meshPrim->GetMeshParams().m_primitiveTopology);
 		std::move(batchBuilder).SetEffectID(effectID);
 

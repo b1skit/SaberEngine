@@ -318,7 +318,7 @@ namespace opengl
 							case gr::Stage::Type::Raster:
 							case gr::Stage::Type::FullscreenQuad:
 							{
-								re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
+								gr::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
 								
 								// Set the VAO:
 								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
@@ -363,7 +363,7 @@ namespace opengl
 								// Draw!
 								switch (rasterParams.m_batchGeometryMode)
 								{
-								case re::Batch::GeometryMode::IndexedInstanced:
+								case gr::Batch::GeometryMode::IndexedInstanced:
 								{
 									glDrawElementsInstanced(
 										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),	// GLenum mode
@@ -373,7 +373,7 @@ namespace opengl
 										(GLsizei)batch.GetInstanceCount());	// Instance count
 								}
 								break;
-								case re::Batch::GeometryMode::ArrayInstanced:
+								case gr::Batch::GeometryMode::ArrayInstanced:
 								{
 									const GLsizei numElements = static_cast<GLsizei>(
 										batch.GetResolvedVertexBuffers()[0].first->m_view.m_streamView.m_numElements);

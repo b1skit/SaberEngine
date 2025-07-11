@@ -135,7 +135,7 @@ namespace gr
 
 		// Build a list of all BLAS's we need to create/recreate.
 		// Note: We pack all MeshPrimitives owned by a single MeshConcept into the same BLAS
-		std::unordered_map<gr::RenderDataID, re::Batch::RayTracingParams::Operation> meshConceptIDToBatchOp;
+		std::unordered_map<gr::RenderDataID, gr::Batch::RayTracingParams::Operation> meshConceptIDToBatchOp;
 
 		bool mustRebuildTLAS = false;
 
@@ -197,7 +197,7 @@ namespace gr
 					{
 						// If we've still got MeshPrimitives associated with the MeshConcept, we'll need to rebuild as
 						// only vertex positions can change in a BLAS (not the no. of geometries etc)
-						meshConceptIDToBatchOp.emplace(owningMeshConceptID, re::Batch::RayTracingParams::Operation::BuildAS);
+						meshConceptIDToBatchOp.emplace(owningMeshConceptID, gr::Batch::RayTracingParams::Operation::BuildAS);
 					}
 
 					// If we've removed geometry, we must rebuild the TLAS
@@ -282,14 +282,14 @@ namespace gr
 			if (meshConceptUpdateItr == meshConceptIDToBatchOp.end())
 			{
 				meshConceptUpdateItr = meshConceptIDToBatchOp.emplace(
-					owningMeshConceptID, re::Batch::RayTracingParams::Operation::UpdateAS).first;
+					owningMeshConceptID, gr::Batch::RayTracingParams::Operation::UpdateAS).first;
 			}
 
 			// If the geometry or opaque-ness have changed, we must rebuild:
 			if (meshPrimItr->IsDirty<gr::MeshPrimitive::RenderData>() ||
 				isNewBlasKey) // Did material properties affecting the BLAS change?
 			{
-				meshConceptUpdateItr->second = re::Batch::RayTracingParams::Operation::BuildAS;
+				meshConceptUpdateItr->second = gr::Batch::RayTracingParams::Operation::BuildAS;
 				mustRebuildTLAS = true;
 			}
 		}
@@ -305,7 +305,7 @@ namespace gr
 			// Record a BLAS update:
 			if (!meshConceptIDToBatchOp.contains(owningMeshConceptID))
 			{
-				meshConceptIDToBatchOp.emplace(owningMeshConceptID, re::Batch::RayTracingParams::Operation::UpdateAS);
+				meshConceptIDToBatchOp.emplace(owningMeshConceptID, gr::Batch::RayTracingParams::Operation::UpdateAS);
 			}
 		}
 
@@ -323,7 +323,7 @@ namespace gr
 		for (auto const& record : meshConceptIDToBatchOp)
 		{
 			const gr::RenderDataID meshConceptID = record.first;
-			const re::Batch::RayTracingParams::Operation batchOperation = record.second;
+			const gr::Batch::RayTracingParams::Operation batchOperation = record.second;
 
 			SEAssert(m_meshConceptToPrimitiveIDs.contains(meshConceptID),
 				"Failed to find MeshConcept record. This should not be possible");
@@ -409,7 +409,7 @@ namespace gr
 					"Could not find an existing BLAS record");
 
 				std::shared_ptr<re::AccelerationStructure> blas;
-				if (batchOperation == re::Batch::RayTracingParams::Operation::BuildAS)
+				if (batchOperation == gr::Batch::RayTracingParams::Operation::BuildAS)
 				{
 					// Create a Transform buffer:
 					CreateUpdate3x4RowMajorTransformBuffer(meshConceptID, blasParams->m_transform, blasMatrices);
@@ -447,10 +447,10 @@ namespace gr
 		if (!meshConceptIDToBatchOp.empty() || mustRebuildTLAS)
 		{
 			// Schedule a single-frame stage to create/update the TLAS on the GPU:
-			re::Batch::RayTracingParams::Operation tlasOperation = re::Batch::RayTracingParams::Operation::Invalid;
+			gr::Batch::RayTracingParams::Operation tlasOperation = gr::Batch::RayTracingParams::Operation::Invalid;
 			if (mustRebuildTLAS)
 			{
-				tlasOperation = re::Batch::RayTracingParams::Operation::BuildAS;
+				tlasOperation = gr::Batch::RayTracingParams::Operation::BuildAS;
 
 				auto tlasParams = std::make_unique<re::AccelerationStructure::TLASParams>();
 
@@ -498,12 +498,12 @@ namespace gr
 			}
 			else
 			{
-				tlasOperation = re::Batch::RayTracingParams::Operation::UpdateAS;
+				tlasOperation = gr::Batch::RayTracingParams::Operation::UpdateAS;
 			}
 			
 			if (m_sceneTLAS) // Ensure we don't try and build a null TLAS
 			{
-				re::Batch::RayTracingParams tlasBatchParams;
+				gr::Batch::RayTracingParams tlasBatchParams;
 				tlasBatchParams.m_operation = tlasOperation,
 					tlasBatchParams.m_ASInput = re::ASInput(m_sceneTLAS);
 

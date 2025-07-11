@@ -578,7 +578,7 @@ namespace dx12
 		CommitGPUDescriptors();
 
 		// Set the geometry for the draw:		
-		re::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
+		gr::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(rasterParams.m_primitiveTopology));
 
@@ -587,7 +587,7 @@ namespace dx12
 		// Record the draw:
 		switch (rasterParams.m_batchGeometryMode)
 		{
-		case re::Batch::GeometryMode::IndexedInstanced:
+		case gr::Batch::GeometryMode::IndexedInstanced:
 		{
 			SEAssert(batch.GetIndexBuffer().GetBuffer(), "Index stream cannot be null for indexed draws");
 
@@ -605,7 +605,7 @@ namespace dx12
 				0);																// Start instance location
 		}
 		break;
-		case re::Batch::GeometryMode::ArrayInstanced:
+		case gr::Batch::GeometryMode::ArrayInstanced:
 		{		
 			SEAssert(batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_type ==
 				re::VertexStream::Type::Position,

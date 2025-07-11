@@ -139,7 +139,7 @@ namespace gr
 					itr->Get<gr::Material::MaterialInstanceRenderData>();
 
 				// Get any animated vertex streams overrides, if they exist
-				re::Batch::VertexStreamOverride const* vertexStreamOverrides = nullptr;
+				gr::Batch::VertexStreamOverride const* vertexStreamOverrides = nullptr;
 				auto const& animatedStreams = m_animatedVertexStreams->find(renderDataID);
 				if (animatedStreams != m_animatedVertexStreams->end())
 				{

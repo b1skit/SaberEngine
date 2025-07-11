@@ -36,7 +36,7 @@ namespace re
 	class Texture;
 }
 
-namespace re
+namespace gr
 {
 	class Batch final : public virtual core::IHashedDataObject
 	{
@@ -67,13 +67,13 @@ namespace re
 
 			Filter_Count
 		};
-		SEStaticAssert(re::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
+		SEStaticAssert(gr::Batch::Filter::Filter_Count <= 32, "Too many filter bits");
 
 		using VertexStreamOverride = std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>;
 		struct RasterParams final
 		{
 		private:
-			friend class re::Batch;
+			friend class gr::Batch;
 			friend class gr::RasterBatchBuilder;
 			friend class gr::StageBatchHandle;
 
@@ -81,11 +81,11 @@ namespace re
 			// Vertex streams must be contiguously packed, with streams of the same type stored consecutively
 			std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> m_vertexBuffers{};
 
-			VertexBufferInput m_indexBuffer{};
+			re::VertexBufferInput m_indexBuffer{};
 
 		protected:
 			// Optional overrides for vertex streams (e.g. animation)
-			re::Batch::VertexStreamOverride const* m_vertexStreamOverrides = nullptr;
+			gr::Batch::VertexStreamOverride const* m_vertexStreamOverrides = nullptr;
 
 
 		public:
@@ -152,13 +152,13 @@ namespace re
 
 		EffectID GetEffectID() const;
 
-		std::vector<BufferInput> const& GetBuffers() const;
-		std::vector<TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
-		std::vector<RWTextureInput> const& GetRWTextureInputs() const;
-		RootConstants const& GetRootConstants() const;
+		std::vector<re::BufferInput> const& GetBuffers() const;
+		std::vector<re::TextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
+		std::vector<re::RWTextureInput> const& GetRWTextureInputs() const;
+		re::RootConstants const& GetRootConstants() const;
 
 		FilterBitmask GetBatchFilterMask() const;
-		bool MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const;
+		bool MatchesFilterBits(gr::Batch::FilterBitmask required, gr::Batch::FilterBitmask excluded) const;
 
 		effect::drawstyle::Bitmask GetDrawstyleBits() const;
 
@@ -190,7 +190,7 @@ namespace re
 			re::TextureView const&);
 
 		void SetRootConstant(std::string_view shaderName, void const* src, re::DataType);
-		void SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled);
+		void SetFilterMaskBit(gr::Batch::Filter filterBit, bool enabled);
 
 
 	private:
@@ -220,12 +220,12 @@ namespace re
 		// Note: Batches can be responsible for the lifetime of a buffer held by a shared pointer: 
 		// e.g. single-frame resources, or permanent buffers that are to be discarded (e.g. batch manager allocated a larger
 		// one)
-		std::vector<BufferInput> m_batchBuffers;
+		std::vector<re::BufferInput> m_batchBuffers;
 
-		std::vector<TextureAndSamplerInput> m_batchTextureSamplerInputs;
-		std::vector<RWTextureInput> m_batchRWTextureInputs;
+		std::vector<re::TextureAndSamplerInput> m_batchTextureSamplerInputs;
+		std::vector<re::RWTextureInput> m_batchRWTextureInputs;
 
-		RootConstants m_batchRootConstants;
+		re::RootConstants m_batchRootConstants;
 
 
 	private:
@@ -241,7 +241,7 @@ namespace re
 	// ---
 
 
-	inline bool re::Batch::RasterParams::HasVertexStream(re::VertexStream::Type streamType) const noexcept
+	inline bool gr::Batch::RasterParams::HasVertexStream(re::VertexStream::Type streamType) const noexcept
 	{
 		for (auto const& vertexBuffer : m_vertexBuffers)
 		{
@@ -258,7 +258,7 @@ namespace re
 	}
 
 
-	inline re::VertexBufferInput const* re::Batch::RasterParams::GetVertexStreamInput(
+	inline re::VertexBufferInput const* gr::Batch::RasterParams::GetVertexStreamInput(
 		re::VertexStream::Type streamType, uint8_t setIdx /*= 0*/) const noexcept
 	{
 		SEAssert(streamType != re::VertexStream::Type::Type_Count, "Invalid vertex stream type");
@@ -298,7 +298,7 @@ namespace re
 	// ---
 
 
-	inline re::Batch::BatchType Batch::GetType() const
+	inline gr::Batch::BatchType Batch::GetType() const
 	{
 		return m_type;
 	}
@@ -322,7 +322,7 @@ namespace re
 	}
 
 
-	inline std::vector<BufferInput> const& Batch::GetBuffers() const
+	inline std::vector<re::BufferInput> const& Batch::GetBuffers() const
 	{
 		return m_batchBuffers;
 	}
@@ -334,7 +334,7 @@ namespace re
 	}
 
 
-	inline std::vector<RWTextureInput> const& Batch::GetRWTextureInputs() const
+	inline std::vector<re::RWTextureInput> const& Batch::GetRWTextureInputs() const
 	{
 		return m_batchRWTextureInputs;
 	}
@@ -346,13 +346,13 @@ namespace re
 	}
 
 
-	inline RootConstants const& Batch::GetRootConstants() const
+	inline re::RootConstants const& Batch::GetRootConstants() const
 	{
 		return m_batchRootConstants;
 	}
 
 
-	inline re::Batch::FilterBitmask Batch::GetBatchFilterMask() const
+	inline gr::Batch::FilterBitmask Batch::GetBatchFilterMask() const
 	{
 		return m_batchFilterBitmask;
 	}

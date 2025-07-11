@@ -12,8 +12,6 @@
 
 #include "Core/Host/PerformanceTimer.h"
 
-#include "Core/Util/FileIOUtils.h"
-
 #include "Renderer/RenderManager.h"
 #include "Renderer/Texture.h"
 

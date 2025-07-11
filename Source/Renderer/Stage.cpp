@@ -1100,13 +1100,13 @@ namespace gr
 			"Cannot add batches to a fullscreen quad stage (except for the initial batch during construction)");
 
 		SEAssert(batch->GetEffectID() != 0 ||
-			batch->GetType() == re::Batch::BatchType::RayTracing,
+			batch->GetType() == gr::Batch::BatchType::RayTracing,
 			"Batch has not been assigned an Effect");
 
-		SEAssert((batch->GetType() == re::Batch::BatchType::Raster &&
+		SEAssert((batch->GetType() == gr::Batch::BatchType::Raster &&
 			(m_type == Type::Raster || m_type == Type::FullscreenQuad)) ||
-			(batch->GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute) ||
-			(batch->GetType() == re::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
+			(batch->GetType() == gr::Batch::BatchType::Compute && m_type == Type::Compute) ||
+			(batch->GetType() == gr::Batch::BatchType::RayTracing && m_type == Type::RayTracing),
 			"Incompatible batch type");
 
 #if defined(_DEBUG)
@@ -1136,7 +1136,7 @@ namespace gr
 	}
 
 
-	void Stage::SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode mode, bool enabled)
+	void Stage::SetBatchFilterMaskBit(gr::Batch::Filter filterBit, FilterMode mode, bool enabled)
 	{
 		switch (mode)
 		{
@@ -1144,15 +1144,15 @@ namespace gr
 		{
 			if (enabled)
 			{
-				m_requiredBatchFilterBitmasks |= static_cast<re::Batch::FilterBitmask>(filterBit);
-				if (m_excludedBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
+				m_requiredBatchFilterBitmasks |= static_cast<gr::Batch::FilterBitmask>(filterBit);
+				if (m_excludedBatchFilterBitmasks & static_cast<gr::Batch::FilterBitmask>(filterBit))
 				{
-					m_excludedBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
+					m_excludedBatchFilterBitmasks ^= static_cast<gr::Batch::FilterBitmask>(filterBit);
 				}
 			}
-			else if (m_requiredBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
+			else if (m_requiredBatchFilterBitmasks & static_cast<gr::Batch::FilterBitmask>(filterBit))
 			{
-				m_requiredBatchFilterBitmasks ^= (1 << static_cast<re::Batch::FilterBitmask>(filterBit));
+				m_requiredBatchFilterBitmasks ^= (1 << static_cast<gr::Batch::FilterBitmask>(filterBit));
 			}
 		}
 		break;
@@ -1160,15 +1160,15 @@ namespace gr
 		{
 			if (enabled)
 			{
-				m_excludedBatchFilterBitmasks |= static_cast<re::Batch::FilterBitmask>(filterBit);
-				if (m_requiredBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
+				m_excludedBatchFilterBitmasks |= static_cast<gr::Batch::FilterBitmask>(filterBit);
+				if (m_requiredBatchFilterBitmasks & static_cast<gr::Batch::FilterBitmask>(filterBit))
 				{
-					m_requiredBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
+					m_requiredBatchFilterBitmasks ^= static_cast<gr::Batch::FilterBitmask>(filterBit);
 				}
 			}
-			else if (m_excludedBatchFilterBitmasks & static_cast<re::Batch::FilterBitmask>(filterBit))
+			else if (m_excludedBatchFilterBitmasks & static_cast<gr::Batch::FilterBitmask>(filterBit))
 			{
-				m_excludedBatchFilterBitmasks ^= static_cast<re::Batch::FilterBitmask>(filterBit);
+				m_excludedBatchFilterBitmasks ^= static_cast<gr::Batch::FilterBitmask>(filterBit);
 			}
 		}
 		break;

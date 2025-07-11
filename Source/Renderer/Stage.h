@@ -236,7 +236,7 @@ namespace gr
 			Require,
 			Exclude
 		};
-		void SetBatchFilterMaskBit(re::Batch::Filter filterBit, FilterMode, bool enabled);
+		void SetBatchFilterMaskBit(gr::Batch::Filter filterBit, FilterMode, bool enabled);
 
 
 	protected:
@@ -271,8 +271,8 @@ namespace gr
 
 		std::vector<gr::StageBatchHandle> m_resolvedBatches;
 
-		re::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
-		re::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
+		gr::Batch::FilterBitmask m_requiredBatchFilterBitmasks;
+		gr::Batch::FilterBitmask m_excludedBatchFilterBitmasks;
 
 		effect::drawstyle::Bitmask m_drawStyleBits;
 

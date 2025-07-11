@@ -179,13 +179,13 @@ namespace gr
 	}
 
 
-	re::Batch const* BatchHandle::operator->() const noexcept
+	gr::Batch const* BatchHandle::operator->() const noexcept
 	{
 		return s_batchPool->GetBatch(m_poolIndex);
 	}
 
 
-	re::Batch const& BatchHandle::operator*() const noexcept
+	gr::Batch const& BatchHandle::operator*() const noexcept
 	{
 		return *s_batchPool->GetBatch(m_poolIndex);
 	}
@@ -199,7 +199,7 @@ namespace gr
 	{
 		SEAssert(m_isResolved, "StageBatchHandle has not been resolved");
 
-		SEAssert((*m_batchHandle).GetType() == re::Batch::BatchType::Raster,
+		SEAssert((*m_batchHandle).GetType() == gr::Batch::BatchType::Raster,
 			"Trying to get a vertex stream from a non-raster batch type. This is unexpected");
 
 		return m_resolvedVertexBuffers[slotIdx];
@@ -210,7 +210,7 @@ namespace gr
 	{
 		SEAssert(m_isResolved, "StageBatchHandle has not been resolved");
 
-		SEAssert((*m_batchHandle).GetType() == re::Batch::BatchType::Raster,
+		SEAssert((*m_batchHandle).GetType() == gr::Batch::BatchType::Raster,
 			"Trying to get an index stream from a non-raster batch type. This is unexpected");
 
 		return (*m_batchHandle).GetRasterParams().m_indexBuffer;
@@ -238,7 +238,7 @@ namespace gr
 
 		// Some specialized batches (e.g. ray tracing) don't have an EffectID
 		SEAssert((*m_batchHandle).GetEffectID() != 0 || 
-			(*m_batchHandle).GetType() == re::Batch::BatchType::RayTracing,
+			(*m_batchHandle).GetType() == gr::Batch::BatchType::RayTracing,
 			"Invalid EffectID");
 
 		// Resolve the shader:
@@ -248,14 +248,14 @@ namespace gr
 			m_batchShader = effectDB.GetResolvedShader((*m_batchHandle).GetEffectID(), finalDrawstyle);
 		}
 
-		SEAssert((*m_batchHandle).GetType() != re::Batch::BatchType::Raster ||
+		SEAssert((*m_batchHandle).GetType() != gr::Batch::BatchType::Raster ||
 			IsBatchAndShaderTopologyCompatible(
 				(*m_batchHandle).GetRasterParams().m_primitiveTopology,
 				m_batchShader->GetRasterizationState()->GetPrimitiveTopologyType()),
 			"Raster topology mode is incompatible with shader pipeline state topology type");
 
 		// Resolve vertex input slots now that we've decided which shader will be used:
-		if ((*m_batchHandle).GetType() == re::Batch::BatchType::Raster)
+		if ((*m_batchHandle).GetType() == gr::Batch::BatchType::Raster)
 		{
 #if defined(_DEBUG)
 			// Validate the resolved vertex buffers are unpopulated:
@@ -267,7 +267,7 @@ namespace gr
 #endif
 
 			// Get the vertex buffers from the batch, choosing the overrides if available:
-			re::Batch::RasterParams const& rasterParams = (*m_batchHandle).GetRasterParams();
+			gr::Batch::RasterParams const& rasterParams = (*m_batchHandle).GetRasterParams();
 
 			std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams> const& vertexBuffers =
 				rasterParams.m_vertexStreamOverrides ? 

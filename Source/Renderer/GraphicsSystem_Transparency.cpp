@@ -141,7 +141,7 @@ namespace gr
 		m_transparencyStage = gr::Stage::CreateGraphicsStage("Transparency Stage", {});
 
 		m_transparencyStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Require, true);
+			gr::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Require, true);
 
 		m_transparencyStage->AddDrawStyleBits(effect::drawstyle::RenderPath_Forward);
 

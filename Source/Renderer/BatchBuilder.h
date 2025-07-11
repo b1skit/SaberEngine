@@ -31,8 +31,8 @@ namespace gr
 	class IBatchBuilder
 	{
 	protected:
-		IBatchBuilder(re::Batch::BatchType) noexcept;
-		IBatchBuilder(re::Batch const&) noexcept;
+		IBatchBuilder(gr::Batch::BatchType) noexcept;
+		IBatchBuilder(gr::Batch const&) noexcept;
 		
 		IBatchBuilder(IBatchBuilder&&) noexcept = default;
 		IBatchBuilder& operator=(IBatchBuilder&&) noexcept = default;
@@ -60,7 +60,7 @@ namespace gr
 
 		BuilderImpl&& SetRootConstant(std::string_view shaderName, void const* src, re::DataType)&& noexcept;
 
-		BuilderImpl&& SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled)&& noexcept;
+		BuilderImpl&& SetFilterMaskBit(gr::Batch::Filter filterBit, bool enabled)&& noexcept;
 
 
 	public:
@@ -68,7 +68,7 @@ namespace gr
 		
 
 	protected:
-		re::Batch m_batch; // The batch we're building
+		gr::Batch m_batch; // The batch we're building
 		gr::RenderDataID m_renderDataID; // RenderDataID associated with the Batch we're building (if any)
 
 
@@ -94,13 +94,13 @@ namespace gr
 	class RasterBatchBuilder : public IBatchBuilder<RasterBatchBuilder>
 	{
 	public:
-		RasterBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::Raster) {}
+		RasterBatchBuilder() noexcept : IBatchBuilder(gr::Batch::BatchType::Raster) {}
 
 
 	public:
 		using BuildFromRenderDataCallback = gr::RasterBatchBuilder&& (*)(
 			RasterBatchBuilder&&,
-			re::Batch::VertexStreamOverride const*,
+			gr::Batch::VertexStreamOverride const*,
 			gr::RenderDataID,
 			gr::RenderDataManager const&);
 
@@ -108,7 +108,7 @@ namespace gr
 			gr::RenderDataID,
 			gr::RenderDataManager const&,
 			BuildFromRenderDataCallback,
-			re::Batch::VertexStreamOverride const* = nullptr) noexcept;
+			gr::Batch::VertexStreamOverride const* = nullptr) noexcept;
 
 
 		using BuildFromMeshPrimitiveCallback = 
@@ -121,7 +121,7 @@ namespace gr
 
 
 	public:
-		RasterBatchBuilder&& SetGeometryMode(re::Batch::GeometryMode)&& noexcept;
+		RasterBatchBuilder&& SetGeometryMode(gr::Batch::GeometryMode)&& noexcept;
 		RasterBatchBuilder&& SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology)&& noexcept;
 
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput&&)&& noexcept;
@@ -130,7 +130,7 @@ namespace gr
 		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>&&)&& noexcept;
 		RasterBatchBuilder&& SetVertexBuffers(std::array<re::VertexBufferInput, re::VertexStream::k_maxVertexStreams>const&)&& noexcept;
 
-		RasterBatchBuilder&& SetVertexStreamOverrides(re::Batch::VertexStreamOverride const*)&& noexcept;
+		RasterBatchBuilder&& SetVertexStreamOverrides(gr::Batch::VertexStreamOverride const*)&& noexcept;
 
 		RasterBatchBuilder&& SetIndexBuffer(re::VertexBufferInput&&)&& noexcept;
 		RasterBatchBuilder&& SetIndexBuffer(re::VertexBufferInput const&)&& noexcept;
@@ -142,7 +142,7 @@ namespace gr
 
 	private:
 		RasterBatchBuilder(gr::RenderDataID) noexcept; // Instanced raster batches: Use create
-		RasterBatchBuilder(re::Batch const& existingBatch) noexcept;
+		RasterBatchBuilder(gr::Batch const& existingBatch) noexcept;
 	};
 
 
@@ -152,7 +152,7 @@ namespace gr
 	class ComputeBatchBuilder : public IBatchBuilder<ComputeBatchBuilder>
 	{
 	public:
-		ComputeBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::Compute) {}
+		ComputeBatchBuilder() noexcept : IBatchBuilder(gr::Batch::BatchType::Compute) {}
 
 
 	public:
@@ -167,11 +167,11 @@ namespace gr
 	class RayTraceBatchBuilder : public IBatchBuilder<RayTraceBatchBuilder>
 	{
 	public:
-		RayTraceBatchBuilder() noexcept : IBatchBuilder(re::Batch::BatchType::RayTracing) {}
+		RayTraceBatchBuilder() noexcept : IBatchBuilder(gr::Batch::BatchType::RayTracing) {}
 
 
 	public:
-		RayTraceBatchBuilder&& SetOperation(re::Batch::RayTracingParams::Operation)&& noexcept;
+		RayTraceBatchBuilder&& SetOperation(gr::Batch::RayTracingParams::Operation)&& noexcept;
 		RayTraceBatchBuilder&& SetASInput(re::ASInput&&)&& noexcept;
 		RayTraceBatchBuilder&& SetASInput(re::ASInput const&)&& noexcept;
 		RayTraceBatchBuilder&& SetDispatchDimensions(glm::uvec3&& dispatchDimensions)&& noexcept;
@@ -184,7 +184,7 @@ namespace gr
 
 
 	template<typename BuilderImpl>
-	IBatchBuilder<BuilderImpl>::IBatchBuilder(re::Batch::BatchType batchType) noexcept
+	IBatchBuilder<BuilderImpl>::IBatchBuilder(gr::Batch::BatchType batchType) noexcept
 		: m_batch(batchType)
 		, m_renderDataID(gr::k_invalidRenderDataID)
 	{
@@ -192,11 +192,11 @@ namespace gr
 
 
 	template<typename BuilderImpl>
-	IBatchBuilder<BuilderImpl>::IBatchBuilder(re::Batch const& existingBatch) noexcept
+	IBatchBuilder<BuilderImpl>::IBatchBuilder(gr::Batch const& existingBatch) noexcept
 		: m_batch(existingBatch)
 		, m_renderDataID(gr::k_invalidRenderDataID)
 	{
-		SEAssert(existingBatch.GetType() != re::Batch::BatchType::Invalid, "Existing batch must not be invalid");
+		SEAssert(existingBatch.GetType() != gr::Batch::BatchType::Invalid, "Existing batch must not be invalid");
 		m_batch.ResetDataHash(); // We're cloning the batch, reset the hash as we expect it will be modified
 	}
 
@@ -276,7 +276,7 @@ namespace gr
 
 
 	template<typename BuilderImpl>
-	BuilderImpl&& IBatchBuilder<BuilderImpl>::SetFilterMaskBit(re::Batch::Filter filterBit, bool enabled) && noexcept
+	BuilderImpl&& IBatchBuilder<BuilderImpl>::SetFilterMaskBit(gr::Batch::Filter filterBit, bool enabled) && noexcept
 	{
 		m_batch.SetFilterMaskBit(filterBit, enabled);
 		return static_cast<BuilderImpl&&>(*this);
@@ -299,7 +299,7 @@ namespace gr
 		gr::RenderDataID renderDataID,
 		gr::RenderDataManager const& renderDataMgr,
 		BuildFromRenderDataCallback buildBatchCallback,
-		re::Batch::VertexStreamOverride const* vertexStreamOverrides /*= nullptr*/) noexcept
+		gr::Batch::VertexStreamOverride const* vertexStreamOverrides /*= nullptr*/) noexcept
 	{
 		return buildBatchCallback(
 			RasterBatchBuilder(renderDataID), vertexStreamOverrides, renderDataID, renderDataMgr);
@@ -315,31 +315,31 @@ namespace gr
 
 	inline RasterBatchBuilder RasterBatchBuilder::CloneAndModify(BatchHandle existingBatchHandle) noexcept
 	{
-		re::Batch const* existingBatch = s_batchPool->GetBatch(existingBatchHandle.GetPoolIndex());
+		gr::Batch const* existingBatch = s_batchPool->GetBatch(existingBatchHandle.GetPoolIndex());
 		SEAssert(existingBatch != nullptr, "Existing batch must not be null");
-		SEAssert(existingBatch->GetType() == re::Batch::BatchType::Raster, "Existing batch must be a raster batch");
+		SEAssert(existingBatch->GetType() == gr::Batch::BatchType::Raster, "Existing batch must be a raster batch");
 
 		return RasterBatchBuilder(*existingBatch);
 	}
 
 
 	inline RasterBatchBuilder::RasterBatchBuilder(gr::RenderDataID renderDataID) noexcept
-		: IBatchBuilder<RasterBatchBuilder>(re::Batch::BatchType::Raster)
+		: IBatchBuilder<RasterBatchBuilder>(gr::Batch::BatchType::Raster)
 	{
 		m_renderDataID = renderDataID;
 	}
 
 
-	inline RasterBatchBuilder::RasterBatchBuilder(re::Batch const& existingBatch) noexcept
+	inline RasterBatchBuilder::RasterBatchBuilder(gr::Batch const& existingBatch) noexcept
 		: IBatchBuilder(existingBatch)
 	{
-		SEAssert(existingBatch.GetType() == re::Batch::BatchType::Raster, "Existing batch must be a raster batch");
+		SEAssert(existingBatch.GetType() == gr::Batch::BatchType::Raster, "Existing batch must be a raster batch");
 	}
 
 
-	inline RasterBatchBuilder&& RasterBatchBuilder::SetGeometryMode(re::Batch::GeometryMode geoMode) && noexcept
+	inline RasterBatchBuilder&& RasterBatchBuilder::SetGeometryMode(gr::Batch::GeometryMode geoMode) && noexcept
 	{
-		SEAssert(geoMode != re::Batch::GeometryMode::Invalid, "Invalid geometry mode");
+		SEAssert(geoMode != gr::Batch::GeometryMode::Invalid, "Invalid geometry mode");
 		m_batch.m_rasterParams.m_batchGeometryMode = geoMode;
 		return std::move(*this);
 	}
@@ -388,7 +388,7 @@ namespace gr
 
 
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetVertexStreamOverrides(
-		re::Batch::VertexStreamOverride const* vertexStreamOverrides) && noexcept
+		gr::Batch::VertexStreamOverride const* vertexStreamOverrides) && noexcept
 	{
 		SEAssert(vertexStreamOverrides, "vertexStreamOverrides is null");
 
@@ -445,7 +445,7 @@ namespace gr
 	// ---
 
 
-	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetOperation(re::Batch::RayTracingParams::Operation operation) && noexcept
+	inline RayTraceBatchBuilder&& RayTraceBatchBuilder::SetOperation(gr::Batch::RayTracingParams::Operation operation) && noexcept
 	{
 		m_batch.m_rayTracingParams.m_operation = operation;
 		return std::move(*this);

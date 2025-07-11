@@ -17,11 +17,11 @@ namespace effect
 }
 namespace gr
 {
+	class Batch;
 	class BatchPool;
 }
 namespace re
 {
-	class Batch;
 	class Shader;
 	class Buffer;
 }
@@ -53,8 +53,8 @@ namespace gr
 
 
 	public:
-		re::Batch const* operator->() const noexcept;
-		re::Batch const& operator*() const noexcept;
+		gr::Batch const* operator->() const noexcept;
+		gr::Batch const& operator*() const noexcept;
 
 		gr::PoolIndex GetPoolIndex() const noexcept;
 
@@ -69,7 +69,7 @@ namespace gr
 
 //#define BATCH_HANDLE_DEBUG
 #if defined(BATCH_HANDLE_DEBUG)
-		re::Batch const* m_batch = nullptr;
+		gr::Batch const* m_batch = nullptr;
 #endif
 
 	private:

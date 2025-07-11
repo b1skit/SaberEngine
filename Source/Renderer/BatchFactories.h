@@ -18,7 +18,7 @@ namespace grutil
 {
 	extern gr::RasterBatchBuilder&& BuildInstancedRasterBatch(
 		gr::RasterBatchBuilder&& batchBuilder,
-		re::Batch::VertexStreamOverride const* vertexStreamOverrides,
+		gr::Batch::VertexStreamOverride const* vertexStreamOverrides,
 		gr::RenderDataID renderDataID,
 		gr::RenderDataManager const& renderData);
 

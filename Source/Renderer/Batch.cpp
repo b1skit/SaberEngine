@@ -8,7 +8,7 @@
 #include "Core/Assert.h"
 
 
-namespace re
+namespace gr
 {
 	Batch::Batch()
 		: m_type(BatchType::Invalid)
@@ -303,7 +303,7 @@ namespace re
 
 			AddDataBytesToHash(m_rasterParams.m_primitiveTopology);
 
-			for (VertexBufferInput const& vertexStream : m_rasterParams.m_vertexBuffers)
+			for (re::VertexBufferInput const& vertexStream : m_rasterParams.m_vertexBuffers)
 			{
 				if (vertexStream.GetStream() == nullptr)
 				{
@@ -386,16 +386,16 @@ namespace re
 	{
 		if (enabled)
 		{
-			m_batchFilterBitmask |= static_cast<re::Batch::FilterBitmask>(filterBit);
+			m_batchFilterBitmask |= static_cast<gr::Batch::FilterBitmask>(filterBit);
 		}
-		else if (m_batchFilterBitmask & static_cast<re::Batch::FilterBitmask>(filterBit))
+		else if (m_batchFilterBitmask & static_cast<gr::Batch::FilterBitmask>(filterBit))
 		{
-			m_batchFilterBitmask ^= static_cast<re::Batch::FilterBitmask>(filterBit);
+			m_batchFilterBitmask ^= static_cast<gr::Batch::FilterBitmask>(filterBit);
 		}
 	}
 
 
-	bool Batch::MatchesFilterBits(re::Batch::FilterBitmask required, re::Batch::FilterBitmask excluded) const
+	bool Batch::MatchesFilterBits(gr::Batch::FilterBitmask required, gr::Batch::FilterBitmask excluded) const
 	{
 		if (required == 0 && excluded == 0) // Accept all batches by default
 		{
@@ -410,8 +410,8 @@ namespace re
 		bool isFullyIncluded = false;
 		if (!isExcluded)
 		{
-			const re::Batch::FilterBitmask invertedRequiredBits = ~required;
-			const re::Batch::FilterBitmask matchingBatchBits = (m_batchFilterBitmask & invertedRequiredBits) ^ m_batchFilterBitmask;
+			const gr::Batch::FilterBitmask invertedRequiredBits = ~required;
+			const gr::Batch::FilterBitmask matchingBatchBits = (m_batchFilterBitmask & invertedRequiredBits) ^ m_batchFilterBitmask;
 			isFullyIncluded = (matchingBatchBits == required);
 		}
 
@@ -518,6 +518,6 @@ namespace re
 			m_batchRWTextureInputs.reserve(k_rwTextureInputReserveAmount);
 		}
 
-		m_batchRWTextureInputs.emplace_back(RWTextureInput{ shaderName, texture, texView });
+		m_batchRWTextureInputs.emplace_back(re::RWTextureInput{ shaderName, texture, texView });
 	}
 }

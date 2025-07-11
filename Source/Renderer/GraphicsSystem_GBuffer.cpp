@@ -21,7 +21,7 @@ namespace gr
 		m_gBufferStage = gr::Stage::CreateGraphicsStage("GBuffer Stage", {});
 
 		m_gBufferStage->SetBatchFilterMaskBit(
-			re::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Exclude, true);
+			gr::Batch::Filter::AlphaBlended, gr::Stage::FilterMode::Exclude, true);
 
 		m_gBufferStage->AddDrawStyleBits(effect::drawstyle::RenderPath_Deferred);
 	}

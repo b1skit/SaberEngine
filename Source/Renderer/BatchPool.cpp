@@ -22,7 +22,7 @@ namespace
 namespace gr
 {
 	BatchPoolPage::BatchPoolPage(uint32_t baseIndex, uint8_t numFramesInFlight) noexcept
-		: m_batches{ re::Batch() }
+		: m_batches{ gr::Batch() }
 		, m_baseIndex(baseIndex)
 		, m_numFramesInFlight(numFramesInFlight)
 	{
@@ -106,7 +106,7 @@ namespace gr
 	}
 
 
-	bool BatchPoolPage::AddBatch(re::Batch&& batch, PoolIndex& outIndex) noexcept
+	bool BatchPoolPage::AddBatch(gr::Batch&& batch, PoolIndex& outIndex) noexcept
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_pageMutex);
@@ -162,7 +162,7 @@ namespace gr
 	}
 
 
-	re::Batch const& BatchPoolPage::GetBatch(uint32_t localIndex) noexcept
+	gr::Batch const& BatchPoolPage::GetBatch(uint32_t localIndex) noexcept
 	{
 		SEAssert(m_batches[localIndex].IsValid(), "Trying to get an invalid Batch");
 		return m_batches[localIndex];
@@ -230,7 +230,7 @@ namespace gr
 	}
 
 
-	gr::BatchHandle BatchPool::AddBatch(re::Batch&& batch, gr::RenderDataID renderDataID) noexcept
+	gr::BatchHandle BatchPool::AddBatch(gr::Batch&& batch, gr::RenderDataID renderDataID) noexcept
 	{
 		SEBeginCPUEvent("BatchPool::AddBatch");
 
@@ -345,7 +345,7 @@ namespace gr
 	}
 
 
-	re::Batch const* BatchPool::GetBatch(PoolIndex poolIndex) noexcept
+	gr::Batch const* BatchPool::GetBatch(PoolIndex poolIndex) noexcept
 	{
 		uint32_t pageIndex, localIndex;
 		PoolIndexToPageLocalIndexes(poolIndex, pageIndex, localIndex);

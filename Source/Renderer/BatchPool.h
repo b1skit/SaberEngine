@@ -43,14 +43,14 @@ namespace gr
 
 
 	public:
-		bool AddBatch(re::Batch&& batch, PoolIndex& outIndex) noexcept;
+		bool AddBatch(gr::Batch&& batch, PoolIndex& outIndex) noexcept;
 
 		void AddBatchRef(uint32_t pageIndex) noexcept; // Increments the ref count for the batch at pageIndex
 
 		// Decrements the ref count, removes the batch if it reaches 0
 		void ReleaseBatch(uint32_t pageIndex, uint64_t currentFrameNum) noexcept; 
 		
-		re::Batch const& GetBatch(uint32_t pageIndex) noexcept;		
+		gr::Batch const& GetBatch(uint32_t pageIndex) noexcept;		
 
 
 	private:
@@ -69,7 +69,7 @@ namespace gr
 		};
 		SEStaticAssert(sizeof(AlignedRefCount) == k_cacheAlignment, "Struct is not cache aligned");
 
-		std::array<re::Batch, k_pageSize> m_batches;
+		std::array<gr::Batch, k_pageSize> m_batches;
 		std::array<AlignedRefCount, k_pageSize> m_batchRefCounts; // Reference counts for each batch
 
 		std::vector<uint32_t> m_freeIndexes; // Free indices in the page: Relative to m_batches, not the overall pool
@@ -116,7 +116,7 @@ namespace gr
 		friend class gr::RasterBatchBuilder;
 		friend class gr::RayTraceBatchBuilder;
 
-		gr::BatchHandle AddBatch(re::Batch&& batch, gr::RenderDataID) noexcept;
+		gr::BatchHandle AddBatch(gr::Batch&& batch, gr::RenderDataID) noexcept;
 
 		void AddBatchRef(PoolIndex) noexcept; // Increments the ref count for the batch
 
@@ -125,7 +125,7 @@ namespace gr
 
 	private:
 		friend class BatchHandle;
-		re::Batch const* GetBatch(PoolIndex) noexcept; // Returns nullptr if the index is invalid
+		gr::Batch const* GetBatch(PoolIndex) noexcept; // Returns nullptr if the index is invalid
 		
 
 	private:
