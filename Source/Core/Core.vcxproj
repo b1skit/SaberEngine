@@ -142,6 +142,7 @@
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PerfLogger.h" />
     <ClInclude Include="ProfilingMarkers.h" />
+    <ClInclude Include="RenderObjectIDs.h" />
     <ClInclude Include="ResourceSystem.h" />
     <ClInclude Include="AccessKey.h" />
     <ClInclude Include="SystemLocator.h" />

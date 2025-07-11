@@ -150,6 +150,9 @@
     <ClInclude Include="ProfilingMarkers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RenderObjectIDs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Util\ByteVector.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>

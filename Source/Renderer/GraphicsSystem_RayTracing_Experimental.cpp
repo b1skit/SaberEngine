@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "BatchBuilder.h"
 #include "EffectDB.h"
@@ -100,7 +100,7 @@ namespace
 		const ResourceHandle pbrMetRoughMaterialBufferHandle = 
 			ibm.GetIndexedBuffer(PBRMetallicRoughnessData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 
-		std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
+		std::vector<core::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryRenderDataIDs();
 	
 		size_t geoIdx = 0;
 		std::vector<InstancedBufferLUTData> initialLUTData;

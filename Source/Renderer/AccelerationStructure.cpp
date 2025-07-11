@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "AccelerationStructure_Platform.h"
 #include "BindlessResource.h"
@@ -33,7 +33,7 @@ namespace
 
 
 	re::BufferInput CreateBindlessLUT(std::vector<std::shared_ptr<re::AccelerationStructure>> const& blasInstances,
-		std::vector<gr::RenderDataID>& blasGeoRenderDataIDsOut)
+		std::vector<core::RenderDataID>& blasGeoRenderDataIDsOut)
 	{
 		const uint32_t geoCount = GetTotalGeometryCount(blasInstances);
 

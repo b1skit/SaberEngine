@@ -1,42 +1,20 @@
 #pragma once
+#include "Core/RenderObjectIDs.h"
 
 
 namespace gr
 {
-	typedef uint32_t IDType;
+	// Forward declare the core types in the gr namespace for backward compatibility
+	using IDType = core::IDType;
+	using RenderDataID = core::RenderDataID;
+	using TransformID = core::TransformID;
+	using FeatureBitmask = core::FeatureBitmask;
+	using RenderObjectFeature = core::RenderObjectFeature;
+	
+	constexpr RenderDataID k_invalidRenderDataID = core::k_invalidRenderDataID;
+	constexpr TransformID k_invalidTransformID = core::k_invalidTransformID;
 
-	typedef IDType RenderDataID;
-	constexpr RenderDataID k_invalidRenderDataID = std::numeric_limits<uint32_t>::max();
-
-	typedef IDType TransformID;
-	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max(); // Identity Transform
-
-	typedef uint32_t FeatureBitmask;
-
-	enum RenderObjectFeature : FeatureBitmask
-	{
-		None					= 0,
-		IsSceneBounds			= 1 << 0,
-		IsMeshBounds			= 1 << 1,
-		IsMeshPrimitiveBounds	= 1 << 2,
-		IsLightBounds			= 1 << 3,
-		
-		IsMeshPrimitiveConcept	= 1 << 4,
-
-		Invalid
-	};
-
-	// True if the featureBits contain the individual feature
-	inline bool HasFeature(RenderObjectFeature feature, FeatureBitmask featureBits)
-	{
-		return feature == RenderObjectFeature::None || 
-			featureBits & feature;
-	}
-
-	// True if the featureBits contain all of the features
-	inline bool HasAllFeatures(FeatureBitmask features, FeatureBitmask featureBits)
-	{
-		return features == RenderObjectFeature::None ||
-			(features & featureBits) == features;
-	}
+	// Forward declare the utility functions
+	using core::HasFeature;
+	using core::HasAllFeatures;
 }

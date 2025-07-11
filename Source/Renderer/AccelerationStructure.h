@@ -1,14 +1,14 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferView.h"
 #include "Effect.h"
-#include "RenderObjectIDs.h"
 #include "ShaderBindingTable.h"
 #include "VertexStream.h"
 
 #include "Core/Assert.h"
 #include "Core/InvPtr.h"
+#include "Core/RenderObjectIDs.h"
 
 #include "Core/Interfaces/IPlatformObject.h"
 #include "Core/Interfaces/INamedObject.h"
@@ -100,7 +100,7 @@ namespace re
 	public:
 		struct Geometry final
 		{
-			Geometry(gr::RenderDataID);
+			Geometry(core::RenderDataID);
 
 			void SetVertexPositions(re::VertexBufferInput const& positions);
 			re::VertexBufferInput const& GetVertexPositions() const;
@@ -111,7 +111,7 @@ namespace re
 			void SetGeometryFlags(GeometryFlags geometryFlags);
 			GeometryFlags GetGeometryFlags() const;
 			
-			gr::RenderDataID GetRenderDataID() const;
+			core::RenderDataID GetRenderDataID() const;
 
 			void SetEffectID(EffectID effectID);
 			EffectID GetEffectID() const;
@@ -151,7 +151,7 @@ namespace re
 
 			GeometryFlags m_geometryFlags = GeometryFlags::GeometryFlags_None;
 
-			gr::RenderDataID m_renderDataID = gr::k_invalidRenderDataID;
+			core::RenderDataID m_renderDataID = core::k_invalidRenderDataID;
 
 			// Effect ID and material drawstyle bits allow us to resolve a Technique from BLAS geometry
 			EffectID m_effectID;
@@ -191,7 +191,7 @@ namespace re
 			ResourceHandle GetResourceHandle() const;
 			re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
-			std::vector<gr::RenderDataID> const& GetBLASGeometryRenderDataIDs() const;
+			std::vector<core::RenderDataID> const& GetBLASGeometryRenderDataIDs() const;
 
 			std::shared_ptr<re::ShaderBindingTable> const& GetShaderBindingTable() const;
 
@@ -201,7 +201,7 @@ namespace re
 			re::BufferInput m_bindlessResourceLUT; // BLAS instances -> bindless resource LUT
 
 			std::vector<std::shared_ptr<re::AccelerationStructure>> m_blasInstances;
-			std::vector<gr::RenderDataID> m_blasGeoRenderDataIDs; // Flattened list of all BLAS geometry elements
+			std::vector<core::RenderDataID> m_blasGeoRenderDataIDs; // Flattened list of all BLAS geometry elements
 
 			std::shared_ptr<re::ShaderBindingTable> m_sbt; // TODO: Support multiple SBTs per TLAS
 
@@ -336,7 +336,7 @@ namespace re
 	// ---
 
 
-	inline AccelerationStructure::Geometry::Geometry(gr::RenderDataID renderDataID)
+	inline AccelerationStructure::Geometry::Geometry(core::RenderDataID renderDataID)
 		: m_renderDataID(renderDataID)
 	{
 	}
@@ -384,9 +384,9 @@ namespace re
 	}
 
 
-	inline gr::RenderDataID AccelerationStructure::Geometry::GetRenderDataID() const
+	inline core::RenderDataID AccelerationStructure::Geometry::GetRenderDataID() const
 	{
-		SEAssert(m_renderDataID != gr::k_invalidRenderDataID, "Invalid RenderDataID");
+		SEAssert(m_renderDataID != core::k_invalidRenderDataID, "Invalid RenderDataID");
 		return m_renderDataID;
 	}
 
@@ -437,7 +437,7 @@ namespace re
 	}
 
 
-	inline std::vector<gr::RenderDataID> const& re::AccelerationStructure::TLASParams::GetBLASGeometryRenderDataIDs() const
+	inline std::vector<core::RenderDataID> const& re::AccelerationStructure::TLASParams::GetBLASGeometryRenderDataIDs() const
 	{
 		return m_blasGeoRenderDataIDs;
 	};
