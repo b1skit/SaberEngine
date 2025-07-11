@@ -132,7 +132,8 @@ namespace dx12
 		void SetScissorRect(re::TextureTargetSet const&) const;
 
 		void SetTextures(std::vector<re::TextureAndSamplerInput> const&, int depthTargetTexInputIdx = -1);
-		void SetTextures(std::vector<re::TextureAndSamplerInput> const&, re::ShaderBindingTable const&);
+		void SetTextures(
+			std::vector<re::TextureAndSamplerInput> const&, re::ShaderBindingTable const&, uint64_t currentFrameNum);
 
 		void SetBuffers(std::vector<re::BufferInput> const&);
 
@@ -140,11 +141,16 @@ namespace dx12
 
 		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 
-		void AttachBindlessResources(re::ShaderBindingTable const&, re::BindlessResourceManager const&);
+		void AttachBindlessResources(
+			re::ShaderBindingTable const&, re::BindlessResourceManager const&, uint64_t currentFrameNum);
 
 		void DrawBatchGeometry(gr::StageBatchHandle const&);
 		void Dispatch(glm::uvec3 const& threadDimensions);
-		void DispatchRays(re::ShaderBindingTable const&, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx);
+		void DispatchRays(
+			re::ShaderBindingTable const&, 
+			glm::uvec3 const& threadDimensions,
+			uint32_t rayGenShaderIdx,
+			uint64_t currentFrameNum);
 
 		void UpdateSubresource(
 			core::InvPtr<re::Texture> const&,

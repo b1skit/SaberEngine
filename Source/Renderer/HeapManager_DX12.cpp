@@ -1217,7 +1217,7 @@ namespace dx12
 
 	void HeapManager::Destroy()
 	{
-		EndOfFrame(std::numeric_limits<uint64_t>::max());
+		EndFrameInternal(std::numeric_limits<uint64_t>::max());
 
 		{
 			std::scoped_lock lock(m_pagedHeapsMutex, m_deferredGPUResourceDeletionsMutex);
@@ -1264,7 +1264,19 @@ namespace dx12
 	}
 
 
-	void HeapManager::EndOfFrame(uint64_t frameNum)
+	void HeapManager::BeginFrame(uint64_t frameNum)
+	{
+		m_currentFrameNum = frameNum;
+	}
+
+
+	void HeapManager::EndFrame()
+	{
+		EndFrameInternal(m_currentFrameNum);
+	}
+
+
+	void HeapManager::EndFrameInternal(uint64_t frameNum)
 	{
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_deferredGPUResourceDeletionsMutex);
@@ -1380,7 +1392,7 @@ namespace dx12
 			SEAssert(gpuResource.m_resource != nullptr, "Trying to release a GPU resource with a null ID3D12Resource");
 
 			m_deferredGPUResourceDeletions.emplace(
-				gr::RenderManager::Get()->GetCurrentRenderFrameNum(),
+				m_currentFrameNum,
 				std::move(gpuResource));
 		}
 	}

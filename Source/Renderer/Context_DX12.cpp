@@ -67,7 +67,7 @@ namespace dx12
 	}
 
 
-	void Context::CreateInternal()
+	void Context::Create_Platform()
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
@@ -134,7 +134,7 @@ namespace dx12
 	}
 
 
-	void Context::UpdateInternal()
+	void Context::Update_Platform()
 	{
 		// Update the bindless resource manager.
 		// Note: At this point, any Buffers created by GS's and resources (e.g. VertexStreams) have had their platform
@@ -143,7 +143,13 @@ namespace dx12
 	}
 
 
-	void Context::DestroyInternal()
+	void Context::EndFrame_Platform()
+	{
+		m_heapManager.EndFrame();
+	}
+
+
+	void Context::Destroy_Platform()
 	{
 		if (m_pixGPUCaptureModule != nullptr)
 		{

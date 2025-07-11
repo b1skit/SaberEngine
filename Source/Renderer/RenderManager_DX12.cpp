@@ -50,11 +50,7 @@ namespace dx12
 
 	void RenderManager::EndFrame_Platform()
 	{
-		SEBeginCPUEvent("dx12::RenderManager::EndFrame");
-
-		m_context->As<dx12::Context*>()->GetHeapManager().EndOfFrame(GetCurrentRenderFrameNum());
-
-		SEEndCPUEvent();
+		//
 	}
 
 
@@ -445,7 +441,8 @@ namespace dx12
 									
 									cmdList->AttachBindlessResources(
 										*batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
-										*context->GetBindlessResourceManager());
+										*context->GetBindlessResourceManager(),
+										GetCurrentRenderFrameNum());
 
 									cmdList->SetRootConstants((*stageItr)->GetRootConstants());
 									cmdList->SetRootConstants((*batch)->GetRootConstants());
@@ -453,7 +450,8 @@ namespace dx12
 									cmdList->DispatchRays(
 										*batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
 										batchRTParams.m_dispatchDimensions,
-										batchRTParams.m_rayGenShaderIdx);
+										batchRTParams.m_rayGenShaderIdx,
+										GetCurrentRenderFrameNum());
 								}
 								break;
 								default: SEAssertF("Invalid ray tracing batch operation type");

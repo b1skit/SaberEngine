@@ -552,7 +552,10 @@ namespace dx12
 
 
 	void CommandList::DispatchRays(
-		re::ShaderBindingTable const& sbt, glm::uvec3 const& threadDimensions, uint32_t rayGenShaderIdx)
+		re::ShaderBindingTable const& sbt,
+		glm::uvec3 const& threadDimensions,
+		uint32_t rayGenShaderIdx,
+		uint64_t currentFrameNum)
 	{
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList4;
 		CheckHResult(m_commandList.As(&commandList4), "Failed to get a ID3D12GraphicsCommandList4");
@@ -563,7 +566,7 @@ namespace dx12
 		commandList4->SetPipelineState1(sbtPlatObj->m_rayTracingStateObject.Get());
 
 		D3D12_DISPATCH_RAYS_DESC const& dispatchRaysDesc = dx12::ShaderBindingTable::BuildDispatchRaysDesc(
-			sbt, threadDimensions, gr::RenderManager::Get()->GetCurrentRenderFrameNum(), rayGenShaderIdx);
+			sbt, threadDimensions, currentFrameNum, rayGenShaderIdx);
 
 #if defined(USE_NSIGHT_AFTERMATH)
 		aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "DispatchRays", false);
@@ -1228,12 +1231,13 @@ namespace dx12
 	}
 
 
-	void CommandList::AttachBindlessResources(re::ShaderBindingTable const& sbt, re::BindlessResourceManager const& brm)
+	void CommandList::AttachBindlessResources(
+		re::ShaderBindingTable const& sbt, re::BindlessResourceManager const& brm, uint64_t currentFrameNum)
 	{
 		SetComputeRootSignature(dx12::BindlessResourceManager::GetRootSignature(brm));
 
 		ID3D12DescriptorHeap* brmDescriptorHeap = 
-			dx12::BindlessResourceManager::GetDescriptorHeap(brm, gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			dx12::BindlessResourceManager::GetDescriptorHeap(brm, currentFrameNum);
 
 		SetDescriptorHeap(brmDescriptorHeap);
 
@@ -1462,14 +1466,16 @@ namespace dx12
 
 
 	void CommandList::SetTextures(
-		std::vector<re::TextureAndSamplerInput> const& texSamplerInputs, re::ShaderBindingTable const& sbt)
+		std::vector<re::TextureAndSamplerInput> const& texSamplerInputs,
+		re::ShaderBindingTable const& sbt,
+		uint64_t currentFrameNum)
 	{
 		dx12::ShaderBindingTable::SetTexturesOnLocalRoots(
 			sbt,
 			texSamplerInputs,
 			this,
 			m_gpuCbvSrvUavDescriptorHeap.get(),
-			gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			currentFrameNum);
 	}
 
 

@@ -67,9 +67,10 @@ namespace re
 
 		virtual re::BindlessResourceManager* GetBindlessResourceManager() = 0;
 	private:
-		virtual void CreateInternal() = 0;
-		virtual void UpdateInternal() = 0;
-		virtual void DestroyInternal() = 0;
+		virtual void Create_Platform() = 0;
+		virtual void Update_Platform() = 0;
+		virtual void EndFrame_Platform() = 0;
+		virtual void Destroy_Platform() = 0;
 
 		virtual void CreateAPIResources_Platform() = 0;
 

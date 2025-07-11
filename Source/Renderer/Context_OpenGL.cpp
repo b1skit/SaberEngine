@@ -271,7 +271,7 @@ namespace opengl
 	}
 
 
-	void Context::CreateInternal()
+	void Context::Create_Platform()
 	{		
 		GetOpenGLExtensionProcessAddresses();
 
@@ -433,13 +433,19 @@ namespace opengl
 	}
 
 
-	void Context::UpdateInternal()
+	void Context::Update_Platform()
 	{
 		//
 	}
 
 
-	void Context::DestroyInternal()
+	void Context::EndFrame_Platform()
+	{
+		//
+	}
+
+
+	void Context::Destroy_Platform()
 	{
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 

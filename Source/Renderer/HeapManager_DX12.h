@@ -278,7 +278,11 @@ namespace dx12
 	public:
 		void Initialize(ID3D12Device*, GlobalResourceStateTracker*, uint8_t numFramesInFlight);
 
-		void EndOfFrame(uint64_t frameNum);
+		void BeginFrame(uint64_t frameNum);
+		void EndFrame();
+
+	private:
+		void EndFrameInternal(uint64_t frameNum);
 
 
 	public:
@@ -289,7 +293,6 @@ namespace dx12
 		friend class GPUResource;
 		void Release(GPUResource&);
 
-
 	private:
 		std::unordered_map<util::HashKey, std::unique_ptr<PagedResourceHeap>> m_pagedHeaps;
 		std::shared_mutex m_pagedHeapsMutex;
@@ -299,6 +302,7 @@ namespace dx12
 
 		ID3D12Device* m_device;
 
+		uint64_t m_currentFrameNum;
 		uint8_t m_numFramesInFlight;
 
 		bool m_canMixResourceTypes;

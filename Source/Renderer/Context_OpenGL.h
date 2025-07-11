@@ -24,9 +24,10 @@ namespace opengl
 		~Context() override = default;
 
 		// Context interface:
-		void CreateInternal() override;
-		void UpdateInternal() override;
-		void DestroyInternal() override;
+		void Create_Platform() override;
+		void Update_Platform() override;
+		void EndFrame_Platform() override;
+		void Destroy_Platform() override;
 
 		void Present() override;
 

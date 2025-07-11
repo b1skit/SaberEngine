@@ -136,7 +136,7 @@ namespace re
 	void Context::Create(uint64_t currentFrame)
 	{
 		m_currentFrameNum = currentFrame;
-		CreateInternal();
+		Create_Platform();
 	}
 
 
@@ -168,7 +168,7 @@ namespace re
 
 		// Platform-level updates:
 		SEBeginCPUEvent("re::Context::UpdateInternal");
-		UpdateInternal();
+		Update_Platform();
 		SEEndCPUEvent();
 
 		// Commit buffer data immediately before rendering
@@ -191,6 +191,8 @@ namespace re
 		m_newTargetSets.ClearReadData();
 
 		ProcessDeferredDeletions(m_currentFrameNum);
+
+		EndFrame_Platform();
 	}
 
 
@@ -214,7 +216,7 @@ namespace re
 		
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
-		DestroyInternal();
+		Destroy_Platform();
 	}
 
 
