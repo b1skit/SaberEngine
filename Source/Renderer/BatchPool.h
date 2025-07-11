@@ -15,11 +15,6 @@ namespace gr
 	class RayTraceBatchBuilder;
 }
 
-namespace re
-{
-	class Batch;
-}
-
 namespace gr
 {
 	using PoolIndex = uint32_t;
