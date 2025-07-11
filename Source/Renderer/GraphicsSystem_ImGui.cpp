@@ -32,7 +32,7 @@ namespace gr
 		std::unique_ptr<platform::RLibraryImGui::Payload> framePayload =
 			std::make_unique<platform::RLibraryImGui::Payload>();
 
-		framePayload->m_currentFrameNum = m_graphicsSystemManager->GetCurrentFrameNum();
+		framePayload->m_currentFrameNum = m_graphicsSystemManager->GetCurrentRenderFrameNum();
 		framePayload->m_perFrameCommands = &m_perFrameCommands;
 
 		dynamic_cast<gr::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));

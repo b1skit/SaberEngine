@@ -5,8 +5,32 @@
 
 namespace re
 {
-	class BufferAllocator
+	class IBufferAllocatorAccess
 	{
+	protected:
+		typedef UniqueID Handle;
+
+	public:
+		virtual ~IBufferAllocatorAccess() = default;
+
+	public:
+		virtual void Register(std::shared_ptr<re::Buffer> const&, uint32_t numBytes) noexcept = 0;
+		virtual void Stage(Handle uniqueID, void const* data) noexcept = 0;
+		virtual void StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset) noexcept = 0;
+		virtual void GetData(Handle uniqueID, void const** out_data) const noexcept = 0;
+		virtual void Deallocate(Handle uniqueID) noexcept = 0;
+
+		virtual uint8_t GetNumFramesInFlight() const noexcept = 0;
+		virtual uint64_t GetCurrentRenderFrameNum() const noexcept = 0;
+	};
+
+
+	// ---
+
+
+	class BufferAllocator : public virtual IBufferAllocatorAccess
+	{
+
 	public:
 		// Arbitrary. GPU buffer size for stack-allocated single frame buffers
 		static constexpr uint32_t k_sharedSingleFrameAllocationByteSize = 64 * 1024 * 1024;
@@ -33,11 +57,12 @@ namespace re
 
 
 	public:
+		void BeginFrame(uint64_t renderFrameNum);
 		void CreateBufferPlatformObjects() const; // Trigger platform creation for any new buffers in the dirty list
-		void BufferData(uint64_t renderFrameNum);
+		void BufferData();
 
 	private:
-		void ResetForNewFrame(uint64_t renderFrameNum);
+		void ResetForNewFrame();
 		void ClearTemporaryStaging();
 
 
@@ -80,8 +105,6 @@ namespace re
 
 	
 	private:
-		typedef UniqueID Handle;
-
 		static constexpr uint32_t k_invalidStartIdx = std::numeric_limits<uint32_t>::max();
 
 		struct CommitMetadata
@@ -160,27 +183,27 @@ namespace re
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
 		uint8_t GetFrameOffsetIndex() const noexcept;
+		uint8_t GetNumFramesInFlight() const noexcept override;
+		uint64_t GetCurrentRenderFrameNum() const noexcept override;
 
 
 	private:
 		bool m_isValid;
 
 
-	protected: // Interfaces for the Buffer friend class:
-		friend class re::Buffer;
-		void Register(std::shared_ptr<re::Buffer> const&, uint32_t numBytes);
+	private: // Interfaces for the Buffer class:
+		void Register(std::shared_ptr<re::Buffer> const&, uint32_t numBytes) noexcept override;
 
 
 	private:		
 		uint32_t Allocate(Handle uniqueID, uint32_t numBytes, Buffer::StagingPool, re::Lifetime bufferLifetime); // Returns the start index
 
-	protected:
-		void Stage(Handle uniqueID, void const* data);	// Update the buffer data
-		void StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
+		void Stage(Handle uniqueID, void const* data) noexcept override;	// Update the buffer data
+		void StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset) noexcept;
 		
-		void GetData(Handle uniqueID, void const** out_data) const;
+		void GetData(Handle uniqueID, void const** out_data) const noexcept;
 
-		void Deallocate(Handle uniqueID);
+		void Deallocate(Handle uniqueID) noexcept;
 
 
 	private:
@@ -219,5 +242,23 @@ namespace re
 	inline bool BufferAllocator::IsValid() const noexcept
 	{
 		return m_isValid;
+	}
+
+
+	inline uint8_t BufferAllocator::GetNumFramesInFlight() const noexcept
+	{
+		return m_numFramesInFlight;
+	}
+
+
+	inline uint64_t BufferAllocator::GetCurrentRenderFrameNum() const noexcept
+	{
+		return m_currentFrameNum;
+	}
+
+
+	inline uint8_t BufferAllocator::GetFrameOffsetIndex() const noexcept
+	{
+		return m_currentFrameNum % m_numFramesInFlight;
 	}
 }

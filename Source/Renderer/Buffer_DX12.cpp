@@ -223,15 +223,13 @@ namespace dx12
 	}
 
 
-	void Buffer::Create(re::Buffer& buffer)
+	void Buffer::Create(re::Buffer& buffer, re::IBufferAllocatorAccess* bufferAllocatorAccess, uint8_t numFramesInFlight)
 	{
 		re::Buffer::BufferParams const& bufferParams = buffer.GetBufferParams();
 		
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
 		SEAssert(!platObj->m_isCreated, "Buffer is already created");
 		platObj->m_isCreated = true;
-
-		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
 
 		const re::Lifetime bufferLifetime = buffer.GetLifetime();
 
@@ -244,8 +242,7 @@ namespace dx12
 			bufferParams.m_memPoolPreference == re::Buffer::MemoryPoolPreference::UploadHeap &&
 			!needsUAV)
 		{
-			dx12::BufferAllocator* bufferAllocator =
-				dynamic_cast<dx12::BufferAllocator*>(gr::RenderManager::Get()->GetContext()->GetBufferAllocator());
+			dx12::BufferAllocator* bufferAllocator = dynamic_cast<dx12::BufferAllocator*>(bufferAllocatorAccess);
 
 			bufferAllocator->GetSubAllocation(
 				bufferParams.m_usageMask,
@@ -423,17 +420,17 @@ namespace dx12
 	}
 
 
-	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
+	void const* Buffer::MapCPUReadback(
+		re::Buffer const& buffer, re::IBufferAllocatorAccess const* bufferAllocator, uint8_t frameLatency)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
-		gr::RenderManager const* renderManager = gr::RenderManager::Get();
 
 		const uint32_t bufferSize = buffer.GetTotalBytes();
 
 		// Compute the index of the readback resource we're mapping:
-		SEAssert(renderManager->GetCurrentRenderFrameNum() >= frameLatency, "Frame latency would result in OOB access");
+		SEAssert(bufferAllocator->GetCurrentRenderFrameNum() >= frameLatency, "Frame latency would result in OOB access");
 		const uint8_t readbackResourceIdx =
-			(renderManager->GetCurrentRenderFrameNum() - frameLatency) % renderManager->GetNumFramesInFlight();
+			(bufferAllocator->GetCurrentRenderFrameNum() - frameLatency) % bufferAllocator->GetNumFramesInFlight();
 
 		// Ensure the GPU is finished with the buffer:
 		{
@@ -466,16 +463,15 @@ namespace dx12
 	}
 
 
-	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
+	void Buffer::UnmapCPUReadback(re::Buffer const& buffer, re::IBufferAllocatorAccess const* bufferAllocator)
 	{
 		dx12::Buffer::PlatObj* platObj = buffer.GetPlatformObject()->As<dx12::Buffer::PlatObj*>();
-		gr::RenderManager const* renderManager = gr::RenderManager::Get();
 
 		// Compute the index of the readback resource we're unmapping:
-		SEAssert(renderManager->GetCurrentRenderFrameNum() >= platObj->m_currentMapFrameLatency,
+		SEAssert(bufferAllocator->GetCurrentRenderFrameNum() >= platObj->m_currentMapFrameLatency,
 			"Frame latency would result in OOB access");
 		const uint8_t readbackResourceIdx =
-			(renderManager->GetCurrentRenderFrameNum() - platObj->m_currentMapFrameLatency) % renderManager->GetNumFramesInFlight();
+			(bufferAllocator->GetCurrentRenderFrameNum() - platObj->m_currentMapFrameLatency) % bufferAllocator->GetNumFramesInFlight();
 
 		const D3D12_RANGE writtenRange{
 			0,		// Begin

@@ -38,10 +38,10 @@ namespace platform
 	}
 
 	// Function handles:
-	void (*platform::Buffer::Create)(re::Buffer&) = nullptr;
+	void (*platform::Buffer::Create)(re::Buffer&, re::IBufferAllocatorAccess*, uint8_t numFramesInFlight) = nullptr;
 	void (*platform::Buffer::Update)(
 		re::Buffer const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes) = nullptr;
 
-	void const* (*platform::Buffer::MapCPUReadback)(re::Buffer const&, uint8_t frameLatency) = nullptr;
-	void (*platform::Buffer::UnmapCPUReadback)(re::Buffer const&) = nullptr;
+	void const* (*platform::Buffer::MapCPUReadback)(re::Buffer const&, re::IBufferAllocatorAccess const*, uint8_t frameLatency) = nullptr;
+	void (*platform::Buffer::UnmapCPUReadback)(re::Buffer const&, re::IBufferAllocatorAccess const*) = nullptr;
 }

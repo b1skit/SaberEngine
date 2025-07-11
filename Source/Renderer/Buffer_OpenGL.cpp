@@ -28,7 +28,7 @@ namespace opengl
 	}
 
 
-	void Buffer::Create(re::Buffer& buffer)
+	void Buffer::Create(re::Buffer& buffer, re::IBufferAllocatorAccess*, uint8_t numFramesInFlight)
 	{
 		SEAssert(!re::Buffer::HasUsageBit(re::Buffer::Constant, buffer.GetBufferParams()) ||
 			buffer.GetBufferParams().m_arraySize == 1,
@@ -216,7 +216,7 @@ namespace opengl
 	}
 
 
-	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, uint8_t frameLatency)
+	void const* Buffer::MapCPUReadback(re::Buffer const& buffer, re::IBufferAllocatorAccess const*, uint8_t frameLatency)
 	{
 		const uint32_t bufferSize = buffer.GetTotalBytes();
 
@@ -232,7 +232,7 @@ namespace opengl
 	}
 
 
-	void Buffer::UnmapCPUReadback(re::Buffer const& buffer)
+	void Buffer::UnmapCPUReadback(re::Buffer const& buffer, re::IBufferAllocatorAccess const*)
 	{
 		PlatObj* bufferPlatObj = buffer.GetPlatformObject()->As<opengl::Buffer::PlatObj*>();
 

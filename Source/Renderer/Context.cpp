@@ -150,6 +150,8 @@ namespace re
 
 		m_gpuTimer.BeginFrame(m_currentFrameNum);
 
+		m_bufferAllocator->BeginFrame(m_currentFrameNum);
+
 		if (re::BindlessResourceManager* brm = GetBindlessResourceManager())
 		{
 			brm->BeginFrame(m_currentFrameNum);
@@ -170,7 +172,7 @@ namespace re
 		SEEndCPUEvent();
 
 		// Commit buffer data immediately before rendering
-		m_bufferAllocator->BufferData(m_currentFrameNum);
+		m_bufferAllocator->BufferData();
 
 		SEEndCPUEvent();
 	}

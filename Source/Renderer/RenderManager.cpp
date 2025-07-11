@@ -250,6 +250,7 @@ namespace gr
 
 	void RenderManager::BeginFrame(uint64_t frameNum)
 	{
+		// Note: This is a blocking call so we do the minimum amount of work here, and defer the rest to Update()
 		SEBeginCPUEvent("gr::RenderManager::BeginFrame");
 		
 		m_renderCommandManager.SwapBuffers();

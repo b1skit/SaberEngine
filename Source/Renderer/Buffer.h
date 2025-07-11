@@ -12,7 +12,7 @@
 
 namespace re
 {
-	class BufferAllocator;
+	class IBufferAllocatorAccess;
 
 
 	class Buffer : public virtual core::INamedObject, public virtual core::IUniqueID
@@ -206,7 +206,7 @@ namespace re
 
 	protected:
 		friend class BufferAllocator;
-		static BufferAllocator* s_bufferAllocator;
+		static IBufferAllocatorAccess* s_bufferAllocator;
 
 
 	private:

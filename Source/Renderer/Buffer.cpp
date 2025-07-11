@@ -64,7 +64,7 @@ namespace
 
 namespace re
 {
-	BufferAllocator* Buffer::s_bufferAllocator = nullptr;
+	IBufferAllocatorAccess* Buffer::s_bufferAllocator = nullptr;
 
 
 	// Private CTOR: Use one of the Create factories instead
@@ -86,8 +86,8 @@ namespace re
 
 		platform::Buffer::CreatePlatformObject(*this);
 
-#if defined(_DEBUG)
-		m_creationFrameNum = gr::RenderManager::Get()->GetCurrentRenderFrameNum();
+#if defined(_DEBUG)		
+		m_creationFrameNum = s_bufferAllocator->GetCurrentRenderFrameNum();
 #endif
 	}
 
@@ -195,12 +195,12 @@ namespace re
 
 #if defined(_DEBUG)
 		SEAssert(m_bufferParams.m_lifetime != re::Lifetime::SingleFrame ||
-			m_creationFrameNum == gr::RenderManager::Get()->GetCurrentRenderFrameNum(),
+			m_creationFrameNum == s_bufferAllocator->GetCurrentRenderFrameNum(),
 			"Single frame buffer created on frame %llu being destroyed on frame %llu. Does something still hold the "
 			"buffer beyond its lifetime? E.g. Has a single-frame batch been added to a stage, but the stage is not "
 			"added to the pipeline (thus has not been cleared)?",
 			m_creationFrameNum,
-			gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+			s_bufferAllocator->GetCurrentRenderFrameNum());
 #endif
 
 		// Free bindless resource handles:
@@ -236,26 +236,24 @@ namespace re
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPURead, m_bufferParams), "CPU reads are not enabled");
 		SEAssert(!m_isCurrentlyMapped, "Buffer is already mapped. Did you forget to unmap it during an earlier frame?");
 
-		gr::RenderManager const* renderManager = gr::RenderManager::Get();
-
 		// Convert the default frame latency value:
 		if (frameLatency == re::Buffer::k_maxFrameLatency)
 		{
-			const uint8_t numFramesInFlight = renderManager->GetNumFramesInFlight();
+			const uint8_t numFramesInFlight = s_bufferAllocator->GetNumFramesInFlight();
 			frameLatency = numFramesInFlight - 1;
 		}
-		SEAssert(frameLatency > 0 && frameLatency < renderManager->GetNumFramesInFlight(),
+		SEAssert(frameLatency > 0 && frameLatency < s_bufferAllocator->GetNumFramesInFlight(),
 			"Invalid frame latency");
 
 		// Ensure we've got results to retrieve:
-		const uint64_t currentRenderFrameNum = renderManager->GetCurrentRenderFrameNum();
+		const uint64_t currentRenderFrameNum = s_bufferAllocator->GetCurrentRenderFrameNum();
 		if (currentRenderFrameNum < frameLatency)
 		{
 			return nullptr; // There is nothing to read back for the first (numFramesInFlight - 1) frames
 		}
 
 		// Get the mapped data:
-		void const* mappedData = platform::Buffer::MapCPUReadback(*this, frameLatency);
+		void const* mappedData = platform::Buffer::MapCPUReadback(*this, s_bufferAllocator, frameLatency);
 		if (mappedData)
 		{
 			m_isCurrentlyMapped = true;
@@ -269,7 +267,7 @@ namespace re
 		SEAssert(re::Buffer::HasAccessBit(re::Buffer::CPURead, m_bufferParams), "CPU reads are not enabled");
 		SEAssert(m_isCurrentlyMapped, "Buffer is not currently mapped");
 
-		platform::Buffer::UnmapCPUReadback(*this);
+		platform::Buffer::UnmapCPUReadback(*this, s_bufferAllocator);
 
 		m_isCurrentlyMapped = false;
 	}

@@ -44,7 +44,7 @@ namespace gr
 	public:
 		gr::RenderDataManager const& GetRenderData() const;
 
-		uint64_t GetCurrentFrameNum() const;
+		uint64_t GetCurrentRenderFrameNum() const;
 		uint8_t GetNumFramesInFlight() const;
 
 
@@ -135,7 +135,7 @@ namespace gr
 	}
 
 
-	inline uint64_t GraphicsSystemManager::GetCurrentFrameNum() const
+	inline uint64_t GraphicsSystemManager::GetCurrentRenderFrameNum() const
 	{
 		return m_currentFrameNum;
 	}

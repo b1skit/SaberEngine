@@ -44,7 +44,7 @@ namespace re
 
 
 	BufferAllocator::BufferAllocator()
-		: m_numFramesInFlight(0) // We'll fetch the correct value during Create()
+		: m_numFramesInFlight(0)
 		, m_singleFrameGPUWriteIdx(0)
 		, m_currentFrameNum(k_invalidFrameNum)
 		, m_isValid(false)
@@ -170,7 +170,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Register(std::shared_ptr<re::Buffer> const& buffer, uint32_t numBytes)
+	void BufferAllocator::Register(std::shared_ptr<re::Buffer> const& buffer, uint32_t numBytes) noexcept
 	{
 		SEBeginCPUEvent("BufferAllocator::Register");
 
@@ -338,7 +338,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Stage(Handle uniqueID, void const* data)
+	void BufferAllocator::Stage(Handle uniqueID, void const* data) noexcept
 	{
 		SEBeginCPUEvent("BufferAllocator::Stage");
 
@@ -421,7 +421,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	void BufferAllocator::StageMutable(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset) noexcept
 	{
 		SEBeginCPUEvent("BufferAllocator::StageMutable");
 
@@ -650,7 +650,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::GetData(Handle uniqueID, void const** out_data) const
+	void BufferAllocator::GetData(Handle uniqueID, void const** out_data) const noexcept
 	{
 		SEBeginCPUEvent("BufferAllocator::GetData");
 
@@ -716,7 +716,7 @@ namespace re
 	}
 
 
-	void BufferAllocator::Deallocate(Handle uniqueID)
+	void BufferAllocator::Deallocate(Handle uniqueID) noexcept
 	{
 		SEBeginCPUEvent("BufferAllocator::Deallocate");
 
@@ -832,27 +832,26 @@ namespace re
 	}
 
 
-	void BufferAllocator::ResetForNewFrame(uint64_t renderFrameNum)
+	void BufferAllocator::ResetForNewFrame()
 	{
 		SEBeginCPUEvent("BufferAllocator::ResetForNewFrame");
 
-		// Avoid stomping existing data when the BufferAllocator has already been accessed (e.g. during
-		// RenderManager::Initialize, before BufferAllocator::BufferData has been called)
-		if (renderFrameNum != m_currentFrameNum)
+		// Increment the single frame GPU resource write index:
+		m_singleFrameGPUWriteIdx = (m_singleFrameGPUWriteIdx + 1) % m_numFramesInFlight;
+
+		// Reset the stack base index back to 0 for each type of shared buffer:
+		for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
 		{
-			m_currentFrameNum = renderFrameNum;
-
-			// Increment the single frame GPU resource write index:
-			m_singleFrameGPUWriteIdx = (m_singleFrameGPUWriteIdx + 1) % m_numFramesInFlight;
-
-			// Reset the stack base index back to 0 for each type of shared buffer:
-			for (uint8_t allocationPoolIdx = 0; allocationPoolIdx < AllocationPool_Count; allocationPoolIdx++)
-			{
-				m_bufferBaseIndexes[allocationPoolIdx].store(0);
-			}
+			m_bufferBaseIndexes[allocationPoolIdx].store(0);
 		}
 
 		SEEndCPUEvent();
+	}
+
+
+	void BufferAllocator::BeginFrame(uint64_t renderFrameNum)
+	{
+		m_currentFrameNum = renderFrameNum;
 	}
 
 
@@ -868,7 +867,7 @@ namespace re
 			{
 				if (!currentBuffer->GetPlatformObject()->m_isCreated)
 				{
-					platform::Buffer::Create(*currentBuffer);
+					platform::Buffer::Create(*currentBuffer, re::Buffer::s_bufferAllocator, m_numFramesInFlight);
 				}
 			}
 		}
@@ -877,13 +876,7 @@ namespace re
 	}
 
 
-	uint8_t BufferAllocator::GetFrameOffsetIndex() const noexcept
-	{
-		return m_currentFrameNum % m_numFramesInFlight;
-	}
-
-
-	void BufferAllocator::BufferData(uint64_t renderFrameNum)
+	void BufferAllocator::BufferData()
 	{
 		SEBeginCPUEvent("re::BufferAllocator::BufferData");
 
@@ -899,7 +892,7 @@ namespace re
 				m_dirtyBuffersMutex);
 
 			// Start by resetting all of our indexes etc:
-			ResetForNewFrame(renderFrameNum);
+			ResetForNewFrame();
 
 			SEBeginCPUEvent("re::BufferAllocator::BufferData: Dirty buffers");
 
@@ -941,7 +934,7 @@ namespace re
 				// still ensure they're created here:
 				if (!currentBuffer->GetPlatformObject()->m_isCreated)
 				{
-					platform::Buffer::Create(*currentBuffer);
+					platform::Buffer::Create(*currentBuffer, this, m_numFramesInFlight);
 				}
 
 				const Handle currentHandle = currentBuffer->GetUniqueID();
