@@ -489,7 +489,8 @@ namespace dx12
 	}
 
 
-	void BindlessResourceManager::Initialize(re::BindlessResourceManager& brm, uint64_t frameNum)
+	void BindlessResourceManager::Initialize(
+		re::BindlessResourceManager& brm, uint8_t numFramesInFlight, uint64_t frameNum)
 	{
 		dx12::BindlessResourceManager::PlatObj* brmPlatObj =
 			brm.GetPlatformObject()->As<dx12::BindlessResourceManager::PlatObj*>();
@@ -500,8 +501,6 @@ namespace dx12
 
 			if (brmPlatObj->m_isCreated == false) // First initialization: 
 			{
-				const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
-
 				brmPlatObj->m_cpuDescriptorCache.resize(numFramesInFlight);
 
 				dx12::Context* ctx = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();

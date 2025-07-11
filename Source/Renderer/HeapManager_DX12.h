@@ -276,7 +276,7 @@ namespace dx12
 
 
 	public:
-		void Initialize(ID3D12Device*, GlobalResourceStateTracker*);
+		void Initialize(ID3D12Device*, GlobalResourceStateTracker*, uint8_t numFramesInFlight);
 
 		void EndOfFrame(uint64_t frameNum);
 

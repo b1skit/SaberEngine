@@ -12,6 +12,6 @@ namespace platform
 
 
 	public:
-		static void (*Create)(re::ShaderBindingTable&);
+		static void (*Create)(re::ShaderBindingTable&, uint8_t numFramesInFlight);
 	};
 }

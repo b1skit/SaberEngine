@@ -570,7 +570,7 @@ namespace dx12
 	// ---
 
 
-	void ShaderBindingTable::Create(re::ShaderBindingTable& sbt)
+	void ShaderBindingTable::Create(re::ShaderBindingTable& sbt, uint8_t numFramesInFlight)
 	{
 		dx12::ShaderBindingTable::PlatObj* platObj =
 			sbt.GetPlatformObject()->As<dx12::ShaderBindingTable::PlatObj*>();
@@ -632,7 +632,7 @@ namespace dx12
 			256llu); // Note: We round size up to a multiple of 256B, as per the NVidia DXR sample
 
 		// Compute the total SBT size for N frames-in-flight-worth of data
-		platObj->m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
+		platObj->m_numFramesInFlight = numFramesInFlight;
 
 		const uint64_t totalSBTByteSize = platObj->m_numFramesInFlight * platObj->m_frameRegionByteSize;
 

@@ -18,13 +18,13 @@ namespace gr
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(gr::RenderSystem*);
+		GraphicsSystemManager(gr::RenderSystem*, uint8_t numFramesInFlight);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
 
 		void Create();
-		void PreRender();
+		void PreRender(uint64_t currentFrameNum);
 
 		void CreateAddGraphicsSystemByScriptName(std::string_view scriptName);
 
@@ -43,6 +43,9 @@ namespace gr
 
 	public:
 		gr::RenderDataManager const& GetRenderData() const;
+
+		uint64_t GetCurrentFrameNum() const;
+		uint8_t GetNumFramesInFlight() const;
 
 
 	public:
@@ -95,8 +98,10 @@ namespace gr
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
 		bool m_activeAmbientLightHasChanged;
 
-		gr::RenderSystem* const m_owningRenderSystem;
+		gr::RenderSystem const* m_owningRenderSystem;
 
+		uint64_t m_currentFrameNum;
+		uint8_t m_numFramesInFlight;
 		bool m_isCreated;
 
 
@@ -127,6 +132,18 @@ namespace gr
 	inline gr::RenderDataManager const& GraphicsSystemManager::GetRenderData() const
 	{
 		return *m_renderData;
+	}
+
+
+	inline uint64_t GraphicsSystemManager::GetCurrentFrameNum() const
+	{
+		return m_currentFrameNum;
+	}
+
+
+	inline uint8_t GraphicsSystemManager::GetNumFramesInFlight() const
+	{
+		return m_numFramesInFlight;
 	}
 
 

@@ -23,7 +23,7 @@ namespace re
 
 
 	public:
-		void Initialize(uint64_t currentFrame, void* platformData); // e.g. platformData == dx12::HeapManager*
+		void Initialize(uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData); // e.g. platformData == dx12::HeapManager*
 
 		virtual ~BufferAllocator();
 

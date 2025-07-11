@@ -3,7 +3,6 @@
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
 #include "Buffer_Platform.h"
-#include "RenderManager.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -88,10 +87,10 @@ namespace re
 	}
 
 
-	void BufferAllocator::Initialize(uint64_t currentFrame, void* platformData)
+	void BufferAllocator::Initialize(uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData)
 	{
 		m_currentFrameNum = currentFrame;
-		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
+		m_numFramesInFlight = numFramesInFlight;
 		m_isValid = true;
 
 		m_singleFrameGPUWriteIdx = 0;

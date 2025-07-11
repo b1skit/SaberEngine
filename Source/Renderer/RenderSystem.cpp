@@ -360,7 +360,7 @@ namespace
 
 namespace gr
 {
-	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& pipelineFileName)
+	std::unique_ptr<RenderSystem> RenderSystem::Create(std::string const& pipelineFileName, uint8_t numFramesInFlight)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
@@ -372,7 +372,7 @@ namespace gr
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name));
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, numFramesInFlight));
 
 		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
 
@@ -380,9 +380,9 @@ namespace gr
 	}
 
 
-	RenderSystem::RenderSystem(std::string const& name)
+	RenderSystem::RenderSystem(std::string const& name, uint8_t numFramesInFlight)
 		: INamedObject(name)
-		, m_graphicsSystemManager(this)
+		, m_graphicsSystemManager(this, numFramesInFlight)
 		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
 	{
@@ -514,7 +514,7 @@ namespace gr
 	}
 
 
-	void RenderSystem::ExecuteUpdatePipeline()
+	void RenderSystem::ExecuteUpdatePipeline(uint64_t currentFrameNum)
 	{
 		SEBeginCPUEvent(std::format("RenderSystem::ExecuteUpdatePipeline: {}", GetName()).c_str());
 
@@ -540,7 +540,7 @@ namespace gr
 			};
 
 
-		m_graphicsSystemManager.PreRender();
+		m_graphicsSystemManager.PreRender(currentFrameNum);
 
 		for (auto& executionGroup : m_updatePipeline)
 		{

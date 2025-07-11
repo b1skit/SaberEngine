@@ -21,7 +21,7 @@ namespace platform
 
 
 	public:
-		static void (*Initialize)(re::BindlessResourceManager&, uint64_t frameNum);
+		static void (*Initialize)(re::BindlessResourceManager&, uint8_t numFramesInFlight, uint64_t frameNum);
 		static void (*SetResource)(re::BindlessResourceManager&, re::IBindlessResource*, ResourceHandle);
 	};
 }

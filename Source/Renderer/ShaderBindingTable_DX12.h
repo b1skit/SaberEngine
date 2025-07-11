@@ -59,7 +59,7 @@ namespace dx12
 		};
 
 	public: // Platform functionality:
-		static void Create(re::ShaderBindingTable&);
+		static void Create(re::ShaderBindingTable&, uint8_t numFramesInFlight);
 
 
 	public: // DX12-specific functionality (to be called from dx12::CommandList)

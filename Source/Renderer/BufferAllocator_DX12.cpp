@@ -50,7 +50,7 @@ namespace dx12
 		SEStaticAssert(re::BufferAllocator::k_sharedSingleFrameAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
 			"Fixed allocation size must match the default resource placement alignment");
 
-		const uint8_t numBuffers = gr::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numBuffers = m_numFramesInFlight;
 		for (uint8_t i = 0; i < re::BufferAllocator::AllocationPool_Count; ++i)
 		{
 			m_singleFrameBufferResources[i].resize(numBuffers);

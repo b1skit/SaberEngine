@@ -30,5 +30,5 @@ namespace platform
 	}
 
 
-	void (*ShaderBindingTable::Create)(re::ShaderBindingTable&) = nullptr;
+	void (*ShaderBindingTable::Create)(re::ShaderBindingTable&, uint8_t numFramesInFlight) = nullptr;
 }

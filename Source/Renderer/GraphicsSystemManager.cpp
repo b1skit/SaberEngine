@@ -13,13 +13,14 @@
 
 namespace gr
 {
-	GraphicsSystemManager::GraphicsSystemManager(gr::RenderSystem* owningRS)
+	GraphicsSystemManager::GraphicsSystemManager(gr::RenderSystem* owningRS, uint8_t numFramesInFlight)
 		: m_renderData(nullptr)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightHasChanged(true)
+		, m_numFramesInFlight(numFramesInFlight)
 		, m_isCreated(false)
 	{
 	}
@@ -60,11 +61,13 @@ namespace gr
 	}
 
 
-	void GraphicsSystemManager::PreRender()
+	void GraphicsSystemManager::PreRender(uint64_t currentFrameNum)
 	{
 		SEBeginCPUEvent("GraphicsSystemManager::PreRender");
 
 		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
+
+		m_currentFrameNum = currentFrameNum;
 
 		if (m_activeCameraRenderDataID != gr::k_invalidRenderDataID &&
 			m_activeCameraTransformDataID != gr::k_invalidTransformID)

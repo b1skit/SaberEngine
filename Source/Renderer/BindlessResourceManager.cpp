@@ -18,10 +18,10 @@ namespace re
 	// ---
 
 
-	BindlessResourceManager::BindlessResourceManager()
+	BindlessResourceManager::BindlessResourceManager(uint8_t numFramesInFlight)
 		: m_platObj(platform::BindlessResourceManager::CreatePlatformObject())
 		, m_mustReinitialize(true)
-		, m_numFramesInFlight(gr::RenderManager::Get()->GetNumFramesInFlight())
+		, m_numFramesInFlight(numFramesInFlight)
 		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 	{
 		// Initialize the free index queue:
@@ -39,7 +39,7 @@ namespace re
 
 		LOG("Initializing BindlessResourceManager to manage %d resources", m_platObj->m_currentMaxIndex);
 
-		platform::BindlessResourceManager::Initialize(*this, m_currentFrameNum);
+		platform::BindlessResourceManager::Initialize(*this, m_numFramesInFlight, m_currentFrameNum);
 	}
 
 

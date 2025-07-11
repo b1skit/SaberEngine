@@ -60,6 +60,7 @@ namespace dx12
 {
 	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
 		: re::Context(api, numFramesInFlight, window)
+		, m_bindlessResourceManager(numFramesInFlight)
 		, m_pixGPUCaptureModule(nullptr)
 		, m_pixCPUCaptureModule(nullptr)
 	{
@@ -125,11 +126,11 @@ namespace dx12
 		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
 		m_commandQueues[CommandListType::Copy].Create(device, CommandListType::Copy);
 
-		m_heapManager.Initialize(device, &m_globalResourceStates);
+		m_heapManager.Initialize(device, &m_globalResourceStates, m_numFramesInFlight);
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
-		m_bufferAllocator->Initialize(m_currentFrameNum, &m_heapManager);
+		m_bufferAllocator->Initialize(m_numFramesInFlight, m_currentFrameNum, &m_heapManager);
 	}
 
 
@@ -449,7 +450,7 @@ namespace dx12
 					}
 					for (auto& sbt : m_newShaderBindingTables.GetReadData())
 					{
-						dx12::ShaderBindingTable::Create(*sbt);
+						dx12::ShaderBindingTable::Create(*sbt, m_numFramesInFlight);
 					}
 					if (!singleThreaded)
 					{

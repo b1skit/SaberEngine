@@ -1,6 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "GraphicsSystem_ImGui.h"
-#include "RenderManager.h"
+#include "GraphicsSystemManager.h"
 
 
 namespace gr
@@ -8,7 +8,7 @@ namespace gr
 	ImGuiGraphicsSystem::ImGuiGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
-		, m_perFrameCommands(k_imGuiCommandBufferSize, gr::RenderManager::Get()->GetNumFramesInFlight())
+		, m_perFrameCommands(k_imGuiCommandBufferSize, owningGSM->GetNumFramesInFlight())
 	{
 	}
 
@@ -32,7 +32,7 @@ namespace gr
 		std::unique_ptr<platform::RLibraryImGui::Payload> framePayload =
 			std::make_unique<platform::RLibraryImGui::Payload>();
 
-		framePayload->m_currentFrameNum = gr::RenderManager::Get()->GetCurrentRenderFrameNum();
+		framePayload->m_currentFrameNum = m_graphicsSystemManager->GetCurrentFrameNum();
 		framePayload->m_perFrameCommands = &m_perFrameCommands;
 
 		dynamic_cast<gr::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));

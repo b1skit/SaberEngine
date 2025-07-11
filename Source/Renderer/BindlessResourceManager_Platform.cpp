@@ -33,6 +33,6 @@ namespace platform
 	void (*IBindlessResource::GetResourceUseState)(void* dest, size_t destByteSize);
 
 
-	void (*BindlessResourceManager::Initialize)(re::BindlessResourceManager&, uint64_t frameNum) = nullptr;
+	void (*BindlessResourceManager::Initialize)(re::BindlessResourceManager&, uint8_t numFramesInFlight, uint64_t frameNum) = nullptr;
 	void (*BindlessResourceManager::SetResource)(re::BindlessResourceManager&, re::IBindlessResource*, ResourceHandle) = nullptr;
 }

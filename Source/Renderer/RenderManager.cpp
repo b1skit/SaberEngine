@@ -221,7 +221,7 @@ namespace gr
 
 		m_effectDB.LoadEffectManifest();
 
-		m_batchPool = std::make_unique<gr::BatchPool>(this->GetNumFramesInFlight());
+		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
 
 		SEBeginCPUEvent("RenderManager::Initialize_Platform");
 		Initialize_Platform();
@@ -239,7 +239,7 @@ namespace gr
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, GetNumFramesInFlight()));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();
@@ -291,7 +291,7 @@ namespace gr
 		SEBeginCPUEvent("RenderManager::Update: Execute update pipeline");
 		for (std::unique_ptr<gr::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			renderSystem->ExecuteUpdatePipeline();
+			renderSystem->ExecuteUpdatePipeline(m_renderFrameNum);
 			renderSystem->PostUpdatePreRender(m_renderData.GetInstancingIndexedBufferManager(), m_effectDB);
 		}
 		SEEndCPUEvent(); // "Execute update pipeline"

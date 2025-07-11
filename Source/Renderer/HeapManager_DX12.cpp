@@ -1232,7 +1232,8 @@ namespace dx12
 	}
 
 	
-	void HeapManager::Initialize(ID3D12Device* device, GlobalResourceStateTracker* globalResourceTracker)
+	void HeapManager::Initialize(
+		ID3D12Device* device, GlobalResourceStateTracker* globalResourceTracker, uint8_t numFramesInFlight)
 	{
 		SEAssert(device && globalResourceTracker, "Dependencies cannot be null");
 
@@ -1243,7 +1244,7 @@ namespace dx12
 		GPUResource::s_device = m_device;
 		GPUResource::s_globalResourceStateTracker = globalResourceTracker;
 
-		m_numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
+		m_numFramesInFlight = numFramesInFlight;
 
 		const D3D12_RESOURCE_HEAP_TIER heapTier = dx12::SysInfo::GetResourceHeapTier();
 		switch (heapTier)

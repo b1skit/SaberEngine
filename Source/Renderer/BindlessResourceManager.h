@@ -48,7 +48,7 @@ namespace re
 
 
 	public:
-		BindlessResourceManager();
+		BindlessResourceManager(uint8_t numFramesInFlight);
 
 		BindlessResourceManager(BindlessResourceManager&&) noexcept = default;
 		BindlessResourceManager& operator=(BindlessResourceManager&&) noexcept = default;

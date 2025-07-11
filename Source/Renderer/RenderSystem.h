@@ -21,7 +21,8 @@ namespace gr
 	class RenderSystem : public virtual core::INamedObject, public virtual core::IUniqueID
 	{
 	public:
-		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& pipelineFileName);
+		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
+			std::string const& pipelineFileName, uint8_t numFramesInFlight);
 		
 		void Destroy();
 
@@ -35,7 +36,7 @@ namespace gr
 		// Scriptable rendering pipeline:
 		void BuildPipeline(gr::RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
 		void ExecuteInitializationPipeline();
-		void ExecuteUpdatePipeline();
+		void ExecuteUpdatePipeline(uint64_t currentFrameNum);
 
 
 	public:
@@ -73,7 +74,7 @@ namespace gr
 
 
 	private: // Use the Create() factory
-		RenderSystem(std::string const& name);
+		RenderSystem(std::string const& name, uint8_t numFramesInFlight);
 		RenderSystem() = delete; 
 
 

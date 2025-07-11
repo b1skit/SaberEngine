@@ -429,7 +429,7 @@ namespace opengl
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
-		m_bufferAllocator->Initialize(m_currentFrameNum, nullptr /*No platform object to supply in OpenGL*/);
+		m_bufferAllocator->Initialize(m_numFramesInFlight, m_currentFrameNum, nullptr /*No platform data in OpenGL*/);
 	}
 
 
