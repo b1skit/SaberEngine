@@ -42,6 +42,10 @@ namespace util
 		bool operator==(uint64_t rhs) const noexcept { return m_hashKey == rhs; }
 		bool operator==(int rhs) const noexcept { SEAssert(rhs == 0, "Unexpected comparison"); return m_hashKey == rhs; } // Convenience only
 
+		bool operator!=(HashKey const& rhs) const noexcept { return !operator==(rhs); }
+		bool operator!=(uint64_t rhs) const noexcept { return !operator==(rhs); }
+		bool operator!=(int rhs) const noexcept { { return !operator==(rhs); } } // Convenience only
+
 		bool operator<(HashKey const& rhs) const noexcept { return m_hashKey < rhs.m_hashKey; }
 		bool operator>(HashKey const& rhs) const noexcept { return m_hashKey > rhs.m_hashKey; }
 
