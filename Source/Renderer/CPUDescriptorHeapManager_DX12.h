@@ -49,6 +49,7 @@ namespace dx12
 		const HeapType m_type;
 		const D3D12_DESCRIPTOR_HEAP_TYPE m_d3dType;
 		const uint32_t m_elementSize;
+		ID3D12Device* m_deviceCache;
 
 		std::vector<std::unique_ptr<AllocationPage>> m_allocationPages;
 		std::set<size_t> m_freePageIndexes; // Sorted indexes of non-full m_allocationPages
@@ -111,8 +112,11 @@ namespace dx12
 	class AllocationPage final
 	{
 	public:
-		AllocationPage(
-			CPUDescriptorHeapManager::HeapType type, uint32_t elementSize, uint32_t totalElements, uint32_t pageIdx);
+		AllocationPage(ID3D12Device*,
+			CPUDescriptorHeapManager::HeapType type,
+			uint32_t elementSize,
+			uint32_t totalElements,
+			uint32_t pageIdx);
 		AllocationPage(AllocationPage&&) noexcept = default;
 		AllocationPage& operator=(AllocationPage&&) noexcept = default;
 		~AllocationPage();

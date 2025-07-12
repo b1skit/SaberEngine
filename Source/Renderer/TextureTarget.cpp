@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Context.h"
 #include "SysInfo_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
-#include "RenderManager.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -163,8 +163,8 @@ namespace re
 	{
 		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
 		newTextureTargetSet.reset(new re::TextureTargetSet(name));
-
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
+		
+		newTextureTargetSet->m_platObj->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}
@@ -175,7 +175,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
 		newTextureTargetSet.reset(new re::TextureTargetSet(rhs, name));
 
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
+		newTextureTargetSet->m_platObj->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}
@@ -195,8 +195,8 @@ namespace re
 		{
 			newTextureTargetSet->SetDepthStencilTarget(rhs.GetDepthStencilTarget().GetTexture(), overrideParams);
 		}
-
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTextureTargetSet);
+		
+		newTextureTargetSet->m_platObj->GetContext()->RegisterForCreate(newTextureTargetSet);
 
 		return newTextureTargetSet;
 	}

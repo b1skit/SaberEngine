@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "RLibrary_ImGui_OpenGL.h"
-#include "RenderManager.h"
 #include "Stage.h"
 
 #include "Core/Host/Window_Win32.h"
@@ -12,6 +11,11 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
 
+
+namespace
+{
+	re::Context* g_context = nullptr; // Internal global context pointer for ImGui callbacks
+}
 
 namespace opengl
 {
@@ -24,8 +28,11 @@ namespace opengl
 		platform::RLibraryImGui* imguiLibrary = dynamic_cast<platform::RLibraryImGui*>(newLibrary.get());
 		platform::RLibraryImGui::CreateInternal(*imguiLibrary);
 
+		g_context = imguiLibrary->GetPlatformObject()->GetContext(); // Store the context globally for ImGui callbacks
+		SEAssert(g_context, "Context pointer is null");
+
 		// Setup OpenGL ImGui backend:
-		host::Window* window = gr::RenderManager::Get()->GetContext()->GetWindow();
+		host::Window* window = g_context->GetWindow();
 		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatObj* windowPlatObj =
@@ -56,11 +63,13 @@ namespace opengl
 		::ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
 
+		g_context = nullptr; // Null out the context for ImGui callbacks
+
 		SEEndCPUEvent(); // "RLibraryImGui::Destroy"
 	}
 
 
-	void RLibraryImGui::Execute(gr::Stage* stage, void* platformObject)
+	void RLibraryImGui::Execute(gr::Stage* stage, void* /*unused*/)
 	{
 		SEBeginCPUEvent("RLibraryImGui::Execute");
 
@@ -71,8 +80,10 @@ namespace opengl
 		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
+		SEAssert(g_context, "Context pointer is null");
+
 		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+			g_context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		SEAssert(imGuiStage && payload && imGuiLibrary, "A critical resource is null");
 

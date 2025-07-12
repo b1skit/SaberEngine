@@ -4,7 +4,6 @@
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
-#include "RenderManager.h"
 #include "SysInfo_DX12.h"
 
 #include "Core/Assert.h"
@@ -14,8 +13,9 @@
 namespace dx12
 {
 	GPUDescriptorHeap::GPUDescriptorHeap(
-		uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, std::wstring const& debugName)
-		: m_deviceCache(nullptr)
+		dx12::Context* context, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE heapType, std::wstring const& debugName)
+		: m_context(context)
+		, m_deviceCache(context->GetDevice().GetD3DDevice().Get())
 		, m_numDescriptors(numDescriptors)
 		, m_heapType(heapType)
 		, m_elementSize(0)
@@ -32,9 +32,6 @@ namespace dx12
 		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ||
 			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
 			"Descriptor heap must have a type that is not bound directly to a command list");
-		
-		m_deviceCache =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 
 		m_elementSize = m_deviceCache->GetDescriptorHandleIncrementSize(m_heapType);
 		SEAssert(m_elementSize > 0, "Invalid element size");
@@ -95,8 +92,6 @@ namespace dx12
 		// (which is guaranteed to result in undefined behavior) so something MUST be set
 		m_unsetInlineDescriptors = 0;
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
 		for (auto const& rootParam : rootParams)
 		{
 			switch (rootParam.m_type)
@@ -144,21 +139,21 @@ namespace dx12
 					{
 					case RootSignature::DescriptorType::SRV:
 					{
-						nullHandle = context->GetNullSRVDescriptor(
+						nullHandle = m_context->GetNullSRVDescriptor(
 							rangeEntry.m_srvDesc.m_viewDimension,
 							rangeEntry.m_srvDesc.m_format).GetBaseDescriptor();
 					}
 					break;
 					case RootSignature::DescriptorType::UAV:
 					{
-						nullHandle = context->GetNullUAVDescriptor(
+						nullHandle = m_context->GetNullUAVDescriptor(
 							rangeEntry.m_uavDesc.m_viewDimension,
 							rangeEntry.m_uavDesc.m_format).GetBaseDescriptor();
 					}
 					break;
 					case RootSignature::DescriptorType::CBV:
 					{
-						nullHandle = context->GetNullCBVDescriptor().GetBaseDescriptor();	
+						nullHandle = m_context->GetNullCBVDescriptor().GetBaseDescriptor();
 					}
 					break;
 					default: SEAssertF("Invalid range type");

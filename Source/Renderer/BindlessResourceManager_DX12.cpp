@@ -2,7 +2,6 @@
 #include "BindlessResourceManager.h"
 #include "BindlessResourceManager_DX12.h"
 #include "Context_DX12.h"
-#include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SysInfo_DX12.h"
 
@@ -43,7 +42,7 @@ namespace
 	}
 
 
-	std::unique_ptr<dx12::RootSignature> CreateGlobalBRMRootSignature()
+	std::unique_ptr<dx12::RootSignature> CreateGlobalBRMRootSignature(dx12::Context* context)
 	{
 		// Create a global root signature:
 		std::unique_ptr<dx12::RootSignature> globalRootSig = dx12::RootSignature::CreateUninitialized();
@@ -423,7 +422,7 @@ namespace
 		});
 
 		// Create the root sig:
-		globalRootSig->Finalize("BRM Global Root", D3D12_ROOT_SIGNATURE_FLAG_NONE);
+		globalRootSig->Finalize(context, "BRM Global Root", D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
 		return globalRootSig;
 	}
@@ -503,7 +502,7 @@ namespace dx12
 			{
 				brmPlatObj->m_cpuDescriptorCache.resize(numFramesInFlight);
 
-				dx12::Context* ctx = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+				dx12::Context* ctx = brmPlatObj->GetContext()->As<dx12::Context*>();
 
 				brmPlatObj->m_deviceCache = ctx->GetDevice().GetD3DDevice().Get();
 
@@ -522,7 +521,7 @@ namespace dx12
 
 				brmPlatObj->m_numFramesInFlight = numFramesInFlight;				
 
-				brmPlatObj->m_globalRootSig = CreateGlobalBRMRootSignature();
+				brmPlatObj->m_globalRootSig = CreateGlobalBRMRootSignature(brmPlatObj->GetContext()->As<dx12::Context*>());
 
 				brmPlatObj->m_isCreated = true;
 			}
@@ -532,7 +531,7 @@ namespace dx12
 				std::make_unique<dx12::BindlessResourceManager::PlatObj>();
 
 			paramsToDelete->m_gpuDescriptorHeaps = std::move(brmPlatObj->m_gpuDescriptorHeaps);
-			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(paramsToDelete));
+			brmPlatObj->GetContext()->RegisterForDeferredDelete(std::move(paramsToDelete));
 			brmPlatObj->m_gpuDescriptorHeaps.resize(brmPlatObj->m_numFramesInFlight);
 
 			// Initialize/grow our non-frame-indexed cache vectors (No-op if old size == new size)

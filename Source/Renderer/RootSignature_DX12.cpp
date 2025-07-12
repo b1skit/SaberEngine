@@ -1244,7 +1244,12 @@ namespace dx12
 
 		const std::wstring rootSigName = shader.GetWName();
 
-		newRootSig->FinalizeInternal(rootSigName, rootParameters, staticSamplers, rootSigFlags);
+		newRootSig->FinalizeInternal(
+			shaderPlatObj->GetContext()->As<dx12::Context*>(),
+			rootSigName,
+			rootParameters,
+			staticSamplers,
+			rootSigFlags);
 
 		return newRootSig;
 	}
@@ -1293,6 +1298,7 @@ namespace dx12
 
 
 	void RootSignature::FinalizeInternal(
+		dx12::Context* context,
 		std::wstring const& rootSigName,
 		std::vector<CD3DX12_ROOT_PARAMETER1> const& rootParameters,
 		std::vector<D3D12_STATIC_SAMPLER_DESC> const& staticSamplers,
@@ -1319,8 +1325,6 @@ namespace dx12
 			util::CheckedCast<uint32_t>(staticSamplers.size()),	// Num static samplers
 			staticSamplersPtr,									// const D3D12_STATIC_SAMPLER_DESC*
 			rootSigFlags);										// D3D12_ROOT_SIGNATURE_FLAGS
-
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
 
 		// Before we create a root signature, check if one with the same layout already exists:
 		m_rootSigDescHash = HashRootSigDesc(rootSignatureDescription);
@@ -1544,7 +1548,7 @@ namespace dx12
 	}
 
 	
-	void RootSignature::Finalize(char const* name, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags)
+	void RootSignature::Finalize(dx12::Context* context, char const* name, D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags)
 	{
 		// Count the number of unique root signature indices we'll be populating:
 		uint32_t numRootSigEntries = 0;
@@ -1669,7 +1673,7 @@ namespace dx12
 		// Lastly, finalize the root sig:
 		std::wstring const& rootSigName = util::ToWideString(name);
 
-		FinalizeInternal(rootSigName, rootParameters, staticSamplers, rootSigFlags);
+		FinalizeInternal(context, rootSigName, rootParameters, staticSamplers, rootSigFlags);
 	}
 
 

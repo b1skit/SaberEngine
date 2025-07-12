@@ -431,7 +431,8 @@ namespace
 		// Global root signature:
 		// TODO: We should decouple the ShaderBindingTable from the BindlessResourceManager
 		ID3D12RootSignature* globalRootSig = dx12::BindlessResourceManager::GetRootSignature(
-			*gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager())->GetD3DRootSignature();
+			*sbtPlatObj->GetContext()->As<dx12::Context*>()->GetBindlessResourceManager())->GetD3DRootSignature();
+		
 
 		subObjects.emplace_back(D3D12_STATE_SUBOBJECT{
 			.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE,
@@ -466,7 +467,7 @@ namespace
 		// Finally, create our ray tracing state object and query interface:
 		ComPtr<ID3D12Device5> device5;
 		dx12::CheckHResult(
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().As(&device5),
+			sbtPlatObj->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().As(&device5),
 			"Failed to get device5");
 
 		dx12::CheckHResult(
@@ -637,7 +638,7 @@ namespace dx12
 		const uint64_t totalSBTByteSize = platObj->m_numFramesInFlight * platObj->m_frameRegionByteSize;
 
 		// We rely on the HeapManager's deferred delete to guarantee the lifetime of any previous SBT buffer
-		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+		dx12::HeapManager& heapMgr = platObj->GetContext()->As<dx12::Context*>()->As<dx12::Context*>()->GetHeapManager();
 		platObj->m_SBT = heapMgr.CreateResource(
 			dx12::ResourceDesc{
 				.m_resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(totalSBTByteSize),

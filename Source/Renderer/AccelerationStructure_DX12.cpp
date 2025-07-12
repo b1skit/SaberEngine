@@ -4,7 +4,6 @@
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "EnumTypes_DX12.h"
-#include "RenderManager.h"
 
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/MathUtils.h"
@@ -165,7 +164,7 @@ namespace
 				"Invalid vertex stream geometry inputs");
 
 			// Currently, our re::Buffers have not been created/allocated at this point (they're staged in CPU memory,
-			// and will be committed to GPU resources *after* RenderManager::CreateAPIResources). The DX12 AS prebuild
+			// and will be committed to GPU resources *after* CreateAPIResources). The DX12 AS prebuild
 			// info structure doesn't dereference GPU pointers, but it does check if they're null or not when
 			// computing the required buffer sizes. So here, we set a non-null GPU VA to ensure our buffer sizes are
 			// correct, and then use the correct GPU VA when we're actually building our BLAS
@@ -381,7 +380,7 @@ namespace
 			util::ToWideString(tlas.GetName()).c_str());
 
 		// Create an SRV to describe the TLAS:
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = platObj->GetContext()->As<dx12::Context*>();
 		platObj->m_tlasSRV = context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::CBV_SRV_UAV).Allocate(1);
 		
 		const D3D12_SHADER_RESOURCE_VIEW_DESC tlasSRVDesc{
@@ -589,7 +588,7 @@ namespace dx12
 {
 	AccelerationStructure::PlatObj::PlatObj()
 	{
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = GetContext()->As<dx12::Context*>();
 
 		m_heapManager = &context->GetHeapManager();
 		

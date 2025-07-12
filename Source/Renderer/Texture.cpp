@@ -134,7 +134,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from byte vector", m_texName).c_str());
 				
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex); 
+				GetContext()->RegisterForCreate(newTex); 
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -189,7 +189,7 @@ namespace re
 				LOG(std::format("Creating texture \"{}\" from color", m_texName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex);
+				GetContext()->RegisterForCreate(newTex);
 			}
 			
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -236,7 +236,7 @@ namespace re
 				LOG(std::format("Creating runtime texture \"{}\"", m_idName).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex);
+				GetContext()->RegisterForCreate(newTex);
 			}
 
 			std::unique_ptr<re::Texture> Load(core::InvPtr<re::Texture>& loadingTexPtr) override
@@ -275,7 +275,7 @@ namespace re
 	{
 		if (tex->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = tex->m_platObj->GetContext()->GetBindlessResourceManager();
 			if (brm)
 			{
 				if (tex->HasUsageBit(re::Texture::Usage::ColorSrc))
@@ -382,11 +382,11 @@ namespace re
 
 		platform::Texture::Destroy(*this);
 
-		gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
+		m_platObj->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = m_platObj->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_srvResourceHandle);
@@ -394,7 +394,7 @@ namespace re
 
 		if (m_uavResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = m_platObj->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_uavResourceHandle);

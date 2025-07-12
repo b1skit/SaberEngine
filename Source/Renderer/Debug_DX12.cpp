@@ -12,6 +12,9 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+	ID3D12Device* g_device = nullptr;
+
+
 	constexpr char const* D3D12_AUTO_BREADCRUMB_OP_ToCStr(D3D12_AUTO_BREADCRUMB_OP breadcrumbOp)
 	{
 		constexpr char const* k_breadcrumbOpNames[] = {
@@ -106,10 +109,8 @@ namespace
 
 	void HandleDRED()
 	{
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
 		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
-		SEVerify(SUCCEEDED(context->GetDevice().GetD3DDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
+		SEVerify(SUCCEEDED(g_device->QueryInterface(IID_PPV_ARGS(&dredQuery))),
 			"Failed to get DRED query interface");
 
 		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
@@ -322,6 +323,12 @@ namespace dx12
 			"\"-%s\" command line argument received, but USE_NSIGHT_AFTERMATH is not defined",
 			core::configkeys::k_enableAftermathCmdLineArg)
 #endif
+	}
+
+
+	void InitCheckHResult(ID3D12Device* device)
+	{
+		g_device = device;
 	}
 
 

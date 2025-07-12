@@ -71,8 +71,9 @@ enum D3D12_RESOURCE_HEAP_TIER;
 
 namespace dx12
 {
-	extern bool CheckHResult(HRESULT hr, char const* msg);
 	extern void EnableDebugLayer();
+	extern void InitCheckHResult(ID3D12Device*);
+	extern bool CheckHResult(HRESULT hr, char const* msg);
 	extern std::wstring GetWDebugName(ID3D12Object*);
 	extern std::string GetDebugName(ID3D12Object*);
 	extern constexpr char const* GetResourceStateAsCStr(D3D12_RESOURCE_STATES state);

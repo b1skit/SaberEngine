@@ -111,6 +111,8 @@ namespace dx12
 		m_device.Create();
 		ID3D12Device* device = m_device.GetD3DDevice().Get();
 
+		InitCheckHResult(device); // Cache the device for debug calls
+
 		// Give the SysInfo a copy of the device for convenience
 		dx12::SysInfo::s_device = device;
 
@@ -122,15 +124,15 @@ namespace dx12
 		m_cpuDescriptorHeapMgrs.emplace_back(device, CPUDescriptorHeapManager::HeapType::DSV);
 
 		// Command Queues:
-		m_commandQueues[CommandListType::Direct].Create(device, CommandListType::Direct);
-		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
-		m_commandQueues[CommandListType::Copy].Create(device, CommandListType::Copy);
+		m_commandQueues[CommandListType::Direct].Create(this, CommandListType::Direct);
+		m_commandQueues[CommandListType::Compute].Create(this, CommandListType::Compute);
+		m_commandQueues[CommandListType::Copy].Create(this, CommandListType::Copy);
 
 		m_heapManager.Initialize(device, &m_globalResourceStates, m_numFramesInFlight);
 
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
-		m_bufferAllocator->Initialize(m_numFramesInFlight, m_currentFrameNum, &m_heapManager);
+		m_bufferAllocator->Initialize(this, m_numFramesInFlight, m_currentFrameNum, &m_heapManager);
 	}
 
 

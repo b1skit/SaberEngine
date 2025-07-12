@@ -11,6 +11,10 @@ namespace gr
 {
 	class Stage;
 }
+namespace re
+{
+	class Context;
+}
 
 namespace dx12
 {

@@ -5,7 +5,6 @@
 #include "Context_DX12.h"
 #include "DescriptorCache_DX12.h"
 #include "EnumTypes.h"
-#include "RenderManager.h"
 #include "Texture.h"
 #include "Texture_DX12.h"
 
@@ -592,14 +591,12 @@ namespace
 
 namespace dx12
 {
-	DescriptorCache::DescriptorCache(DescriptorType descriptorType)
+	DescriptorCache::DescriptorCache(DescriptorType descriptorType, dx12::Context* context)
 		: m_descriptorType(descriptorType)
-		, m_deviceCache(nullptr)
+		, m_context(context)
+		, m_deviceCache(context->GetDevice().GetD3DDevice().Get())
 	{
 		SEAssert(m_descriptorType != DescriptorType::DescriptorType_Count, "Invalid descriptor type");
-
-		m_deviceCache =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get();
 	}
 
 
@@ -658,11 +655,9 @@ namespace dx12
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
 			{
-				dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
-					context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
+					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
 
 				switch (m_descriptorType)
 				{
@@ -737,11 +732,9 @@ namespace dx12
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
 			{
-				dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
 				CacheEntry newCacheEntry{
 					bufViewHash,
-					context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
+					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
 
 				switch (m_descriptorType)
 				{

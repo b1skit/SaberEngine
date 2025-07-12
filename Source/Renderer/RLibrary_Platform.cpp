@@ -61,7 +61,7 @@ namespace platform
 	}
 
 
-	void RLibrary::Execute(gr::Stage* stage, void* platformObject)
+	void RLibrary::Execute(re::Context* context, gr::Stage* stage, void* platformObject)
 	{
 		SEAssert(stage->GetStageType() == gr::Stage::Type::LibraryRaster ||
 			stage->GetStageType() == gr::Stage::Type::LibraryCompute,
@@ -75,8 +75,7 @@ namespace platform
 		case gr::Stage::LibraryStageParams::LibraryType::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(
-					platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
+				context->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
 		}
 		break;
 		default: SEAssertF("Invalid library type");

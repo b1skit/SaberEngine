@@ -350,23 +350,23 @@ namespace dx12
 
 	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
-		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+		// Generate the PSO:
+		dx12::Shader::PlatObj* shaderPlatObj = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
 		
+		SEAssert(!shaderPlatObj->m_shaderBlobs[re::Shader::Hull] &&
+			!shaderPlatObj->m_shaderBlobs[re::Shader::Domain] &&
+			!shaderPlatObj->m_shaderBlobs[re::Shader::Mesh] &&
+			!shaderPlatObj->m_shaderBlobs[re::Shader::Amplification],
+			"TODO: Support this shader type");
+
+		Microsoft::WRL::ComPtr<ID3D12Device> device =
+			shaderPlatObj->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
+
 		Microsoft::WRL::ComPtr<ID3D12Device2> device2;
 		HRESULT hr = device.As(&device2);
 		SEAssert(SUCCEEDED(hr), "Failed to get ID3D12Device2 from ID3D12Device");
 
-		// Generate the PSO:
-		dx12::Shader::PlatObj* shaderParams = shader.GetPlatformObject()->As<dx12::Shader::PlatObj*>();
-		
-		SEAssert(!shaderParams->m_shaderBlobs[re::Shader::Hull] &&
-			!shaderParams->m_shaderBlobs[re::Shader::Domain] &&
-			!shaderParams->m_shaderBlobs[re::Shader::Mesh] &&
-			!shaderParams->m_shaderBlobs[re::Shader::Amplification],
-			"TODO: Support this shader type");
-
-		if (shaderParams->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
+		if (shaderPlatObj->m_shaderBlobs[re::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
 			SEAssert(targetSet, "Raster pipelines require a valid target set");
 
@@ -374,13 +374,13 @@ namespace dx12
 
 			// Get the shader reflection:
 			ComPtr<IDxcUtils> dxcUtils;
-			HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+			hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
 			dx12::CheckHResult(hr, "Failed to create IDxcUtils instance");
 
 			const DxcBuffer reflectionBuffer
 			{
-				.Ptr = shaderParams->m_shaderBlobs[re::Shader::Vertex]->GetBufferPointer(),
-				.Size = shaderParams->m_shaderBlobs[re::Shader::Vertex]->GetBufferSize(),
+				.Ptr = shaderPlatObj->m_shaderBlobs[re::Shader::Vertex]->GetBufferPointer(),
+				.Size = shaderPlatObj->m_shaderBlobs[re::Shader::Vertex]->GetBufferSize(),
 				.Encoding = 0,
 			};
 
@@ -398,19 +398,19 @@ namespace dx12
 
 			// Build graphics pipeline description:
 			GraphicsPipelineStateStream graphicsStateStream {};
-			graphicsStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
+			graphicsStateStream.rootSignature = shaderPlatObj->m_rootSignature->GetD3DRootSignature();
 			graphicsStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
 			graphicsStateStream.primitiveTopologyType = GetD3DTopologyType(rasterizationState->GetPrimitiveTopologyType());
-			graphicsStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Vertex].Get());
+			graphicsStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderPlatObj->m_shaderBlobs[re::Shader::Vertex].Get());
 
-			if (shaderParams->m_shaderBlobs[re::Shader::Geometry])
+			if (shaderPlatObj->m_shaderBlobs[re::Shader::Geometry])
 			{
-				graphicsStateStream.gShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Geometry].Get());
+				graphicsStateStream.gShader = CD3DX12_SHADER_BYTECODE(shaderPlatObj->m_shaderBlobs[re::Shader::Geometry].Get());
 			}
 			
-			if (shaderParams->m_shaderBlobs[re::Shader::Pixel])
+			if (shaderPlatObj->m_shaderBlobs[re::Shader::Pixel])
 			{
-				graphicsStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Pixel].Get());
+				graphicsStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderPlatObj->m_shaderBlobs[re::Shader::Pixel].Get());
 			}
 
 			// Target formats:
@@ -453,12 +453,12 @@ namespace dx12
 					shader.GetName(),
 					targetSet ? targetSet->GetName().c_str() : "<no targets>")).c_str());
 		}
-		else if (shaderParams->m_shaderBlobs[re::Shader::Compute])
+		else if (shaderPlatObj->m_shaderBlobs[re::Shader::Compute])
 		{
 			// Build compute pipeline description:
 			ComputePipelineStateStream computePipelineStateStream;
-			computePipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
-			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[re::Shader::Compute].Get());
+			computePipelineStateStream.rootSignature = shaderPlatObj->m_rootSignature->GetD3DRootSignature();
+			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderPlatObj->m_shaderBlobs[re::Shader::Compute].Get());
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC computePipelineStateStreamDesc
 			{

@@ -239,7 +239,7 @@ namespace gr
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, GetNumFramesInFlight()));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get(), GetNumFramesInFlight()));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();
@@ -668,7 +668,7 @@ namespace gr
 			{
 				ImGui::Indent();
 
-				re::Context::RenderDocAPI* renderDocApi = GetContext()->GetRenderDocAPI();
+				re::Context::RenderDocAPI* renderDocApi = m_context->GetRenderDocAPI();
 
 				const bool renderDocCmdLineEnabled =
 					core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&

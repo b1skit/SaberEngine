@@ -5,6 +5,9 @@
 
 namespace re
 {
+	class Context;
+
+
 	class IBufferAllocatorAccess
 	{
 	protected:
@@ -47,7 +50,7 @@ namespace re
 
 
 	public:
-		void Initialize(uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData); // e.g. platformData == dx12::HeapManager*
+		void Initialize(re::Context*, uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData); // e.g. platformData == dx12::HeapManager*
 
 		virtual ~BufferAllocator();
 
@@ -178,6 +181,7 @@ namespace re
 
 
 	protected:
+		re::Context* m_context;
 		uint8_t m_numFramesInFlight;
 	private:
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame

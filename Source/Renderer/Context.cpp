@@ -4,7 +4,6 @@
 #include "Context_OpenGL.h"
 #include "EnumTypes.h"
 #include "Sampler.h"
-#include "Shader.h"
 #include "Texture.h"
 #include "VertexStream.h"
 
@@ -13,6 +12,9 @@
 #include "Core/Invptr.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
+
+#include "Core/Interfaces/ILoadContext.h"
+#include "Core/Interfaces/IPlatformObject.h"
 
 #include "Core/Util/TextUtils.h"
 
@@ -130,6 +132,9 @@ namespace re
 					util::FromWideCString(comError.ErrorMessage())).c_str());
 			}
 		}
+
+		core::IPlatObj::s_context = this;
+		core::ILoadContextBase::s_context = this;
 	}
 
 
@@ -217,6 +222,9 @@ namespace re
 		ProcessDeferredDeletions(k_forceDeferredDeletionsFlag); // Force-delete everything
 
 		Destroy_Platform();
+
+		core::IPlatObj::s_context = nullptr;
+		core::ILoadContextBase::s_context = nullptr;
 	}
 
 

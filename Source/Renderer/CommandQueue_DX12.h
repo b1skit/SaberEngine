@@ -7,6 +7,9 @@
 
 namespace dx12
 {
+	class Context;
+
+
 	class CommandQueue
 	{
 	public:
@@ -15,7 +18,7 @@ namespace dx12
 		CommandQueue& operator=(CommandQueue&&) noexcept = default;
 		~CommandQueue() { Destroy(); };
 
-		[[nodiscard]] void Create(ID3D12Device*, dx12::CommandListType type);
+		[[nodiscard]] void Create(dx12::Context*, dx12::CommandListType type);
 		void Destroy();
 
 		bool IsCreated() const;
@@ -62,6 +65,7 @@ namespace dx12
 		CommandListType m_type;
 		D3D12_COMMAND_LIST_TYPE m_d3dType;
 
+		dx12::Context* m_context;
 		ID3D12Device* m_deviceCache;
 
 		Fence m_fence;

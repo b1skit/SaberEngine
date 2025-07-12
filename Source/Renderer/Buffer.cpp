@@ -4,7 +4,6 @@
 #include "Buffer.h"
 #include "Buffer_Platform.h"
 #include "Context.h"
-#include "RenderManager.h"
 
 #include "Core/ProfilingMarkers.h"
 
@@ -101,7 +100,7 @@ namespace re
 			"Invalid type detected. Can only set data of the original type");
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = newBuffer->m_platObj->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			if (HasUsageBit(re::Buffer::Usage::Constant, *newBuffer))
@@ -206,7 +205,7 @@ namespace re
 		// Free bindless resource handles:
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = m_platObj->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
@@ -215,7 +214,7 @@ namespace re
 
 		if (m_cbvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = m_platObj->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm,
 				"Failed to get BindlessResourceManager, but resource handle is valid. This should not be possible");
 
@@ -226,7 +225,7 @@ namespace re
 		{
 			s_bufferAllocator->Deallocate(GetUniqueID());
 
-			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
+			m_platObj->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}		
 	}
 

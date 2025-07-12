@@ -1,11 +1,15 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "BufferView.h"
 #include "GraphicsEvent.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 
 
+namespace re
+{
+	class Context;
+	class BufferInput;
+}
 namespace gr
 {
 	class GraphicsSystem;
@@ -18,7 +22,7 @@ namespace gr
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(gr::RenderSystem*, uint8_t numFramesInFlight);
+		GraphicsSystemManager(gr::RenderSystem*, re::Context*, uint8_t numFramesInFlight);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
@@ -44,6 +48,7 @@ namespace gr
 	public:
 		gr::RenderDataManager const& GetRenderData() const;
 
+		re::Context* GetContext() const;
 		uint64_t GetCurrentRenderFrameNum() const;
 		uint8_t GetNumFramesInFlight() const;
 
@@ -98,6 +103,7 @@ namespace gr
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
 		bool m_activeAmbientLightHasChanged;
 
+		re::Context* m_context;
 		gr::RenderSystem const* m_owningRenderSystem;
 
 		uint64_t m_currentFrameNum;
@@ -134,6 +140,11 @@ namespace gr
 		return *m_renderData;
 	}
 
+
+	inline re::Context* GraphicsSystemManager::GetContext() const
+	{
+		return m_context;
+	}
 
 	inline uint64_t GraphicsSystemManager::GetCurrentRenderFrameNum() const
 	{

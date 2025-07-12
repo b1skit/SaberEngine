@@ -12,6 +12,10 @@ namespace effect
 {
 	class EffectDB;
 }
+namespace re
+{
+	class Context;
+}
 namespace gr
 {
 	struct RenderSystemDescription;
@@ -22,7 +26,7 @@ namespace gr
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
-			std::string const& pipelineFileName, uint8_t numFramesInFlight);
+			std::string const& pipelineFileName, re::Context*, uint8_t numFramesInFlight);
 		
 		void Destroy();
 
@@ -74,7 +78,7 @@ namespace gr
 
 
 	private: // Use the Create() factory
-		RenderSystem(std::string const& name, uint8_t numFramesInFlight);
+		RenderSystem(std::string const& name, re::Context*, uint8_t numFramesInFlight);
 		RenderSystem() = delete; 
 
 

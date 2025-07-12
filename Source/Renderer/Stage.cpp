@@ -421,7 +421,7 @@ namespace gr
 		}
 		else
 		{
-			re::SwapChain const& swapchain = gr::RenderManager::Get()->GetContext()->GetSwapChain();
+			re::SwapChain const& swapchain = m_src->GetPlatformObject()->GetContext()->GetSwapChain();
 			glm::uvec2 const& swapchainDims = platform::SwapChain::GetBackbufferDimensions(swapchain);
 
 			SEAssert(m_src->Width() == swapchainDims.x && m_src->Height() == swapchainDims.y,
@@ -438,9 +438,9 @@ namespace gr
 	}
 
 
-	void LibraryStage::Execute(void* platformObject)
+	void LibraryStage::Execute(re::Context* context, void* platformObject)
 	{
-		platform::RLibrary::Execute(this, platformObject);
+		platform::RLibrary::Execute(context, this, platformObject);
 	}
 
 

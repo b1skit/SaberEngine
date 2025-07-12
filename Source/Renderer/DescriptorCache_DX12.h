@@ -3,8 +3,6 @@
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "TextureView.h"
 
-#include "Core/Util/HashUtils.h"
-
 
 namespace re
 {
@@ -15,6 +13,9 @@ namespace re
 
 namespace dx12
 {
+	class Context;
+
+
 	class DescriptorCache
 	{
 	public:
@@ -31,7 +32,7 @@ namespace dx12
 
 
 	public:
-		DescriptorCache(DescriptorType);
+		DescriptorCache(DescriptorType, dx12::Context*);
 		~DescriptorCache();
 
 		DescriptorCache(DescriptorCache&&) noexcept = default;
@@ -68,6 +69,7 @@ namespace dx12
 		std::mutex m_descriptorCacheMutex;
 		std::vector<CacheEntry> m_descriptorCache;
 
+		dx12::Context* m_context;
 		ID3D12Device* m_deviceCache;
 
 		DescriptorType m_descriptorType;

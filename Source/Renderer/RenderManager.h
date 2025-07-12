@@ -81,8 +81,6 @@ namespace gr
 		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
 		core::Inventory* GetInventory() const;
 
-		re::Context* GetContext() { return m_context.get(); }
-		re::Context const* GetContext() const { return m_context.get(); }
 
 	private:
 		core::Inventory* m_inventory;

@@ -180,6 +180,8 @@
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="Interfaces\IEngineThread.cpp" />
+    <ClCompile Include="Interfaces\ILoadContext.cpp" />
+    <ClCompile Include="Interfaces\IPlatformObject.cpp" />
     <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="pch\pch.cpp">

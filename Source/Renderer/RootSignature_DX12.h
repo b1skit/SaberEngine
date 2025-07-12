@@ -13,6 +13,9 @@ namespace re
 
 namespace dx12
 {
+	class Context;
+
+
 	class RootSignature final
 	{
 	public:
@@ -186,7 +189,7 @@ namespace dx12
 
 		void AddStaticSampler(core::InvPtr<re::Sampler> const&);
 
-		void Finalize(char const* name, D3D12_ROOT_SIGNATURE_FLAGS);
+		void Finalize(dx12::Context*, char const* name, D3D12_ROOT_SIGNATURE_FLAGS);
 
 
 	public:
@@ -223,6 +226,7 @@ namespace dx12
 		void ValidateRootSigSize(); // _DEBUG only
 
 		void FinalizeInternal(
+			dx12::Context*,
 			std::wstring const& rootSigName,
 			std::vector<CD3DX12_ROOT_PARAMETER1> const&, 
 			std::vector<D3D12_STATIC_SAMPLER_DESC> const&,

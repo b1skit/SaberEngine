@@ -56,7 +56,7 @@ namespace dx12
 			targetSet.GetPlatformObject()->As<dx12::TextureTargetSet::PlatObj*>();
 		SEAssert(texTargetSetPlatObj->m_isCommitted, "Target set has not been committed");
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = texTargetSetPlatObj->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 		
 		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())

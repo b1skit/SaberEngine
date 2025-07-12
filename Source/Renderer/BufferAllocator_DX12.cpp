@@ -2,8 +2,8 @@
 #include "Buffer_DX12.h"
 #include "BufferAllocator_DX12.h"
 #include "CommandList_DX12.h"
+#include "CommandQueue_DX12.h"
 #include "Context_DX12.h"
-#include "RenderManager_DX12.h"
 
 #include "Core/ProfilingMarkers.h"
 
@@ -95,7 +95,7 @@ namespace dx12
 	{
 		if (!dirtyBuffersForPlatformUpdate.empty())
 		{
-			dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+			dx12::Context* context = m_context->As<dx12::Context*>();
 			dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
 			SEBeginGPUEvent(copyQueue->GetD3DCommandQueue().Get(),

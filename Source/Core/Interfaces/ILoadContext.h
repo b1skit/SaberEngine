@@ -3,6 +3,10 @@
 #include "../Util/HashKey.h"
 
 
+namespace re
+{
+	class Context;
+}
 namespace core
 {
 	template<typename T>
@@ -37,6 +41,8 @@ namespace core
 		void Initialize(util::HashKey objectID);
 		void Finalize();
 
+		re::Context* GetContext() const { return s_context; }
+
 
 	private:
 		void FinalizeDependencies(util::HashKey);
@@ -48,6 +54,11 @@ namespace core
 		std::mutex m_parentLoadContextsMutex;
 
 		util::HashKey m_objectID; // ID of the object associated with this instance
+
+
+	private:
+		friend class re::Context;
+		static re::Context* s_context;
 	};
 
 

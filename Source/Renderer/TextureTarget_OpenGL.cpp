@@ -1,10 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context_OpenGL.h"
-#include "RenderManager.h"
 #include "SwapChain_OpenGL.h"
-#include "TextureTarget.h"
-#include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
+#include "TextureTarget_OpenGL.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -761,7 +759,7 @@ namespace opengl
 				"Can only copy to the backbuffer from textures with identical dimensions");
 
 			re::TextureTargetSet const* backbufferTargetSet = opengl::SwapChain::GetBackBufferTargetSet(
-				gr::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain()).get();
+				srcPlatObj->GetContext()->As<opengl::Context*>()->GetSwapChain()).get();
 			
 			opengl::TextureTargetSet::PlatObj const* backbufferPlatObj =
 				backbufferTargetSet->GetPlatformObject()->As<opengl::TextureTargetSet::PlatObj const*>();
@@ -800,7 +798,7 @@ namespace opengl
 
 			// Get the backbuffer to read its dimensions
 			std::shared_ptr<re::TextureTargetSet> const& backbufferTargets = 
-				opengl::SwapChain::GetBackBufferTargetSet(gr::RenderManager::Get()->GetContext()->As<opengl::Context*>()->GetSwapChain());
+				opengl::SwapChain::GetBackBufferTargetSet(srcPlatObj->GetContext()->As<opengl::Context*>()->GetSwapChain());
 
 			glBlitNamedFramebuffer(
 				srcFBO,										// GLuint readFramebuffer

@@ -26,10 +26,10 @@ namespace re
 		newSBT.reset(new ShaderBindingTable(name, sbtParams));
 
 		newSBT->Initialize(tlas);
-
+		
 		// Finally, register our SBT for API creation. This needs to be done to ensure any shaders we access have
 		// already been created (as we'll need their shader blobs etc)
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
+		newSBT->m_platObj->GetContext()->RegisterForCreate<re::ShaderBindingTable>(newSBT);
 
 		return newSBT;
 	}
@@ -56,7 +56,7 @@ namespace re
 		// Guarantee the lifetime of any in-flight resources:
 		if (m_platObj)
 		{
-			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
+			m_platObj->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		m_rayGenShaders.clear();

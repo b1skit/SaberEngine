@@ -70,8 +70,8 @@ namespace opengl
 	void RenderManager::Render()
 	{
 		SEBeginCPUEvent("RenderManager::Render");
-
-		opengl::Context* context = GetContext()->As<opengl::Context*>();
+		
+		opengl::Context* context = m_context->As<opengl::Context*>();
 
 		re::GPUTimer& gpuTimer = context->GetGPUTimer();
 
@@ -171,7 +171,7 @@ namespace opengl
 						SEAssert(stage->GetRootConstants().GetRootConstantCount() == 0,
 							"TODO: Handle setting root constants for library stages");
 
-						dynamic_cast<gr::LibraryStage*>(stage.get())->Execute(nullptr);
+						dynamic_cast<gr::LibraryStage*>(stage.get())->Execute(m_context.get(), nullptr);
 					}
 					break;
 					case gr::Stage::Type::ClearTargetSet:

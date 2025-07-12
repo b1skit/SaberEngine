@@ -3,6 +3,7 @@
 #include "BufferAllocator_DX12.h"
 #include "BufferAllocator_OpenGL.h"
 #include "Buffer_Platform.h"
+#include "Context.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -87,8 +88,11 @@ namespace re
 	}
 
 
-	void BufferAllocator::Initialize(uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData)
+	void BufferAllocator::Initialize(re::Context* context, uint8_t numFramesInFlight, uint64_t currentFrame, void* platformData)
 	{
+		SEAssert(!m_isValid, "BufferAllocator already initialized");
+
+		m_context = context;
 		m_currentFrameNum = currentFrame;
 		m_numFramesInFlight = numFramesInFlight;
 		m_isValid = true;

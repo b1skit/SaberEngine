@@ -2,8 +2,12 @@
 #pragma once
 
 
-namespace core
+namespace re
 {
+	class Context;
+}
+namespace core
+{	
 	struct IPlatObj
 	{
 		IPlatObj() = default;
@@ -18,6 +22,14 @@ namespace core
 		T const As() const;
 
 		virtual void Destroy() {}
+
+		re::Context* GetContext() const;
+
+
+	private:
+		friend class re::Context;
+		static re::Context* s_context;
+
 
 	private: // No copying allowed:
 		IPlatObj(IPlatObj const&) = delete;
@@ -36,5 +48,11 @@ namespace core
 	inline T const IPlatObj::As() const
 	{
 		return dynamic_cast<T const>(this);
+	}
+
+
+	inline re::Context* IPlatObj::GetContext() const
+	{
+		return s_context;
 	}
 }

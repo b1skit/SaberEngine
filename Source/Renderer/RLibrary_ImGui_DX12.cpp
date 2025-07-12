@@ -1,11 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "Context.h"
 #include "Context_DX12.h"
+#include "Debug_DX12.h"
 #include "RLibrary_ImGui_DX12.h"
-#include "RenderManager.h"
 #include "Stage.h"
-#include "SysInfo_DX12.h"
 #include "SwapChain_DX12.h"
+#include "SysInfo_DX12.h"
 #include "Texture_DX12.h"
 
 #include "Core/Logger.h"
@@ -13,11 +12,17 @@
 
 #include "Core/Host/Window_Win32.h"
 
-#include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
+#include "backends/imgui_impl_win32.h"
+
 
 using Microsoft::WRL::ComPtr;
 
+
+namespace
+{
+	re::Context* g_context = nullptr; // Internal global context pointer for ImGui callbacks
+}
 
 namespace dx12
 {
@@ -26,8 +31,8 @@ namespace dx12
 		SEBeginCPUEvent("RLibraryImGui::PlatObj::InitializeImGuiSRVHeap");
 
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector);
-
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		
+		dx12::Context* context = GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
@@ -77,7 +82,9 @@ namespace dx12
 
 
 	void RLibraryImGui::PlatObj::Allocate(
-		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandleOut, D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandleOut)
+		ImGui_ImplDX12_InitInfo* info,
+		D3D12_CPU_DESCRIPTOR_HANDLE* cpuHandleOut,
+		D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandleOut)
 	{
 		SEBeginCPUEvent("RLibraryImGui::PlatObj::Allocate");
 
@@ -88,8 +95,10 @@ namespace dx12
 		}
 		else
 		{
+			SEAssert(g_context, "Context pointer is null");
+
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				g_context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -112,7 +121,9 @@ namespace dx12
 
 
 	void RLibraryImGui::PlatObj::Free(
-		ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHanle)
+		ImGui_ImplDX12_InitInfo* info,
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
+		D3D12_GPU_DESCRIPTOR_HANDLE gpuHanle)
 	{
 		SEBeginCPUEvent("RLibraryImGui::PlatObj::Free");
 
@@ -123,8 +134,10 @@ namespace dx12
 		}
 		else
 		{
+			SEAssert(g_context, "Context pointer is null");
+
 			dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(
-				gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+				g_context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 		}
 		SEAssert(dx12ImGuiLibrary, "Failed to get RLibraryImGui");
 
@@ -159,7 +172,7 @@ namespace dx12
 		util::ScopedThreadProtector scopedThreadProtector(m_threadProtector); // Avoid recursive call in Allocate()
 
 		// Copy the descriptor in:
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		const uint32_t numDescriptors = 1;
@@ -175,7 +188,7 @@ namespace dx12
 
 		// Record the allocation in the deferred delete queue: Temporary allocations are valid for a single frame only
 		m_deferredDescriptorDelete.emplace(
-			gr::RenderManager::Get()->GetCurrentRenderFrameNum(),
+			context->GetCurrentRenderFrameNum(),
 			TempDescriptorAllocation{ 
 				cpuDstOut, 
 				gpuDstOut });
@@ -198,8 +211,10 @@ namespace dx12
 			}
 		}
 
+		SEAssert(g_context, "Context pointer is null");
+
 		// Defer deletion by numFramesInFlight
-		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = g_context->GetNumFramesInFlight();
 
 		while (!m_deferredDescriptorDelete.empty() &&
 			m_deferredDescriptorDelete.front().first + numFramesInFlight < currentFrame)
@@ -224,16 +239,18 @@ namespace dx12
 
 		dx12::RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<dx12::RLibraryImGui*>(newLibrary.get());
 		platform::RLibraryImGui::CreateInternal(*dx12ImGuiLibrary);
+		
+		dx12::Context* context = dx12ImGuiLibrary->GetPlatformObject()->GetContext()->As<dx12::Context*>();
+		g_context = context; // Store the context globally for ImGui callbacks
+		SEAssert(g_context, "Context pointer is null");
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
+		ID3D12Device* device = context->GetDevice().GetD3DDevice().Get();
 
 		re::SwapChain& swapChain = context->GetSwapChain();
 
 		// Setup ImGui platform/Renderer backends:
-		SEAssert(gr::RenderManager::Get()->GetContext()->GetWindow(), "Window pointer cannot be null");
-		win32::Window::PlatObj* windowPlatObj =
-			gr::RenderManager::Get()->GetContext()->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
+		SEAssert(context->GetWindow(), "Window pointer cannot be null");
+		win32::Window::PlatObj* windowPlatObj = context->GetWindow()->GetPlatformObject()->As<win32::Window::PlatObj*>();
 
 		dx12::Texture::PlatObj const* backbufferColorTarget0PlatObj =
 			dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()
@@ -251,10 +268,10 @@ namespace dx12
 		// ImGui DX12 backend initialization:
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 
-		const uint8_t numFramesInFlight = gr::RenderManager::Get()->GetNumFramesInFlight();
+		const uint8_t numFramesInFlight = context->GetNumFramesInFlight();
 
 		ImGui_ImplDX12_InitInfo initInfo{};
-		initInfo.Device = device.Get();
+		initInfo.Device = device;
 		initInfo.CommandQueue = directQueue.GetD3DCommandQueue().Get();
 		initInfo.NumFramesInFlight = numFramesInFlight;
 		initInfo.RTVFormat = backbufferColorTarget0PlatObj->m_format;
@@ -284,7 +301,9 @@ namespace dx12
 	{
 		SEBeginCPUEvent("RLibraryImGui::CopyTempDescriptorToImGuiHeap");
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		SEAssert(g_context, "Context pointer is null");
+
+		dx12::Context* context = g_context->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
@@ -304,6 +323,8 @@ namespace dx12
 
 		LOG("Destroying ImGui render library");
 
+		SEAssert(g_context, "Context pointer is null");
+
 		// ImGui Cleanup:
 		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
@@ -311,7 +332,7 @@ namespace dx12
 
 		// Clean up our ImGui descriptor heap:
 		RLibraryImGui* dx12ImGuiLibrary = dynamic_cast<RLibraryImGui*>(
-			gr::RenderManager::Get()->GetContext()->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
+			g_context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
 		dx12::RLibraryImGui::PlatObj* platObj =
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();
@@ -319,6 +340,8 @@ namespace dx12
 		platObj->FreeTempDescriptors(std::numeric_limits<uint64_t>::max());
 
 		platObj->DestroyImGuiSRVHeap();
+
+		g_context = nullptr; // Null out the context for ImGui callbacks
 
 		SEEndCPUEvent(); // "RLibraryImGui::Destroy"
 	}
@@ -334,7 +357,8 @@ namespace dx12
 		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
 		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		SEAssert(g_context, "Context pointer is null");
+		dx12::Context* context = g_context->As<dx12::Context*>();
 
 		RLibraryImGui* dx12ImGuiLibrary = 
 			dynamic_cast<RLibraryImGui*>(context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
@@ -402,7 +426,7 @@ namespace dx12
 		}
 
 		// Descriptor deferred delete queue:
-		platObj->FreeTempDescriptors(gr::RenderManager::Get()->GetCurrentRenderFrameNum());
+		platObj->FreeTempDescriptors(context->GetCurrentRenderFrameNum());
 
 		SEEndCPUEvent(); // "RLibraryImGui::Execute"
 	}

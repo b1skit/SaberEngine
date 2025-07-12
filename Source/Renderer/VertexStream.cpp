@@ -119,7 +119,7 @@ namespace re
 		{
 			std::unique_ptr<re::VertexStream> Load(core::InvPtr<re::VertexStream>& newVertexStream) override
 			{
-				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newVertexStream);
+				GetContext()->RegisterForCreate(newVertexStream);
 
 				return std::unique_ptr<re::VertexStream>(
 					new VertexStream(m_streamDesc, std::move(m_data), m_dataHash, m_extraUsageBits));
@@ -177,9 +177,9 @@ namespace re
 
 		// Release the data:
 		m_deferredBufferCreateParams = nullptr;
-
+		
 		// Create the bindless resource handle after we're released the deferred buffer create params to avoid an assert
-		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = m_streamBuffer->GetPlatformObject()->GetContext()->GetBindlessResourceManager();
 		if (brm) // May be null (e.g. API does not support bindless resources)
 		{
 			vertexStream->m_srvResourceHandle = brm->RegisterResource(
@@ -259,17 +259,17 @@ namespace re
 		SEAssert((m_streamBuffer == nullptr) != (m_deferredBufferCreateParams == nullptr),
 			"A null Buffer and deferred buffer create params are expected to be mutually exclusive");
 
-		m_streamBuffer = nullptr;
-		m_deferredBufferCreateParams = nullptr;
-
 		if (m_srvResourceHandle != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm =
-				gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = 
+				m_streamBuffer->GetPlatformObject()->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			brm->UnregisterResource(m_srvResourceHandle);
 		}
+
+		m_streamBuffer = nullptr;
+		m_deferredBufferCreateParams = nullptr;
 	}
 
 

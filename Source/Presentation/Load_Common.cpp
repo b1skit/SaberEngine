@@ -12,7 +12,7 @@
 
 #include "Core/Host/PerformanceTimer.h"
 
-#include "Renderer/RenderManager.h"
+#include "Renderer/Context.h"
 #include "Renderer/Texture.h"
 
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
@@ -39,9 +39,9 @@ namespace load
 	void TextureFromFilePath<re::Texture>::OnLoadBegin(core::InvPtr<re::Texture>& newTex)
 	{
 		LOG(std::format("Creating texture from file path \"{}\"", m_filePath).c_str());
-
+		
 		// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newTex);
+		GetContext()->RegisterForCreate(newTex);
 	}
 
 
@@ -460,7 +460,7 @@ namespace load
 		std::unique_ptr<re::Texture> result = load::TextureFromFilePath<re::Texture>::Load(newIBL);
 
 		// Register for API-layer creation now that we've loaded the (typically large amount of) data
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newIBL);
+		GetContext()->RegisterForCreate(newIBL);
 
 		return std::move(result);
 	}

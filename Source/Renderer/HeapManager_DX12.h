@@ -215,10 +215,10 @@ namespace dx12
 
 		// Create a committed GPU resource.
 		// Note: Lifetime is not managed by the heap manager (no deferred delete etc).
-		GPUResource(HeapManager*, ResourceDesc const&, wchar_t const* name, PrivateCTORToken);
+		GPUResource(ResourceDesc const&, wchar_t const* name, PrivateCTORToken);
 
 		// HeapManager managed GPUResource CTOR. Use HeapManager::CreateResource().
-		GPUResource(HeapManager*, ResourceDesc const&, HeapAllocation&&, wchar_t const* name, PrivateCTORToken);
+		GPUResource(ResourceDesc const&, HeapAllocation&&, wchar_t const* name, PrivateCTORToken);
 
 		GPUResource(GPUResource&&) noexcept;
 		GPUResource& operator=(GPUResource&&) noexcept;
@@ -249,10 +249,12 @@ namespace dx12
 	private:
 		HeapAllocation m_heapAllocation; // Note: Deferred deletion is managed by the HeapManager
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_resource;
-		HeapManager* m_heapManager; // Note: Always be populated so GPUResources can all use the deferred delete queue
+		bool m_isValid;
+
 
 	private:
 		friend class HeapManager;
+		static HeapManager* s_heapManager; // Note: Always be populated so GPUResources can all use the deferred delete queue
 		static ID3D12Device* s_device;
 		static GlobalResourceStateTracker* s_globalResourceStateTracker;
 
@@ -429,12 +431,12 @@ namespace dx12
 
 	inline bool GPUResource::IsValid() const
 	{
-		return m_heapManager != nullptr;
+		return m_isValid;
 	}
 
 	
 	inline void GPUResource::Invalidate()
 	{
-		m_heapManager = nullptr; // Prevent recursive re-enqueing
+		m_isValid = false;
 	}
 }

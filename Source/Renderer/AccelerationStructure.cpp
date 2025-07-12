@@ -4,7 +4,7 @@
 #include "BindlessResource.h"
 #include "Buffer.h"
 #include "BufferView.h"
-#include "RenderManager.h"
+#include "Context.h"
 
 #include "Core/Assert.h"
 
@@ -257,7 +257,7 @@ namespace re
 				AccelerationStructure::Type::BLAS, 
 				std::move(blasParams)));
 
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newAccelerationStructure);
+		newAccelerationStructure->m_platObj->GetContext()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
@@ -275,7 +275,7 @@ namespace re
 			name, AccelerationStructure::Type::TLAS, std::move(tlasParams)));
 
 		// Get a bindless resource handle:
-		re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+		re::BindlessResourceManager* brm = newAccelerationStructure->m_platObj->GetContext()->GetBindlessResourceManager();
 		SEAssert(brm, "Failed to get BindlessResourceManager");
 		
 		re::AccelerationStructure::TLASParams* newTLASParams =
@@ -292,7 +292,7 @@ namespace re
 		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
 
 		// Register for API creation:
-		gr::RenderManager::Get()->GetContext()->RegisterForCreate(newAccelerationStructure);
+		newAccelerationStructure->m_platObj->GetContext()->RegisterForCreate(newAccelerationStructure);
 
 		return newAccelerationStructure;
 	}
@@ -320,13 +320,13 @@ namespace re
 	{
 		if (m_platObj)
 		{
-			gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
+			m_platObj->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 		}
 
 		if (m_type == re::AccelerationStructure::Type::TLAS &&
 			GetResourceHandle() != INVALID_RESOURCE_IDX)
 		{
-			re::BindlessResourceManager* brm = gr::RenderManager::Get()->GetContext()->GetBindlessResourceManager();
+			re::BindlessResourceManager* brm = m_platObj->GetContext()->GetBindlessResourceManager();
 			SEAssert(brm, "Failed to get BindlessResourceManager. This should not be possible");
 
 			re::AccelerationStructure::TLASParams* tlasParams =

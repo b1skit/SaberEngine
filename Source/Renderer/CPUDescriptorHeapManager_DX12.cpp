@@ -1,9 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Core/Assert.h"
-#include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"
-#include "RenderManager.h"
 #include "SysInfo_DX12.h"
 
 
@@ -28,6 +26,7 @@ namespace dx12
 		: m_type(type)
 		, m_d3dType(TranslateHeapTypeToD3DHeapType(type))
 		, m_elementSize(device->GetDescriptorHandleIncrementSize(TranslateHeapTypeToD3DHeapType(type)))
+		, m_deviceCache(device)
 	{
 	}
 
@@ -125,7 +124,7 @@ namespace dx12
 
 		const uint32_t pageIdx = static_cast<uint32_t>(m_allocationPages.size());
 		m_allocationPages.emplace_back(
-			std::make_unique<AllocationPage>(m_type, m_elementSize, k_numDescriptorsPerPage, pageIdx));
+			std::make_unique<AllocationPage>(m_deviceCache, m_type, m_elementSize, k_numDescriptorsPerPage, pageIdx));
 
 		// The new page currently has 0 allocations, so we can safely add it to our free page index list
 		m_freePageIndexes.insert(m_allocationPages.size() - 1);
@@ -138,7 +137,11 @@ namespace dx12
 
 
 	AllocationPage::AllocationPage(
-		CPUDescriptorHeapManager::HeapType type, uint32_t elementSize, uint32_t numElementsPerPage, uint32_t pageIdx)
+		ID3D12Device* device,
+		CPUDescriptorHeapManager::HeapType type,
+		uint32_t elementSize,
+		uint32_t numElementsPerPage,
+		uint32_t pageIdx)
 		: m_type(type)
 		, m_d3dType(CPUDescriptorHeapManager::TranslateHeapTypeToD3DHeapType(type))
 		, m_descriptorElementSize(elementSize)
@@ -156,7 +159,7 @@ namespace dx12
 		// Note: CBV/SRV/UAV and sampler descriptors will NOT be shader visible with this flag:
 		heapDescriptor.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-		HRESULT hr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice()->CreateDescriptorHeap(
+		HRESULT hr = device->CreateDescriptorHeap(
 			&heapDescriptor, 
 			IID_PPV_ARGS(&m_descriptorHeap));
 		CheckHResult(hr, "Failed to create CPU-visible descriptor heap");

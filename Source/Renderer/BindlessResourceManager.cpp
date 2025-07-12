@@ -1,10 +1,12 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "BindlessResourceManager_Platform.h"
 #include "BindlessResourceManager.h"
-#include "RenderManager.h"
+#include "Context.h"
 
 #include "Core/Assert.h"
 #include "Core/Logger.h"
+
+#include "Shaders/Common/ResourceCommon.h"
 
 
 namespace re
@@ -182,6 +184,6 @@ namespace re
 
 		m_freeIndexes = {};
 
-		gr::RenderManager::Get()->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
+		m_platObj->GetContext()->RegisterForDeferredDelete(std::move(m_platObj));
 	}
 }

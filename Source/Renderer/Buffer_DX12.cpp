@@ -36,11 +36,11 @@ namespace
 	}
 
 
-	dx12::Buffer::ReadbackResource CreateReadbackResource(uint64_t numBytes, wchar_t const* debugName)
+	dx12::Buffer::ReadbackResource CreateReadbackResource(re::Context* ctx, uint64_t numBytes, wchar_t const* debugName)
 	{
 		dx12::Buffer::ReadbackResource readbackResource;
-
-		dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+		
+		dx12::HeapManager& heapMgr = ctx->As<dx12::Context*>()->GetHeapManager();
 
 		readbackResource.m_readbackGPUResource = heapMgr.CreateResource(
 			dx12::ResourceDesc{
@@ -189,9 +189,9 @@ namespace dx12
 		, m_resolvedGPUResource(nullptr)
 		, m_baseByteOffset(0)
 		, m_currentMapFrameLatency(std::numeric_limits<uint8_t>::max())
-		, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
-		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
-		, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV)
+		, m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV, GetContext()->As<dx12::Context*>())
+		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV, GetContext()->As<dx12::Context*>())
+		, m_cbvDescriptors(dx12::DescriptorCache::DescriptorType::CBV, GetContext()->As<dx12::Context*>())
 		, m_views{ 0 }
 	{
 	}
@@ -275,7 +275,7 @@ namespace dx12
 
 			// Note: Resources created in a D3D12_HEAP_TYPE_UPLOAD heap must have a D3D12_RESOURCE_STATE_GENERIC_READ
 			// initial state
-			platObj->m_gpuResource = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
+			platObj->m_gpuResource = platObj->GetContext()->As<dx12::Context*>()->GetHeapManager().CreateResource(
 				dx12::ResourceDesc{
 					.m_resourceDesc = bufferDesc,
 					.m_heapType = MemoryPoolPreferenceToD3DHeapType(bufferParams.m_memPoolPreference),
@@ -296,7 +296,7 @@ namespace dx12
 					buffer.GetWName() + L"_ReadbackBuffer" + std::to_wstring(resourceIdx);
 
 				platObj->m_readbackResources.emplace_back(
-					CreateReadbackResource(buffer.GetTotalBytes(), readbackDebugName.c_str()));
+					CreateReadbackResource(platObj->GetContext(), buffer.GetTotalBytes(), readbackDebugName.c_str()));
 			}
 		}
 	}
@@ -440,7 +440,7 @@ namespace dx12
 				platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 
 			dx12::CommandQueue& resourceCopyQueue =
-				gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
+				platObj->As<dx12::Context*>()->GetCommandQueue(resourceCopyCmdListType);
 
 			resourceCopyQueue.CPUWait(platObj->m_readbackResources[readbackResourceIdx].m_readbackFence);
 		}

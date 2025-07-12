@@ -129,7 +129,7 @@ namespace re
 				LOG(std::format("Scheduling load for Shader with ID \"{}\"", m_shaderID).c_str());
 
 				// Register for API-layer creation now to ensure we don't miss our chance for the current frame
-				gr::RenderManager::Get()->GetContext()->RegisterForCreate(newShader);
+				GetContext()->RegisterForCreate(newShader);
 			}
 
 			std::unique_ptr<re::Shader> Load(core::InvPtr<re::Shader>&) override

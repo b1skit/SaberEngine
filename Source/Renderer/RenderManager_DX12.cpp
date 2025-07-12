@@ -317,7 +317,7 @@ namespace dx12
 						{
 							cmdList->SetRootConstants((*stageItr)->GetRootConstants());
 
-							dynamic_cast<gr::LibraryStage*>((*stageItr).get())->Execute(cmdList.get());
+							dynamic_cast<gr::LibraryStage*>((*stageItr).get())->Execute(m_context.get(), cmdList.get());
 						}
 						break;
 						case gr::Stage::Type::ClearTargetSet:

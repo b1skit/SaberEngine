@@ -1022,6 +1022,7 @@ namespace dx12
 	// -----------------------------------------------------------------------------------------------------------------
 	
 	
+	HeapManager* GPUResource::s_heapManager = nullptr;
 	ID3D12Device* GPUResource::s_device = nullptr;
 	GlobalResourceStateTracker* GPUResource::s_globalResourceStateTracker = nullptr;
 
@@ -1029,13 +1030,10 @@ namespace dx12
 	GPUResource::GPUResource(
 		Microsoft::WRL::ComPtr<ID3D12Resource> existingResource, D3D12_RESOURCE_STATES initialState, wchar_t const* name)
 		: m_resource(existingResource)
-		, m_heapManager(nullptr)
+		, m_isValid(true)
 	{
+		SEAssert(s_heapManager, "Heap manageris null");
 		SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
-
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
-		m_heapManager = &context->GetHeapManager();
 
 		SetName(name);
 
@@ -1048,10 +1046,9 @@ namespace dx12
 	}
 
 
-	GPUResource::GPUResource(
-		HeapManager* heapMgr, ResourceDesc const& committedResourceDesc, wchar_t const* name, PrivateCTORToken)
+	GPUResource::GPUResource(ResourceDesc const& committedResourceDesc, wchar_t const* name, PrivateCTORToken)
 		: m_resource(nullptr)
-		, m_heapManager(heapMgr)
+		, m_isValid(true)
 	{
 		SEAssert(s_device, "Device is null");
 		SEAssert(s_globalResourceStateTracker, "Global resource tracker is null");
@@ -1087,14 +1084,13 @@ namespace dx12
 
 
 	GPUResource::GPUResource(
-		HeapManager* owningHeapMgr,
 		ResourceDesc const& resourceDesc,
 		HeapAllocation&& heapAllocation,
 		wchar_t const* name,
 		PrivateCTORToken)
 		: m_heapAllocation(std::move(heapAllocation))
 		, m_resource(nullptr)
-		, m_heapManager(owningHeapMgr)
+		, m_isValid(true)
 	{
 		SEAssert(m_heapAllocation.IsValid(), "Cannot construct a resource with an invalid heap allocation");
 		SEAssert(s_device, "Device is null");
@@ -1142,9 +1138,9 @@ namespace dx12
 
 			m_resource = rhs.m_resource;
 			rhs.m_resource = nullptr;
-
-			m_heapManager = rhs.m_heapManager;
-			rhs.m_heapManager = nullptr;
+			
+			m_isValid = rhs.m_isValid;
+			rhs.m_isValid = false;
 		}
 		return *this;
 	}
@@ -1192,8 +1188,8 @@ namespace dx12
 
 	void GPUResource::Free()
 	{
-		m_heapManager->Release(*this);
-		m_heapManager = nullptr;
+		SEAssert(s_heapManager, "Heap manageris null");
+		s_heapManager->Release(*this);
 	}
 
 
@@ -1227,6 +1223,7 @@ namespace dx12
 
 		HeapPage::s_device = nullptr;
 
+		GPUResource::s_heapManager = nullptr;
 		GPUResource::s_device = nullptr;
 		GPUResource::s_globalResourceStateTracker = nullptr;
 	}
@@ -1241,6 +1238,7 @@ namespace dx12
 
 		HeapPage::s_device = m_device;
 		
+		GPUResource::s_heapManager = this;
 		GPUResource::s_device = m_device;
 		GPUResource::s_globalResourceStateTracker = globalResourceTracker;
 
@@ -1310,7 +1308,7 @@ namespace dx12
 		// Committed resources are simply wrapped in a GPUResource:
 		if (resourceDesc.m_createAsComitted)
 		{
-			return std::make_unique<GPUResource>(this, resourceDesc, name, GPUResource::PrivateCTORToken{});
+			return std::make_unique<GPUResource>(resourceDesc, name, GPUResource::PrivateCTORToken{});
 		}
 
 		// We only currently support a single GPU; Just stubbing these in for readability
@@ -1372,11 +1370,7 @@ namespace dx12
 
 		// Now that we know which PagedResourceHeap will back our resource, we can create it
 		return std::make_unique<GPUResource>(
-			this,
-			resourceDesc,
-			std::move(newAllocation),
-			name,
-			GPUResource::PrivateCTORToken{});
+			resourceDesc, std::move(newAllocation), name, GPUResource::PrivateCTORToken{});
 	}
 
 

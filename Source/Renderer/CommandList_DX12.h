@@ -36,6 +36,7 @@ namespace re
 
 namespace dx12
 {
+	class Context;
 	class GPUDescriptorHeap;
 	class RootSignature;
 	class PipelineState;
@@ -78,7 +79,7 @@ namespace dx12
 
 
 	public:
-		CommandList(Microsoft::WRL::ComPtr<ID3D12Device> const&, CommandListType);
+		CommandList(dx12::Context*, CommandListType);
 		CommandList(CommandList&&) noexcept = default;
 		CommandList& operator=(CommandList&&) noexcept = default;
 		~CommandList() { Destroy(); }
@@ -205,6 +206,7 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_commandAllocatorReuseFenceValue; // When the command allocator can be reused
 
+		dx12::Context* m_context;
 		ID3D12Device* m_device; // Cached for convenience
 
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation

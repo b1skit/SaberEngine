@@ -7,10 +7,10 @@
 #include "BufferView.h"
 #include "Buffer_DX12.h"
 #include "CommandList_DX12.h"
+#include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "MeshPrimitive.h"
 #include "PipelineState_DX12.h"
-#include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RootConstants.h"
 #include "RootSignature_DX12.h"
@@ -144,11 +144,12 @@ namespace dx12
 	}
 
 
-	CommandList::CommandList(Microsoft::WRL::ComPtr<ID3D12Device> const& device, CommandListType type)
+	CommandList::CommandList(dx12::Context* context, CommandListType type)
 		: m_commandList(nullptr)
 		, m_commandAllocator(nullptr)
 		, m_commandAllocatorReuseFenceValue(0)
-		, m_device(device.Get())
+		, m_context(context)
+		, m_device(context->GetDevice().GetD3DDevice().Get())
 		, k_commandListNumber(s_commandListNumber++)
 		, m_d3dType(TranslateToD3DCommandListType(type))
 		, m_type(type)
@@ -164,10 +165,10 @@ namespace dx12
 			GetCommandListTypeWName(type)) +
 			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 
-		m_commandAllocator = CreateCommandAllocator(device, m_d3dType, commandListname + L"_CommandAllocator");
+		m_commandAllocator = CreateCommandAllocator(m_device, m_d3dType, commandListname + L"_CommandAllocator");
 
 		// Create the command list:
-		HRESULT hr = device->CreateCommandList(
+		HRESULT hr = m_device->CreateCommandList(
 			dx12::SysInfo::GetDeviceNodeMask(),
 			m_d3dType,						// Direct draw/compute/copy/etc
 			m_commandAllocator.Get(),		// The command allocator the command lists will be created on
@@ -186,6 +187,7 @@ namespace dx12
 		{
 			// Create our GPU-visible descriptor heaps:
 			m_gpuCbvSrvUavDescriptorHeap = std::make_unique<GPUDescriptorHeap>(
+				m_context,
 				k_gpuDescriptorHeapSize,
 				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				commandListname + L"_GPUDescriptorHeap");

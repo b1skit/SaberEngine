@@ -246,6 +246,7 @@ namespace dx12
 		: m_commandQueue(nullptr)
 		, m_type(CommandListType::CommandListType_Invalid)
 		, m_d3dType(D3D12_COMMAND_LIST_TYPE_NONE)
+		, m_context(nullptr)
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 		, m_typeFenceBitMask(0)
@@ -254,11 +255,12 @@ namespace dx12
 	}
 
 
-	void CommandQueue::Create(ID3D12Device* device, dx12::CommandListType type)
+	void CommandQueue::Create(dx12::Context* context, dx12::CommandListType type)
 	{
 		m_type = type;
 		m_d3dType = CommandList::TranslateToD3DCommandListType(type);
-		m_deviceCache = device; // Store a local copy, for convenience
+		m_context = context;
+		m_deviceCache = context->GetDevice().GetD3DDevice().Get(); // Store a local copy, for convenience
 
 		const D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {
 			.Type = m_d3dType,
@@ -321,6 +323,7 @@ namespace dx12
 		m_fence.Destroy();
 		m_fenceValue = 0;
 		m_commandQueue = nullptr;
+		m_context = nullptr;
 		m_deviceCache = nullptr;
 		
 		// Swap our queue with an empty version to clear it
@@ -346,7 +349,7 @@ namespace dx12
 			}
 			else
 			{
-				commandList = std::make_shared<dx12::CommandList>(m_deviceCache, m_type);
+				commandList = std::make_shared<dx12::CommandList>(m_context, m_type);
 			}
 
 			commandList->Reset();
@@ -365,21 +368,19 @@ namespace dx12
 	{
 		SEBeginCPUEvent("CommandQueue::TransitionIncompatibleResourceStatesToCommon");
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-
-		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
+		dx12::CommandQueue& directQueue = m_context->GetCommandQueue(dx12::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> directCmdList = nullptr;
 		std::vector<D3D12_RESOURCE_BARRIER> directBarriers; // TODO: Set a reasonable reservation amount?
 
-		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
+		dx12::CommandQueue& computeQueue = m_context->GetCommandQueue(dx12::CommandListType::Compute);
 		std::shared_ptr<dx12::CommandList> computeCmdList = nullptr;
 		std::vector<D3D12_RESOURCE_BARRIER> computeBarriers; // TODO: Set a reasonable reservation amount?
 
-		dx12::CommandQueue& copyQueue = context->GetCommandQueue(dx12::CommandListType::Copy);
+		dx12::CommandQueue& copyQueue = m_context->GetCommandQueue(dx12::CommandListType::Copy);
 		std::shared_ptr<dx12::CommandList> copyCmdList = nullptr;
 		std::vector<D3D12_RESOURCE_BARRIER> copyBarriers; // TODO: Set a reasonable reservation amount?
 
-		dx12::GlobalResourceStateTracker& globalResourceStates = context->GetGlobalResourceStates();
+		dx12::GlobalResourceStateTracker& globalResourceStates = m_context->GetGlobalResourceStates();
 
 
 		auto ConfigureTransitionPtrs = [&](
@@ -704,8 +705,7 @@ namespace dx12
 		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
 		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
-		dx12::GlobalResourceStateTracker& globalResourceStates = context->GetGlobalResourceStates();
+		dx12::GlobalResourceStateTracker& globalResourceStates = m_context->GetGlobalResourceStates();
 
 		// Manually patch the barriers for each command list:
 		{
@@ -898,7 +898,7 @@ namespace dx12
 				const dx12::CommandListType cmdListType = static_cast<dx12::CommandListType>(queueIdx);
 				if (cmdListType != m_type) // Don't wait on resources this queue is about to modify
 				{
-					dx12::CommandQueue& commandQueue = context->GetCommandQueue(cmdListType);
+					dx12::CommandQueue& commandQueue = m_context->GetCommandQueue(cmdListType);
 					if (!commandQueue.GetFence().IsFenceComplete(currentModificationFence))
 					{
 						GPUWait(commandQueue.GetFence(), currentModificationFence);

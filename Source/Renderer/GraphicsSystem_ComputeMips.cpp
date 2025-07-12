@@ -1,8 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BatchBuilder.h"
+#include "Context.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
-#include "RenderManager.h"
 #include "Sampler.h"
 
 #include "Renderer/Shaders/Common/MipGenerationParams.h"
@@ -64,7 +65,7 @@ namespace gr
 	void ComputeMipsGraphicsSystem::PreRender()
 	{
 		std::vector<core::InvPtr<re::Texture>> const& newTextures = 
-			gr::RenderManager::Get()->GetContext()->GetNewResources<re::Texture>();
+			m_graphicsSystemManager->GetContext()->GetNewResources<re::Texture>();
 		if (newTextures.empty())
 		{
 			return;

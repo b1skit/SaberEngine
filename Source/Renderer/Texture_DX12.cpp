@@ -206,7 +206,7 @@ namespace
 	}
 
 
-	bool FormatIsUAVCompatible(DXGI_FORMAT format)
+	bool FormatIsUAVCompatible(ID3D12Device* device, DXGI_FORMAT format)
 	{
 		// Guaranteed UAV support: 
 		if (format == DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT ||
@@ -215,9 +215,6 @@ namespace
 		{
 			return true;
 		}
-
-		Microsoft::WRL::ComPtr<ID3D12Device> device =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice();
 
 		D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport;
 		formatSupport.Format = format;
@@ -271,7 +268,7 @@ namespace
 	}
 
 
-	bool UAVIsNeeded(re::Texture::TextureParams const& texParams, DXGI_FORMAT dxgiFormat)
+	bool UAVIsNeeded(ID3D12Device* device, re::Texture::TextureParams const& texParams, DXGI_FORMAT dxgiFormat)
 	{
 		const bool compatibleUsage = 
 			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 &&
@@ -283,7 +280,7 @@ namespace
 			return false;
 		}
 
-		const bool compatibleFormat = FormatIsUAVCompatible(dxgiFormat);
+		const bool compatibleFormat = FormatIsUAVCompatible(device, dxgiFormat);
 		if (!compatibleFormat)
 		{
 			const bool alternativeFormatExists = 
@@ -428,9 +425,8 @@ namespace
 
 		// Note: The copy queue requires resources in the COMMON state; this is mandatory if we're copying initial data
 		constexpr D3D12_RESOURCE_STATES k_initialState = D3D12_RESOURCE_STATE_COMMON;
-
-		dx12::HeapManager& heapMgr =
-			gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+		
+		dx12::HeapManager& heapMgr = texPlatObj->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 		texPlatObj->m_gpuResource = heapMgr.CreateResource(dx12::ResourceDesc{
 				.m_resourceDesc = resourceDesc,
@@ -641,10 +637,10 @@ namespace dx12
 
 
 	Texture::PlatObj::PlatObj(re::Texture& texture)
-		: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV)
-		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV)
-		, m_rtvDescriptors(dx12::DescriptorCache::DescriptorType::RTV)
-		, m_dsvDescriptors(dx12::DescriptorCache::DescriptorType::DSV)
+		: m_srvDescriptors(dx12::DescriptorCache::DescriptorType::SRV, GetContext()->As<dx12::Context*>())
+		, m_uavDescriptors(dx12::DescriptorCache::DescriptorType::UAV, GetContext()->As<dx12::Context*>())
+		, m_rtvDescriptors(dx12::DescriptorCache::DescriptorType::RTV, GetContext()->As<dx12::Context*>())
+		, m_dsvDescriptors(dx12::DescriptorCache::DescriptorType::DSV, GetContext()->As<dx12::Context*>())
 	{
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
@@ -683,7 +679,7 @@ namespace dx12
 		SEAssert(texPlatObj->m_isCreated == false, "Texture is already created");
 		texPlatObj->m_isCreated = true;
 
-		dx12::Context* context = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>();
+		dx12::Context* context = texPlatObj->GetContext()->As<dx12::Context*>();
 		Microsoft::WRL::ComPtr<ID3D12Device> device = context->GetDevice().GetD3DDevice();
 
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
@@ -710,7 +706,11 @@ namespace dx12
 		const bool needsSimultaneousAccess = SimultaneousAccessIsNeeded(texParams);
 
 		// Figure out our resource needs:
-		const bool needsUAV = UAVIsNeeded(texParams, texPlatObj->m_format);
+		
+		const bool needsUAV = UAVIsNeeded(
+			texPlatObj->GetContext()->As<dx12::Context*>()->GetDevice().GetD3DDevice().Get(),
+			texParams,
+			texPlatObj->m_format);
 		const uint32_t numMips = texture->GetNumMips();
 		const uint32_t numSubresources = texture->GetTotalNumSubresources();
 
@@ -751,7 +751,7 @@ namespace dx12
 				totalBytes, 
 				static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
 
-			dx12::HeapManager& heapMgr = gr::RenderManager::Get()->GetContext()->As<dx12::Context*>()->GetHeapManager();
+			dx12::HeapManager& heapMgr = texPlatObj->GetContext()->As<dx12::Context*>()->GetHeapManager();
 
 			// GPUResources automatically use a deferred deletion, it is safe to let this go out of scope immediately
 			std::wstring const& intermediateName = texture->GetWName() + L" intermediate buffer";

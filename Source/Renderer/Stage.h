@@ -645,7 +645,7 @@ namespace gr
 		};
 
 	public:
-		void Execute(void* platformObject); // e.g. platformObject == DX12 command list
+		void Execute(re::Context*, void* platformObject); // e.g. platformObject == DX12 command list
 		
 		// The payload is an arbitrary data blob passed by a graphics system every frame for consumption by the backend
 		void SetPayload(std::unique_ptr<IPayload>&&);

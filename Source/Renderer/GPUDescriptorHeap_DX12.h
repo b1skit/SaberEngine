@@ -8,7 +8,8 @@
 namespace dx12
 {
 	class CommandList;
-	
+	class Context;
+
 
 	class GPUDescriptorHeap
 	{
@@ -32,7 +33,7 @@ namespace dx12
 			"GPUDescriptorHeap and root signature are out of sync");
 
 	public:		
-		GPUDescriptorHeap(uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE, std::wstring const& debugName);
+		GPUDescriptorHeap(dx12::Context*, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE, std::wstring const& debugName);
 
 		GPUDescriptorHeap(GPUDescriptorHeap&&) noexcept = default;
 		GPUDescriptorHeap& operator=(GPUDescriptorHeap&&) noexcept = default;
@@ -75,6 +76,7 @@ namespace dx12
 
 		
 	private:
+		dx12::Context* m_context;
 		ID3D12Device* m_deviceCache;
 		uint32_t m_numDescriptors;
 		D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;

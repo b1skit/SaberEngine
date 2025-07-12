@@ -3,8 +3,8 @@
 #include "BindlessResourceManager.h"
 #include "BufferAllocator.h"
 #include "GPUTimer.h"
-
 #include "RLibrary_Platform.h"
+#include "Shader.h"
 #include "SwapChain.h"
 
 #include "Core/Host/Window.h"
@@ -29,7 +29,6 @@ namespace dx12
 namespace re
 {
 	class AccelerationStructure;
-	class Shader;
 	class Texture;
 	class TextureTargetSet;
 	class Sampler;
@@ -87,6 +86,9 @@ namespace re
 		platform::RLibrary* GetOrCreateRenderLibrary(platform::RLibrary::Type);
 
 		re::GPUTimer& GetGPUTimer();
+
+		uint64_t GetCurrentRenderFrameNum() const noexcept;
+		uint8_t GetNumFramesInFlight() const noexcept;
 
 
 	public:
@@ -209,6 +211,18 @@ namespace re
 	inline re::GPUTimer& Context::GetGPUTimer()
 	{
 		return m_gpuTimer;
+	}
+
+
+	inline uint64_t Context::GetCurrentRenderFrameNum() const noexcept
+	{
+		return m_currentFrameNum;
+	}
+
+
+	inline uint8_t Context::GetNumFramesInFlight() const noexcept
+	{
+		return m_numFramesInFlight;
 	}
 
 

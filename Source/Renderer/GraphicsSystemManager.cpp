@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Buffer.h"
+#include "BufferView.h"
 #include "CameraRenderData.h"
+#include "Context.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "LightRenderData.h"
@@ -13,13 +15,16 @@
 
 namespace gr
 {
-	GraphicsSystemManager::GraphicsSystemManager(gr::RenderSystem* owningRS, uint8_t numFramesInFlight)
+	GraphicsSystemManager::GraphicsSystemManager(
+		gr::RenderSystem* owningRS, re::Context* context, uint8_t numFramesInFlight)
 		: m_renderData(nullptr)
+		, m_context(context)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightHasChanged(true)
+		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 		, m_numFramesInFlight(numFramesInFlight)
 		, m_isCreated(false)
 	{
