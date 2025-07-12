@@ -62,7 +62,7 @@ namespace pr
 			pr::RenderDataComponent::GetCreateRenderDataComponent(em, lightEntity, gr::k_invalidTransformID);
 
 		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad = 
-			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
+			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
 		pr::MeshPrimitiveComponent const& meshPrimCmpt = pr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
@@ -96,7 +96,6 @@ namespace pr
 		glm::vec3 minPos = glm::vec3(0.f);
 		glm::vec3 maxPos = glm::vec3(0.f);
 		const gr::meshfactory::FactoryOptions sphereOptions{ 
-			.m_inventory = em.GetInventory(),
 			.m_positionMinXYZOut = &minPos, 
 			.m_positionMaxXYZOut = &maxPos};
 
@@ -156,7 +155,6 @@ namespace pr
 		glm::vec3 maxPos(0.f);
 
 		const gr::meshfactory::FactoryOptions coneFactoryOptions{ 
-			.m_inventory = em.GetInventory(),
 			.m_orientation = gr::meshfactory::Orientation::ZNegative,
 			.m_positionMinXYZOut = &minPos, 
 			.m_positionMaxXYZOut = &maxPos
@@ -230,7 +228,7 @@ namespace pr
 
 		// MeshPrimitive:
 		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad =
-			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
+			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
 		pr::MeshPrimitiveComponent const& meshPrimCmpt = pr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,

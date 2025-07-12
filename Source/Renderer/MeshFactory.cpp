@@ -308,7 +308,6 @@ namespace
 		
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			meshName,
 			indexStream,
 			std::move(vertexStreams),
@@ -487,8 +486,6 @@ namespace gr::meshfactory
 	core::InvPtr<gr::MeshPrimitive> CreateCube(
 		FactoryOptions const& factoryOptions /*= FactoryOptions{}*/, float extentDistance /*= 1.f*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		constexpr char const* k_meshName = "MeshFactory_Cube";
 
 		extentDistance = std::abs(extentDistance);
@@ -503,9 +500,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		// Note: Using a RHCS
@@ -654,7 +651,6 @@ namespace gr::meshfactory
 
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),
@@ -662,10 +658,8 @@ namespace gr::meshfactory
 	}
 
 
-	core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(core::Inventory* inventory, ZLocation zLocation)
+	core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
 	{
-		SEAssert(inventory, "Inventory cannot be null, it is required");
-
 		constexpr char const* k_meshName = "MeshFactory_OptimizedFullscreenQuad";
 
 		// Build a unique name specific to this mesh's params:
@@ -673,9 +667,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, zLocation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		float zDepth;
@@ -745,7 +739,6 @@ namespace gr::meshfactory
 			std::move(triIndices));
 
 		return gr::MeshPrimitive::Create(
-			inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),
@@ -760,8 +753,6 @@ namespace gr::meshfactory
 		glm::vec3 bl /*= glm::vec3(-0.5f, -0.5f, 0.0f)*/,
 		glm::vec3 br /*= glm::vec3(0.5f, -0.5f, 0.0f)*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		ComputeQuadMinMaxXYZ(factoryOptions, tl, tr, bl, br);
 
 		constexpr char const* k_meshName = "MeshFactory_Quad";
@@ -777,9 +768,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>({ tl, bl, tr, br });
@@ -879,7 +870,6 @@ namespace gr::meshfactory
 			std::move(quadIndices));
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),
@@ -908,8 +898,6 @@ namespace gr::meshfactory
 		uint32_t numLatSlices /*= 16*/,
 		uint32_t numLongSlices /*= 16*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		radius = std::max(std::abs(radius), k_minRadius);
 
 		ComputeSphereMinMaxXYZ(factoryOptions, radius);
@@ -926,9 +914,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		numLatSlices = std::max(numLatSlices, k_minSideEdges);
@@ -1161,7 +1149,6 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),
@@ -1175,8 +1162,6 @@ namespace gr::meshfactory
 		float radius /*= 0.5f*/,
 		uint32_t numSides /*= 16*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		height = std::max(std::abs(height), k_minHeight);		
 		ComputeConeMinMaxXYZ(factoryOptions, height, radius);
 
@@ -1192,9 +1177,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 		
 		radius = std::max(std::abs(radius), k_minRadius);
@@ -1427,7 +1412,6 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),
@@ -1441,8 +1425,6 @@ namespace gr::meshfactory
 		float radius /*= 0.5f*/,
 		uint32_t numSides /*= 16*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		height = std::max(std::abs(height), k_minHeight);
 		radius = std::max(std::abs(radius), k_minRadius);
 		ComputeCylinderMinMaxXYZ(factoryOptions, height, radius, radius);
@@ -1459,9 +1441,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 		
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		return CreateCylinderHelper(instanceName.c_str(), factoryOptions, height, radius, radius, numSides, true);
@@ -1473,8 +1455,6 @@ namespace gr::meshfactory
 		float scale /*= 1.f*/, 
 		float zDepth /*= 0.5f*/)
 	{
-		SEAssert(factoryOptions.m_inventory, "Inventory cannot be null, it is required");
-
 		zDepth = std::clamp(zDepth, 0.f, 1.f);
 
 		constexpr float k_baseScale = 1.f;
@@ -1504,9 +1484,9 @@ namespace gr::meshfactory
 		util::AddDataBytesToHash(paramHash, factoryOptions.m_orientation);
 		std::string const& instanceName = std::format("{}_{}", k_meshName, paramHash);
 
-		if (factoryOptions.m_inventory->Has<gr::MeshPrimitive>(instanceName))
+		if (core::Inventory::Has<gr::MeshPrimitive>(instanceName))
 		{
-			return factoryOptions.m_inventory->Get<gr::MeshPrimitive>(instanceName);
+			return core::Inventory::Get<gr::MeshPrimitive>(instanceName);
 		}
 
 		util::ByteVector positions = util::ByteVector::Create<glm::vec3>( // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
@@ -1610,7 +1590,6 @@ namespace gr::meshfactory
 			std::move(indices));
 
 		return gr::MeshPrimitive::Create(
-			factoryOptions.m_inventory,
 			instanceName,
 			indexStream,
 			std::move(vertexStreams),

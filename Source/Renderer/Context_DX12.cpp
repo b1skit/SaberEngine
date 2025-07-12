@@ -59,8 +59,8 @@ namespace
 namespace dx12
 {
 	Context::Context(
-		platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window, core::Inventory* inventory)
-		: re::Context(api, numFramesInFlight, window, inventory)
+		platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+		: re::Context(api, numFramesInFlight, window)
 		, m_bindlessResourceManager(numFramesInFlight)
 		, m_pixGPUCaptureModule(nullptr)
 		, m_pixCPUCaptureModule(nullptr)

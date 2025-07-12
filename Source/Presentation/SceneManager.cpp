@@ -10,6 +10,7 @@
 
 #include "Core/Config.h"
 #include "Core/EventManager.h"
+#include "Core/Inventory.h"
 
 #include "Core/Definitions/EventKeys.h"
 
@@ -29,17 +30,9 @@ namespace pr
 	}
 
 
-	SceneManager::SceneManager()
-		: m_inventory(nullptr)
-	{
-	}
-
-
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
-
-		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
 
 		// Event subscriptions:
 		core::EventManager::Get()->Subscribe(eventkey::FileImportRequest, this);
@@ -86,7 +79,7 @@ namespace pr
 			load::CreateDefaultCamera(pr::EntityManager::Get()).m_owningEntity);
 
 		core::InvPtr<re::Texture> defaultIBL =
-			m_inventory->Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
+			core::Inventory::Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
 
 		em->EnqueueEntityCommand([em, defaultIBL]()
 			{
@@ -155,12 +148,12 @@ namespace pr
 		std::string const& fileExtension = util::ExtractExtensionFromFilePath(filePath);
 		if (fileExtension == "gltf" || fileExtension == "glb")
 		{
-			load::ImportGLTFFile(m_inventory, filePath); // Kicks off async loading
+			load::ImportGLTFFile(filePath); // Kicks off async loading
 			success = true;
 		}
 		else if (fileExtension == "hdr") // Assume we want to create an IBL from the loaded texture
 		{
-			load::ImportIBL(m_inventory, filePath, load::IBLTextureFromFilePath::ActivationMode::Always);
+			load::ImportIBL(filePath, load::IBLTextureFromFilePath::ActivationMode::Always);
 			success = true;
 		}
 
@@ -182,7 +175,6 @@ namespace pr
 		LOG("Generating default resources...");
 
 		load::ImportTexture(
-			m_inventory,
 			core::configkeys::k_defaultEngineIBLFilePath,
 			re::Texture::k_errorTextureColor,
 			re::Texture::Format::RGBA8_UNORM, // Fallback to something simple
@@ -190,7 +182,7 @@ namespace pr
 			re::Texture::MipMode::AllocateGenerate,
 			true);
 
-		load::GenerateDefaultGLTFMaterial(m_inventory);
+		load::GenerateDefaultGLTFMaterial();
 	}
 
 

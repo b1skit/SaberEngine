@@ -51,8 +51,7 @@ namespace re
 			platform::RenderingAPI,
 			uint64_t currentFrameNum,
 			uint8_t numFramesInFlight,
-			host::Window*,
-			core::Inventory*);
+			host::Window*);
 		
 		template <typename T>
 		T As();
@@ -98,8 +97,6 @@ namespace re
 
 		uint64_t GetCurrentRenderFrameNum() const noexcept;
 		uint8_t GetNumFramesInFlight() const noexcept;
-
-		core::Inventory* GetInventory() const noexcept;
 
 
 	public:
@@ -159,7 +156,7 @@ namespace re
 
 
 	protected:
-		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*, core::Inventory*);
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*);
 
 
 	protected:
@@ -173,8 +170,6 @@ namespace re
 
 	protected:
 		re::GPUTimer m_gpuTimer;
-
-		core::Inventory* m_inventory;
 
 		uint64_t m_currentFrameNum;
 		uint8_t m_numFramesInFlight;
@@ -236,12 +231,6 @@ namespace re
 	inline uint8_t Context::GetNumFramesInFlight() const noexcept
 	{
 		return m_numFramesInFlight;
-	}
-
-
-	inline core::Inventory* Context::GetInventory() const noexcept
-	{
-		return m_inventory;
 	}
 
 

@@ -27,13 +27,6 @@ namespace pr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
-	public:
-		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
-		core::Inventory* GetInventory() const;
-	private:
-		core::Inventory* m_inventory;
-
-
 	private: // Systems:
 		void UpdateCameraController(double stepTimeMs);
 		void UpdateAnimationControllers(double stepTimeMs);
@@ -173,18 +166,6 @@ namespace pr
 	public:
 		EntityManager(PrivateCTORTag);
 	};
-
-
-	inline void EntityManager::SetInventory(core::Inventory* inventory)
-	{
-		m_inventory = inventory;
-	}
-
-
-	inline core::Inventory* EntityManager::GetInventory() const
-	{
-		return m_inventory;
-	}
 
 
 	template<typename T>

@@ -47,7 +47,7 @@ namespace opengl
 
 
 	protected:
-		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*, core::Inventory*);
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*);
 		friend class re::Context;
 
 

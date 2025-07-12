@@ -379,8 +379,7 @@ namespace gr
 		// Cube mesh, for rendering of IBL cubemaps
 		if (m_cubeMeshPrimitive == nullptr)
 		{
-			m_cubeMeshPrimitive = gr::meshfactory::CreateCube(gr::meshfactory::FactoryOptions{
-				.m_inventory = gr::RenderManager::Get()->GetInventory(), });
+			m_cubeMeshPrimitive = gr::meshfactory::CreateCube(gr::meshfactory::FactoryOptions{});
 		}
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:

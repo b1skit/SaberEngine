@@ -117,7 +117,6 @@ namespace gr
 		: m_renderingAPI(renderingAPI)
 		, m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
-		, m_inventory(nullptr)
 		, m_windowCache(nullptr)
 		, m_context(nullptr)
 		, m_quitEventRecieved(false)
@@ -186,7 +185,7 @@ namespace gr
 		
 		// Create the context:
 		m_context = re::Context::CreateContext_Platform(
-			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache, m_inventory);
+			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");	
 		
 		// The swap chain requires the context be fully created before it is created
@@ -216,8 +215,6 @@ namespace gr
 		host::PerformanceTimer timer;
 		timer.Start();
 
-		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
-
 		m_renderData.Initialize();
 
 		m_effectDB.LoadEffectManifest();
@@ -240,7 +237,7 @@ namespace gr
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get(), m_inventory));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get()));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();
@@ -338,6 +335,8 @@ namespace gr
 
 		EndFrame_Platform();
 
+		core::Inventory::OnEndOfFrame(ACCESS_KEY(core::Inventory::AccessKey)); // Free Resources that have gone out of scope
+
 		SEEndCPUEvent(); // "gr::RenderManager::EndFrame"
 	}
 
@@ -377,7 +376,7 @@ namespace gr
 
 		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
 		// be destroyed from the render thread (i.e. for OpenGL)
-		m_inventory->Destroy();
+		core::Inventory::Destroy(ACCESS_KEY(core::Inventory::AccessKey));
 
 		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatObj there
 		m_context->GetBufferAllocator()->Destroy();

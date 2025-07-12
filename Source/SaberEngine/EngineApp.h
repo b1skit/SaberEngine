@@ -54,8 +54,6 @@ namespace app
 		static EngineApp* m_engineApp;
 
 		std::unique_ptr<host::Window> m_window;
-		
-		std::unique_ptr<core::Inventory> m_inventory;
 
 
 	private:

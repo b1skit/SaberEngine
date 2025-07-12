@@ -362,7 +362,7 @@ namespace
 namespace gr
 {
 	std::unique_ptr<RenderSystem> RenderSystem::Create(
-		std::string const& pipelineFileName, re::Context* context, core::Inventory* inventory)
+		std::string const& pipelineFileName, re::Context* context)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
@@ -374,7 +374,7 @@ namespace gr
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, context, inventory));
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, context));
 
 		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
 
@@ -382,9 +382,9 @@ namespace gr
 	}
 
 
-	RenderSystem::RenderSystem(std::string const& name, re::Context* context, core::Inventory* inventory)
+	RenderSystem::RenderSystem(std::string const& name, re::Context* context)
 		: INamedObject(name)
-		, m_graphicsSystemManager(this, context, inventory)
+		, m_graphicsSystemManager(this, context)
 		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
 	{

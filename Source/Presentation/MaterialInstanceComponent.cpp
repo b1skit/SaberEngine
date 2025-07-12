@@ -75,7 +75,7 @@ namespace pr
 			if (ImGui::Button(std::format("Reset##{}", ptrToID).c_str()))
 			{
 				core::InvPtr<gr::Material> const& srcMaterial =
-					em.GetInventory()->Get<gr::Material>(matComponent.m_instanceData.m_materialName);
+					core::Inventory::Get<gr::Material>(matComponent.m_instanceData.m_materialName);
 
 				srcMaterial->InitializeMaterialInstanceData(matComponent.m_instanceData);
 				matComponent.m_isDirty = true;

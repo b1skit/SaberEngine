@@ -307,7 +307,6 @@ namespace gr
 
 
 	core::InvPtr<MeshPrimitive> MeshPrimitive::Create(
-		core::Inventory* inventory,
 		std::string const& name,
 		core::InvPtr<re::VertexStream> const& indexStream,
 		std::vector<MeshVertexStream>&& vertexStreams,
@@ -336,12 +335,11 @@ namespace gr
 		loadContext->m_vertexStreams = std::move(vertexStreams);
 		loadContext->m_meshParams = meshParams;
 
-		return inventory->Get<gr::MeshPrimitive>(util::HashKey(name), loadContext);
+		return core::Inventory::Get<gr::MeshPrimitive>(util::HashKey(name), loadContext);
 	}
 
 
 	core::InvPtr<MeshPrimitive> MeshPrimitive::Create(
-		core::Inventory* inventory,
 		std::string const& name,
 		std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&& streamCreateParams,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
@@ -368,7 +366,7 @@ namespace gr
 		loadContext->m_streamCreateParams = std::move(streamCreateParams);
 		loadContext->m_meshParams = meshParams;
 
-		return inventory->Get<gr::MeshPrimitive>(util::HashKey(name), loadContext);		
+		return core::Inventory::Get<gr::MeshPrimitive>(util::HashKey(name), loadContext);		
 	}
 
 

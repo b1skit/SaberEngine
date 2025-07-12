@@ -171,7 +171,7 @@ namespace re
 		loadContext->m_texParams = params;
 		loadContext->m_initialDataBytes = std::move(initialData);
 
-		core::InvPtr<re::Texture> const& newTexture = gr::RenderManager::Get()->GetInventory()->Get(
+		core::InvPtr<re::Texture> const& newTexture = core::Inventory::Get(
 			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
@@ -222,7 +222,7 @@ namespace re
 		loadContext->m_texParams = params;
 		loadContext->m_fillColor = fillColor;
 
-		return gr::RenderManager::Get()->GetInventory()->Get(
+		return core::Inventory::Get(
 			util::HashKey(name),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}
@@ -266,7 +266,7 @@ namespace re
 
 		loadContext->m_texParams = params;
 
-		return gr::RenderManager::Get()->GetInventory()->Get(
+		return core::Inventory::Get(
 			util::HashKey(runtimeName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 	}

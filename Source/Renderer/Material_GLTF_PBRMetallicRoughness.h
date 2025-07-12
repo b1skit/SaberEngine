@@ -95,7 +95,7 @@ namespace gr
 		friend struct DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness;
 
 	private:
-		Material_GLTF_PBRMetallicRoughness(std::string const& name, core::Inventory*);
+		Material_GLTF_PBRMetallicRoughness(std::string const& name);
 
 
 	private:

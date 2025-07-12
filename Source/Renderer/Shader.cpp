@@ -116,10 +116,9 @@ namespace re
 		const ShaderID shaderID = ComputeShaderIdentifier(metadata, rasterizationState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		core::Inventory* inventory = gr::RenderManager::Get()->GetInventory();
-		if (inventory->Has<re::Shader>(shaderID))
+		if (core::Inventory::Has<re::Shader>(shaderID))
 		{
-			return inventory->Get<re::Shader>(shaderID);
+			return core::Inventory::Get<re::Shader>(shaderID);
 		}
 
 
@@ -175,7 +174,7 @@ namespace re
 		shaderLoadContext->m_rasterizationState = rasterizationState;
 		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
 
-		return inventory->Get(
+		return core::Inventory::Get(
 			shaderID,
 			static_pointer_cast<core::ILoadContext<re::Shader>>(shaderLoadContext));
 	}

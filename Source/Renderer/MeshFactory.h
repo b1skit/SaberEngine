@@ -28,8 +28,6 @@ namespace gr::meshfactory
 
 	struct FactoryOptions
 	{
-		core::Inventory* m_inventory = nullptr;
-
 		bool m_generateNormalsAndTangents = false;
 		
 		glm::vec4 m_vertexColor = glm::vec4(1.f); // GLTF default = (1,1,1,1)
@@ -51,7 +49,7 @@ namespace gr::meshfactory
 	extern core::InvPtr<gr::MeshPrimitive> CreateCube(
 		FactoryOptions const& factoryOptions = FactoryOptions{}, float extentDistance = 1.f);
 
-	extern core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(core::Inventory*, ZLocation zLocation);
+	extern core::InvPtr<gr::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
 
 	extern core::InvPtr<gr::MeshPrimitive> CreateQuad(
 		FactoryOptions const& factoryOptions = FactoryOptions{},

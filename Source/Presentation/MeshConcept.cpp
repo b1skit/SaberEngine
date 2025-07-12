@@ -361,7 +361,6 @@ namespace pr
 				glm::vec3 maxXYZ = glm::vec3(0.f);
 				const gr::meshfactory::FactoryOptions factoryOptions
 				{
-					.m_inventory = em->GetInventory(),
 					.m_generateNormalsAndTangents = true,
 					.m_vertexColor = glm::vec4(1.f), // GLTF default
 					.m_positionMinXYZOut = &minXYZ,
@@ -428,7 +427,7 @@ namespace pr
 
 				// Attach a material:
 				core::InvPtr<gr::Material> const& material =
-					em->GetInventory()->Get<gr::Material>(s_meshFactoryMaterialName.c_str());
+					core::Inventory::Get<gr::Material>(s_meshFactoryMaterialName.c_str());
 
 				pr::MaterialInstanceComponent::AttachMaterialComponent(
 					*em, meshPrimimitiveEntity, material);

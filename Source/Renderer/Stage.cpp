@@ -275,8 +275,7 @@ namespace gr
 	{
 		SEAssert(stageParams->m_effectID != 0, "Invalid EffectID");
 
-		m_screenAlignedQuad = 
-			gr::meshfactory::CreateFullscreenQuad(gr::RenderManager::Get()->GetInventory(), stageParams->m_zLocation);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(stageParams->m_zLocation);
 
 		m_drawStyleBits = stageParams->m_drawStyleBitmask;
 

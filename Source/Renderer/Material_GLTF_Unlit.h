@@ -24,7 +24,7 @@ namespace gr
 		static bool FilterRenderData(MaterialInstanceRenderData const*);
 
 	public:
-		Material_GLTF_Unlit(std::string const& name, core::Inventory*);
+		Material_GLTF_Unlit(std::string const& name);
 
 		~Material_GLTF_Unlit() = default;
 

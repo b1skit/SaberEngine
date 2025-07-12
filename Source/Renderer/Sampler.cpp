@@ -38,7 +38,8 @@ namespace re
 		samplerLoadContext->m_samplerName = name;
 		samplerLoadContext->m_samplerDesc = samplerDesc;
 
-		return gr::RenderManager::Get()->GetInventory()->Get(
+		
+		return core::Inventory::Get(
 				util::HashKey(name), 
 				static_pointer_cast<core::ILoadContext<re::Sampler>>(samplerLoadContext));
 	}

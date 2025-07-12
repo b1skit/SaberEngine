@@ -6,28 +6,32 @@
 
 namespace core
 {
-	void Inventory::Destroy()
+	std::unordered_map<std::type_index, std::unique_ptr<IResourceSystem>> Inventory::s_resourceSystems;
+	std::shared_mutex Inventory::s_resourceSystemsMutex;
+
+
+	void Inventory::Destroy(AccessKey)
 	{
 		{
-			std::lock_guard<std::shared_mutex> lock(m_resourceSystemsMutex);
+			std::lock_guard<std::shared_mutex> lock(s_resourceSystemsMutex);
 
-			for (auto& resourceSystem : m_resourceSystems)
+			for (auto& resourceSystem : s_resourceSystems)
 			{
 				resourceSystem.second->Destroy();
 			}
-			m_resourceSystems.clear();
+			s_resourceSystems.clear();
 		}
 	}
 
 
-	void Inventory::OnEndOfFrame()
+	void Inventory::OnEndOfFrame(AccessKey)
 	{
 		SEBeginCPUEvent("Inventory::OnEndOfFrame");
 
 		{
-			std::lock_guard<std::shared_mutex> lock(m_resourceSystemsMutex);
+			std::lock_guard<std::shared_mutex> lock(s_resourceSystemsMutex);
 
-			for (auto& resourceSystem : m_resourceSystems)
+			for (auto& resourceSystem : s_resourceSystems)
 			{
 				resourceSystem.second->OnEndOfFrame();
 			}

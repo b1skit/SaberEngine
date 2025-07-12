@@ -143,14 +143,12 @@ namespace gr
 
 	public:
 		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
-			core::Inventory*,
 			std::string const& name,
 			core::InvPtr<re::VertexStream> const& indexStream,
 			std::vector<MeshVertexStream>&& vertexStreams,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		[[nodiscard]] static core::InvPtr<MeshPrimitive> Create(
-			core::Inventory*,
 			std::string const& name,
 			std::vector<std::array<re::VertexStream::CreateParams, re::VertexStream::Type::Type_Count>>&&,
 			gr::MeshPrimitive::MeshPrimitiveParams const&);

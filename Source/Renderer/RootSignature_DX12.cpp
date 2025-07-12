@@ -635,7 +635,7 @@ namespace dx12
 		break;
 		case D3D_SIT_SAMPLER: // The shader resource is a sampler
 		{			
-			core::InvPtr<re::Sampler> const& sampler = context->GetInventory()->Get<re::Sampler>(inputBindingDesc.Name);
+			core::InvPtr<re::Sampler> const& sampler = core::Inventory::Get<re::Sampler>(inputBindingDesc.Name);
 
 			dx12::Sampler::PlatObj* samplerPlatObj =
 				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
@@ -1663,7 +1663,7 @@ namespace dx12
 
 		for (auto const& samplerName : m_staticSamplerNames)
 		{
-			core::InvPtr<re::Sampler> const& sampler = context->GetInventory()->Get<re::Sampler>(samplerName);
+			core::InvPtr<re::Sampler> const& sampler = core::Inventory::Get<re::Sampler>(samplerName);
 
 			dx12::Sampler::PlatObj* samplerPlatObj =
 				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();

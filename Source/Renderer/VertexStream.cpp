@@ -109,10 +109,9 @@ namespace re
 		const util::HashKey streamDataHash =
 			ComputeVertexStreamDataHash(streamDesc, data.data().data(), data.GetTotalNumBytes());
 
-		core::Inventory* inventory = gr::RenderManager::Get()->GetInventory();
-		if (inventory->Has<re::VertexStream>(streamDataHash))
+		if (core::Inventory::Has<re::VertexStream>(streamDataHash))
 		{
-			return inventory->Get<re::VertexStream>(streamDataHash);
+			return core::Inventory::Get<re::VertexStream>(streamDataHash);
 		}
 
 
@@ -140,7 +139,7 @@ namespace re
 		loadContext->m_data = std::move(data);
 		loadContext->m_extraUsageBits = extraUsageBits;
 
-		return inventory->Get(
+		return core::Inventory::Get(
 			streamDataHash,
 			static_pointer_cast<core::ILoadContext<re::VertexStream>>(loadContext));
 	}

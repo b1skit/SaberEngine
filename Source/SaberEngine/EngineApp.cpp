@@ -2,6 +2,7 @@
 #include "EngineApp.h"
 #include "Platform.h"
 
+#include "Core/AccessKey.h"
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/EventManager.h"
@@ -64,7 +65,6 @@ namespace app
 		: m_isRunning(false)
 		, m_frameNum(0)
 		, m_window(std::make_unique<host::Window>())
-		, m_inventory(std::make_unique<core::Inventory>())
 	{
 		m_engineApp = this;
 
@@ -121,10 +121,6 @@ namespace app
 		pr::UIManager* uiMgr = pr::UIManager::Get();
 
 		// Dependency injection:
-		entityMgr->SetInventory(m_inventory.get()); 
-		renderManager->SetInventory(m_inventory.get());
-		sceneMgr->SetInventory(m_inventory.get());
-
 		renderManager->SetWindow(m_window.get());
 		uiMgr->SetWindow(m_window.get());
 
@@ -231,8 +227,6 @@ namespace app
 			SEBeginCPUEvent("pr::EntityManager::EnqueueRenderUpdates");
 			entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
-
-			m_inventory->OnEndOfFrame(); // Free Resources that have gone out of scope
 
 			// Pump the render thread:
 			renderManager->EnqueueUpdate({ m_frameNum, lastOuterFrameTime });

@@ -95,7 +95,6 @@ namespace load
 
 
 	core::InvPtr<re::Texture> ImportTexture(
-		core::Inventory* inventory,
 		std::string const& filepath,
 		glm::vec4 const& colorFallback /*= re::Texture::k_errorTextureColor*/,
 		re::Texture::Format formatFallback /*= re::Texture::Format::RGBA8_UNORM*/,
@@ -116,7 +115,7 @@ namespace load
 		loadContext->m_colorSpace = colorSpace;
 		loadContext->m_mipMode = mipMode;
 
-		return inventory->Get<re::Texture>(util::HashKey(filepath), loadContext);
+		return core::Inventory::Get<re::Texture>(util::HashKey(filepath), loadContext);
 	}
 
 
@@ -506,7 +505,6 @@ namespace load
 	}
 
 	core::InvPtr<re::Texture> ImportIBL(
-		core::Inventory* inventory,
 		std::string const& filepath,
 		IBLTextureFromFilePath::ActivationMode activationMode,
 		bool makePermanent /*= false*/)
@@ -522,7 +520,7 @@ namespace load
 		loadContext->m_filePath = filepath;
 		loadContext->m_activationMode = activationMode;
 
-		return inventory->Get<re::Texture>(util::HashKey(filepath), loadContext);
+		return core::Inventory::Get<re::Texture>(util::HashKey(filepath), loadContext);
 	}
 
 

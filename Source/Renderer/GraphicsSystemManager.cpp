@@ -18,10 +18,9 @@
 namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(
-		gr::RenderSystem* owningRS, re::Context* context, core::Inventory* inventory)
+		gr::RenderSystem* owningRS, re::Context* context)
 		: m_renderData(nullptr)
 		, m_context(context)
-		, m_inventory(inventory)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
@@ -143,7 +142,7 @@ namespace gr
 
 	core::InvPtr<re::Sampler> GraphicsSystemManager::GetSampler(util::HashKey const& samplerNameHash)
 	{
-		return m_inventory->Get<re::Sampler>(samplerNameHash, nullptr);
+		return core::Inventory::Get<re::Sampler>(samplerNameHash, nullptr);
 	}
 
 

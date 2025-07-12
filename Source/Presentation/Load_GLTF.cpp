@@ -698,7 +698,6 @@ namespace
 
 
 	core::InvPtr<re::Texture> LoadGLTFTextureOrColor(
-		core::Inventory* inventory,
 		std::shared_ptr<cgltf_data const> const& data, // So we can keep this alive while we're accessing the cgltf_texture*
 		std::string const& sceneRootPath,
 		cgltf_texture const* texture,
@@ -712,9 +711,9 @@ namespace
 		std::string const& texName =
 			GenerateGLTFTextureName(sceneRootPath, texture, colorFallback, formatFallback, colorSpace);
 
-		if (inventory->Has<re::Texture>(texName))
+		if (core::Inventory::Has<re::Texture>(texName))
 		{
-			return inventory->Get<re::Texture>(texName);
+			return core::Inventory::Get<re::Texture>(texName);
 		}
 
 		std::shared_ptr<TextureFromCGLTF<re::Texture>> loadContext = std::make_shared<TextureFromCGLTF<re::Texture>>();
@@ -728,7 +727,7 @@ namespace
 		loadContext->m_formatFallback = formatFallback;
 		loadContext->m_colorSpace = colorSpace;
 
-		core::InvPtr<re::Texture> const& newTexture = inventory->Get(
+		core::InvPtr<re::Texture> const& newTexture = core::Inventory::Get(
 			util::HashKey(texName),
 			static_pointer_cast<core::ILoadContext<re::Texture>>(loadContext));
 
@@ -749,15 +748,12 @@ namespace
 			SEAssert(m_srcMaterial, "Source material is null, this is unexpected");
 			SEAssert(m_srcMaterial->has_pbr_metallic_roughness == 1, "Invalid source material");
 
-			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_PBRMetallicRoughness(
-				m_matName,
-				GetContext()->GetInventory()));
+			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_PBRMetallicRoughness(m_matName));
 
 			// BaseColorTex
 			newMat->SetTexture(
 				gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx::BaseColor,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->pbr_metallic_roughness.base_color_texture.texture,
@@ -771,7 +767,6 @@ namespace
 			newMat->SetTexture(
 				gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx::MetallicRoughness,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->pbr_metallic_roughness.metallic_roughness_texture.texture,
@@ -784,7 +779,6 @@ namespace
 			newMat->SetTexture(
 				gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx::Normal,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->normal_texture.texture,
@@ -797,7 +791,6 @@ namespace
 			newMat->SetTexture(
 				gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx::Occlusion,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->occlusion_texture.texture,
@@ -810,7 +803,6 @@ namespace
 			newMat->SetTexture(
 				gr::Material_GLTF_PBRMetallicRoughness::TextureSlotIdx::Emissive,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->emissive_texture.texture,
@@ -861,9 +853,6 @@ namespace
 			return std::move(newMat);
 		}
 
-
-		core::Inventory* m_inventory = nullptr;
-
 		std::string m_sceneRootPath;
 		std::shared_ptr<cgltf_data const> m_data;
 		cgltf_material const* m_srcMaterial = nullptr;
@@ -885,8 +874,7 @@ namespace
 		{
 			// Default error material:
 			std::unique_ptr<gr::Material> defaultMaterialGLTF(new gr::Material_GLTF_PBRMetallicRoughness(
-				en::DefaultResourceNames::k_defaultGLTFMaterialName,
-				GetContext()->GetInventory()));
+				en::DefaultResourceNames::k_defaultGLTFMaterialName));
 
 			constexpr uint8_t k_defaultUVChannelIdx = 0;
 
@@ -970,13 +958,12 @@ namespace
 			SEAssert(m_srcMaterial, "Source material is null, this is unexpected");
 			SEAssert(m_srcMaterial->has_pbr_metallic_roughness == 1 && m_srcMaterial->unlit, "Invalid source material");
 
-			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_Unlit(m_matName, GetContext()->GetInventory()));
+			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_Unlit(m_matName));
 
 			// BaseColorTex
 			newMat->SetTexture(
 				0,
 				newMatHandle.AddDependency(LoadGLTFTextureOrColor(
-					m_inventory,
 					m_data,
 					m_sceneRootPath,
 					m_srcMaterial->pbr_metallic_roughness.base_color_texture.texture,
@@ -1017,9 +1004,6 @@ namespace
 			return std::move(newMat);
 		}
 
-
-		core::Inventory* m_inventory = nullptr;
-
 		std::string m_sceneRootPath;
 		std::shared_ptr<cgltf_data const> m_data;
 		cgltf_material const* m_srcMaterial = nullptr;
@@ -1029,7 +1013,6 @@ namespace
 
 
 	core::InvPtr<gr::Material> LoadGLTFMaterial(
-		core::Inventory* inventory,
 		std::shared_ptr<FileMetadata> const& fileMetadata,
 		std::shared_ptr<cgltf_data const> const& data,
 		cgltf_material const* material)
@@ -1041,13 +1024,12 @@ namespace
 				std::shared_ptr<MaterialLoadContext_GLTF_Unlit<gr::Material_GLTF_Unlit>> matLoadCtx =
 					std::make_shared<MaterialLoadContext_GLTF_Unlit<gr::Material_GLTF_Unlit>>();
 
-				matLoadCtx->m_inventory = inventory;
 				matLoadCtx->m_sceneRootPath = fileMetadata->m_sceneRootPath;
 				matLoadCtx->m_data = data;
 				matLoadCtx->m_srcMaterial = material;
 				matLoadCtx->m_matName = GenerateGLTFMaterialName(fileMetadata, material);
 
-				return inventory->Get(
+				return core::Inventory::Get(
 					util::HashKey(matLoadCtx->m_matName),
 					std::static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx));
 			}
@@ -1056,13 +1038,12 @@ namespace
 				std::shared_ptr<MaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>> matLoadCtx =
 					std::make_shared<MaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>>();
 
-				matLoadCtx->m_inventory = inventory;
 				matLoadCtx->m_sceneRootPath = fileMetadata->m_sceneRootPath;
 				matLoadCtx->m_data = data;
 				matLoadCtx->m_srcMaterial = material;
 				matLoadCtx->m_matName = GenerateGLTFMaterialName(fileMetadata, material);
 
-				return inventory->Get(
+				return core::Inventory::Get(
 					util::HashKey(matLoadCtx->m_matName),
 					std::static_pointer_cast<core::ILoadContext<gr::Material>>(matLoadCtx));
 			}
@@ -1889,7 +1870,6 @@ namespace
 
 
 	void LoadGLTFMeshData(
-		core::Inventory* inventory,
 		std::shared_ptr<cgltf_data const> const& data,
 		std::shared_ptr<FileMetadata>& fileMetadata,
 		core::InvPtr<GLTFSceneHandle>& gltfScene)
@@ -1961,7 +1941,7 @@ namespace
 					MeshPrimitiveMetadata& meshPrimMetadata = fileMetadata->m_primitiveToMeshPrimitiveMetadata.emplace(
 						&curMesh->primitives[primIdx],
 						MeshPrimitiveMetadata{
-							.m_meshPrimitive = gltfScene.AddDependency(inventory->Get(
+							.m_meshPrimitive = gltfScene.AddDependency(core::Inventory::Get(
 								util::HashKey(primitiveName),
 								static_pointer_cast<core::ILoadContext<gr::MeshPrimitive>>(loadContext))),
 						}).first->second;
@@ -1971,11 +1951,11 @@ namespace
 					{
 						// Load the Material and add it as a dependency of the MeshPrimitive:
 						meshPrimMetadata.m_material = meshPrimMetadata.m_meshPrimitive.AddDependency(
-							LoadGLTFMaterial(inventory, fileMetadata, data, curMesh->primitives[primIdx].material));
+							LoadGLTFMaterial(fileMetadata, data, curMesh->primitives[primIdx].material));
 					}
 					else
 					{
-						meshPrimMetadata.m_material = inventory->Get<gr::Material>(
+						meshPrimMetadata.m_material = core::Inventory::Get<gr::Material>(
 							util::HashKey(en::DefaultResourceNames::k_defaultGLTFMaterialName));
 					}
 				}
@@ -2673,7 +2653,7 @@ namespace
 				}
 #endif
 
-				LoadGLTFMeshData(m_inventory, m_sceneData, m_sceneMetadata, gltfScene);
+				LoadGLTFMeshData(m_sceneData, m_sceneMetadata, gltfScene);
 
 				std::vector<std::future<void>> loadFutures;
 				PreLoadGLTFSkinData(m_sceneData, m_sceneMetadata, loadFutures);
@@ -2758,7 +2738,6 @@ namespace
 
 
 	public:
-		core::Inventory* m_inventory = nullptr;
 		std::string m_filePath;
 	};
 }
@@ -2766,7 +2745,7 @@ namespace
 
 namespace load
 {
-	void ImportGLTFFile(core::Inventory* inventory, std::string const& filePath)
+	void ImportGLTFFile(std::string const& filePath)
 	{
 		SEAssert(!filePath.empty(), "Invalid file path");
 
@@ -2776,30 +2755,29 @@ namespace load
 		if (util::FileExists(importIBLFilePath))
 		{
 			// We let this go out of scope, but it'll register itself during OnLoadComplete()
-			ImportIBL(inventory, importIBLFilePath, IBLTextureFromFilePath::ActivationMode::Always);
+			ImportIBL(importIBLFilePath, IBLTextureFromFilePath::ActivationMode::Always);
 		}
 
 		std::shared_ptr<GLTFFileLoadContext<GLTFSceneHandle>> loadContext =
 			std::make_shared<GLTFFileLoadContext<GLTFSceneHandle>>();
 
-		loadContext->m_inventory = inventory;
 		loadContext->m_filePath = filePath;
 
 		// We let this go out of scope, it'll clean up after itself once loading is done
-		inventory->Get(
+		core::Inventory::Get(
 			util::HashKey(filePath),
 			static_pointer_cast<core::ILoadContext<GLTFSceneHandle>>(loadContext));
 	}
 
 
-	void GenerateDefaultGLTFMaterial(core::Inventory* inventory)
+	void GenerateDefaultGLTFMaterial()
 	{
 		std::shared_ptr<DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>> loadContext =
 			std::make_shared<DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness<gr::Material_GLTF_PBRMetallicRoughness>>();
 
 		loadContext->m_retentionPolicy = core::RetentionPolicy::Permanent;
 
-		inventory->Get(
+		core::Inventory::Get(
 			util::HashKey(en::DefaultResourceNames::k_defaultGLTFMaterialName),
 			static_pointer_cast<core::ILoadContext<gr::Material>>(loadContext));
 	}

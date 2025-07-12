@@ -1,10 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core/Inventory.h"
-
 #include "Core/Interfaces/IEventListener.h"
 #include "Core/Interfaces/IEngineComponent.h"
-#include "Core/Interfaces/INamedObject.h"
 
 
 namespace pr
@@ -16,7 +13,7 @@ namespace pr
 
 
 	public:
-		SceneManager();
+		SceneManager() = default;
 		SceneManager(SceneManager&&) noexcept = default;
 		SceneManager& operator=(SceneManager&&) noexcept = default;
 		~SceneManager() = default;
@@ -28,13 +25,6 @@ namespace pr
 
 		// IEventListener interface:
 		void HandleEvents() override;
-
-
-	public:
-		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
-		core::Inventory* GetInventory() const;
-	private:
-		core::Inventory* m_inventory;
 
 
 	public:
@@ -53,17 +43,5 @@ namespace pr
 		SceneManager(SceneManager const&) = delete;
 		void operator=(SceneManager const&) = delete;
 	};
-
-
-	inline void SceneManager::SetInventory(core::Inventory* inventory)
-	{
-		m_inventory = inventory;
-	}
-
-
-	inline core::Inventory* SceneManager::GetInventory() const
-	{
-		return m_inventory;
-	}
 }
 

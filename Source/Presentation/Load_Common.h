@@ -24,7 +24,6 @@ namespace load
 	};
 
 	core::InvPtr<re::Texture> ImportTexture(
-		core::Inventory* inventory,
 		std::string const& filepath,
 		glm::vec4 const& colorFallback = re::Texture::k_errorTextureColor,
 		re::Texture::Format formatFallback = re::Texture::Format::RGBA8_UNORM,
@@ -74,7 +73,6 @@ namespace load
 	};
 
 	core::InvPtr<re::Texture> ImportIBL(
-		core::Inventory* inventory,
 		std::string const& filepath,
 		IBLTextureFromFilePath::ActivationMode activationMode,
 		bool makePermanent = false);

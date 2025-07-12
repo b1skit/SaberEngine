@@ -10,7 +10,7 @@
 
 namespace gr
 {
-	Material_GLTF_Unlit::Material_GLTF_Unlit(std::string const& name, core::Inventory* inventory)
+	Material_GLTF_Unlit::Material_GLTF_Unlit(std::string const& name)
 		: Material(name, gr::Material::MaterialID::GLTF_Unlit)
 		, INamedObject(name)
 	{
@@ -21,7 +21,7 @@ namespace gr
 
 		m_texSlots.resize(TextureSlotIdx_Count);
 
-		core::InvPtr<re::Sampler> const& clampPointSampler = inventory->Get<re::Sampler>("ClampMinMagMipPoint");
+		core::InvPtr<re::Sampler> const& clampPointSampler = core::Inventory::Get<re::Sampler>("ClampMinMagMipPoint");
 
 		m_texSlots[BaseColor] = { nullptr, clampPointSampler, "BaseColorTex", 0 };
 	}

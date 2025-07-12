@@ -30,7 +30,7 @@ namespace gr
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
-			std::string const& pipelineFileName, re::Context*, core::Inventory*);
+			std::string const& pipelineFileName, re::Context*);
 		
 		void Destroy();
 
@@ -82,7 +82,7 @@ namespace gr
 
 
 	private: // Use the Create() factory
-		RenderSystem(std::string const& name, re::Context*, core::Inventory*);
+		RenderSystem(std::string const& name, re::Context*);
 		RenderSystem() = delete; 
 
 

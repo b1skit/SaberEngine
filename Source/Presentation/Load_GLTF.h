@@ -9,7 +9,7 @@ namespace core
 
 namespace load
 {
-	void ImportGLTFFile(core::Inventory*, std::string const& filePath);
+	void ImportGLTFFile(std::string const& filePath);
 
-	void GenerateDefaultGLTFMaterial(core::Inventory*);
+	void GenerateDefaultGLTFMaterial();
 }

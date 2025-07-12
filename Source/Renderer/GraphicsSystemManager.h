@@ -29,7 +29,7 @@ namespace gr
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(gr::RenderSystem*, re::Context*, core::Inventory*);
+		GraphicsSystemManager(gr::RenderSystem*, re::Context*);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
@@ -59,7 +59,6 @@ namespace gr
 		uint64_t GetCurrentRenderFrameNum() const;
 		uint8_t GetNumFramesInFlight() const;
 
-		core::Inventory* GetInventory() const;
 		core::InvPtr<re::Sampler> GetSampler(util::HashKey const& samplerName);
 
 	public:
@@ -113,7 +112,6 @@ namespace gr
 		bool m_activeAmbientLightHasChanged;
 
 		re::Context* m_context;
-		core::Inventory* m_inventory;
 		gr::RenderSystem const* m_owningRenderSystem;
 
 
@@ -167,12 +165,6 @@ namespace gr
 	inline uint8_t GraphicsSystemManager::GetNumFramesInFlight() const
 	{
 		return m_numFramesInFlight;
-	}
-
-
-	inline core::Inventory* GraphicsSystemManager::GetInventory() const
-	{
-		return m_inventory;
 	}
 
 

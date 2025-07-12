@@ -77,14 +77,7 @@ namespace gr
 		effect::EffectDB const& GetEffectDB() const;
 
 
-	public:
-		void SetInventory(core::Inventory*); // Dependency injection: Call once immediately after creation
-		core::Inventory* GetInventory() const;
-
-
 	private:
-		core::Inventory* m_inventory;
-
 		host::Window* m_windowCache; // Passed to the m_context at creation
 
 	protected:
@@ -219,22 +212,10 @@ namespace gr
 	}
 
 
-	inline void RenderManager::SetInventory(core::Inventory* inventory)
-	{
-		m_inventory = inventory;
-	}
-
-
 	inline void RenderManager::SetWindow(host::Window* window)
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
 		m_windowCache = window; // Cache this to pass to the context
-	}
-
-
-	inline core::Inventory* RenderManager::GetInventory() const
-	{
-		return m_inventory;
 	}
 
 

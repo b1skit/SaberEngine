@@ -52,8 +52,6 @@ namespace pr
 	{
 		LOG("EntityManager starting...");
 
-		SEAssert(m_inventory, "Inventory is null. This dependency must be injected immediately after creation");
-
 		// Event subscriptions:
 		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
 
