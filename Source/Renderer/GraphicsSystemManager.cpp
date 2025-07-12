@@ -8,24 +8,27 @@
 #include "LightRenderData.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
+#include "Sampler.h"
 
 #include "Core/Assert.h"
+#include "Core/Inventory.h"
 #include "Core/ProfilingMarkers.h"
 
 
 namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(
-		gr::RenderSystem* owningRS, re::Context* context, uint8_t numFramesInFlight)
+		gr::RenderSystem* owningRS, re::Context* context, core::Inventory* inventory)
 		: m_renderData(nullptr)
 		, m_context(context)
+		, m_inventory(inventory)
 		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightHasChanged(true)
 		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
-		, m_numFramesInFlight(numFramesInFlight)
+		, m_numFramesInFlight(context->GetNumFramesInFlight())
 		, m_isCreated(false)
 	{
 	}
@@ -135,6 +138,12 @@ namespace gr
 		{
 			gs->EndOfFrame();
 		}
+	}
+
+
+	core::InvPtr<re::Sampler> GraphicsSystemManager::GetSampler(util::HashKey const& samplerNameHash)
+	{
+		return m_inventory->Get<re::Sampler>(samplerNameHash, nullptr);
 	}
 
 

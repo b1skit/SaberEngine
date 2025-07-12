@@ -14,7 +14,10 @@ namespace
 	template<typename T>
 	struct DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness;
 }
-
+namespace core
+{
+	class Inventory;
+}
 namespace gr
 {
 	class Material_GLTF_PBRMetallicRoughness final : public virtual Material
@@ -92,7 +95,7 @@ namespace gr
 		friend struct DefaultMaterialLoadContext_GLTF_PBRMetallicRoughness;
 
 	private:
-		Material_GLTF_PBRMetallicRoughness(std::string const& name);
+		Material_GLTF_PBRMetallicRoughness(std::string const& name, core::Inventory*);
 
 
 	private:

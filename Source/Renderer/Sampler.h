@@ -1,8 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Sampler_Platform.h"
-
-#include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IPlatformObject.h"
@@ -118,10 +115,6 @@ namespace re
 
 			bool operator==(SamplerDesc const& rhs) const noexcept;
 		};
-
-
-	public: // Convenience helper that retrieves pre-created Samplers (only) from the Inventory
-		static core::InvPtr<re::Sampler> GetSampler(util::HashKey const& samplerName);
 
 
 	public:	

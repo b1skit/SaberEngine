@@ -7,6 +7,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Interfaces/IHashedDataObject.h"

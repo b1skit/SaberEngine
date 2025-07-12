@@ -169,7 +169,7 @@ namespace gr
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
 			*texDependencies.at(k_ambientDFGTexInput),
-			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(*texDependencies.at(k_ambientDFGTexInput)));
 
 		pipeline.AppendStage(m_transparencyStage);
@@ -200,13 +200,13 @@ namespace gr
 			m_transparencyStage->AddSingleFrameTextureInput(
 				"CubeMapIEM",
 				*m_ambientIEMTex,
-				re::Sampler::GetSampler("WrapMinMagMipLinear"),
+				m_graphicsSystemManager->GetSampler("WrapMinMagMipLinear"),
 				re::TextureView(*m_ambientIEMTex));
 
 			m_transparencyStage->AddSingleFrameTextureInput(
 				"CubeMapPMREM",
 				*m_ambientPMREMTex,
-				re::Sampler::GetSampler("WrapMinMagMipLinear"),
+				m_graphicsSystemManager->GetSampler("WrapMinMagMipLinear"),
 				re::TextureView(*m_ambientPMREMTex));
 
 			m_transparencyStage->AddSingleFrameBuffer(AmbientLightData::s_shaderName, *m_ambientParams);
@@ -236,19 +236,19 @@ namespace gr
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"DirectionalShadows",
 			*m_directionalShadowArrayTex,
-			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
+			m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_directionalShadowArrayTex, {re::TextureView::ViewFlags::ReadOnlyDepth}));
 
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"PointShadows",
 			*m_pointShadowArrayTex,
-			re::Sampler::GetSampler("WrapCmpMinMagLinearMipPoint"),
+			m_graphicsSystemManager->GetSampler("WrapCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_pointShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
 		m_transparencyStage->AddSingleFrameTextureInput(
 			"SpotShadows",
 			*m_spotShadowArrayTex,
-			re::Sampler::GetSampler("BorderCmpMinMagLinearMipPoint"),
+			m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
 			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
 

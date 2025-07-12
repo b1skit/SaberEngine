@@ -10,6 +10,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Inventory.h"
 
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/HashUtils.h"
@@ -456,6 +457,7 @@ namespace dx12
 
 
 	void RootSignature::ParseInputBindingDesc(
+		dx12::Context* context,
 		dx12::RootSignature* newRootSig, // Static function: Need our root sig object
 		re::Shader::ShaderType shaderType,
 		D3D12_SHADER_INPUT_BIND_DESC const& inputBindingDesc,
@@ -632,8 +634,8 @@ namespace dx12
 		}
 		break;
 		case D3D_SIT_SAMPLER: // The shader resource is a sampler
-		{
-			core::InvPtr<re::Sampler> const& sampler = re::Sampler::GetSampler(inputBindingDesc.Name);
+		{			
+			core::InvPtr<re::Sampler> const& sampler = context->GetInventory()->Get<re::Sampler>(inputBindingDesc.Name);
 
 			dx12::Sampler::PlatObj* samplerPlatObj =
 				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
@@ -1123,6 +1125,7 @@ namespace dx12
 							"Failed to get resource binding description");
 
 						ParseInputBindingDesc(
+							shaderPlatObj->GetContext()->As<dx12::Context*>(),
 							newRootSig.get(),
 							static_cast<re::Shader::ShaderType>(shaderIdx),
 							inputBindingDesc,
@@ -1169,6 +1172,7 @@ namespace dx12
 						"Too many root parameters. Consider increasing the root sig index type from a uint8_t");
 
 					ParseInputBindingDesc(
+						shaderPlatObj->GetContext()->As<dx12::Context*>(),
 						newRootSig.get(),
 						static_cast<re::Shader::ShaderType>(shaderIdx),
 						inputBindingDesc,
@@ -1659,7 +1663,7 @@ namespace dx12
 
 		for (auto const& samplerName : m_staticSamplerNames)
 		{
-			core::InvPtr<re::Sampler> const& sampler = re::Sampler::GetSampler(samplerName);
+			core::InvPtr<re::Sampler> const& sampler = context->GetInventory()->Get<re::Sampler>(samplerName);
 
 			dx12::Sampler::PlatObj* samplerPlatObj =
 				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();

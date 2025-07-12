@@ -2,6 +2,7 @@
 #include "Material_GLTF_Unlit.h"
 #include "EnumTypes.h"
 
+#include "Core/Inventory.h"
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/Shaders/Common/MaterialParams.h"
@@ -9,7 +10,7 @@
 
 namespace gr
 {
-	Material_GLTF_Unlit::Material_GLTF_Unlit(std::string const& name)
+	Material_GLTF_Unlit::Material_GLTF_Unlit(std::string const& name, core::Inventory* inventory)
 		: Material(name, gr::Material::MaterialID::GLTF_Unlit)
 		, INamedObject(name)
 	{
@@ -20,7 +21,7 @@ namespace gr
 
 		m_texSlots.resize(TextureSlotIdx_Count);
 
-		core::InvPtr<re::Sampler> const& clampPointSampler = re::Sampler::GetSampler("ClampMinMagMipPoint");
+		core::InvPtr<re::Sampler> const& clampPointSampler = inventory->Get<re::Sampler>("ClampMinMagMipPoint");
 
 		m_texSlots[BaseColor] = { nullptr, clampPointSampler, "BaseColorTex", 0 };
 	}

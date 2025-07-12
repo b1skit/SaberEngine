@@ -749,7 +749,9 @@ namespace
 			SEAssert(m_srcMaterial, "Source material is null, this is unexpected");
 			SEAssert(m_srcMaterial->has_pbr_metallic_roughness == 1, "Invalid source material");
 
-			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_PBRMetallicRoughness(m_matName));
+			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_PBRMetallicRoughness(
+				m_matName,
+				GetContext()->GetInventory()));
 
 			// BaseColorTex
 			newMat->SetTexture(
@@ -882,8 +884,9 @@ namespace
 		std::unique_ptr<gr::Material> Load(core::InvPtr<gr::Material>& newMat) override
 		{
 			// Default error material:
-			std::unique_ptr<gr::Material> defaultMaterialGLTF(
-				new gr::Material_GLTF_PBRMetallicRoughness(en::DefaultResourceNames::k_defaultGLTFMaterialName));
+			std::unique_ptr<gr::Material> defaultMaterialGLTF(new gr::Material_GLTF_PBRMetallicRoughness(
+				en::DefaultResourceNames::k_defaultGLTFMaterialName,
+				GetContext()->GetInventory()));
 
 			constexpr uint8_t k_defaultUVChannelIdx = 0;
 
@@ -967,7 +970,7 @@ namespace
 			SEAssert(m_srcMaterial, "Source material is null, this is unexpected");
 			SEAssert(m_srcMaterial->has_pbr_metallic_roughness == 1 && m_srcMaterial->unlit, "Invalid source material");
 
-			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_Unlit(m_matName));
+			std::unique_ptr<gr::Material> newMat(new gr::Material_GLTF_Unlit(m_matName, GetContext()->GetInventory()));
 
 			// BaseColorTex
 			newMat->SetTexture(

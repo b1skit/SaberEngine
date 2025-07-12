@@ -95,7 +95,7 @@ namespace gr
 		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
 			*m_skyTexture,
-			re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
+			m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint"),
 			re::TextureView(*m_skyTexture));
 
 
@@ -139,7 +139,7 @@ namespace gr
 			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
 				*m_skyTexture,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
+				m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint"),
 				re::TextureView(*m_skyTexture));
 
 		}

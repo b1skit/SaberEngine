@@ -64,7 +64,7 @@ namespace gr
 		m_tonemappingStage->AddPermanentTextureInput(
 			k_bloomShaderName,
 			*texDependencies.at(k_bloomResultInput),
-			re::Sampler::GetSampler("ClampMinMagMipLinear"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipLinear"),
 			re::TextureView(*texDependencies.at(k_bloomResultInput)));
 
 		pipeline.AppendStage(m_tonemappingStage);
@@ -91,7 +91,7 @@ namespace gr
 		m_swapchainBlitStage->AddPermanentTextureInput(
 			"Tex0",
 			lightingTex,
-			re::Sampler::GetSampler("ClampMinMagMipLinear"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipLinear"),
 			re::TextureView(lightingTex));
 
 		pipeline.AppendStage(m_swapchainBlitStage);

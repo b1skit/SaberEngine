@@ -71,7 +71,7 @@ namespace gr
 			return;
 		}
 
-		core::InvPtr<re::Sampler> const& mipSampler = re::Sampler::GetSampler("ClampMinMagLinearMipPoint");
+		core::InvPtr<re::Sampler> const& mipSampler = m_graphicsSystemManager->GetSampler("ClampMinMagLinearMipPoint");
 
 		gr::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 

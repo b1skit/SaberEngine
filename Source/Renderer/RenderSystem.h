@@ -8,6 +8,10 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
+namespace core
+{
+	class Inventory;
+}
 namespace effect
 {
 	class EffectDB;
@@ -26,7 +30,7 @@ namespace gr
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
-			std::string const& pipelineFileName, re::Context*, uint8_t numFramesInFlight);
+			std::string const& pipelineFileName, re::Context*, core::Inventory*);
 		
 		void Destroy();
 
@@ -78,7 +82,7 @@ namespace gr
 
 
 	private: // Use the Create() factory
-		RenderSystem(std::string const& name, re::Context*, uint8_t numFramesInFlight);
+		RenderSystem(std::string const& name, re::Context*, core::Inventory*);
 		RenderSystem() = delete; 
 
 

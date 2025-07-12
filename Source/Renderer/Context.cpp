@@ -22,7 +22,11 @@
 namespace re
 {
 	std::unique_ptr<re::Context> Context::CreateContext_Platform(
-		platform::RenderingAPI api, uint64_t currentFrameNum, uint8_t numFramesInFlight, host::Window* window)
+		platform::RenderingAPI api,
+		uint64_t currentFrameNum,
+		uint8_t numFramesInFlight,
+		host::Window* window,
+		core::Inventory* inventory)
 	{
 		SEAssert(window, "Received a null window");
 
@@ -31,12 +35,12 @@ namespace re
 		{
 		case platform::RenderingAPI::OpenGL:
 		{
-			newContext.reset(new opengl::Context(api, numFramesInFlight, window));
+			newContext.reset(new opengl::Context(api, numFramesInFlight, window, inventory));
 		}
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			newContext.reset(new dx12::Context(api, numFramesInFlight, window));
+			newContext.reset(new dx12::Context(api, numFramesInFlight, window, inventory));
 		}
 		break;
 		default: SEAssertF("Invalid rendering API argument received");
@@ -48,7 +52,8 @@ namespace re
 	}
 
 
-	Context::Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window)
+	Context::Context(
+		platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window* window, core::Inventory* inventory)
 		: m_newShaders(util::NBufferedVector<core::InvPtr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<core::InvPtr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newSamplers(util::NBufferedVector<core::InvPtr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -58,6 +63,7 @@ namespace re
 		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_window(window)
 		, m_gpuTimer(core::PerfLogger::Get(), numFramesInFlight)
+		, m_inventory(inventory)
 		, m_numFramesInFlight(numFramesInFlight)
 		, m_renderDocApi(nullptr)
 		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())

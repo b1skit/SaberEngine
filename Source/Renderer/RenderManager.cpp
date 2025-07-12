@@ -8,6 +8,7 @@
 #include "Texture.h"
 
 #include "Core/Config.h"
+#include "Core/Inventory.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 
@@ -185,7 +186,7 @@ namespace gr
 		
 		// Create the context:
 		m_context = re::Context::CreateContext_Platform(
-			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache);
+			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache, m_inventory);
 		SEAssert(m_context, "Failed to create platform context.");	
 		
 		// The swap chain requires the context be fully created before it is created
@@ -239,7 +240,7 @@ namespace gr
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get(), GetNumFramesInFlight()));
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get(), m_inventory));
 
 		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
 		m_renderSystems.back()->ExecuteInitializationPipeline();

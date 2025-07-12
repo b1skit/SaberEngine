@@ -4,10 +4,13 @@
 #include "Sampler.h"
 
 #include "Core/Assert.h"
+#include "Core/Inventory.h"
+#include "Core/InvPtr.h"
 
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/Shaders/Common/MaterialParams.h"
+
 
 
 namespace gr
@@ -73,7 +76,8 @@ namespace gr
 	}
 
 
-	Material_GLTF_PBRMetallicRoughness::Material_GLTF_PBRMetallicRoughness(std::string const& name)
+	Material_GLTF_PBRMetallicRoughness::Material_GLTF_PBRMetallicRoughness(
+		std::string const& name, core::Inventory* inventory)
 		: Material(name, gr::Material::MaterialID::GLTF_PBRMetallicRoughness)
 		, INamedObject(name)
 	{
@@ -85,7 +89,7 @@ namespace gr
 
 		m_texSlots.resize(TextureSlotIdx::TextureSlotIdx_Count);
 
-		core::InvPtr<re::Sampler> const& wrapAnisoSampler = re::Sampler::GetSampler("WrapAnisotropic");
+		core::InvPtr<re::Sampler> const& wrapAnisoSampler = inventory->Get<re::Sampler>("WrapAnisotropic");
 
 		m_texSlots[TextureSlotIdx::BaseColor] = { nullptr, wrapAnisoSampler, "BaseColorTex", 0 };
 		m_texSlots[TextureSlotIdx::MetallicRoughness] = { nullptr, wrapAnisoSampler, "MetallicRoughnessTex", 0 }; // G = roughness, B = metalness. R & A are unused.

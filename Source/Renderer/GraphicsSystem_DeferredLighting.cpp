@@ -242,7 +242,7 @@ namespace gr
 			iemStage->AddPermanentTextureInput(
 				"Tex0",
 				iblTex,
-				re::Sampler::GetSampler("WrapMinMagLinearMipPoint"),
+				m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint"),
 				re::TextureView(iblTex));
 
 			// Buffers:
@@ -320,7 +320,7 @@ namespace gr
 				pmremStage->AddPermanentTextureInput(
 					"Tex0",
 					iblTex,
-					re::Sampler::GetSampler("ClampMinMagMipLinear"),
+					m_graphicsSystemManager->GetSampler("ClampMinMagMipLinear"),
 					re::TextureView(iblTex));
 
 				// Buffers:
@@ -527,7 +527,7 @@ namespace gr
 		// Get/set the AO texture. If it doesn't exist, we'll get a default opaque white texture
 		m_ssaoTex = *texDependencies.at(k_ssaoInput);
 
-		core::InvPtr<re::Sampler> const& clampMinMagMipPoint = re::Sampler::GetSampler("ClampMinMagMipPoint");
+		core::InvPtr<re::Sampler> const& clampMinMagMipPoint = m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint");
 
 		m_ambientStage->AddPermanentTextureInput(
 			k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint, re::TextureView(m_ssaoTex));
@@ -600,7 +600,7 @@ namespace gr
 
 
 		// Attach GBuffer color inputs:
-		core::InvPtr<re::Sampler> const& wrapMinMagLinearMipPoint = re::Sampler::GetSampler("WrapMinMagLinearMipPoint");
+		core::InvPtr<re::Sampler> const& wrapMinMagLinearMipPoint = m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint");
 
 		constexpr uint8_t numGBufferColorInputs = 
 			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexIdx::GBufferColorTex_Count);
@@ -761,12 +761,12 @@ namespace gr
 									.SetTextureInput(
 										"CubeMapIEM",
 										iemTex,
-										re::Sampler::GetSampler("WrapMinMagMipLinear"),
+										m_graphicsSystemManager->GetSampler("WrapMinMagMipLinear"),
 										re::TextureView(iemTex))
 									.SetTextureInput(
 										"CubeMapPMREM",
 										pmremTex,
-										re::Sampler::GetSampler("WrapMinMagMipLinear"),
+										m_graphicsSystemManager->GetSampler("WrapMinMagMipLinear"),
 										re::TextureView(pmremTex))
 									.SetBuffer(AmbientLightData::s_shaderName, ambientParams)
 									.Build()
@@ -868,7 +868,7 @@ namespace gr
 
 					std::move(batchBuilder).SetTextureInput(k_directionalShadowShaderName,
 						*shadowRecord.m_shadowTex,
-						re::Sampler::GetSampler(k_sampler2DShadowName),
+						m_graphicsSystemManager->GetSampler(k_sampler2DShadowName),
 						CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
 				}
 
@@ -906,7 +906,7 @@ namespace gr
 					{
 						std::move(batchBuilder).SetTextureInput(k_pointShadowShaderName,
 							*shadowRecord.m_shadowTex,
-							re::Sampler::GetSampler(k_samplerCubeShadowName),
+							m_graphicsSystemManager->GetSampler(k_samplerCubeShadowName),
 							CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
 					}
 					break;
@@ -914,7 +914,7 @@ namespace gr
 					{
 						std::move(batchBuilder).SetTextureInput(k_spotShadowShaderName,
 							*shadowRecord.m_shadowTex,
-							re::Sampler::GetSampler(k_sampler2DShadowName),
+							m_graphicsSystemManager->GetSampler(k_sampler2DShadowName),
 							CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
 					}
 					break;

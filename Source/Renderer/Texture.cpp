@@ -5,6 +5,7 @@
 #include "Texture_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Inventory.h"
 #include "Core/Logger.h"
 
 #include "Core/Interfaces/ILoadContext.h"

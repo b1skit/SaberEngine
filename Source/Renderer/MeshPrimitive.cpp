@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "MeshPrimitive.h"
-#include "RenderManager.h"
 #include "VertexStream.h"
 
+#include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 
 

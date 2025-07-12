@@ -243,7 +243,7 @@ namespace gr
 		m_prefilterDepthsStage->AddPermanentTextureInput(
 			"SceneDepth",
 			*texDependencies.at(k_depthInput),
-			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			{ re::TextureView::Texture2DView(0, 1), re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth} });
 
 		// Append the depth prefilter stage:
@@ -295,19 +295,19 @@ namespace gr
 		m_mainStage->AddPermanentTextureInput(
 			"PrefilteredDepth",
 			m_prefilterDepthsTex,
-			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(m_prefilterDepthsTex));
 		
 		m_mainStage->AddPermanentTextureInput(
 			k_wNormalInput.GetKey(),
 			*texDependencies.at(k_wNormalInput),
-			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			re::TextureView::Texture2DView(0, 1));
 
 		m_mainStage->AddPermanentTextureInput(
 			k_hilbertLutTexName,
 			m_hilbertLUT,
-			re::Sampler::GetSampler("ClampMinMagMipPoint"),
+			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(m_hilbertLUT));
 
 		// Append the main stage:
@@ -351,7 +351,7 @@ namespace gr
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					m_denoisePingTargetTex, // Read from the denoise target texture
-					re::Sampler::GetSampler("ClampMinMagMipPoint"),
+					m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 					re::TextureView(m_denoisePingTargetTex));
 
 				// We reuse the working AO buffer as our 2nd target
@@ -365,7 +365,7 @@ namespace gr
 				m_denoiseStages[passIdx]->AddPermanentTextureInput(
 					"SourceAO",
 					m_workingAOTex, // Read from the working AO texture
-					re::Sampler::GetSampler("ClampMinMagMipPoint"),
+					m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 					re::TextureView(m_workingAOTex));
 
 				m_denoiseStages[passIdx]->AddPermanentRWTextureInput(
@@ -376,7 +376,7 @@ namespace gr
 			m_denoiseStages[passIdx]->AddPermanentTextureInput(
 				"SourceEdges",
 				m_workingEdgesTargetTex,
-				re::Sampler::GetSampler("ClampMinMagMipPoint"),
+				m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 				re::TextureView(m_workingEdgesTargetTex));
 
 			pipeline.AppendStage(m_denoiseStages[passIdx]);

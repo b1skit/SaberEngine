@@ -5,17 +5,12 @@
 #include "Sampler_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Inventory.h"
 #include "Core/Logger.h"
 
 
 namespace re
 {
-	core::InvPtr<re::Sampler> Sampler::GetSampler(util::HashKey const& samplerNameHash)
-	{
-		return gr::RenderManager::Get()->GetInventory()->Get<re::Sampler>(samplerNameHash, nullptr);
-	}
-
-
 	core::InvPtr<re::Sampler> Sampler::Create(char const* name, SamplerDesc const& samplerDesc)
 	{
 		struct LoadContext final : public virtual core::ILoadContext<re::Sampler>

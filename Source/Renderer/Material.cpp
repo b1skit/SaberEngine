@@ -9,6 +9,10 @@
 #include "Texture.h"
 
 #include "Core/Assert.h"
+
+#include "Core/Interfaces/INamedObject.h"
+
+#include "Core/Util/CHashKey.h"
 #include "Core/Util/ImGuiUtils.h"
 
 

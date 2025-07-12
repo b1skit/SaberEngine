@@ -247,6 +247,7 @@ namespace dx12
 			D3D12_SHADER_VISIBILITY m_visibility;
 		};
 		static void ParseInputBindingDesc(
+			dx12::Context*,
 			dx12::RootSignature*,
 			re::Shader::ShaderType,
 			D3D12_SHADER_INPUT_BIND_DESC const&,

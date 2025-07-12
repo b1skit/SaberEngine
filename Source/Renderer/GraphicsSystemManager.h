@@ -4,7 +4,14 @@
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 
+#include "Core/Util/CHashKey.h"
+#include "Core/Util/HashKey.h"
 
+
+namespace core
+{
+	class Inventory;
+}
 namespace re
 {
 	class Context;
@@ -22,7 +29,7 @@ namespace gr
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(gr::RenderSystem*, re::Context*, uint8_t numFramesInFlight);
+		GraphicsSystemManager(gr::RenderSystem*, re::Context*, core::Inventory*);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
@@ -52,6 +59,8 @@ namespace gr
 		uint64_t GetCurrentRenderFrameNum() const;
 		uint8_t GetNumFramesInFlight() const;
 
+		core::Inventory* GetInventory() const;
+		core::InvPtr<re::Sampler> GetSampler(util::HashKey const& samplerName);
 
 	public:
 		gr::RenderDataID GetActiveCameraRenderDataID() const;
@@ -104,7 +113,9 @@ namespace gr
 		bool m_activeAmbientLightHasChanged;
 
 		re::Context* m_context;
+		core::Inventory* m_inventory;
 		gr::RenderSystem const* m_owningRenderSystem;
+
 
 		uint64_t m_currentFrameNum;
 		uint8_t m_numFramesInFlight;
@@ -146,6 +157,7 @@ namespace gr
 		return m_context;
 	}
 
+
 	inline uint64_t GraphicsSystemManager::GetCurrentRenderFrameNum() const
 	{
 		return m_currentFrameNum;
@@ -155,6 +167,12 @@ namespace gr
 	inline uint8_t GraphicsSystemManager::GetNumFramesInFlight() const
 	{
 		return m_numFramesInFlight;
+	}
+
+
+	inline core::Inventory* GraphicsSystemManager::GetInventory() const
+	{
+		return m_inventory;
 	}
 
 

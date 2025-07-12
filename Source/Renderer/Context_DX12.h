@@ -97,7 +97,7 @@ namespace dx12
 
 
 	protected:
-		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*);
+		Context(platform::RenderingAPI api, uint8_t numFramesInFlight, host::Window*, core::Inventory*);
 		friend class re::Context;
 	};
 

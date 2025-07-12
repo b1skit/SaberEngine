@@ -5,6 +5,7 @@
 #include "Shader_Platform.h"
 
 #include "Core/Assert.h"
+#include "Core/Inventory.h"
 #include "Core/InvPtr.h"
 #include "Core/Logger.h"
 
