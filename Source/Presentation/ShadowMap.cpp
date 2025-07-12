@@ -7,28 +7,28 @@
 
 namespace
 {
-	fr::ShadowMap::ShadowType GetShadowTypeFromLightType(fr::Light::Type lightType)
+	pr::ShadowMap::ShadowType GetShadowTypeFromLightType(pr::Light::Type lightType)
 	{
 		switch (lightType)
 		{
-		case fr::Light::Type::Directional: return fr::ShadowMap::ShadowType::Orthographic;
-		case fr::Light::Type::Point: return fr::ShadowMap::ShadowType::CubeMap;
-		case fr::Light::Type::Spot: return fr::ShadowMap::ShadowType::Perspective;
-		case fr::Light::Type::AmbientIBL:
+		case pr::Light::Type::Directional: return pr::ShadowMap::ShadowType::Orthographic;
+		case pr::Light::Type::Point: return pr::ShadowMap::ShadowType::CubeMap;
+		case pr::Light::Type::Spot: return pr::ShadowMap::ShadowType::Perspective;
+		case pr::Light::Type::AmbientIBL:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
 		}
-		return fr::ShadowMap::ShadowType::ShadowType_Count;
+		return pr::ShadowMap::ShadowType::ShadowType_Count;
 	}
 
 
-	void SetDefaults(fr::ShadowMap::ShadowParams& shadowParams)
+	void SetDefaults(pr::ShadowMap::ShadowParams& shadowParams)
 	{
 		switch (shadowParams.m_lightType)
 		{
-		case fr::Light::Type::Directional:
+		case pr::Light::Type::Directional:
 		{
-			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
 				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
@@ -36,12 +36,12 @@ namespace
 
 			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey);
 
-			shadowParams.m_orthographic.m_frustumSnapMode = fr::ShadowMap::ShadowParams::Orthographic::ActiveCamera;
+			shadowParams.m_orthographic.m_frustumSnapMode = pr::ShadowMap::ShadowParams::Orthographic::ActiveCamera;
 		}
 		break;
-		case fr::Light::Type::Spot:
+		case pr::Light::Type::Spot:
 		{
-			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
 				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
@@ -50,9 +50,9 @@ namespace
 			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightShadowSoftnessKey);
 		}
 		break;
-		case fr::Light::Type::Point:
+		case pr::Light::Type::Point:
 		{
-			shadowParams.m_shadowQuality = fr::ShadowMap::ShadowQuality::PCSS_HIGH;
+			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
 				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
@@ -61,15 +61,15 @@ namespace
 			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
 		}
 		break;
-		case fr::Light::Type::AmbientIBL:
+		case pr::Light::Type::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
 	}
 }
 
-namespace fr
+namespace pr
 {
-	ShadowMap::ShadowMap(fr::Light::Type lightType)
+	ShadowMap::ShadowMap(pr::Light::Type lightType)
 		: m_typeProperties{ 
 			.m_shadowType = GetShadowTypeFromLightType(lightType), 
 			.m_lightType = lightType,

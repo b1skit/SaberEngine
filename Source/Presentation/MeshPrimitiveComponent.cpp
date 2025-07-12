@@ -20,27 +20,27 @@
 namespace
 {
 	void AttachMeshPrimitiveComponentHelper(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity,
 		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
-		fr::RenderDataComponent& meshPrimRenderCmpt,
+		pr::RenderDataComponent& meshPrimRenderCmpt,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
 		// MeshPrimitive:
-		em.EmplaceComponent<fr::MeshPrimitiveComponent>(
+		em.EmplaceComponent<pr::MeshPrimitiveComponent>(
 			owningEntity,
-			fr::MeshPrimitiveComponent{
+			pr::MeshPrimitiveComponent{
 				.m_meshPrimitive = meshPrimitive
 			});
 
-		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
+		pr::Relationship const& owningEntityRelationship = em.GetComponent<pr::Relationship>(owningEntity);
 
 		const entt::entity encapsulatingBounds =
-			owningEntityRelationship.GetFirstEntityInHierarchyAbove<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>();
+			owningEntityRelationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>();
 
 		// Bounds for the MeshPrimitive
-		fr::BoundsComponent const& meshPrimitiveBounds = fr::BoundsComponent::AttachBoundsComponent(
+		pr::BoundsComponent const& meshPrimitiveBounds = pr::BoundsComponent::AttachBoundsComponent(
 			em,
 			owningEntity,
 			encapsulatingBounds,
@@ -48,40 +48,40 @@ namespace
 			positionMaxXYZ);	
 
 		// Mark our new MeshPrimitive as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::MeshPrimitiveComponent>>(owningEntity);
 	}
 }
 
 
-namespace fr
+namespace pr
 {
 	entt::entity MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity, 
 		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
 		entt::entity meshPrimitiveConcept = em.CreateEntity(meshPrimitive->GetName());
 
 		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveConcept);
+		pr::Relationship& meshPrimitiveRelationship = em.GetComponent<pr::Relationship>(meshPrimitiveConcept);
 		meshPrimitiveRelationship.SetParent(em, owningEntity);
 
 		// RenderDataComponent: A MeshPrimitive has its own RenderDataID, but shares the TransformID of its owningEntity
 		// However, if the owning entity does not have a TransformComponent, we attach one to the meshPrimitiveConcept
 		// entity instead (as it's possible the owning entity is associated with a shared TransformID, without having
 		// the TransformComponent attached to it)
-		fr::TransformComponent const* transformComponent = em.TryGetComponent<fr::TransformComponent>(owningEntity);
+		pr::TransformComponent const* transformComponent = em.TryGetComponent<pr::TransformComponent>(owningEntity);
 		if (!transformComponent)
 		{
-			transformComponent = &fr::TransformComponent::AttachTransformComponent(em, meshPrimitiveConcept);
+			transformComponent = &pr::TransformComponent::AttachTransformComponent(em, meshPrimitiveConcept);
 		}
 
-		fr::RenderDataComponent* meshPrimRenderCmpt = fr::RenderDataComponent::GetCreateRenderDataComponent(
+		pr::RenderDataComponent* meshPrimRenderCmpt = pr::RenderDataComponent::GetCreateRenderDataComponent(
 			em, meshPrimitiveConcept, transformComponent->GetTransformID());
 
 		meshPrimRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitiveConcept);
@@ -97,20 +97,20 @@ namespace fr
 
 
 	void MeshPrimitiveComponent::AttachMeshPrimitiveComponent(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity,
 		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::TransformComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a TransformComponent");
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 		
-		fr::RenderDataComponent* meshPrimRenderCmpt = relationship.GetFirstInHierarchyAbove<fr::RenderDataComponent>();
+		pr::RenderDataComponent* meshPrimRenderCmpt = relationship.GetFirstInHierarchyAbove<pr::RenderDataComponent>();
 
 		// Note: A Material component will typically need to be attached to the owningEntity
 		AttachMeshPrimitiveComponentHelper(
@@ -121,7 +121,7 @@ namespace fr
 	MeshPrimitiveComponent& MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 		EntityManager& em,
 		entt::entity owningEntity, 
-		fr::RenderDataComponent const& sharedRenderDataCmpt, 
+		pr::RenderDataComponent const& sharedRenderDataCmpt, 
 		core::InvPtr<gr::MeshPrimitive> const& meshPrimitive)
 	{
 		// MeshPrimitive:
@@ -133,7 +133,7 @@ namespace fr
 			});
 
 		// Mark our new MeshPrimitive as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::MeshPrimitiveComponent>>(owningEntity);
 
 		return meshPrimCmpt;
 	}
@@ -145,19 +145,19 @@ namespace fr
 		// Get the RenderDataID of the MeshConcept that owns the MeshPrimitive
 		gr::RenderDataID owningMeshRenderDataID = gr::k_invalidRenderDataID;
 
-		fr::EntityManager const* em = fr::EntityManager::Get();
-		fr::Relationship const& meshPrimRelationship = em->GetComponent<fr::Relationship>(entity);
+		pr::EntityManager const* em = pr::EntityManager::Get();
+		pr::Relationship const& meshPrimRelationship = em->GetComponent<pr::Relationship>(entity);
 		entt::entity meshConceptEntity = meshPrimRelationship.GetParent();
 		bool meshHasSkinning = false;
 		if (meshConceptEntity != entt::null) // null if the MeshPrimitive isn't owned by a MeshConcept
 		{
-			fr::RenderDataComponent const& meshConceptRenderComponent =
-				em->GetComponent<fr::RenderDataComponent>(meshConceptEntity);
+			pr::RenderDataComponent const& meshConceptRenderComponent =
+				em->GetComponent<pr::RenderDataComponent>(meshConceptEntity);
 
 			owningMeshRenderDataID = meshConceptRenderComponent.GetRenderDataID();
 			SEAssert(owningMeshRenderDataID != gr::k_invalidRenderDataID, "Invalid render data ID received from Mesh");
 
-			fr::SkinningComponent const* skinningCmpt = em->TryGetComponent<fr::SkinningComponent>(meshConceptEntity);
+			pr::SkinningComponent const* skinningCmpt = em->TryGetComponent<pr::SkinningComponent>(meshConceptEntity);
 			if (skinningCmpt)
 			{
 				meshHasSkinning = true;
@@ -195,9 +195,9 @@ namespace fr
 	}
 
 
-	void MeshPrimitiveComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity meshPrimitive)
+	void MeshPrimitiveComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity meshPrimitive)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(meshPrimitive);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(meshPrimitive);
 
 		if (ImGui::CollapsingHeader(
 			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -205,16 +205,16 @@ namespace fr
 			ImGui::Indent();
 			
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, meshPrimitive);
+			pr::RenderDataComponent::ShowImGuiWindow(em, meshPrimitive);
 
-			fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(meshPrimitive);
+			pr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<pr::MeshPrimitiveComponent>(meshPrimitive);
 			meshPrimCmpt.m_meshPrimitive->ShowImGuiWindow();
 
 			// Material:
-			fr::MaterialInstanceComponent* matCmpt = em.TryGetComponent<fr::MaterialInstanceComponent>(meshPrimitive);
+			pr::MaterialInstanceComponent* matCmpt = em.TryGetComponent<pr::MaterialInstanceComponent>(meshPrimitive);
 			if (matCmpt)
 			{
-				fr::MaterialInstanceComponent::ShowImGuiWindow(em, meshPrimitive);
+				pr::MaterialInstanceComponent::ShowImGuiWindow(em, meshPrimitive);
 			}
 			else
 			{
@@ -224,17 +224,17 @@ namespace fr
 			}
 
 			// Bounds
-			fr::BoundsComponent::ShowImGuiWindow(em, meshPrimitive);
+			pr::BoundsComponent::ShowImGuiWindow(em, meshPrimitive);
 
 			// Transform:
-			fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(meshPrimitive);
+			pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(meshPrimitive);
 			
 			entt::entity transformOwner = entt::null;
-			fr::TransformComponent* transformComponent =
-				relationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformOwner);
+			pr::TransformComponent* transformComponent =
+				relationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(transformOwner);
 			
 			ImGui::PushID(static_cast<uint64_t>(meshPrimitive));
-			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
+			pr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
 			ImGui::PopID();
 
 			ImGui::Unindent();

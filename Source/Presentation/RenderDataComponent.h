@@ -4,12 +4,12 @@
 #include "Renderer/RenderManager.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 }
 
-namespace fr
+namespace pr
 {
 	// Automatically assigns itself a unique RenderDataID
 	class RenderDataComponent
@@ -19,14 +19,14 @@ namespace fr
 
 	public:
 		static RenderDataComponent* GetCreateRenderDataComponent(
-			fr::EntityManager&, entt::entity, gr::TransformID);
+			pr::EntityManager&, entt::entity, gr::TransformID);
 
 		static RenderDataComponent& AttachSharedRenderDataComponent(
-			fr::EntityManager&, entt::entity, RenderDataComponent const&);
+			pr::EntityManager&, entt::entity, RenderDataComponent const&);
 
 	public:
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
-		static void ShowImGuiWindow(std::vector<fr::RenderDataComponent const*> const&);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity);
+		static void ShowImGuiWindow(std::vector<pr::RenderDataComponent const*> const&);
 
 
 	public:

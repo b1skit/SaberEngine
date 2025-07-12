@@ -19,40 +19,40 @@
 #include "Renderer/MeshFactory.h"
 
 
-namespace fr
+namespace pr
 {
 	void Mesh::AttachMeshConceptMarker(entt::entity owningEntity, char const* name)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
+		pr::EntityManager& em = *pr::EntityManager::Get();
 		
-		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(owningEntity);
+		em.EmplaceComponent<pr::Mesh::MeshConceptMarker>(owningEntity);
 
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
 		if (!transformCmpt)
 		{
-			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent* meshRenderData = 
-			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		pr::RenderDataComponent* meshRenderData = 
+			pr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// Before we attach a BoundsComponent, search the hierarchy above for a potential encapsulation
 		const entt::entity encapsulatingBounds =
-			relationship.GetFirstEntityInHierarchyAbove<fr::Mesh::MeshConceptMarker, fr::BoundsComponent>();
+			relationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>();
 
 		// Mesh bounds: Encompasses all attached primitive bounds
-		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity, encapsulatingBounds);
+		pr::BoundsComponent::AttachBoundsComponent(em, owningEntity, encapsulatingBounds);
 
 		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
 		meshRenderData->SetFeatureBit(gr::RenderObjectFeature::IsMeshBounds);
 	}
 
 
-	void Mesh::ShowImGuiWindow(fr::EntityManager& em, entt::entity meshConcept)
+	void Mesh::ShowImGuiWindow(pr::EntityManager& em, entt::entity meshConcept)
 	{
-		fr::NameComponent const& meshName = em.GetComponent<fr::NameComponent>(meshConcept);
+		pr::NameComponent const& meshName = em.GetComponent<pr::NameComponent>(meshConcept);
 
 		if (ImGui::CollapsingHeader(
 			std::format("Mesh \"{}\"##{}", meshName.GetName(), meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -60,21 +60,21 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
+			pr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
 
-			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
+			pr::Relationship const& meshRelationship = em.GetComponent<pr::Relationship>(meshConcept);
 
 			// Transform:
 			ImGui::PushID(static_cast<uint64_t>(meshConcept));
-			fr::TransformComponent::TransformComponent::ShowImGuiWindow(
+			pr::TransformComponent::TransformComponent::ShowImGuiWindow(
 				em, meshConcept, static_cast<uint64_t>(meshConcept));
 			ImGui::PopID();
 
 			// Bounds:
-			fr::BoundsComponent::ShowImGuiWindow(em, meshConcept);
+			pr::BoundsComponent::ShowImGuiWindow(em, meshConcept);
 
 			// Mesh primitives:
-			const uint32_t numMeshPrims = meshRelationship.GetNumInImmediateChildren<fr::MeshPrimitiveComponent>();
+			const uint32_t numMeshPrims = meshRelationship.GetNumInImmediateChildren<pr::MeshPrimitiveComponent>();
 			if (ImGui::CollapsingHeader(
 				std::format("Mesh Primitives ({})##{}", numMeshPrims, meshName.GetUniqueID()).c_str(),
 				ImGuiTreeNodeFlags_None))
@@ -84,13 +84,13 @@ namespace fr
 				entt::entity curChild = meshRelationship.GetFirstChild();
 				do
 				{
-					fr::MeshPrimitiveComponent* meshPrimCmpt = em.TryGetComponent<fr::MeshPrimitiveComponent>(curChild);
+					pr::MeshPrimitiveComponent* meshPrimCmpt = em.TryGetComponent<pr::MeshPrimitiveComponent>(curChild);
 					if (meshPrimCmpt)
 					{
 						meshPrimCmpt->ShowImGuiWindow(em, curChild);
 					}
 
-					fr::Relationship const& childRelationship = em.GetComponent<fr::Relationship>(curChild);
+					pr::Relationship const& childRelationship = em.GetComponent<pr::Relationship>(curChild);
 					curChild = childRelationship.GetNext();
 				} while (curChild != meshRelationship.GetFirstChild());
 
@@ -98,7 +98,7 @@ namespace fr
 			}
 
 			// Skinning component:
-			fr::SkinningComponent::ShowImGuiWindow(em, meshConcept);
+			pr::SkinningComponent::ShowImGuiWindow(em, meshConcept);
 
 			ImGui::Unindent();
 		}
@@ -200,7 +200,7 @@ namespace fr
 		};
 		static HelloTriangleSpawnParams s_helloTriangleSpawnParams;
 
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		static char* s_nameInputBuffer = nullptr;
 		static std::string s_meshFactoryMaterialName;
@@ -301,7 +301,7 @@ namespace fr
 			static uint32_t s_selectedMaterialIdx = 0;
 			std::vector<std::string> materialNames;
 			{
-				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<fr::MaterialInstanceComponent>();
+				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<pr::MaterialInstanceComponent>();
 
 				materialNames.reserve(materialEntities.size() + 1); // +1 for the default material
 
@@ -309,7 +309,7 @@ namespace fr
 				std::unordered_set<std::string> seenMaterials;
 				for (entt::entity matEntity : materialEntities)
 				{
-					fr::MaterialInstanceComponent& material = em->GetComponent<fr::MaterialInstanceComponent>(matEntity);
+					pr::MaterialInstanceComponent& material = em->GetComponent<pr::MaterialInstanceComponent>(matEntity);
 
 					if (!seenMaterials.contains(material.GetMaterial()->GetName()))
 					{
@@ -354,8 +354,8 @@ namespace fr
 			{
 			case SourceType::MeshFactory:
 			{
-				const entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer, entt::null);
-				fr::Mesh::AttachMeshConceptMarker(sceneNode, s_nameInputBuffer);
+				const entt::entity sceneNode = pr::SceneNode::Create(*em, s_nameInputBuffer, entt::null);
+				pr::Mesh::AttachMeshConceptMarker(sceneNode, s_nameInputBuffer);
 
 				glm::vec3 minXYZ = glm::vec3(0.f);
 				glm::vec3 maxXYZ = glm::vec3(0.f);
@@ -419,7 +419,7 @@ namespace fr
 				default: SEAssertF("Invalid mesh factory type");
 				}
 
-				entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
+				entt::entity meshPrimimitiveEntity = pr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 					*em,
 					sceneNode,
 					mesh,
@@ -430,7 +430,7 @@ namespace fr
 				core::InvPtr<gr::Material> const& material =
 					em->GetInventory()->Get<gr::Material>(s_meshFactoryMaterialName.c_str());
 
-				fr::MaterialInstanceComponent::AttachMaterialComponent(
+				pr::MaterialInstanceComponent::AttachMaterialComponent(
 					*em, meshPrimimitiveEntity, material);
 			}
 			break;

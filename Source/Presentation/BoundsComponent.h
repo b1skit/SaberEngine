@@ -8,7 +8,7 @@ namespace util
 	class ByteVector;
 }
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 	class NameComponent;
@@ -27,26 +27,26 @@ namespace fr
 
 
 	public:
-		static fr::BoundsComponent& CreateSceneBoundsConcept(fr::EntityManager&);
+		static pr::BoundsComponent& CreateSceneBoundsConcept(pr::EntityManager&);
 		
-		static fr::BoundsComponent& AttachBoundsComponent(
-			fr::EntityManager&, entt::entity owningEntity, entt::entity encapsulatingBounds);
+		static pr::BoundsComponent& AttachBoundsComponent(
+			pr::EntityManager&, entt::entity owningEntity, entt::entity encapsulatingBounds);
 
-		static fr::BoundsComponent& AttachBoundsComponent(
-			fr::EntityManager&, 
+		static pr::BoundsComponent& AttachBoundsComponent(
+			pr::EntityManager&, 
 			entt::entity,
 			entt::entity encapsulatingBounds,
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ);
 
 		static void UpdateBoundsComponent(
-			fr::EntityManager&, fr::BoundsComponent&, fr::Relationship const&, entt::entity);
+			pr::EntityManager&, pr::BoundsComponent&, pr::Relationship const&, entt::entity);
 
 
 	public:
-		static gr::Bounds::RenderData CreateRenderData(entt::entity, fr::BoundsComponent const&);
+		static gr::Bounds::RenderData CreateRenderData(entt::entity, pr::BoundsComponent const&);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity, bool startOpen = false);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity, bool startOpen = false);
 
 
 	public:
@@ -86,9 +86,9 @@ namespace fr
 
 	private:
 		void ExpandEncapsulatingBounds(
-			fr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
+			pr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
 		void ExpandEncapsulatingBounds(
-			fr::EntityManager&, glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity);
+			pr::EntityManager&, glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity);
 
 		// Returns true if the bounds was modified, false otherwise
 		bool ExpandBoundsInternal(
@@ -108,8 +108,8 @@ namespace fr
 		BoundsComponent& operator=(BoundsComponent&&) noexcept = default;
 		~BoundsComponent() = default;
 
-		bool operator==(fr::BoundsComponent const&) const;
-		bool operator!=(fr::BoundsComponent const&) const;
+		bool operator==(pr::BoundsComponent const&) const;
+		bool operator!=(pr::BoundsComponent const&) const;
 
 
 	private:

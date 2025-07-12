@@ -11,7 +11,7 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace fr
+namespace pr
 {
 	gr::Material::MaterialInstanceRenderData MaterialInstanceComponent::CreateRenderData(
 		entt::entity, MaterialInstanceComponent const& matComponent)
@@ -24,22 +24,22 @@ namespace fr
 
 
 	MaterialInstanceComponent& MaterialInstanceComponent::AttachMaterialComponent(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity meshPrimitiveConcept,
 		core::InvPtr<gr::Material> const& sceneMaterial)
 	{
 		SEAssert(sceneMaterial != nullptr, "Cannot attach a null material");
-		SEAssert(em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept),
+		SEAssert(em.HasComponent<pr::MeshPrimitiveComponent>(meshPrimitiveConcept),
 			"Material components must be attached to entities with a MeshPrimitiveComponent");
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(meshPrimitiveConcept),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(meshPrimitiveConcept),
 			"Material components must be attached to entities with a RenderDataComponent");
 
 		// Attach the material component:
-		fr::MaterialInstanceComponent& matComponent = 
-			*em.EmplaceComponent<fr::MaterialInstanceComponent>(meshPrimitiveConcept, PrivateCTORTag{}, sceneMaterial);
+		pr::MaterialInstanceComponent& matComponent = 
+			*em.EmplaceComponent<pr::MaterialInstanceComponent>(meshPrimitiveConcept, PrivateCTORTag{}, sceneMaterial);
 
 		// Mark our Material as dirty:
-		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialInstanceComponent>>(meshPrimitiveConcept);
+		em.EmplaceOrReplaceComponent<DirtyMarker<pr::MaterialInstanceComponent>>(meshPrimitiveConcept);
 
 		return matComponent;
 	}
@@ -54,9 +54,9 @@ namespace fr
 	}
 
 
-	void MaterialInstanceComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	void MaterialInstanceComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningEntity)
 	{
-		fr::MaterialInstanceComponent const& matCmpt = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
+		pr::MaterialInstanceComponent const& matCmpt = em.GetComponent<pr::MaterialInstanceComponent>(owningEntity);
 
 		const uint64_t ptrToID = util::PtrToID(&matCmpt);
 
@@ -66,10 +66,10 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+			pr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
 			// MaterialInstanceRenderData:
-			fr::MaterialInstanceComponent& matComponent = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
+			pr::MaterialInstanceComponent& matComponent = em.GetComponent<pr::MaterialInstanceComponent>(owningEntity);
 			matComponent.m_isDirty |= gr::Material::ShowImGuiWindow(matComponent.m_instanceData);
 
 			if (ImGui::Button(std::format("Reset##{}", ptrToID).c_str()))

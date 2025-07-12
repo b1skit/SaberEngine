@@ -4,13 +4,13 @@
 #include "SceneNodeConcept.h"
 
 
-namespace fr
+namespace pr
 {
 	entt::entity SceneNode::Create(EntityManager& em, std::string_view name, entt::entity parent)
 	{
 		entt::entity sceneNodeEntity = em.CreateEntity(name);
 
-		fr::Relationship& sceneNodeRelationship = em.GetComponent<fr::Relationship>(sceneNodeEntity);
+		pr::Relationship& sceneNodeRelationship = em.GetComponent<pr::Relationship>(sceneNodeEntity);
 		sceneNodeRelationship.SetParent(em, parent);
 		
 		return sceneNodeEntity;

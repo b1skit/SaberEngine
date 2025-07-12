@@ -7,7 +7,7 @@
 #include "Core/Interfaces/INamedObject.h"
 
 
-namespace fr
+namespace pr
 {
 	class SceneManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{

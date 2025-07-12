@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace fr
+namespace pr
 {
 	class Camera;
 	class EntityManager;
@@ -24,12 +24,12 @@ namespace fr
 
 		static void Update(
 			CameraControlComponent&, 
-			fr::Transform& playerTransform, 
-			fr::Camera const&, 
-			fr::Transform& cameraTransform, 
+			pr::Transform& playerTransform, 
+			pr::Camera const&, 
+			pr::Transform& cameraTransform, 
 			double stepTimeMs);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camControlEntity, entt::entity currentCam);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity camControlEntity, entt::entity currentCam);
 
 
 	public:
@@ -46,7 +46,7 @@ namespace fr
 		float m_mouseYawSensitivity;
 
 		entt::entity m_prevCameraParentEntity;
-		fr::Transform* m_prevCameraTransformParent;
+		pr::Transform* m_prevCameraTransformParent;
 
 		glm::vec3 m_prevLocalTranslation;
 		glm::quat m_prevLocalRotation;

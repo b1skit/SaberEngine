@@ -6,23 +6,23 @@
 #include "Renderer/RenderSystem.h"
 
 
-namespace fr
+namespace pr
 {
 	std::atomic<gr::RenderDataID> RenderDataComponent::s_objectIDs = 0;
 
 
 	RenderDataComponent* RenderDataComponent::GetCreateRenderDataComponent(
-		fr::EntityManager& em, entt::entity entity, gr::TransformID transformID)
+		pr::EntityManager& em, entt::entity entity, gr::TransformID transformID)
 	{
-		RenderDataComponent* renderDataCmpt = em.TryGetComponent<fr::RenderDataComponent>(entity);
+		RenderDataComponent* renderDataCmpt = em.TryGetComponent<pr::RenderDataComponent>(entity);
 
 		SEAssert(!renderDataCmpt || renderDataCmpt->GetTransformID() == transformID,
 			"RenderDataComponent already exists, but is associated with a different TransformID");
 
 		if (!renderDataCmpt)
 		{
-			em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
-			renderDataCmpt = em.EmplaceComponent<fr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
+			em.EmplaceComponent<pr::RenderDataComponent::NewRegistrationMarker>(entity);
+			renderDataCmpt = em.EmplaceComponent<pr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
 		}
 		
 		return renderDataCmpt;
@@ -30,10 +30,10 @@ namespace fr
 
 
 	RenderDataComponent& RenderDataComponent::AttachSharedRenderDataComponent(
-		fr::EntityManager& em, entt::entity entity, RenderDataComponent const& renderDataComponent)
+		pr::EntityManager& em, entt::entity entity, RenderDataComponent const& renderDataComponent)
 	{
-		em.EmplaceComponent<fr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *em.EmplaceComponent<fr::RenderDataComponent>(
+		em.EmplaceComponent<pr::RenderDataComponent::NewRegistrationMarker>(entity);
+		return *em.EmplaceComponent<pr::RenderDataComponent>(
 			entity, 
 			PrivateCTORTag{},
 			renderDataComponent.m_renderDataID, 
@@ -41,11 +41,11 @@ namespace fr
 	}
 
 
-	void RenderDataComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	void RenderDataComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningEntity)
 	{
 		ImGui::Indent();
 
-		fr::RenderDataComponent const& renderDataCmpt = em.GetComponent<fr::RenderDataComponent>(owningEntity);
+		pr::RenderDataComponent const& renderDataCmpt = em.GetComponent<pr::RenderDataComponent>(owningEntity);
 		ImGui::Text(std::format("RenderDataID: {}, TransformID: {}",
 			renderDataCmpt.GetRenderDataID(), renderDataCmpt.GetTransformID()).c_str());
 
@@ -53,7 +53,7 @@ namespace fr
 	}
 
 
-	void RenderDataComponent::ShowImGuiWindow(std::vector<fr::RenderDataComponent const*> const& renderDataComponents)
+	void RenderDataComponent::ShowImGuiWindow(std::vector<pr::RenderDataComponent const*> const& renderDataComponents)
 	{		
 		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 		constexpr int numCols = 2;

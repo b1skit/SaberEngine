@@ -7,44 +7,44 @@
 #include "TransformComponent.h"
 
 
-namespace fr
+namespace pr
 {
 	void CameraComponent::CreateCameraConcept(
-		fr::EntityManager& em, entt::entity sceneNode, std::string_view name, gr::Camera::Config const& cameraConfig)
+		pr::EntityManager& em, entt::entity sceneNode, std::string_view name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert(sceneNode != entt::null, "Cannot attach a CameraComponent to a null sceneNode");
 
-		SEAssert(em.HasComponent<fr::TransformComponent>(sceneNode),
+		SEAssert(em.HasComponent<pr::TransformComponent>(sceneNode),
 			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
+		pr::TransformComponent& owningTransform = em.GetComponent<pr::TransformComponent>(sceneNode);
 
-		fr::RenderDataComponent::GetCreateRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
+		pr::RenderDataComponent::GetCreateRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
 
 		// CameraComponent:
-		fr::CameraComponent* cameraComponent = 
-			em.EmplaceComponent<fr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
+		pr::CameraComponent* cameraComponent = 
+			em.EmplaceComponent<pr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
 
 		cameraComponent->MarkDirty(em, sceneNode);
 	}
 
 
 	CameraComponent& CameraComponent::AttachCameraComponent(
-		fr::EntityManager& em, entt::entity owningEntity, std::string_view name, gr::Camera::Config const& cameraConfig)
+		pr::EntityManager& em, entt::entity owningEntity, std::string_view name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert(owningEntity != entt::null, "Cannot attach a CameraComponent to a null entity");
 
-		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::TransformComponent>(owningEntity),
 			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A CameraComponent must be attached to an entity that has a RenderDataComponent");
 
-		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+		pr::TransformComponent& owningTransform = em.GetComponent<pr::TransformComponent>(owningEntity);
 
 		// CameraComponent:
-		fr::CameraComponent* cameraComponent = 
-			em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
+		pr::CameraComponent* cameraComponent = 
+			em.EmplaceComponent<pr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
 
 		cameraComponent->MarkDirty(em, owningEntity);
 
@@ -54,17 +54,17 @@ namespace fr
 
 	void CameraComponent::MarkDirty(EntityManager& em, entt::entity cameraEntity)
 	{
-		em.TryEmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
+		em.TryEmplaceComponent<DirtyMarker<pr::CameraComponent>>(cameraEntity);
 	}
 
 
 	gr::Camera::RenderData CameraComponent::CreateRenderData(entt::entity entity, CameraComponent const& cameraComponent)
 	{
-		fr::EntityManager const* em = fr::EntityManager::Get();
-		fr::NameComponent const& nameCmpt = em->GetComponent<fr::NameComponent>(entity);
+		pr::EntityManager const* em = pr::EntityManager::Get();
+		pr::NameComponent const& nameCmpt = em->GetComponent<pr::NameComponent>(entity);
 
 		gr::Camera::RenderData renderData = gr::Camera::RenderData{
-			.m_cameraParams = fr::Camera::BuildCameraData(cameraComponent.GetCamera()),
+			.m_cameraParams = pr::Camera::BuildCameraData(cameraComponent.GetCamera()),
 			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
 			.m_transformID = cameraComponent.GetTransformID(),
 			.m_isActive = cameraComponent.GetCamera().IsActive(),
@@ -76,9 +76,9 @@ namespace fr
 	}
 
 
-	void CameraComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity camEntity)
+	void CameraComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity camEntity)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(camEntity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(camEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("Camera \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -86,13 +86,13 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
+			pr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
 			
-			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
+			pr::CameraComponent& camCmpt = em.GetComponent<pr::CameraComponent>(camEntity);
 			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
 
-			fr::TransformComponent& camTransformCmpt = em.GetComponent<fr::TransformComponent>(camEntity);
-			fr::TransformComponent::ShowImGuiWindow(em, camEntity, static_cast<uint32_t>(camEntity));
+			pr::TransformComponent& camTransformCmpt = em.GetComponent<pr::TransformComponent>(camEntity);
+			pr::TransformComponent::ShowImGuiWindow(em, camEntity, static_cast<uint32_t>(camEntity));
 
 			ImGui::Unindent();
 		}
@@ -100,7 +100,7 @@ namespace fr
 
 
 	CameraComponent::CameraComponent(
-		PrivateCTORTag, gr::Camera::Config const& cameraConfig, fr::TransformComponent& transformCmpt)
+		PrivateCTORTag, gr::Camera::Config const& cameraConfig, pr::TransformComponent& transformCmpt)
 		: m_transformID(transformCmpt.GetTransformID())
 		, m_camera(cameraConfig, &transformCmpt.GetTransform())
 	{

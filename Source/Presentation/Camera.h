@@ -5,7 +5,7 @@
 #include "Renderer/Shaders/Common/CameraParams.h"
 
 
-namespace fr
+namespace pr
 {
 	class Transform;
 
@@ -13,11 +13,11 @@ namespace fr
 	class Camera final
 	{
 	public:
-		static CameraData BuildCameraData(fr::Camera const&);
+		static CameraData BuildCameraData(pr::Camera const&);
 
 
 	public:
-		Camera(gr::Camera::Config const& camConfig, fr::Transform const* transform);
+		Camera(gr::Camera::Config const& camConfig, pr::Transform const* transform);
 
 		Camera(Camera const&) = default;
 		Camera(Camera&&) noexcept = default;
@@ -44,7 +44,7 @@ namespace fr
 		gr::Camera::Config const& GetCameraConfig() const;
 		void SetCameraConfig(gr::Camera::Config const& newConfig);
 
-		fr::Transform const* GetTransform() const;
+		pr::Transform const* GetTransform() const;
 
 		bool SetActive(bool isActive);
 		bool IsActive() const;
@@ -56,7 +56,7 @@ namespace fr
 
 
 	private:
-		fr::Transform const* m_transform; // We cache this for convenience due to a Camera's dependence on its Transform
+		pr::Transform const* m_transform; // We cache this for convenience due to a Camera's dependence on its Transform
 
 		gr::Camera::Config m_cameraConfig;
 		
@@ -140,7 +140,7 @@ namespace fr
 	}
 
 
-	inline fr::Transform const* Camera::GetTransform() const
+	inline pr::Transform const* Camera::GetTransform() const
 	{
 		return m_transform;
 	}

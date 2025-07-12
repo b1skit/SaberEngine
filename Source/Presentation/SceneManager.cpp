@@ -20,11 +20,11 @@
 #include "Renderer/RenderManager.h"
 
 
-namespace fr
+namespace pr
 {
 	SceneManager* SceneManager::Get()
 	{
-		static std::unique_ptr<fr::SceneManager> instance = std::make_unique<fr::SceneManager>();
+		static std::unique_ptr<pr::SceneManager> instance = std::make_unique<pr::SceneManager>();
 		return instance.get();
 	}
 
@@ -68,22 +68,22 @@ namespace fr
 		LOG("SceneManager: Resetting scene");
 
 		// Schedule initial scene setup:
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 		em->EnqueueEntityCommand([em]()
 			{
 				// Create a scene bounds entity:
-				fr::BoundsComponent::CreateSceneBoundsConcept(*em);
+				pr::BoundsComponent::CreateSceneBoundsConcept(*em);
 				LOG("Created scene BoundsComponent");
 
 				// Add an unbound camera controller to the scene:
-				fr::CameraControlComponent::CreateCameraControlConcept(*em, entt::null);
+				pr::CameraControlComponent::CreateCameraControlConcept(*em, entt::null);
 				LOG("Created unbound CameraControlComponent");
 			});
 
 		// Schedule creation of a default camera. Note: The ordering is important here, we schedule this 1st which
 		// ensures if we import a camera after this point it will be activated
-		fr::EntityManager::Get()->EnqueueEntityCommand<fr::SetMainCameraCommand>(
-			load::CreateDefaultCamera(fr::EntityManager::Get()).m_owningEntity);
+		pr::EntityManager::Get()->EnqueueEntityCommand<pr::SetMainCameraCommand>(
+			load::CreateDefaultCamera(pr::EntityManager::Get()).m_owningEntity);
 
 		core::InvPtr<re::Texture> defaultIBL =
 			m_inventory->Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
@@ -91,15 +91,15 @@ namespace fr
 		em->EnqueueEntityCommand([em, defaultIBL]()
 			{
 				// Create an Ambient LightComponent, and make it active if requested:
-				const bool ambientExists = em->EntityExists<fr::LightComponent::AmbientIBLDeferredMarker>();
+				const bool ambientExists = em->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
 				if (!ambientExists)
 				{
-					const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+					const entt::entity ambientLight = pr::LightComponent::CreateDeferredAmbientLightConcept(
 						*em,
 						defaultIBL->GetName().c_str(),
 						defaultIBL);
 
-					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+					em->EnqueueEntityCommand<pr::SetActiveAmbientLightCommand>(ambientLight);
 				}
 			});
 	}
@@ -263,12 +263,12 @@ namespace fr
 				{
 				case EntityType::Light:
 				{
-					fr::LightComponent::ShowImGuiSpawnWindow();
+					pr::LightComponent::ShowImGuiSpawnWindow();
 				}
 				break;
 				case EntityType::Mesh:
 				{
-					fr::Mesh::ShowImGuiSpawnWindow();
+					pr::Mesh::ShowImGuiSpawnWindow();
 				}
 				break;
 				default: SEAssertF("Invalid EntityType");

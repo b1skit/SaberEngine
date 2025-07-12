@@ -5,7 +5,7 @@
 #include "Renderer/GraphicsSystem_Debug.h"
 
 
-namespace fr
+namespace pr
 {
 	class GraphicsService_Debug final : public virtual IGraphicsService
 	{

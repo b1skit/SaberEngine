@@ -3,7 +3,7 @@
 #include "../Interfaces/IPlatformObject.h"
 
 
-namespace fr
+namespace pr
 {
 	class UIManager;
 }
@@ -52,7 +52,7 @@ namespace host
 
 
 	protected:
-		friend class fr::UIManager;
+		friend class pr::UIManager;
 		void SetRelativeMouseMode(bool enabled); // enabled: Hides cursor and wraps movements around boundaries
 
 

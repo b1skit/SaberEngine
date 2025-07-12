@@ -9,7 +9,7 @@
 #include "Core/Interfaces/IEventListener.h"
 
 
-namespace fr
+namespace pr
 {
 	class BoundsComponent;
 
@@ -65,14 +65,14 @@ namespace fr
 
 	private:
 		void SetMainCamera(entt::entity);
-		friend fr::SetMainCameraCommand;
+		friend pr::SetMainCameraCommand;
 
 		void SetActiveAmbientLight(entt::entity);
-		friend fr::SetActiveAmbientLightCommand;
+		friend pr::SetActiveAmbientLightCommand;
 
 		entt::entity GetActiveAmbientLight() const;
 
-		fr::BoundsComponent const* GetSceneBounds() const;
+		pr::BoundsComponent const* GetSceneBounds() const;
 		entt::entity GetMainCamera() const;
 
 		void Reset();

@@ -6,12 +6,12 @@
 #include "Renderer/RenderObjectIDs.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 
 
-	// EnTT wrapper for a fr::Transform, to guarantee pointer stability.
+	// EnTT wrapper for a pr::Transform, to guarantee pointer stability.
 	// Automatically assigns itself a unique TransformID
 	class TransformComponent
 	{
@@ -22,43 +22,43 @@ namespace fr
 	public:
 		struct NewIDMarker {}; // Attached when a a new TransformID is allocated
 
-		static TransformComponent& AttachTransformComponent(fr::EntityManager&, entt::entity);
+		static TransformComponent& AttachTransformComponent(pr::EntityManager&, entt::entity);
 
-		static gr::Transform::RenderData CreateRenderData(fr::TransformComponent&);
+		static gr::Transform::RenderData CreateRenderData(pr::TransformComponent&);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
 
 
 	public:
-		fr::Transform& GetTransform();
-		fr::Transform const& GetTransform() const;
+		pr::Transform& GetTransform();
+		pr::Transform const& GetTransform() const;
 
 		gr::TransformID GetTransformID() const;
 
 
 	public: // Transform systems:
 		static void DispatchTransformUpdateThreads(
-			std::vector<std::future<void>>& taskFuturesOut, fr::Transform* rootNode);
+			std::vector<std::future<void>>& taskFuturesOut, pr::Transform* rootNode);
 
 
 	private:
-		fr::Transform m_transform;
+		pr::Transform m_transform;
 
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
-		TransformComponent(PrivateCTORTag, fr::Transform* parent);
+		TransformComponent(PrivateCTORTag, pr::Transform* parent);
 	};
 
 
-	inline fr::Transform& TransformComponent::GetTransform()
+	inline pr::Transform& TransformComponent::GetTransform()
 	{
 		return m_transform;
 	}
 
 
-	inline fr::Transform const& TransformComponent::GetTransform() const
+	inline pr::Transform const& TransformComponent::GetTransform() const
 	{
 		return m_transform;
 	}
@@ -76,7 +76,7 @@ namespace fr
 	class UpdateTransformDataRenderCommand
 	{
 	public:
-		UpdateTransformDataRenderCommand(fr::TransformComponent&);
+		UpdateTransformDataRenderCommand(pr::TransformComponent&);
 
 		static void Execute(void*);
 		static void Destroy(void*);

@@ -9,7 +9,7 @@ namespace core
 	class InvPtr;
 }
 
-namespace fr
+namespace pr
 {
 	class NameComponent;
 
@@ -18,12 +18,12 @@ namespace fr
 	{
 	public:
 		static MaterialInstanceComponent& AttachMaterialComponent(
-			fr::EntityManager&, entt::entity meshPrimitiveConcept, core::InvPtr<gr::Material> const&);
+			pr::EntityManager&, entt::entity meshPrimitiveConcept, core::InvPtr<gr::Material> const&);
 
 	public:
 		static gr::Material::MaterialInstanceRenderData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity);
 
 
 	public:

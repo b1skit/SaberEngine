@@ -12,7 +12,7 @@ namespace host
 	class Window;
 }
 
-namespace fr
+namespace pr
 {
 	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
@@ -81,7 +81,7 @@ namespace fr
 
 
 	private: // Graphics services:
-		fr::CullingGraphicsService m_cullingGraphicsService;
-		fr::GraphicsService_Debug m_debugGraphicsService;
+		pr::CullingGraphicsService m_cullingGraphicsService;
+		pr::GraphicsService_Debug m_debugGraphicsService;
 	};
 }

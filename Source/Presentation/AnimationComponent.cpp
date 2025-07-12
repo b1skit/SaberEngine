@@ -7,9 +7,9 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace fr
+namespace pr
 {
-	AnimationController* AnimationController::CreateAnimationController(fr::EntityManager& em, char const* name)
+	AnimationController* AnimationController::CreateAnimationController(pr::EntityManager& em, char const* name)
 	{
 		entt::entity newEntity = em.CreateEntity(name);
 
@@ -29,7 +29,7 @@ namespace fr
 
 
 	AnimationController* AnimationController::CreateAnimationController(
-		fr::EntityManager& em, char const* name, std::unique_ptr<AnimationController>&& initializedAnimationController)
+		pr::EntityManager& em, char const* name, std::unique_ptr<AnimationController>&& initializedAnimationController)
 	{
 		SEAssert(initializedAnimationController != nullptr, "initializedAnimationController is null");
 
@@ -128,9 +128,9 @@ namespace fr
 	}
 
 
-	void AnimationController::ShowImGuiWindow(fr::EntityManager& em, entt::entity animControllerEntity)
+	void AnimationController::ShowImGuiWindow(pr::EntityManager& em, entt::entity animControllerEntity)
 	{
-		fr::NameComponent const& nameComponent = em.GetComponent<fr::NameComponent>(animControllerEntity);
+		pr::NameComponent const& nameComponent = em.GetComponent<pr::NameComponent>(animControllerEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("Animation Controller: \"{}\"##{}", 
@@ -140,7 +140,7 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			fr::AnimationController& animController = em.GetComponent<fr::AnimationController>(animControllerEntity);
+			pr::AnimationController& animController = em.GetComponent<pr::AnimationController>(animControllerEntity);
 
 			if (animController.HasAnimations())
 			{
@@ -169,24 +169,24 @@ namespace fr
 				if (ImGui::Button(std::format("Stop##{}", nameComponent.GetUniqueID()).c_str(),
 					k_buttonDims))
 				{
-					animController.SetAnimationState(fr::AnimationState::Stopped);
+					animController.SetAnimationState(pr::AnimationState::Stopped);
 				}
 
 				ImGui::SameLine();
 
-				const fr::AnimationState currentAnimationState = animController.GetAnimationState();
+				const pr::AnimationState currentAnimationState = animController.GetAnimationState();
 				if (ImGui::Button(
-					std::format("{}##{}", currentAnimationState != fr::AnimationState::Playing ? "Play" : "Pause",
+					std::format("{}##{}", currentAnimationState != pr::AnimationState::Playing ? "Play" : "Pause",
 						nameComponent.GetUniqueID()).c_str(),
 					k_buttonDims))
 				{
-					if (currentAnimationState != fr::AnimationState::Playing)
+					if (currentAnimationState != pr::AnimationState::Playing)
 					{
-						animController.SetAnimationState(fr::AnimationState::Playing);
+						animController.SetAnimationState(pr::AnimationState::Playing);
 					}
 					else
 					{
-						animController.SetAnimationState(fr::AnimationState::Paused);
+						animController.SetAnimationState(pr::AnimationState::Paused);
 					}
 				}
 
@@ -252,20 +252,20 @@ namespace fr
 
 
 	AnimationComponent* AnimationComponent::AttachAnimationComponent(
-		fr::EntityManager& em, entt::entity entity, AnimationController const* animController)
+		pr::EntityManager& em, entt::entity entity, AnimationController const* animController)
 	{
 		SEAssert(animController != nullptr, "Animation controller cannot be null");
 
-		fr::AnimationComponent* animationCmpt = 
-			em.EmplaceComponent<fr::AnimationComponent>(entity, animController, PrivateCTORTag{});
+		pr::AnimationComponent* animationCmpt = 
+			em.EmplaceComponent<pr::AnimationComponent>(entity, animController, PrivateCTORTag{});
 
 		return animationCmpt;
 	}
 
 
 	void AnimationComponent::GetPrevNextKeyframeIdx(
-		fr::AnimationController const* animController, 
-		fr::AnimationData::Channel const& channel, 
+		pr::AnimationController const* animController, 
+		pr::AnimationData::Channel const& channel, 
 		size_t& prevKeyframeIdxOut,
 		size_t& nextKeyframeIdxOut)
 	{
@@ -333,7 +333,7 @@ namespace fr
 
 
 	void AnimationComponent::ApplyAnimation(
-		fr::AnimationComponent const& animCmpt, fr::TransformComponent& transformCmpt)
+		pr::AnimationComponent const& animCmpt, pr::TransformComponent& transformCmpt)
 	{
 		if (animCmpt.m_animationController->GetAnimationState() != AnimationState::Playing)
 		{
@@ -347,7 +347,7 @@ namespace fr
 			return; // Node is not animated by the given keyframe times index
 		}
 
-		fr::Transform& transform = transformCmpt.GetTransform();
+		pr::Transform& transform = transformCmpt.GetTransform();
 
 		const float currentTimeSec = animCmpt.m_animationController->GetActiveClampedAnimationTimeSec();
 
@@ -384,7 +384,7 @@ namespace fr
 			case AnimationPath::Rotation:
 			{
 				glm::quat interpolatedValue;
-				if (channel.m_interpolationMode == fr::InterpolationMode::SphericalLinearInterpolation)
+				if (channel.m_interpolationMode == pr::InterpolationMode::SphericalLinearInterpolation)
 				{
 					interpolatedValue = GetSphericalLinearInterpolatedValue(
 						channel.m_interpolationMode,

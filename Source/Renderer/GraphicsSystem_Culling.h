@@ -7,7 +7,7 @@
 #include "Core/AccessKey.h"
 
 
-namespace fr
+namespace pr
 {
 	class CullingGraphicsService;
 }
@@ -78,7 +78,7 @@ namespace gr
 
 
 	public: // Culling service interface:
-		using AccessKey = accesscontrol::AccessKey<CullingGraphicsSystem, fr::CullingGraphicsService>;
+		using AccessKey = accesscontrol::AccessKey<CullingGraphicsSystem, pr::CullingGraphicsService>;
 
 		void EnableCulling(AccessKey, bool isEnabled);
 

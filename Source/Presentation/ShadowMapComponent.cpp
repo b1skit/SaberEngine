@@ -17,12 +17,12 @@ namespace
 
 
 	gr::Camera::Config SnapTransformAndComputeDirectionalShadowCameraConfig(
-		fr::ShadowMap const& shadowMap,
-		fr::Transform& lightTransform,
-		fr::BoundsComponent const* sceneWorldBounds,
-		fr::CameraComponent const* activeSceneCam)
+		pr::ShadowMap const& shadowMap,
+		pr::Transform& lightTransform,
+		pr::BoundsComponent const* sceneWorldBounds,
+		pr::CameraComponent const* activeSceneCam)
 	{
-		SEAssert(shadowMap.GetShadowMapType() == fr::ShadowMap::ShadowType::Orthographic, "Unexpected shadow map type");
+		SEAssert(shadowMap.GetShadowMapType() == pr::ShadowMap::ShadowType::Orthographic, "Unexpected shadow map type");
 		
 		// TODO: Make the padding around orthographic shadow map edges tuneable
 		constexpr float k_padding = 1.f;
@@ -32,12 +32,12 @@ namespace
 		shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Orthographic;
 		shadowCamConfig.m_yFOV = 0.f; // Not used
 
-		fr::ShadowMap::ShadowParams directionalProperties =
-			shadowMap.GetTypeProperties(fr::ShadowMap::ShadowType::Orthographic);
+		pr::ShadowMap::ShadowParams directionalProperties =
+			shadowMap.GetTypeProperties(pr::ShadowMap::ShadowType::Orthographic);
 
 		switch (directionalProperties.m_orthographic.m_frustumSnapMode)
 		{
-		case fr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::SceneBounds:
+		case pr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::SceneBounds:
 		{
 			// Set the light's location so that it's oriented directly in the middle of the bounds, looking towards the
 			// bounds region. This ensures the near and far planes are both on the same side of the X-axis, so that we
@@ -45,7 +45,7 @@ namespace
 			// correct to have our light oriented towards its shadow camera frustum)
 			if (sceneWorldBounds)
 			{
-				fr::BoundsComponent lightSpaceSceneBounds =
+				pr::BoundsComponent lightSpaceSceneBounds =
 					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));
 
 				glm::vec4 centerPoint = glm::vec4(
@@ -95,15 +95,15 @@ namespace
 			}
 		}
 		break;
-		case fr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::ActiveCamera:
+		case pr::ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::ActiveCamera:
 		{
 			if (activeSceneCam && sceneWorldBounds)
 			{
-				fr::BoundsComponent const& lightSpaceSceneBounds =
+				pr::BoundsComponent const& lightSpaceSceneBounds =
 					sceneWorldBounds->GetTransformedAABBBounds(glm::inverse(lightTransform.GetGlobalMatrix()));
 
 				// Omit any scale components from the camera's view matrix
-				fr::Transform const* sceneCamTransform = activeSceneCam->GetCamera().GetTransform();
+				pr::Transform const* sceneCamTransform = activeSceneCam->GetCamera().GetTransform();
 				glm::mat4 const& view = 
 					glm::inverse(sceneCamTransform->GetGlobalTranslationMat() * sceneCamTransform->GetGlobalRotationMat());
 
@@ -193,35 +193,35 @@ namespace
 	}
 }
 
-namespace fr
+namespace pr
 {
 	ShadowMapComponent& ShadowMapComponent::AttachShadowMapComponent(
-		EntityManager& em, entt::entity owningEntity, char const* name, fr::Light::Type lightType)
+		EntityManager& em, entt::entity owningEntity, char const* name, pr::Light::Type lightType)
 	{
-		SEAssert(em.HasComponent<fr::LightComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::LightComponent>(owningEntity),
 			"A ShadowMapComponent must be attached to a LightComponent");
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A ShadowMapComponent must be attached to an entity with a RenderDataComponent");
 
-		fr::LightComponent const& owningLightComponent = em.GetComponent<fr::LightComponent>(owningEntity);
-		fr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<fr::RenderDataComponent>(owningEntity);
+		pr::LightComponent const& owningLightComponent = em.GetComponent<pr::LightComponent>(owningEntity);
+		pr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<pr::RenderDataComponent>(owningEntity);
 
-		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<fr::ShadowMapComponent>(
+		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<pr::ShadowMapComponent>(
 			owningEntity,
 			PrivateCTORTag{},
 			lightType,
 			sharedRenderDataCmpt.GetRenderDataID(),
 			sharedRenderDataCmpt.GetTransformID());
 
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
-		fr::TransformComponent* owningTransform = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
+		pr::TransformComponent* owningTransform = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
 		SEAssert(owningTransform != nullptr, "A shadow map requires a TransformComponent");
 
 		// We need to recompute the Transform, as it's likely dirty during scene construction
 		owningTransform->GetTransform().Recompute();
 
 		// Attach a shadow map render camera:
-		fr::CameraComponent& shadowCamCmpt = fr::CameraComponent::AttachCameraComponent(
+		pr::CameraComponent& shadowCamCmpt = pr::CameraComponent::AttachCameraComponent(
 			em,
 			owningEntity,
 			std::format("{}_ShadowCam", name).c_str(),
@@ -239,7 +239,7 @@ namespace fr
 		em.EmplaceComponent<HasShadowMarker>(owningEntity);
 
 		// Finally, mark our new ShadowMapComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::ShadowMapComponent>>(owningEntity);
 
 		return shadowMapComponent;
 	}
@@ -247,28 +247,28 @@ namespace fr
 
 	gr::Camera::Config ShadowMapComponent::SnapTransformAndGenerateShadowCameraConfig(
 		ShadowMap const& shadowMap, 
-		fr::Transform& lightTransform, 
-		fr::Light const& owningLight, 
-		fr::BoundsComponent const* sceneWorldBounds,
-		fr::CameraComponent const* activeSceneCam)
+		pr::Transform& lightTransform, 
+		pr::Light const& owningLight, 
+		pr::BoundsComponent const* sceneWorldBounds,
+		pr::CameraComponent const* activeSceneCam)
 	{
 		gr::Camera::Config shadowCamConfig{};
 
 		switch (shadowMap.GetShadowMapType())
 		{
-		case fr::ShadowMap::ShadowType::Orthographic:
+		case pr::ShadowMap::ShadowType::Orthographic:
 		{
 			// Note: It's valid for sceneWorldBounds to be null if it has not been created yet
 			shadowCamConfig = SnapTransformAndComputeDirectionalShadowCameraConfig(
 				shadowMap, lightTransform, sceneWorldBounds, activeSceneCam);
 		}
 		break;
-		case fr::ShadowMap::ShadowType::Perspective:
+		case pr::ShadowMap::ShadowType::Perspective:
 		{
-			SEAssert(owningLight.GetType() == fr::Light::Type::Spot, "Unexpected light type");
+			SEAssert(owningLight.GetType() == pr::Light::Type::Spot, "Unexpected light type");
 
-			fr::Light::TypeProperties const& lightTypeProperties = 
-				owningLight.GetLightTypeProperties(fr::Light::Type::Spot);
+			pr::Light::TypeProperties const& lightTypeProperties = 
+				owningLight.GetLightTypeProperties(pr::Light::Type::Spot);
 
 			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Perspective;
 
@@ -279,16 +279,16 @@ namespace fr
 			shadowCamConfig.m_aspectRatio = 1.f;
 		}
 		break;
-		case fr::ShadowMap::ShadowType::CubeMap:
+		case pr::ShadowMap::ShadowType::CubeMap:
 		{
-			SEAssert(owningLight.GetType() == fr::Light::Type::Point, "Unexpected light type");
+			SEAssert(owningLight.GetType() == pr::Light::Type::Point, "Unexpected light type");
 
 			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
 
 			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;		
 
 			shadowCamConfig.m_near = k_defaultShadowCamNear;
-			shadowCamConfig.m_far = owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
+			shadowCamConfig.m_far = owningLight.GetLightTypeProperties(pr::Light::Type::Point).m_point.m_sphericalRadius;
 			shadowCamConfig.m_aspectRatio = 1.f;
 		}
 		break;
@@ -300,21 +300,21 @@ namespace fr
 
 
 	gr::ShadowMap::RenderData ShadowMapComponent::CreateRenderData(
-		entt::entity entity, fr::ShadowMapComponent const& shadowMapCmpt)
+		entt::entity entity, pr::ShadowMapComponent const& shadowMapCmpt)
 	{
-		fr::EntityManager const* em = fr::EntityManager::Get();
-		fr::NameComponent const& nameCmpt = em->GetComponent<fr::NameComponent>(entity);
+		pr::EntityManager const* em = pr::EntityManager::Get();
+		pr::NameComponent const& nameCmpt = em->GetComponent<pr::NameComponent>(entity);
 
-		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
+		pr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
 
 		gr::ShadowMap::RenderData shadowRenderData = gr::ShadowMap::RenderData
 		{
 			.m_renderDataID = shadowMapCmpt.GetRenderDataID(),
 			.m_transformID = shadowMapCmpt.GetTransformID(),
 
-			.m_lightType = fr::Light::ConvertToGrLightType(shadowMap.GetOwningLightType()),
-			.m_shadowType = fr::ShadowMap::GetGrShadowMapType(shadowMap.GetShadowMapType()),
-			.m_shadowQuality = fr::ShadowMap::GetGrShadowQuality(shadowMap.GetShadowQuality()),
+			.m_lightType = pr::Light::ConvertToGrLightType(shadowMap.GetOwningLightType()),
+			.m_shadowType = pr::ShadowMap::GetGrShadowMapType(shadowMap.GetShadowMapType()),
+			.m_shadowQuality = pr::ShadowMap::GetGrShadowQuality(shadowMap.GetShadowQuality()),
 
 			.m_minMaxShadowBias = shadowMap.GetMinMaxShadowBias(),
 			.m_softness = shadowMap.GetSoftness(),
@@ -330,20 +330,20 @@ namespace fr
 
 	void ShadowMapComponent::Update(
 		entt::entity entity,
-		fr::ShadowMapComponent& shadowMapCmpt,
-		fr::TransformComponent& lightTransformCmpt,
-		fr::LightComponent const& lightCmpt,
-		fr::CameraComponent& shadowCamCmpt, 
-		fr::BoundsComponent const* sceneWorldBounds,
-		fr::CameraComponent const* activeSceneCam,
+		pr::ShadowMapComponent& shadowMapCmpt,
+		pr::TransformComponent& lightTransformCmpt,
+		pr::LightComponent const& lightCmpt,
+		pr::CameraComponent& shadowCamCmpt, 
+		pr::BoundsComponent const* sceneWorldBounds,
+		pr::CameraComponent const* activeSceneCam,
 		bool force)
 	{
 		bool didModify = false;
 
-		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
-		fr::ShadowMap::ShadowParams const& typeProperties = shadowMap.GetTypeProperties(shadowMap.GetShadowMapType());
+		pr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
+		pr::ShadowMap::ShadowParams const& typeProperties = shadowMap.GetTypeProperties(shadowMap.GetShadowMapType());
 
-		const bool mustUpdateFrustumSnap = (shadowMap.GetShadowMapType() == fr::ShadowMap::ShadowType::Orthographic &&
+		const bool mustUpdateFrustumSnap = (shadowMap.GetShadowMapType() == pr::ShadowMap::ShadowType::Orthographic &&
 				typeProperties.m_orthographic.m_frustumSnapMode == 
 			ShadowMap::ShadowParams::Orthographic::FrustumSnapMode::ActiveCamera) &&
 			activeSceneCam->GetCamera().GetTransform()->HasChanged();
@@ -372,29 +372,29 @@ namespace fr
 
 		if (didModify)
 		{
-			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(entity);
+			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::ShadowMapComponent>>(entity);
 		}
 	}
 
 
-	void ShadowMapComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity shadowMapEntity)
+	void ShadowMapComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity shadowMapEntity)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(shadowMapEntity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(shadowMapEntity);
 		if (ImGui::CollapsingHeader(
 			std::format("ShadowMap \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
+			pr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
 
-			fr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
+			pr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<pr::ShadowMapComponent>(shadowMapEntity);
 			shadowMapCmpt.GetShadowMap().ShowImGuiWindow(nameCmpt.GetUniqueID());
 
 			// Shadow camera:
-			fr::CameraComponent& shadowCamCmpt = em.GetComponent<fr::CameraComponent>(shadowMapEntity);
+			pr::CameraComponent& shadowCamCmpt = em.GetComponent<pr::CameraComponent>(shadowMapEntity);
 			ImGui::PushID(static_cast<uint64_t>(shadowMapEntity));
-			fr::CameraComponent::ShowImGuiWindow(em, shadowMapEntity);
+			pr::CameraComponent::ShowImGuiWindow(em, shadowMapEntity);
 			ImGui::PopID();
 
 			ImGui::Unindent();
@@ -407,7 +407,7 @@ namespace fr
 
 	ShadowMapComponent::ShadowMapComponent(
 		PrivateCTORTag,
-		fr::Light::Type lightType, 
+		pr::Light::Type lightType, 
 		gr::RenderDataID renderDataID, 
 		gr::TransformID transformID)
 		: m_renderDataID(renderDataID)

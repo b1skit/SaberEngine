@@ -10,7 +10,7 @@ namespace re
 {
 	class RenderManager;
 }
-namespace fr
+namespace pr
 {
 	// Graphics service interface. This is used to interface with GraphicsSystems over a command queue, which guarantees
 	// commands are executed single threaded at the beginning of each frame

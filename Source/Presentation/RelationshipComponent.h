@@ -5,7 +5,7 @@
 #include "Core/Assert.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 
@@ -198,7 +198,7 @@ namespace fr
 	template<typename T>
 	T* Relationship::GetFirstAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		entt::entity currentEntity = m_thisEntity; // No lock needed: This should never change
 
@@ -211,7 +211,7 @@ namespace fr
 				return component;
 			}
 
-			currentEntity = em->GetComponent<fr::Relationship>(currentEntity).GetParent();
+			currentEntity = em->GetComponent<pr::Relationship>(currentEntity).GetParent();
 		}
 		owningEntityOut = entt::null;
 		return nullptr;
@@ -221,7 +221,7 @@ namespace fr
 	template<typename T, typename... Args>
 	entt::entity Relationship::GetFirstEntityInHierarchyAbove() const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		entt::entity currentEntity = m_thisEntity; // No lock needed: This should never change
 		while (currentEntity != entt::null)
@@ -230,7 +230,7 @@ namespace fr
 			{
 				return currentEntity;
 			}
-			currentEntity = em->GetComponent<fr::Relationship>(currentEntity).GetParent();
+			currentEntity = em->GetComponent<pr::Relationship>(currentEntity).GetParent();
 		}
 		return entt::null;
 	}
@@ -247,7 +247,7 @@ namespace fr
 	template<typename T>
 	T* Relationship::GetLastAndEntityInHierarchyAbove(entt::entity& owningEntityOut) const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		T* result = nullptr;
 		owningEntityOut = entt::null;
@@ -261,7 +261,7 @@ namespace fr
 				owningEntityOut = curEntity;
 			}
 
-			fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curEntity);
+			pr::Relationship const& curRelationship = em->GetComponent<pr::Relationship>(curEntity);
 			curEntity = curRelationship.GetParent();
 		}
 
@@ -286,7 +286,7 @@ namespace fr
 			return nullptr;
 		}
 
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		childEntityOut = entt::null;
 
@@ -294,7 +294,7 @@ namespace fr
 		entt::entity current = firstChild;
 		do
 		{
-			fr::Relationship const& currentRelationship = em->GetComponent<fr::Relationship>(current);
+			pr::Relationship const& currentRelationship = em->GetComponent<pr::Relationship>(current);
 
 			T* component = em->TryGetComponent<T>(current);
 			if (component)
@@ -313,7 +313,7 @@ namespace fr
 	template<typename T, typename... Args>
 	std::vector<entt::entity> Relationship::GetAllEntitiesInChildrenAndBelow() const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		std::vector<entt::entity> const& allDescendents = GetAllDescendents();
 		
@@ -335,7 +335,7 @@ namespace fr
 	template<typename T, typename... Args>
 	std::vector<entt::entity> Relationship::GetAllEntitiesInImmediateChildren() const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 		std::vector<entt::entity> result;
 
 		if (HasChildren())
@@ -349,7 +349,7 @@ namespace fr
 					result.emplace_back(curEntity);
 				}
 
-				fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curEntity);
+				pr::Relationship const& curRelationship = em->GetComponent<pr::Relationship>(curEntity);
 				curEntity = curRelationship.GetNext();
 			} while (curEntity != firstChild);
 		}
@@ -361,7 +361,7 @@ namespace fr
 	template<typename T>
 	uint32_t Relationship::GetNumInImmediateChildren() const
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 		uint32_t count = 0;
 
 		{
@@ -375,7 +375,7 @@ namespace fr
 					++count;
 				}
 
-				fr::Relationship const& curRelationship = em->GetComponent<fr::Relationship>(curChild);
+				pr::Relationship const& curRelationship = em->GetComponent<pr::Relationship>(curChild);
 				curChild = curRelationship.GetNext();
 				if (curChild == m_firstChild)
 				{

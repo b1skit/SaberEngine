@@ -14,37 +14,37 @@ namespace
 
 
 	void ConfigureEncapsulatingBoundsRenderDataID(
-		fr::EntityManager& em, entt::entity boundsEntity, fr::BoundsComponent& bounds, entt::entity encapsulatingBounds)
+		pr::EntityManager& em, entt::entity boundsEntity, pr::BoundsComponent& bounds, entt::entity encapsulatingBounds)
 	{
 		if (encapsulatingBounds == entt::null)
 		{
 			return;
 		}
-		SEAssert(em.HasComponent<fr::BoundsComponent>(encapsulatingBounds),
+		SEAssert(em.HasComponent<pr::BoundsComponent>(encapsulatingBounds),
 			"Encapsulating bounds entity does not have a BoundsComponent");
 
-		fr::RenderDataComponent const& encapsulatingRenderDataCmpt =
-			em.GetComponent<fr::RenderDataComponent>(encapsulatingBounds);
+		pr::RenderDataComponent const& encapsulatingRenderDataCmpt =
+			em.GetComponent<pr::RenderDataComponent>(encapsulatingBounds);
 
 		bounds.SetEncapsulatingBounds(encapsulatingBounds, encapsulatingRenderDataCmpt.GetRenderDataID());
 	}
 
 
 	void ComputeWorldMinMax(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity boundsEntity,
-		fr::BoundsComponent const& bounds,
+		pr::BoundsComponent const& bounds,
 		glm::vec3& globalMinXYZOut,
 		glm::vec3& globalMaxXYZOut)
 	{
 		globalMinXYZOut = bounds.GetLocalMinXYZ();
 		globalMaxXYZOut = bounds.GetLocalMaxXYZ();
-		if (!em.HasComponent<fr::BoundsComponent::SceneBoundsMarker>(boundsEntity))
+		if (!em.HasComponent<pr::BoundsComponent::SceneBoundsMarker>(boundsEntity))
 		{
-			fr::TransformComponent const* transformCmpt =
-				em.GetComponent<fr::Relationship>(boundsEntity).GetFirstInHierarchyAbove<fr::TransformComponent>();
+			pr::TransformComponent const* transformCmpt =
+				em.GetComponent<pr::Relationship>(boundsEntity).GetFirstInHierarchyAbove<pr::TransformComponent>();
 
-			fr::BoundsComponent const& globalBounds =
+			pr::BoundsComponent const& globalBounds =
 				bounds.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix());
 
 			globalMinXYZOut = globalBounds.GetLocalMinXYZ();
@@ -56,8 +56,8 @@ namespace
 	void ValidateMinMaxBounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 	{
 #if defined(_DEBUG)
-		SEAssert((minXYZ != fr::BoundsComponent::k_invalidMinXYZ && 
-			maxXYZ != fr::BoundsComponent::k_invalidMaxXYZ),
+		SEAssert((minXYZ != pr::BoundsComponent::k_invalidMinXYZ && 
+			maxXYZ != pr::BoundsComponent::k_invalidMaxXYZ),
 			"Invalid minXYZ/maxXYZ");
 
 		SEAssert(minXYZ != maxXYZ &&
@@ -74,22 +74,22 @@ namespace
 }
 
 
-namespace fr
+namespace pr
 {
-	fr::BoundsComponent& BoundsComponent::CreateSceneBoundsConcept(fr::EntityManager& em)
+	pr::BoundsComponent& BoundsComponent::CreateSceneBoundsConcept(pr::EntityManager& em)
 	{
 		constexpr char const* k_sceneBoundsName = "SceneBounds";
 
 		entt::entity sceneBoundsEntity = em.CreateEntity(k_sceneBoundsName);
 
 		// Create a Transform and render data representation: 
-		fr::TransformComponent& sceneBoundsTransformComponent = 
-			fr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity);
+		pr::TransformComponent& sceneBoundsTransformComponent = 
+			pr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity);
 
 		SEAssert(sceneBoundsTransformComponent.GetTransform().GetParent() == nullptr,
 			"Found a parent transform for the scene bounds. This is unexpected");
 		
-		fr::RenderDataComponent* sceneBoundsRenderCmpt = fr::RenderDataComponent::GetCreateRenderDataComponent(
+		pr::RenderDataComponent* sceneBoundsRenderCmpt = pr::RenderDataComponent::GetCreateRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
 		sceneBoundsRenderCmpt->SetFeatureBit(gr::RenderObjectFeature::IsSceneBounds);
@@ -100,14 +100,14 @@ namespace fr
 	}
 
 
-	fr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
-		fr::EntityManager& em, entt::entity entity, entt::entity encapsulatingBounds)
+	pr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
+		pr::EntityManager& em, entt::entity entity, entt::entity encapsulatingBounds)
 	{
-		SEAssert(em.GetComponent<fr::Relationship>(entity).IsInHierarchyAbove<fr::TransformComponent>(),
+		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(),
 			"A Bounds requires a TransformComponent");
 
 		// Attach the BoundsComponent (which will trigger event listeners)
-		fr::BoundsComponent* boundsCmpt = em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+		pr::BoundsComponent* boundsCmpt = em.EmplaceComponent<pr::BoundsComponent>(entity, PrivateCTORTag{});
 
 		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
@@ -117,19 +117,19 @@ namespace fr
 	}
 
 
-	fr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
-		fr::EntityManager& em,
+	pr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
+		pr::EntityManager& em,
 		entt::entity entity,
 		entt::entity encapsulatingBounds,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ)
 	{
-		SEAssert(em.GetComponent<fr::Relationship>(entity).IsInHierarchyAbove<fr::TransformComponent>(),
+		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(),
 			"A Bounds requires a TransformComponent");
 
 		// Attach the BoundsComponent (which will trigger event listeners)
-		fr::BoundsComponent* boundsCmpt = 
-			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, encapsulatingBounds);
+		pr::BoundsComponent* boundsCmpt = 
+			em.EmplaceComponent<pr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, encapsulatingBounds);
 
 		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
@@ -142,12 +142,12 @@ namespace fr
 
 
 	void BoundsComponent::UpdateBoundsComponent(
-		fr::EntityManager& em,
-		fr::BoundsComponent& boundsCmpt,
-		fr::Relationship const& relationship,
+		pr::EntityManager& em,
+		pr::BoundsComponent& boundsCmpt,
+		pr::Relationship const& relationship,
 		entt::entity boundsEntity)
 	{
-		if (fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>())
+		if (pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>())
 		{
 			if (transformCmpt->GetTransform().HasChanged())
 			{
@@ -156,10 +156,10 @@ namespace fr
 		}
 
 		std::vector<entt::entity> const& childBounds = 
-			relationship.GetAllEntitiesInImmediateChildren<fr::BoundsComponent>();
+			relationship.GetAllEntitiesInImmediateChildren<pr::BoundsComponent>();
 		for (entt::entity child : childBounds)
 		{
-			fr::BoundsComponent& childBounds = em.GetComponent<fr::BoundsComponent>(child);
+			pr::BoundsComponent& childBounds = em.GetComponent<pr::BoundsComponent>(child);
 			if (childBounds.GetEncapsulatingBoundsEntity() == boundsEntity)
 			{
 				// Internally calls MarkDirty()
@@ -170,11 +170,11 @@ namespace fr
 
 
 	gr::Bounds::RenderData BoundsComponent::CreateRenderData(
-		entt::entity owningEntity, fr::BoundsComponent const& bounds)
+		entt::entity owningEntity, pr::BoundsComponent const& bounds)
 	{
 		glm::vec3 worldMinXYZ;
 		glm::vec3 worldMaxXYZ;
-		ComputeWorldMinMax(*fr::EntityManager::Get(), owningEntity, bounds, worldMinXYZ, worldMaxXYZ);
+		ComputeWorldMinMax(*pr::EntityManager::Get(), owningEntity, bounds, worldMinXYZ, worldMaxXYZ);
 		
 		return gr::Bounds::RenderData
 		{
@@ -216,13 +216,13 @@ namespace fr
 	}
 
 
-	bool BoundsComponent::operator==(fr::BoundsComponent const& rhs) const
+	bool BoundsComponent::operator==(pr::BoundsComponent const& rhs) const
 	{
 		return m_localMinXYZ == rhs.m_localMinXYZ && m_localMaxXYZ == rhs.m_localMaxXYZ;
 	}
 
 
-	bool BoundsComponent::operator!=(fr::BoundsComponent const& rhs) const
+	bool BoundsComponent::operator!=(pr::BoundsComponent const& rhs) const
 	{
 		return operator==(rhs) == false;
 	}
@@ -270,7 +270,7 @@ namespace fr
 
 	void BoundsComponent::MarkDirty(entt::entity boundsEntity)
 	{
-		fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::BoundsComponent>>(boundsEntity);
+		pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::BoundsComponent>>(boundsEntity);
 	}
 
 
@@ -306,21 +306,21 @@ namespace fr
 
 
 	void BoundsComponent::ExpandEncapsulatingBounds(
-		fr::EntityManager& em, BoundsComponent const& newContents, entt::entity boundsEntity)
+		pr::EntityManager& em, BoundsComponent const& newContents, entt::entity boundsEntity)
 	{
 		ExpandEncapsulatingBounds(em, newContents.m_localMinXYZ, newContents.m_localMaxXYZ, boundsEntity);
 	}
 
 
 	void BoundsComponent::ExpandEncapsulatingBounds(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		glm::vec3 const& newLocalMinXYZ,
 		glm::vec3 const& newLocalMaxXYZ,
 		entt::entity boundsEntity)
 	{
 		if (m_encapsulatingBoundsEntity != entt::null)
 		{
-			fr::BoundsComponent& encapsulatingBounds = em.GetComponent<fr::BoundsComponent>(m_encapsulatingBoundsEntity);
+			pr::BoundsComponent& encapsulatingBounds = em.GetComponent<pr::BoundsComponent>(m_encapsulatingBoundsEntity);
 			encapsulatingBounds.ExpandBounds(newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
 		}
 	}
@@ -410,21 +410,21 @@ namespace fr
 	}
 
 
-	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity, bool startOpen /*= false*/)
+	void BoundsComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningEntity, bool startOpen /*= false*/)
 	{
 		const ImGuiTreeNodeFlags_ flags = startOpen ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
 
 		if (ImGui::CollapsingHeader(
 			std::format("Local bounds##{}", static_cast<uint32_t>(owningEntity)).c_str(), flags))
 		{
-			fr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+			pr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
 			ImGui::Indent();
 
-			fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(owningEntity);
+			pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(owningEntity);
 			ImGui::Text(std::format("\"{}\", entity: {}", nameCmpt.GetName(), static_cast<uint64_t>(owningEntity)).c_str());
 
-			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
+			pr::BoundsComponent const& boundsCmpt = em.GetComponent<pr::BoundsComponent>(owningEntity);
 
 			ImGui::Text(std::format("Encapsulting bounds entity: {}",
 				static_cast<uint64_t>(boundsCmpt.m_encapsulatingBoundsEntity)).c_str());
@@ -439,7 +439,7 @@ namespace fr
 
 			glm::vec3 worldMinXYZ;
 			glm::vec3 worldMaxXYZ;
-			ComputeWorldMinMax(*fr::EntityManager::Get(), owningEntity, boundsCmpt, worldMinXYZ, worldMaxXYZ);
+			ComputeWorldMinMax(*pr::EntityManager::Get(), owningEntity, boundsCmpt, worldMinXYZ, worldMaxXYZ);
 
 			ImGui::Text("World min XYZ = %s", glm::to_string(worldMinXYZ).c_str());
 			ImGui::Text("World max XYZ = %s", glm::to_string(worldMaxXYZ).c_str());

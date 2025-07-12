@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace fr
+namespace pr
 {
 	class SetMainCameraCommand final
 	{

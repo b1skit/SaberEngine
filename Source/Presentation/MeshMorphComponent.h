@@ -3,7 +3,7 @@
 #include "Renderer/MeshPrimitive.h"
 
 
-namespace fr
+namespace pr
 {
 	class AnimationComponent;
 	class EntityManager;
@@ -13,9 +13,9 @@ namespace fr
 	{
 	public:
 		static MeshMorphComponent* AttachMeshMorphComponent(
-			fr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
+			pr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
-		static void ApplyAnimation(entt::entity meshConcept, fr::AnimationComponent const&, fr::MeshMorphComponent&);
+		static void ApplyAnimation(entt::entity meshConcept, pr::AnimationComponent const&, pr::MeshMorphComponent&);
 
 		static gr::MeshPrimitive::MeshMorphRenderData CreateRenderData(entt::entity, MeshMorphComponent const&);
 

@@ -9,7 +9,7 @@
 
 struct DebugData;
 
-namespace fr
+namespace pr
 {
 	class GraphicsService_Debug;
 }
@@ -140,7 +140,7 @@ namespace gr
 
 
 	public: // Debug service interface:
-		using AccessKey = accesscontrol::AccessKey<DebugGraphicsSystem, fr::GraphicsService_Debug>;
+		using AccessKey = accesscontrol::AccessKey<DebugGraphicsSystem, pr::GraphicsService_Debug>;
 
 		void EnableWorldCoordinateAxis(AccessKey, bool show);
 	};

@@ -116,9 +116,9 @@ namespace app
 		constexpr bool k_allowDragAndDrop = true; // Allways allowed, for now
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
-		fr::EntityManager* entityMgr = fr::EntityManager::Get();
-		fr::SceneManager* sceneMgr = fr::SceneManager::Get();
-		fr::UIManager* uiMgr = fr::UIManager::Get();
+		pr::EntityManager* entityMgr = pr::EntityManager::Get();
+		pr::SceneManager* sceneMgr = pr::SceneManager::Get();
+		pr::UIManager* uiMgr = pr::UIManager::Get();
 
 		// Dependency injection:
 		entityMgr->SetInventory(m_inventory.get()); 
@@ -160,10 +160,10 @@ namespace app
 		core::EventManager* eventManager = core::EventManager::Get();
 		core::Logger* logger = core::Logger::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
-		fr::EntityManager* entityManager = fr::EntityManager::Get();
-		fr::SceneManager* sceneManager = fr::SceneManager::Get();
+		pr::EntityManager* entityManager = pr::EntityManager::Get();
+		pr::SceneManager* sceneManager = pr::SceneManager::Get();
 		gr::RenderManager* renderManager = gr::RenderManager::Get();
-		fr::UIManager* uiManager = fr::UIManager::Get();
+		pr::UIManager* uiManager = pr::UIManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
@@ -220,15 +220,15 @@ namespace app
 				SEEndCPUEvent();
 			}
 
-			SEBeginCPUEvent("fr::SceneManager::Update");
+			SEBeginCPUEvent("pr::SceneManager::Update");
 			sceneManager->Update(m_frameNum, lastOuterFrameTime); // Note: Must be updated after entity manager (e.g. Reset)
 			SEEndCPUEvent();
 
-			SEBeginCPUEvent("fr::UIManager::Update");
+			SEBeginCPUEvent("pr::UIManager::Update");
 			uiManager->Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
-			SEBeginCPUEvent("fr::EntityManager::EnqueueRenderUpdates");
+			SEBeginCPUEvent("pr::EntityManager::EnqueueRenderUpdates");
 			entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
 
@@ -270,11 +270,11 @@ namespace app
 
 		core::Config::Get()->SaveConfigFile();
 
-		fr::UIManager::Get()->Shutdown();
+		pr::UIManager::Get()->Shutdown();
 		
-		fr::EntityManager::Get()->Shutdown();
+		pr::EntityManager::Get()->Shutdown();
 
-		fr::SceneManager::Get()->Shutdown();
+		pr::SceneManager::Get()->Shutdown();
 
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using.

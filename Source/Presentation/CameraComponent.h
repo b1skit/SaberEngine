@@ -10,7 +10,7 @@ namespace gr
 	class Camera;
 }
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 	class NameComponent;
@@ -25,21 +25,21 @@ namespace fr
 
 	public:
 		static void CreateCameraConcept(
-			fr::EntityManager&, entt::entity sceneNode, std::string_view name, gr::Camera::Config const&);
+			pr::EntityManager&, entt::entity sceneNode, std::string_view name, gr::Camera::Config const&);
 
-		static fr::CameraComponent& AttachCameraComponent(
-			fr::EntityManager&, entt::entity owningEntity, std::string_view name, gr::Camera::Config const&);
+		static pr::CameraComponent& AttachCameraComponent(
+			pr::EntityManager&, entt::entity owningEntity, std::string_view name, gr::Camera::Config const&);
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);
 
 		static gr::Camera::RenderData CreateRenderData(entt::entity, CameraComponent const&);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camEntity);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity camEntity);
 
 
 	public:
-		fr::Camera& GetCameraForModification();
-		fr::Camera const& GetCamera() const;
+		pr::Camera& GetCameraForModification();
+		pr::Camera const& GetCamera() const;
 
 		gr::TransformID GetTransformID() const;
 
@@ -47,24 +47,24 @@ namespace fr
 	private:
 		const gr::TransformID m_transformID;
 
-		fr::Camera m_camera;
+		pr::Camera m_camera;
 
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
-		CameraComponent(PrivateCTORTag, gr::Camera::Config const&, fr::TransformComponent&);
+		CameraComponent(PrivateCTORTag, gr::Camera::Config const&, pr::TransformComponent&);
 	};
 
 
 
-	inline fr::Camera& CameraComponent::GetCameraForModification()
+	inline pr::Camera& CameraComponent::GetCameraForModification()
 	{
 		return m_camera;
 	}
 
 
-	inline fr::Camera const& CameraComponent::GetCamera() const
+	inline pr::Camera const& CameraComponent::GetCamera() const
 	{
 		return m_camera;
 	}

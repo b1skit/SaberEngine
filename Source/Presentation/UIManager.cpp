@@ -148,11 +148,11 @@ namespace
 	}
 }
 
-namespace fr
+namespace pr
 {
 	UIManager* UIManager::Get()
 	{
-		static std::unique_ptr<fr::UIManager> instance = std::make_unique<fr::UIManager>();
+		static std::unique_ptr<pr::UIManager> instance = std::make_unique<pr::UIManager>();
 		return instance.get();
 	}
 
@@ -644,7 +644,7 @@ namespace fr
 		// Scene manager debug:
 		auto ShowSceneMgrDebug = [&]()
 			{
-				fr::SceneManager::Get()->ShowImGuiWindow(&m_show[Show::SceneMgrDbg]);
+				pr::SceneManager::Get()->ShowImGuiWindow(&m_show[Show::SceneMgrDbg]);
 			};
 		if (m_show[Show::SceneMgrDbg])
 		{
@@ -654,9 +654,9 @@ namespace fr
 		// Entity manager debug:
 		auto ShowEntityMgrDebug = [&]()
 			{
-				fr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&m_show[Show::EntityMgrDbg]);
-				fr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&m_show[Show::TransformationHierarchyDbg]);
-				fr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&m_show[Show::EntityComponentDbg]);
+				pr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&m_show[Show::EntityMgrDbg]);
+				pr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&m_show[Show::TransformationHierarchyDbg]);
+				pr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&m_show[Show::EntityComponentDbg]);
 			};
 		if (m_show[Show::EntityMgrDbg] || m_show[Show::TransformationHierarchyDbg] || m_show[Show::EntityComponentDbg])
 		{

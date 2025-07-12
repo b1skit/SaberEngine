@@ -4,7 +4,7 @@
 #include "Renderer/RenderObjectIDs.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 
@@ -22,14 +22,14 @@ namespace fr
 			float longestAnimationTimeSec,
 			std::vector<entt::entity>&& boundsEntities);
 
-		static void UpdateSkinMatrices(fr::EntityManager&, entt::entity owningEntity, SkinningComponent&, float deltaTime);
+		static void UpdateSkinMatrices(pr::EntityManager&, entt::entity owningEntity, SkinningComponent&, float deltaTime);
 
 		static gr::MeshPrimitive::SkinningRenderData CreateRenderData(
 			entt::entity skinnedMeshPrimitive, SkinningComponent const&);
 
 
 	public:
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity skinnedEntity);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity skinnedEntity);
 
 
 	private: // Use the static creation factories

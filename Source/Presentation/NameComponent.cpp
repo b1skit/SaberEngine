@@ -3,7 +3,7 @@
 #include "NameComponent.h"
 
 
-namespace fr
+namespace pr
 {
 	NameComponent& NameComponent::AttachNameComponent(EntityManager& em, entt::entity entity, char const* name)
 	{

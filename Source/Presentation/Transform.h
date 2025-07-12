@@ -3,7 +3,7 @@
 #include "Renderer/RenderObjectIDs.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 
@@ -109,21 +109,21 @@ namespace fr
 
 
 	public:
-		void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity);
 		
 		// Hierarchy view window
-		static void ShowImGuiWindow(fr::EntityManager&, std::vector<entt::entity> const& rootNodeEntities, bool* show); 
+		static void ShowImGuiWindow(pr::EntityManager&, std::vector<entt::entity> const& rootNodeEntities, bool* show); 
 
 
 	private:
 		void ImGuiHelper_ShowData(uint64_t uniqueID);
 		void ImGuiHelper_Modify(uint64_t uniqueID);
-		void ImGuiHelper_Hierarchy(fr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
+		void ImGuiHelper_Hierarchy(pr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
 
 		static void ImGuiHelper_ShowHierarchy(
-			fr::EntityManager&,
+			pr::EntityManager&,
 			entt::entity nodeEntity,
-			std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntityMap,
+			std::unordered_map<pr::Transform const*, entt::entity> const& transformToEntityMap,
 			bool highlightCurrentNode = false,
 			bool expandAllState = false,
 			bool expandChangeTriggered = false);

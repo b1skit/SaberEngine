@@ -12,7 +12,7 @@ namespace re
 	class Texture;
 }
 
-namespace fr
+namespace pr
 {
 	class Camera;
 	class EntityManager;
@@ -35,30 +35,30 @@ namespace fr
 		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, std::string_view name, core::InvPtr<re::Texture> const& iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
-			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
+			pr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredSpotLightConcept(
-			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
+			pr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			fr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
+			pr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 	public:
 		static gr::Light::RenderDataAmbientIBL CreateRenderDataAmbientIBL_Deferred(
-			fr::NameComponent const&, fr::LightComponent const&);
+			pr::NameComponent const&, pr::LightComponent const&);
 		
 		static gr::Light::RenderDataDirectional CreateRenderDataDirectional_Deferred(
-			fr::NameComponent const&, fr::LightComponent const&);
+			pr::NameComponent const&, pr::LightComponent const&);
 		
 		static gr::Light::RenderDataPoint CreateRenderDataPoint_Deferred(
-			fr::NameComponent const&, fr::LightComponent const&);
+			pr::NameComponent const&, pr::LightComponent const&);
 
 		static gr::Light::RenderDataSpot CreateRenderDataSpot_Deferred(
-			fr::NameComponent const&, fr::LightComponent const&);
+			pr::NameComponent const&, pr::LightComponent const&);
 
-		static void Update(entt::entity, fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
+		static void Update(entt::entity, pr::LightComponent&, pr::Transform* lightTransform, pr::Camera* shadowCam);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity lightEntity);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity lightEntity);
 		static void ShowImGuiSpawnWindow();
 
 
@@ -66,8 +66,8 @@ namespace fr
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
 
-		fr::Light& GetLight();
-		fr::Light const& GetLight() const;
+		pr::Light& GetLight();
+		pr::Light const& GetLight() const;
 
 
 	private:
@@ -75,7 +75,7 @@ namespace fr
 		const gr::TransformID m_transformID;
 
 	private:
-		fr::Light m_light;
+		pr::Light m_light;
 		const bool m_hasShadow;
 
 
@@ -84,15 +84,15 @@ namespace fr
 	public:
 		LightComponent(
 			PrivateCTORTag, 
-			fr::RenderDataComponent const&, 
-			fr::Light::Type, 
+			pr::RenderDataComponent const&, 
+			pr::Light::Type, 
 			glm::vec4 colorIntensity,
 			bool hasShadow);
 		LightComponent(
 			PrivateCTORTag, 
-			fr::RenderDataComponent const&,
+			pr::RenderDataComponent const&,
 			core::InvPtr<re::Texture> const& iblTex,
-			const fr::Light::Type = fr::Light::Type::AmbientIBL); // Ambient light only
+			const pr::Light::Type = pr::Light::Type::AmbientIBL); // Ambient light only
 	};
 
 
@@ -102,7 +102,7 @@ namespace fr
 	class UpdateLightDataRenderCommand final
 	{
 	public:
-		UpdateLightDataRenderCommand(fr::NameComponent const&, LightComponent const&);
+		UpdateLightDataRenderCommand(pr::NameComponent const&, LightComponent const&);
 		~UpdateLightDataRenderCommand();
 
 		static void Execute(void*);
@@ -152,13 +152,13 @@ namespace fr
 	}
 
 
-	inline fr::Light& LightComponent::GetLight()
+	inline pr::Light& LightComponent::GetLight()
 	{
 		return m_light;
 	}
 
 
-	inline fr::Light const& LightComponent::GetLight() const
+	inline pr::Light const& LightComponent::GetLight() const
 	{
 		return m_light;
 	}

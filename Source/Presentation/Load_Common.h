@@ -86,5 +86,5 @@ namespace load
 		entt::entity m_owningEntity;
 	};
 
-	CameraMetadata CreateDefaultCamera(fr::EntityManager* em);
+	CameraMetadata CreateDefaultCamera(pr::EntityManager* em);
 }

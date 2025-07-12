@@ -25,18 +25,18 @@ namespace
 
 
 	// Helper: Builds a map from Transform* -> entt::entity:
-	std::unordered_map<fr::Transform const*, entt::entity> BuildEntityToTransformMap(fr::EntityManager const& em)
+	std::unordered_map<pr::Transform const*, entt::entity> BuildEntityToTransformMap(pr::EntityManager const& em)
 	{
 		SEBeginCPUEvent("BuildEntityToTransformMap");
 
-		std::vector<entt::entity> const& transformEntities = em.GetAllEntities<fr::TransformComponent>();
+		std::vector<entt::entity> const& transformEntities = em.GetAllEntities<pr::TransformComponent>();
 
-		std::unordered_map<fr::Transform const*, entt::entity> transformToEntity;
+		std::unordered_map<pr::Transform const*, entt::entity> transformToEntity;
 		transformToEntity.reserve(transformEntities.size());
 
 		for (entt::entity curEntity : transformEntities)
 		{
-			fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
+			pr::TransformComponent const& curTransformCmpt = em.GetComponent<pr::TransformComponent>(curEntity);
 			transformToEntity.emplace(&curTransformCmpt.GetTransform(), curEntity);
 		}
 
@@ -48,14 +48,14 @@ namespace
 	
 	// Helper: Find the entity of the root node of an entity
 	entt::entity FindRootNodeEntity(
-		fr::EntityManager const& em, 
+		pr::EntityManager const& em, 
 		entt::entity nodeEntity, 
-		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity)
+		std::unordered_map<pr::Transform const*, entt::entity> const& transformToEntity)
 	{
 		SEBeginCPUEvent("FindRootNodeEntity");
 
-		fr::TransformComponent const* transformCmpt = &em.GetComponent<fr::TransformComponent>(nodeEntity);
-		fr::Transform const* transform = &transformCmpt->GetTransform();
+		pr::TransformComponent const* transformCmpt = &em.GetComponent<pr::TransformComponent>(nodeEntity);
+		pr::Transform const* transform = &transformCmpt->GetTransform();
 
 		while (transform->GetParent() != nullptr)
 		{
@@ -69,7 +69,7 @@ namespace
 	}
 }
 
-namespace fr
+namespace pr
 {
 	std::atomic<gr::TransformID> Transform::s_transformIDs = 0;
 
@@ -106,7 +106,7 @@ namespace fr
 		}
 		if (!m_children.empty())
 		{
-			for (fr::Transform* child : m_children)
+			for (pr::Transform* child : m_children)
 			{
 				child->SetParent(nullptr);
 			}
@@ -886,7 +886,7 @@ namespace fr
 	}
 
 
-	void Transform::ImGuiHelper_Hierarchy(fr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
+	void Transform::ImGuiHelper_Hierarchy(pr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
 	{
 		SEBeginCPUEvent("Transform::ImGuiHelper_Hierarchy");
 
@@ -894,11 +894,11 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			fr::TransformComponent& thisTransformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
-			fr::Transform& thisTransform = thisTransformCmpt.GetTransform();
-			fr::Transform const* thisTransformParent = thisTransform.GetParent();
+			pr::TransformComponent& thisTransformCmpt = em.GetComponent<pr::TransformComponent>(owningEntity);
+			pr::Transform& thisTransform = thisTransformCmpt.GetTransform();
+			pr::Transform const* thisTransformParent = thisTransform.GetParent();
 
-			std::vector<entt::entity> const& transformEntities = em.GetAllEntities<fr::TransformComponent>();
+			std::vector<entt::entity> const& transformEntities = em.GetAllEntities<pr::TransformComponent>();
 
 			std::vector<std::string> transformIDStrings;
 			transformIDStrings.reserve(transformEntities.size());
@@ -908,7 +908,7 @@ namespace fr
 			{
 				const entt::entity curEntity = transformEntities[i];
 
-				fr::TransformComponent const& curTransformCmpt = em.GetComponent<fr::TransformComponent>(curEntity);
+				pr::TransformComponent const& curTransformCmpt = em.GetComponent<pr::TransformComponent>(curEntity);
 
 				transformIDStrings.emplace_back(std::to_string(curTransformCmpt.GetTransformID()));
 
@@ -938,10 +938,10 @@ namespace fr
 				}
 				else
 				{
-					fr::TransformComponent& newParentTransformCmpt = 
-						em.GetComponent<fr::TransformComponent>(transformEntities[newParentTransformIdx]);
+					pr::TransformComponent& newParentTransformCmpt = 
+						em.GetComponent<pr::TransformComponent>(transformEntities[newParentTransformIdx]);
 
-					fr::Transform* newParentTransform = &newParentTransformCmpt.GetTransform();
+					pr::Transform* newParentTransform = &newParentTransformCmpt.GetTransform();
 					if (newParentTransform != &thisTransform) // Can't parent a transform to itself
 					{
 						thisTransform.SetParent(newParentTransform);
@@ -956,10 +956,10 @@ namespace fr
 	}
 
 
-	void Transform::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	void Transform::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningEntity)
 	{
 		// Build a map from Transform* -> entt::entity:
-		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity =
+		std::unordered_map<pr::Transform const*, entt::entity> const& transformToEntity =
 			BuildEntityToTransformMap(em);
 
 		ImGuiHelper_ShowHierarchy(em, owningEntity, transformToEntity, true);
@@ -967,7 +967,7 @@ namespace fr
 
 
 	void Transform::ShowImGuiWindow(
-		fr::EntityManager& em, std::vector<entt::entity> const& rootNodeEntities, bool* show)
+		pr::EntityManager& em, std::vector<entt::entity> const& rootNodeEntities, bool* show)
 	{
 		if (!(*show))
 		{
@@ -1002,7 +1002,7 @@ namespace fr
 			}
 
 			// Build a map from Transform* -> entt::entity:
-			std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntity = 
+			std::unordered_map<pr::Transform const*, entt::entity> const& transformToEntity = 
 				BuildEntityToTransformMap(em);
 
 			// Show each root node in the panel
@@ -1021,9 +1021,9 @@ namespace fr
 
 
 	void Transform::ImGuiHelper_ShowHierarchy(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity nodeEntity,
-		std::unordered_map<fr::Transform const*, entt::entity> const& transformToEntityMap,
+		std::unordered_map<pr::Transform const*, entt::entity> const& transformToEntityMap,
 		bool highlightCurrentNode/* = false*/,
 		bool expandAllState/* = false*/,
 		bool expandChangeTriggered/* = false*/)
@@ -1034,20 +1034,20 @@ namespace fr
 		constexpr ImVec4 k_thisObjectMarkerTextCol = ImVec4(0, 1, 0, 1);
 		constexpr char const* k_thisObjectText = "<this object>";
 		
-		SEAssert(em.HasComponent<fr::TransformComponent>(nodeEntity), "Node entity does not have a TransformComponent");
+		SEAssert(em.HasComponent<pr::TransformComponent>(nodeEntity), "Node entity does not have a TransformComponent");
 
 		// Find the root node entity
 		entt::entity rootEntity = FindRootNodeEntity(em, nodeEntity, transformToEntityMap);
-		fr::TransformComponent* rootTransformCmpt = &em.GetComponent<fr::TransformComponent>(rootEntity);
+		pr::TransformComponent* rootTransformCmpt = &em.GetComponent<pr::TransformComponent>(rootEntity);
 
 		SEBeginCPUEvent("Transform::ImGuiHelper_ShowHierarchy: Process nodes");
 		struct NodeState
 		{
-			fr::Transform* m_node;
+			pr::Transform* m_node;
 			uint32_t m_depth;
 		};
 
-		fr::Transform* rootNode = &rootTransformCmpt->GetTransform();
+		pr::Transform* rootNode = &rootTransformCmpt->GetTransform();
 		SEAssert(rootNode->m_parent == nullptr, "Root cannot have a parent");
 	
 		std::stack<NodeState> nodes;
@@ -1059,7 +1059,7 @@ namespace fr
 			nodes.pop();
 
 			// Add children for next iteration:
-			for (fr::Transform* child : curNodeState.m_node->m_children)
+			for (pr::Transform* child : curNodeState.m_node->m_children)
 			{
 				nodes.push(NodeState{ child, curNodeState.m_depth + 1 });
 			}
@@ -1080,7 +1080,7 @@ namespace fr
 
 			const entt::entity curTransformEntity = transformToEntityMap.at(curNodeState.m_node);
 
-			fr::NameComponent const* nameCmpt = em.TryGetComponent<fr::NameComponent>(curTransformEntity);
+			pr::NameComponent const* nameCmpt = em.TryGetComponent<pr::NameComponent>(curTransformEntity);
 
 			if (ImGui::TreeNode(std::format("TransformID: {}, Entity {}, \"{}\"",
 				curNodeState.m_node->m_transformID,

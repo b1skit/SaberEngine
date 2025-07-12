@@ -18,19 +18,19 @@ namespace
 	constexpr char const* k_defaultCameraControllerName = "FPS Camera Controller";
 }
 
-namespace fr
+namespace pr
 {
 	entt::entity CameraControlComponent::CreateCameraControlConcept(EntityManager& em, entt::entity camEntity)
 	{
 		SEAssert(camEntity == entt::null ||
-			em.HasComponent<fr::CameraComponent>(camEntity),
+			em.HasComponent<pr::CameraComponent>(camEntity),
 			"camEntity must have a CameraComponent attached");
 
-		entt::entity camControlNode = fr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
+		entt::entity camControlNode = pr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
 
 		em.EmplaceComponent<CameraControlComponent>(camControlNode);
 
-		fr::TransformComponent::AttachTransformComponent(em, camControlNode);
+		pr::TransformComponent::AttachTransformComponent(em, camControlNode);
 
 		// Attach the camera to the camera controller:
 		if (camEntity != entt::null)
@@ -47,35 +47,35 @@ namespace fr
 		entt::entity currentCamCmptEntity,
 		entt::entity newCamCmptEntity)
 	{	
-		fr::EntityManager& em = *fr::EntityManager::Get();
+		pr::EntityManager& em = *pr::EntityManager::Get();
 
 		// The CameraControlComponent gimbal requires 2 Transforms (for pitch/yaw), animations target a single Transform
-		SEAssert(!em.HasComponent<fr::AnimationComponent>(newCamCmptEntity),
+		SEAssert(!em.HasComponent<pr::AnimationComponent>(newCamCmptEntity),
 			"The target camera has an AnimationComponent, it cannot be controlled by a camera controller as well");
 
-		SEAssert(em.HasComponent<fr::TransformComponent>(camControlCmptEntity),
+		SEAssert(em.HasComponent<pr::TransformComponent>(camControlCmptEntity),
 			"CameraControlComponent owning entity must have a TransformComponent");
 
-		fr::CameraControlComponent& camControlCmpt = em.GetComponent<fr::CameraControlComponent>(camControlCmptEntity);
+		pr::CameraControlComponent& camControlCmpt = em.GetComponent<pr::CameraControlComponent>(camControlCmptEntity);
 
 		// Reparent the existing camera (if any) to a null parent. This effectively collapses the global transform
 		// values to the local transform, so the camera's final location remains the same
 		if (currentCamCmptEntity != entt::null)
 		{
-			SEAssert(em.HasComponent<fr::TransformComponent>(currentCamCmptEntity),
+			SEAssert(em.HasComponent<pr::TransformComponent>(currentCamCmptEntity),
 				"Owning entity for the current camera component does not have a TransformComponent. This is unexpected");
 
-			fr::TransformComponent& currentCamTransformCmpt = em.GetComponent<fr::TransformComponent>(currentCamCmptEntity);
+			pr::TransformComponent& currentCamTransformCmpt = em.GetComponent<pr::TransformComponent>(currentCamCmptEntity);
 
 			// Restore the previous hierarchy to the camera:
-			fr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
+			pr::Transform& currentCamTransform = currentCamTransformCmpt.GetTransform();
 			currentCamTransform.ReParent(camControlCmpt.m_prevCameraTransformParent);
 
 			currentCamTransform.SetLocalTranslation(camControlCmpt.m_prevLocalTranslation);
 			currentCamTransform.SetLocalRotation(camControlCmpt.m_prevLocalRotation);
 			currentCamTransform.SetLocalScale(camControlCmpt.m_prevLocalScale);
 
-			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(currentCamCmptEntity);
+			pr::Relationship& currentCamRelationship = em.GetComponent<pr::Relationship>(currentCamCmptEntity);
 			currentCamRelationship.SetParent(em, camControlCmpt.m_prevCameraParentEntity);
 
 			// Clear the cached hierarchy records:
@@ -83,20 +83,20 @@ namespace fr
 			camControlCmpt.m_prevCameraTransformParent = nullptr;
 
 			// Deactivate the camera:
-			fr::CameraComponent& currentCamCmpt = em.GetComponent<fr::CameraComponent>(currentCamCmptEntity);
+			pr::CameraComponent& currentCamCmpt = em.GetComponent<pr::CameraComponent>(currentCamCmptEntity);
 			currentCamCmpt.GetCameraForModification().SetActive(false);
 		}
 		
 		// Attach the new camera (if any) to the controller:
 		if (newCamCmptEntity != entt::null)
 		{
-			SEAssert(em.HasComponent<fr::TransformComponent>(newCamCmptEntity),
+			SEAssert(em.HasComponent<pr::TransformComponent>(newCamCmptEntity),
 				"Owning entity for the new camera component does not have a TransformComponent. This is unexpected");
 
-			fr::Transform& controllerTransform =
-				em.GetComponent<fr::TransformComponent>(camControlCmptEntity).GetTransform();
+			pr::Transform& controllerTransform =
+				em.GetComponent<pr::TransformComponent>(camControlCmptEntity).GetTransform();
 
-			fr::Transform& newCamTransform = em.GetComponent<fr::TransformComponent>(newCamCmptEntity).GetTransform();
+			pr::Transform& newCamTransform = em.GetComponent<pr::TransformComponent>(newCamCmptEntity).GetTransform();
 			camControlCmpt.m_prevCameraTransformParent = newCamTransform.GetParent();
 
 			// Store the previous local Translation so we can restore it later. We need to Recompute() to ensure the Transform is not dirty
@@ -111,12 +111,12 @@ namespace fr
 			controllerTransform.SetGlobalTranslation(newCamTransform.GetGlobalTranslation());
 			newCamTransform.ReParent(&controllerTransform);
 
-			fr::Relationship& currentCamRelationship = em.GetComponent<fr::Relationship>(newCamCmptEntity);
+			pr::Relationship& currentCamRelationship = em.GetComponent<pr::Relationship>(newCamCmptEntity);
 			camControlCmpt.m_prevCameraParentEntity = currentCamRelationship.GetParent();
 			currentCamRelationship.SetParent(em, camControlCmptEntity);
 
 			// Activate the camera:
-			fr::CameraComponent& newCamCmpt = em.GetComponent<fr::CameraComponent>(newCamCmptEntity);
+			pr::CameraComponent& newCamCmpt = em.GetComponent<pr::CameraComponent>(newCamCmptEntity);
 			newCamCmpt.GetCameraForModification().SetActive(true);
 		}
 	}
@@ -124,9 +124,9 @@ namespace fr
 
 	void CameraControlComponent::Update(
 		CameraControlComponent& camController, 
-		fr::Transform& controllerTransform,
-		fr::Camera const& camera,
-		fr::Transform& cameraTransform,
+		pr::Transform& controllerTransform,
+		pr::Camera const& camera,
+		pr::Transform& cameraTransform,
 		double stepTimeMs)
 	{
 		SEAssert(cameraTransform.GetParent() == &controllerTransform,
@@ -213,9 +213,9 @@ namespace fr
 
 
 	void CameraControlComponent::ShowImGuiWindow(
-		fr::EntityManager& em, entt::entity camControlEntity, entt::entity currentCam)
+		pr::EntityManager& em, entt::entity camControlEntity, entt::entity currentCam)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(camControlEntity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(camControlEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("Camera controller \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -257,11 +257,11 @@ namespace fr
 			ImGui::EndDisabled();
 
 			// Transform:
-			fr::TransformComponent::ShowImGuiWindow(em, camControlEntity, nameCmpt.GetUniqueID());
+			pr::TransformComponent::ShowImGuiWindow(em, camControlEntity, nameCmpt.GetUniqueID());
 
 			// Camera: Push/pop IDs to prevent a collision if the Camera menu is also expanded
 			ImGui::PushID(std::format("Camera controller \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str());
-			fr::CameraComponent::ShowImGuiWindow(em, currentCam);
+			pr::CameraComponent::ShowImGuiWindow(em, currentCam);
 			ImGui::PopID();
 
 			ImGui::Unindent();

@@ -6,7 +6,7 @@
 #include "Renderer/VertexStream.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 	class MeshPrimitiveComponent;
@@ -56,7 +56,7 @@ namespace fr
 
 	template<typename T>
 	T GetInterpolatedValue(
-		fr::InterpolationMode mode,
+		pr::InterpolationMode mode,
 		float const* channelData,
 		size_t channelDataCount,
 		size_t prevKeyframeIdx,
@@ -69,7 +69,7 @@ namespace fr
 
 		switch (mode)
 		{
-		case fr::InterpolationMode::Linear:
+		case pr::InterpolationMode::Linear:
 		{
 			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
 			T const& nextValue = reinterpret_cast<T const*>(channelData)[nextKeyframeIdx];
@@ -82,14 +82,14 @@ namespace fr
 			return (1.f - t) * prevValue + t * nextValue;
 		}
 		break;
-		case fr::InterpolationMode::Step:
+		case pr::InterpolationMode::Step:
 		{
 			T const& prevValue = reinterpret_cast<T const*>(channelData)[prevKeyframeIdx];
 
 			return prevValue;
 		}
 		break;
-		case fr::InterpolationMode::CubicSpline:
+		case pr::InterpolationMode::CubicSpline:
 		{
 			const bool isFirstKeyframeTangent = prevKeyframeIdx == 0;
 			const bool isLastKeyframeTangent = prevKeyframeIdx > nextKeyframeIdx;
@@ -128,7 +128,7 @@ namespace fr
 				(t3 - t2) * nextInputTangent;
 		}
 		break;
-		case fr::InterpolationMode::SphericalLinearInterpolation:
+		case pr::InterpolationMode::SphericalLinearInterpolation:
 		default: SEAssertF("Invalid interpolation mode");
 		}
 		return reinterpret_cast<T const*>(channelData)[prevKeyframeIdx]; // This should never happen
@@ -136,7 +136,7 @@ namespace fr
 
 
 	inline glm::quat GetSphericalLinearInterpolatedValue(
-		fr::InterpolationMode mode,
+		pr::InterpolationMode mode,
 		float const* channelData,
 		size_t channelDataCount,
 		size_t prevKeyframeIdx,
@@ -145,7 +145,7 @@ namespace fr
 		float nextSec,
 		float requestedSec)
 	{
-		SEAssert(mode == fr::InterpolationMode::SphericalLinearInterpolation, "Invalid mode for this implementation");
+		SEAssert(mode == pr::InterpolationMode::SphericalLinearInterpolation, "Invalid mode for this implementation");
 
 		glm::quat const& prevValue = reinterpret_cast<glm::quat const*>(channelData)[prevKeyframeIdx];
 		glm::quat const& nextValue = reinterpret_cast<glm::quat const*>(channelData)[nextKeyframeIdx];
@@ -174,7 +174,7 @@ namespace fr
 
 	public:
 		// Create an empty AnimationController entity directly:
-		static AnimationController* CreateAnimationController(fr::EntityManager&, char const* name);
+		static AnimationController* CreateAnimationController(pr::EntityManager&, char const* name);
 
 		// 2-step/deferred AnimationController construction:
 		// 1) Create an animation controller object
@@ -182,7 +182,7 @@ namespace fr
 		// 3) Move it to initialize an entity/component with it
 		static std::unique_ptr<AnimationController> CreateAnimationControllerObject();
 		static AnimationController* CreateAnimationController(
-			fr::EntityManager&, char const* name, std::unique_ptr<AnimationController>&&);
+			pr::EntityManager&, char const* name, std::unique_ptr<AnimationController>&&);
 
 		static void UpdateAnimationController(AnimationController&, double stepTimeMs);
 
@@ -218,7 +218,7 @@ namespace fr
 		size_t GetNumChannels() const;
 
 	public:
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity);
 
 
 	private:
@@ -372,14 +372,14 @@ namespace fr
 	class AnimationComponent final
 	{
 	public:
-		static AnimationComponent* AttachAnimationComponent(fr::EntityManager&, entt::entity, AnimationController const*);
+		static AnimationComponent* AttachAnimationComponent(pr::EntityManager&, entt::entity, AnimationController const*);
 
-		static void ApplyAnimation(fr::AnimationComponent const&, fr::TransformComponent&);
+		static void ApplyAnimation(pr::AnimationComponent const&, pr::TransformComponent&);
 
 
 	public: // Helpers:
 		static void GetPrevNextKeyframeIdx(
-			fr::AnimationController const*, fr::AnimationData::Channel const&, size_t& prevIdxOut, size_t& nextIdxOut);
+			pr::AnimationController const*, pr::AnimationData::Channel const&, size_t& prevIdxOut, size_t& nextIdxOut);
 
 
 	private: // Use the static creation factories
@@ -447,6 +447,6 @@ namespace fr
 
 	inline bool AnimationComponent::IsPlaying() const
 	{
-		return GetAnimationState() == fr::AnimationState::Playing;
+		return GetAnimationState() == pr::AnimationState::Playing;
 	}
 }

@@ -9,23 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\fr">
-      <UniqueIdentifier>{74d845cc-af85-450c-b361-a51da2319784}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr">
-      <UniqueIdentifier>{90b7f405-b5a5-4ad3-bf5b-ac84412309c6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\pch">
       <UniqueIdentifier>{5e018b8d-c33c-43fe-8b24-6b60bab29336}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\pch">
       <UniqueIdentifier>{24be11b4-c65d-47dd-8c3b-4d372ef5f1a7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr\Components">
-      <UniqueIdentifier>{1fe10d20-a77f-4d3b-8e9e-d54ae9631dcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr\Components">
-      <UniqueIdentifier>{2db72d74-df2d-4e05-a4dd-eaaa9663b847}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\load">
       <UniqueIdentifier>{42c73958-281d-4b11-9df5-3b70ec6b049b}</UniqueIdentifier>
@@ -33,88 +21,100 @@
     <Filter Include="Source Files\load">
       <UniqueIdentifier>{9a7edd0c-7efc-43b6-9fbf-d242c4f7868d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\fr\Services">
+    <Filter Include="Header Files\pr">
+      <UniqueIdentifier>{74d845cc-af85-450c-b361-a51da2319784}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pr\Components">
+      <UniqueIdentifier>{2db72d74-df2d-4e05-a4dd-eaaa9663b847}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pr\Services">
       <UniqueIdentifier>{ede5bb92-04ac-416e-a4c2-ecbcc3acded2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\fr\Services">
+    <Filter Include="Source Files\pr">
+      <UniqueIdentifier>{90b7f405-b5a5-4ad3-bf5b-ac84412309c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pr\Components">
+      <UniqueIdentifier>{1fe10d20-a77f-4d3b-8e9e-d54ae9631dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pr\Services">
       <UniqueIdentifier>{72f8725a-bceb-4fea-a1b3-479336103943}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BoundsComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="CameraComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="CameraControlComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="LightComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMap.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="UIManager.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="EntityCommands.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="EntityManager.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="Light.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="pch\pch.cpp">
       <Filter>Source Files\pch</Filter>
     </ClCompile>
     <ClCompile Include="MaterialInstanceComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="MeshPrimitiveComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="NameComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="RelationshipComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="RenderDataComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMapComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="TransformComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="SceneNodeConcept.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="MeshConcept.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">
-      <Filter>Source Files\fr</Filter>
+      <Filter>Source Files\pr</Filter>
     </ClCompile>
     <ClCompile Include="AnimationComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="SkinningComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="MeshMorphComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
+      <Filter>Source Files\pr\Components</Filter>
     </ClCompile>
     <ClCompile Include="Load_GLTF.cpp">
       <Filter>Source Files\load</Filter>
@@ -123,90 +123,90 @@
       <Filter>Source Files\load</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsService_Culling.cpp">
-      <Filter>Source Files\fr\Services</Filter>
+      <Filter>Source Files\pr\Services</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsService_Debug.cpp">
-      <Filter>Source Files\fr\Services</Filter>
+      <Filter>Source Files\pr\Services</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundsComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="CameraComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="CameraControlComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="EntityCommands.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="UIManager.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="pch\pch.h">
       <Filter>Header Files\pch</Filter>
     </ClInclude>
     <ClInclude Include="MarkerComponents.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="MaterialInstanceComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="MeshPrimitiveComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="NameComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="RelationshipComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="RenderDataComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="TransformComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="SceneNodeConcept.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="MeshConcept.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>Header Files\fr</Filter>
+      <Filter>Header Files\pr</Filter>
     </ClInclude>
     <ClInclude Include="AnimationComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="LightComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="SkinningComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="MeshMorphComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
+      <Filter>Header Files\pr\Components</Filter>
     </ClInclude>
     <ClInclude Include="Load_GLTF.h">
       <Filter>Header Files\load</Filter>
@@ -215,13 +215,13 @@
       <Filter>Header Files\load</Filter>
     </ClInclude>
     <ClInclude Include="IGraphicsService.h">
-      <Filter>Header Files\fr\Services</Filter>
+      <Filter>Header Files\pr\Services</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsService_Culling.h">
-      <Filter>Header Files\fr\Services</Filter>
+      <Filter>Header Files\pr\Services</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsService_Debug.h">
-      <Filter>Header Files\fr\Services</Filter>
+      <Filter>Header Files\pr\Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

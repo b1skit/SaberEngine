@@ -48,7 +48,7 @@ namespace
 }
 
 
-namespace fr
+namespace pr
 {
 	entt::entity LightComponent::CreateDeferredAmbientLightConcept(
 		EntityManager& em, std::string_view name, core::InvPtr<re::Texture> const& iblTex)
@@ -58,20 +58,20 @@ namespace fr
 		entt::entity lightEntity = em.CreateEntity(name);
 
 		// MeshPrimitive:
-		fr::RenderDataComponent* renderDataComponent = 
-			fr::RenderDataComponent::GetCreateRenderDataComponent(em, lightEntity, gr::k_invalidTransformID);
+		pr::RenderDataComponent* renderDataComponent = 
+			pr::RenderDataComponent::GetCreateRenderDataComponent(em, lightEntity, gr::k_invalidTransformID);
 
 		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad = 
 			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
 
-		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
+		pr::MeshPrimitiveComponent const& meshPrimCmpt = pr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			lightEntity,
 			*renderDataComponent,
 			fullscreenQuad);
 
 		// LightComponent:
-		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
+		pr::LightComponent& lightComponent = *em.EmplaceComponent<pr::LightComponent>(
 			lightEntity, 
 			PrivateCTORTag{}, 
 			*renderDataComponent,
@@ -79,14 +79,14 @@ namespace fr
 		em.EmplaceComponent<AmbientIBLDeferredMarker>(lightEntity);
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(lightEntity);
+		em.EmplaceComponent<DirtyMarker<pr::LightComponent>>(lightEntity);
 
 		return lightEntity;
 	}
 
 
 	LightComponent& LightComponent::AttachDeferredPointLightConcept(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity, 
 		std::string_view name, 
 		glm::vec4 const& colorIntensity, 
@@ -103,28 +103,28 @@ namespace fr
 		core::InvPtr<gr::MeshPrimitive> const& pointLightMesh = 
 			gr::meshfactory::CreateSphere(sphereOptions, 1.f);
 
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
 		if (!transformCmpt)
 		{
-			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent* renderDataComponent =
-			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		pr::RenderDataComponent* renderDataComponent =
+			pr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		renderDataComponent->SetFeatureBit(gr::RenderObjectFeature::IsLightBounds);
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh, minPos, maxPos);
+		pr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh, minPos, maxPos);
 
 		// LightComponent:
-		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
+		pr::LightComponent& lightComponent = *em.EmplaceComponent<pr::LightComponent>(
 			owningEntity,
 			PrivateCTORTag{}, 
 			*renderDataComponent,
-			fr::Light::Type::Point,
+			pr::Light::Type::Point,
 			colorIntensity,
 			hasShadow);
 		em.EmplaceComponent<PointDeferredMarker>(owningEntity);
@@ -132,12 +132,12 @@ namespace fr
 		// ShadowMapComponent, if required:
 		if (hasShadow)
 		{
-			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Point);
+			pr::ShadowMapComponent::AttachShadowMapComponent(
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), pr::Light::Type::Point);
 		}
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::LightComponent>>(owningEntity);
 
 		return lightComponent;
 	}
@@ -145,7 +145,7 @@ namespace fr
 
 
 	LightComponent& LightComponent::AttachDeferredSpotLightConcept(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity,
 		std::string_view name,
 		glm::vec4 const& colorIntensity,
@@ -168,28 +168,28 @@ namespace fr
 			1.f,	// Radius
 			16);	// No. sides
 
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
 		if (!transformCmpt)
 		{
-			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
-		fr::RenderDataComponent* renderDataComponent =
-			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		pr::RenderDataComponent* renderDataComponent =
+			pr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		renderDataComponent->SetFeatureBit(gr::RenderObjectFeature::IsLightBounds);
 
 		// Attach the MeshPrimitive 
-		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh, minPos, maxPos);
+		pr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, spotLightMesh, minPos, maxPos);
 
 		// LightComponent:
-		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
+		pr::LightComponent& lightComponent = *em.EmplaceComponent<pr::LightComponent>(
 			owningEntity,
 			PrivateCTORTag{},
 			*renderDataComponent,
-			fr::Light::Type::Spot,
+			pr::Light::Type::Spot,
 			colorIntensity,
 			hasShadow);
 		em.EmplaceComponent<SpotDeferredMarker>(owningEntity);
@@ -197,42 +197,42 @@ namespace fr
 		// ShadowMapComponent, if required:
 		if (hasShadow)
 		{
-			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Spot);
+			pr::ShadowMapComponent::AttachShadowMapComponent(
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), pr::Light::Type::Spot);
 		}
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::LightComponent>>(owningEntity);
 
 		return lightComponent;
 	}
 
 
 	LightComponent& LightComponent::AttachDeferredDirectionalLightConcept(
-		fr::EntityManager& em,
+		pr::EntityManager& em,
 		entt::entity owningEntity, 
 		std::string_view name, 
 		glm::vec4 const& colorIntensity,
 		bool hasShadow)
 	{
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(owningEntity);
-		fr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<fr::TransformComponent>();
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
 		if (!transformCmpt)
 		{
-			transformCmpt = &fr::TransformComponent::AttachTransformComponent(em, owningEntity);
+			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
 		}
 
 		// Note: Our fullscreen quad will technically be linked to the owningTransform; We can't use 
 		// k_invalidTransformID as a directional light/shadow needs a valid transform. 
 		// Fullscreen quads don't use a Transform so this shouldn't matter.
-		fr::RenderDataComponent* renderDataComponent =
-			fr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
+		pr::RenderDataComponent* renderDataComponent =
+			pr::RenderDataComponent::GetCreateRenderDataComponent(em, owningEntity, transformCmpt->GetTransformID());
 
 		// MeshPrimitive:
 		core::InvPtr<gr::MeshPrimitive> const& fullscreenQuad =
 			gr::meshfactory::CreateFullscreenQuad(em.GetInventory(), gr::meshfactory::ZLocation::Far);
 
-		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
+		pr::MeshPrimitiveComponent const& meshPrimCmpt = pr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
 			owningEntity,
 			*renderDataComponent,
@@ -243,7 +243,7 @@ namespace fr
 			owningEntity,
 			PrivateCTORTag{},
 			*renderDataComponent,
-			fr::Light::Type::Directional,
+			pr::Light::Type::Directional,
 			colorIntensity,
 			hasShadow);
 		em.EmplaceComponent<DirectionalDeferredMarker>(owningEntity);
@@ -251,12 +251,12 @@ namespace fr
 		// ShadowMapComponent, if required:
 		if (hasShadow)
 		{
-			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Directional);
+			pr::ShadowMapComponent::AttachShadowMapComponent(
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), pr::Light::Type::Directional);
 		}
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::LightComponent>>(owningEntity);
 
 		return lightComponent;
 	}
@@ -265,17 +265,17 @@ namespace fr
 
 
 	gr::Light::RenderDataAmbientIBL LightComponent::CreateRenderDataAmbientIBL_Deferred(
-		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+		pr::NameComponent const& nameCmpt, pr::LightComponent const& lightCmpt)
 	{
 		gr::Light::RenderDataAmbientIBL renderData(
 			nameCmpt.GetName().c_str(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
 
-		fr::Light const& light = lightCmpt.m_light;
+		pr::Light const& light = lightCmpt.m_light;
 
-		fr::Light::TypeProperties const& typeProperties =
-			light.GetLightTypeProperties(fr::Light::Type::AmbientIBL);
+		pr::Light::TypeProperties const& typeProperties =
+			light.GetLightTypeProperties(pr::Light::Type::AmbientIBL);
 		SEAssert(typeProperties.m_ambient.m_IBLTex, "IBL texture cannot be null");
 
 		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
@@ -290,17 +290,17 @@ namespace fr
 
 
 	gr::Light::RenderDataDirectional LightComponent::CreateRenderDataDirectional_Deferred(
-		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+		pr::NameComponent const& nameCmpt, pr::LightComponent const& lightCmpt)
 	{
 		gr::Light::RenderDataDirectional renderData(
 			nameCmpt.GetName().c_str(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
 
-		fr::Light const& light = lightCmpt.m_light;
+		pr::Light const& light = lightCmpt.m_light;
 
-		fr::Light::TypeProperties const& typeProperties =
-			light.GetLightTypeProperties(fr::Light::Type::Directional);
+		pr::Light::TypeProperties const& typeProperties =
+			light.GetLightTypeProperties(pr::Light::Type::Directional);
 
 		renderData.m_colorIntensity = typeProperties.m_directional.m_colorIntensity;
 
@@ -319,16 +319,16 @@ namespace fr
 
 
 	gr::Light::RenderDataPoint LightComponent::CreateRenderDataPoint_Deferred(
-		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+		pr::NameComponent const& nameCmpt, pr::LightComponent const& lightCmpt)
 	{
 		gr::Light::RenderDataPoint renderData(
 			nameCmpt.GetName().c_str(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
 
-		fr::Light const& light = lightCmpt.m_light;
+		pr::Light const& light = lightCmpt.m_light;
 
-		fr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
+		pr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(pr::Light::Type::Point);
 
 		renderData.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
 		renderData.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
@@ -351,16 +351,16 @@ namespace fr
 
 
 	gr::Light::RenderDataSpot LightComponent::CreateRenderDataSpot_Deferred(
-		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+		pr::NameComponent const& nameCmpt, pr::LightComponent const& lightCmpt)
 	{
 		gr::Light::RenderDataSpot renderData(
 			nameCmpt.GetName().c_str(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
 
-		fr::Light const& light = lightCmpt.m_light;
+		pr::Light const& light = lightCmpt.m_light;
 
-		fr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(fr::Light::Type::Spot);
+		pr::Light::TypeProperties const& typeProperties = light.GetLightTypeProperties(pr::Light::Type::Spot);
 
 		renderData.m_colorIntensity = typeProperties.m_spot.m_colorIntensity;
 		renderData.m_emitterRadius = typeProperties.m_spot.m_emitterRadius;
@@ -385,13 +385,13 @@ namespace fr
 
 
 	void LightComponent::Update(
-		entt::entity entity, fr::LightComponent& lightComponent, fr::Transform* lightTransform, fr::Camera* shadowCam)
+		entt::entity entity, pr::LightComponent& lightComponent, pr::Transform* lightTransform, pr::Camera* shadowCam)
 	{
-		fr::Light& light = lightComponent.GetLight();
+		pr::Light& light = lightComponent.GetLight();
 
 		bool didModify = light.Update();
 
-		if (light.GetType() != fr::Light::Type::AmbientIBL && lightTransform->HasChanged())
+		if (light.GetType() != pr::Light::Type::AmbientIBL && lightTransform->HasChanged())
 		{
 			didModify = true;
 		}
@@ -400,31 +400,31 @@ namespace fr
 		{
 			switch (light.GetType())
 			{
-			case fr::Light::Type::AmbientIBL:
+			case pr::Light::Type::AmbientIBL:
 			{
 				//
 			}
 			break;
-			case fr::Light::Type::Directional:
+			case pr::Light::Type::Directional:
 			{
 				//
 			}
 			break;
-			case fr::Light::Type::Point:
+			case pr::Light::Type::Point:
 			{
 				SEAssert(lightTransform, "Point lights require a Transform");
 
-				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
+				pr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(pr::Light::Type::Point);
 
 				// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
 				lightTransform->SetLocalScale(glm::vec3(lightProperties.m_point.m_sphericalRadius));
 			}
 			break;
-			case fr::Light::Type::Spot:
+			case pr::Light::Type::Spot:
 			{
 				SEAssert(lightTransform, "Spot lights require a Transform");
 
-				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Spot);
+				pr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(pr::Light::Type::Spot);
 
 				// Scale the owning transform such that a cone created with a height of 1 will be the correct dimensions
 				lightTransform->SetLocalScale(
@@ -438,14 +438,14 @@ namespace fr
 
 		if (didModify)
 		{
-			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::LightComponent>>(entity);
+			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::LightComponent>>(entity);
 		}
 	}
 
 
-	void LightComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity lightEntity)
+	void LightComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity lightEntity)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(lightEntity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(lightEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("Light \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -453,36 +453,36 @@ namespace fr
 			ImGui::Indent();
 
 			// RenderDataComponent:
-			fr::RenderDataComponent::ShowImGuiWindow(em, lightEntity);
+			pr::RenderDataComponent::ShowImGuiWindow(em, lightEntity);
 
-			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(lightEntity);
+			pr::LightComponent& lightCmpt = em.GetComponent<pr::LightComponent>(lightEntity);
 			
 			lightCmpt.GetLight().ShowImGuiWindow(nameCmpt.GetUniqueID());
 
 			// Transform:
-			fr::TransformComponent* transformComponent = em.TryGetComponent<fr::TransformComponent>(lightEntity);
-			SEAssert(transformComponent || lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL,
+			pr::TransformComponent* transformComponent = em.TryGetComponent<pr::TransformComponent>(lightEntity);
+			SEAssert(transformComponent || lightCmpt.m_light.GetType() == pr::Light::Type::AmbientIBL,
 				"Failed to find TransformComponent");
 			if (transformComponent)
 			{
-				fr::TransformComponent::ShowImGuiWindow(em, lightEntity, static_cast<uint64_t>(lightEntity));
+				pr::TransformComponent::ShowImGuiWindow(em, lightEntity, static_cast<uint64_t>(lightEntity));
 			}
 
-			fr::BoundsComponent* boundsCmpt = em.TryGetComponent<fr::BoundsComponent>(lightEntity);
+			pr::BoundsComponent* boundsCmpt = em.TryGetComponent<pr::BoundsComponent>(lightEntity);
 			SEAssert(boundsCmpt || 
-				lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL || 
-				lightCmpt.m_light.GetType() == fr::Light::Type::Directional,
+				lightCmpt.m_light.GetType() == pr::Light::Type::AmbientIBL || 
+				lightCmpt.m_light.GetType() == pr::Light::Type::Directional,
 				"Failed to find BoundsComponent");
 			if (boundsCmpt)
 			{
-				fr::BoundsComponent::ShowImGuiWindow(em, lightEntity);
+				pr::BoundsComponent::ShowImGuiWindow(em, lightEntity);
 			}
 
 			// Shadow map
-			fr::ShadowMapComponent* shadowMapCmpt = em.TryGetComponent<fr::ShadowMapComponent>(lightEntity);
+			pr::ShadowMapComponent* shadowMapCmpt = em.TryGetComponent<pr::ShadowMapComponent>(lightEntity);
 			if (shadowMapCmpt)
 			{
-				fr::ShadowMapComponent::ShowImGuiWindow(em, lightEntity);
+				pr::ShadowMapComponent::ShowImGuiWindow(em, lightEntity);
 			}
 
 			ImGui::Unindent();
@@ -498,17 +498,17 @@ namespace fr
 			glm::vec4 m_colorIntensity = glm::vec4(1.f, 1.f, 1.f, 100.f);
 		};
 
-		auto InitializeSpawnParams = [](fr::Light::Type lightType, std::unique_ptr<LightSpawnParams>& spawnParams)
+		auto InitializeSpawnParams = [](pr::Light::Type lightType, std::unique_ptr<LightSpawnParams>& spawnParams)
 			{
 				spawnParams = std::make_unique<LightSpawnParams>(lightType);
 			};
 
-		static fr::Light::Type s_selectedLightType = static_cast<fr::Light::Type>(0);
+		static pr::Light::Type s_selectedLightType = static_cast<pr::Light::Type>(0);
 		static std::unique_ptr<LightSpawnParams> s_spawnParams = std::make_unique<LightSpawnParams>(s_selectedLightType);
 
-		const fr::Light::Type currentSelectedLightTypeIdx = s_selectedLightType;
+		const pr::Light::Type currentSelectedLightTypeIdx = s_selectedLightType;
 		util::ShowBasicComboBox(
-			"Light type", fr::Light::k_lightTypeNames.data(), fr::Light::k_lightTypeNames.size(), s_selectedLightType);
+			"Light type", pr::Light::k_lightTypeNames.data(), pr::Light::k_lightTypeNames.size(), s_selectedLightType);
 
 		// If the selection has changed, re-initialize the spawn parameters:
 		if (s_spawnParams == nullptr || s_selectedLightType != currentSelectedLightTypeIdx)
@@ -519,7 +519,7 @@ namespace fr
 		// Display type-specific spawn options
 		switch (s_selectedLightType)
 		{
-		case fr::Light::Type::AmbientIBL:
+		case pr::Light::Type::AmbientIBL:
 		{
 			if (ImGui::Button("Import"))
 			{
@@ -536,9 +536,9 @@ namespace fr
 			}
 		}
 		break;
-		case fr::Light::Type::Directional:
-		case fr::Light::Type::Point:
-		case fr::Light::Type::Spot:
+		case pr::Light::Type::Directional:
+		case pr::Light::Type::Point:
+		case pr::Light::Type::Spot:
 		{
 			ImGui::Checkbox("Attach shadow map", &s_spawnParams->m_attachShadow);
 			ImGui::ColorEdit3("Color",
@@ -551,20 +551,20 @@ namespace fr
 
 			if (ImGui::Button("Spawn"))
 			{
-				fr::EntityManager* em = fr::EntityManager::Get();
+				pr::EntityManager* em = pr::EntityManager::Get();
 
-				entt::entity sceneNode = fr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
+				entt::entity sceneNode = pr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
 
-				switch (static_cast<fr::Light::Type>(s_selectedLightType))
+				switch (static_cast<pr::Light::Type>(s_selectedLightType))
 				{
-				case fr::Light::Type::AmbientIBL:
+				case pr::Light::Type::AmbientIBL:
 				{
 					//
 				}
 				break;
-				case fr::Light::Type::Directional:
+				case pr::Light::Type::Directional:
 				{
-					fr::LightComponent::AttachDeferredDirectionalLightConcept(
+					pr::LightComponent::AttachDeferredDirectionalLightConcept(
 						*em,
 						sceneNode,
 						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
@@ -572,9 +572,9 @@ namespace fr
 						s_spawnParams->m_attachShadow);
 				}
 				break;
-				case fr::Light::Type::Point:
+				case pr::Light::Type::Point:
 				{
-					fr::LightComponent::AttachDeferredPointLightConcept(
+					pr::LightComponent::AttachDeferredPointLightConcept(
 						*em,
 						sceneNode,
 						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
@@ -582,9 +582,9 @@ namespace fr
 						s_spawnParams->m_attachShadow);
 				}
 				break;
-				case fr::Light::Type::Spot:
+				case pr::Light::Type::Spot:
 				{
-					fr::LightComponent::AttachDeferredSpotLightConcept(
+					pr::LightComponent::AttachDeferredSpotLightConcept(
 						*em,
 						sceneNode,
 						std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
@@ -607,8 +607,8 @@ namespace fr
 
 	LightComponent::LightComponent(
 		PrivateCTORTag,
-		fr::RenderDataComponent const& renderDataComponent, 
-		fr::Light::Type lightType, 
+		pr::RenderDataComponent const& renderDataComponent, 
+		pr::Light::Type lightType, 
 		glm::vec4 colorIntensity,
 		bool hasShadow)
 		: m_renderDataID(renderDataComponent.GetRenderDataID())
@@ -621,15 +621,15 @@ namespace fr
 
 	LightComponent::LightComponent(
 		PrivateCTORTag, 
-		fr::RenderDataComponent const& renderDataComponent,
+		pr::RenderDataComponent const& renderDataComponent,
 		core::InvPtr<re::Texture> const& iblTex,
-		const fr::Light::Type ambientTypeOnly)
+		const pr::Light::Type ambientTypeOnly)
 		: m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
-		, m_light(iblTex, fr::Light::Type::AmbientIBL)
+		, m_light(iblTex, pr::Light::Type::AmbientIBL)
 		, m_hasShadow(false)
 	{
-		SEAssert(ambientTypeOnly == fr::Light::Type::AmbientIBL, "This constructor is for ambient light types only");
+		SEAssert(ambientTypeOnly == pr::Light::Type::AmbientIBL, "This constructor is for ambient light types only");
 	}
 
 
@@ -637,11 +637,11 @@ namespace fr
 
 
 	UpdateLightDataRenderCommand::UpdateLightDataRenderCommand(
-		fr::NameComponent const& nameComponent, LightComponent const& lightComponent)
+		pr::NameComponent const& nameComponent, LightComponent const& lightComponent)
 		: m_renderDataID(lightComponent.GetRenderDataID())
 		, m_transformID(lightComponent.GetTransformID())
 	{
-		m_type = fr::Light::ConvertToGrLightType(lightComponent.GetLight().GetType());
+		m_type = pr::Light::ConvertToGrLightType(lightComponent.GetLight().GetType());
 		switch (m_type)
 		{
 		case gr::Light::Type::AmbientIBL:
@@ -649,22 +649,22 @@ namespace fr
 			// Zero initialize the union, as it contains an InvPtr
 			memset(&m_ambientData, 0, sizeof(gr::Light::RenderDataAmbientIBL));
 
-			m_ambientData = fr::LightComponent::CreateRenderDataAmbientIBL_Deferred(nameComponent, lightComponent);
+			m_ambientData = pr::LightComponent::CreateRenderDataAmbientIBL_Deferred(nameComponent, lightComponent);
 		}
 		break;
 		case gr::Light::Type::Directional:
 		{
-			m_directionalData = fr::LightComponent::CreateRenderDataDirectional_Deferred(nameComponent, lightComponent);
+			m_directionalData = pr::LightComponent::CreateRenderDataDirectional_Deferred(nameComponent, lightComponent);
 		}
 		break;
 		case gr::Light::Type::Point:
 		{
-			m_pointData = fr::LightComponent::CreateRenderDataPoint_Deferred(nameComponent, lightComponent);
+			m_pointData = pr::LightComponent::CreateRenderDataPoint_Deferred(nameComponent, lightComponent);
 		}
 		break;
 		case gr::Light::Type::Spot:
 		{
-			m_spotData = fr::LightComponent::CreateRenderDataSpot_Deferred(nameComponent, lightComponent);
+			m_spotData = pr::LightComponent::CreateRenderDataSpot_Deferred(nameComponent, lightComponent);
 		}
 		break;
 		default: SEAssertF("Invalid type");
@@ -750,7 +750,7 @@ namespace fr
 
 	DestroyLightDataRenderCommand::DestroyLightDataRenderCommand(LightComponent const& lightCmpt)
 		: m_renderDataID(lightCmpt.GetRenderDataID())
-		, m_type(fr::Light::ConvertToGrLightType(lightCmpt.GetLight().GetType()))
+		, m_type(pr::Light::ConvertToGrLightType(lightCmpt.GetLight().GetType()))
 	{
 	}
 
@@ -763,22 +763,22 @@ namespace fr
 
 		switch (cmdPtr->m_type)
 		{
-		case fr::Light::Type::AmbientIBL:
+		case pr::Light::Type::AmbientIBL:
 		{
 			renderDataMgr.DestroyObjectData<gr::Light::RenderDataAmbientIBL>(cmdPtr->m_renderDataID);
 		}
 		break;
-		case fr::Light::Type::Directional:
+		case pr::Light::Type::Directional:
 		{
 			renderDataMgr.DestroyObjectData<gr::Light::RenderDataDirectional>(cmdPtr->m_renderDataID);
 		}
 		break;
-		case fr::Light::Type::Point:
+		case pr::Light::Type::Point:
 		{
 			renderDataMgr.DestroyObjectData<gr::Light::RenderDataPoint>(cmdPtr->m_renderDataID);
 		}
 		break;
-		case fr::Light::Type::Spot:
+		case pr::Light::Type::Spot:
 		{
 			renderDataMgr.DestroyObjectData<gr::Light::RenderDataSpot>(cmdPtr->m_renderDataID);
 		}

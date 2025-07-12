@@ -3,7 +3,7 @@
 #include "EntityManager.h"
 
 
-namespace fr
+namespace pr
 {
 	SetMainCameraCommand::SetMainCameraCommand(entt::entity newMainCam)
 		: m_newMainCamera(newMainCam)
@@ -13,7 +13,7 @@ namespace fr
 	void SetMainCameraCommand::Execute(void* cmdData)
 	{
 		SetMainCameraCommand* cmdPtr = reinterpret_cast<SetMainCameraCommand*>(cmdData);
-		fr::EntityManager::Get()->SetMainCamera(cmdPtr->m_newMainCamera);
+		pr::EntityManager::Get()->SetMainCamera(cmdPtr->m_newMainCamera);
 	}
 
 	void SetMainCameraCommand::Destroy(void* cmdData)
@@ -31,7 +31,7 @@ namespace fr
 	void SetActiveAmbientLightCommand::Execute(void* cmdData)
 	{
 		SetActiveAmbientLightCommand* cmdPtr = reinterpret_cast<SetActiveAmbientLightCommand*>(cmdData);
-		fr::EntityManager::Get()->SetActiveAmbientLight(cmdPtr->m_newActiveAmbientLight);
+		pr::EntityManager::Get()->SetActiveAmbientLight(cmdPtr->m_newActiveAmbientLight);
 	}
 
 	void SetActiveAmbientLightCommand::Destroy(void* cmdData)

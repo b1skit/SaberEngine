@@ -22,7 +22,7 @@ namespace core
 {
 	class Inventory;
 }
-namespace fr
+namespace pr
 {
 	class IGraphicsService;
 }
@@ -113,7 +113,7 @@ namespace gr
 
 		void EnqueueRenderCommand(std::function<void(void)>&&);
 
-		using CommandManagerAccessKey = accesscontrol::AccessKey<fr::IGraphicsService>;
+		using CommandManagerAccessKey = accesscontrol::AccessKey<pr::IGraphicsService>;
 		core::CommandManager* GetRenderCommandManager(CommandManagerAccessKey);
 
 

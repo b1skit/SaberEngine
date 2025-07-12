@@ -10,26 +10,26 @@
 
 namespace
 {
-	float ConvertLuminousPowerToLuminousIntensity(fr::Light::Type lightType, float luminousPower)
+	float ConvertLuminousPowerToLuminousIntensity(pr::Light::Type lightType, float luminousPower)
 	{
 		switch (lightType)
 		{
-		case fr::Light::Directional:
+		case pr::Light::Directional:
 		{
 			SEAssertF("Only punctual lights are (currently) supported");
 		}
 		break;
-		case fr::Light::Point:
+		case pr::Light::Point:
 		{
 			return luminousPower / (4.f * glm::pi<float>());
 		}
 		break;
-		case fr::Light::Spot:
+		case pr::Light::Spot:
 		{
 			return luminousPower / glm::pi<float>();
 		}
 		break;
-		case fr::Light::AmbientIBL:
+		case pr::Light::AmbientIBL:
 		default: SEAssertF("Invalid light type")
 		}
 		return 0.f;
@@ -37,7 +37,7 @@ namespace
 
 
 	float ComputeLightRadiusFromLuminousPower(
-		fr::Light::Type lightType, float luminousPower, float emitterRadius, float intensityCutoff)
+		pr::Light::Type lightType, float luminousPower, float emitterRadius, float intensityCutoff)
 	{
 		const float luminousIntensity = ConvertLuminousPowerToLuminousIntensity(lightType, luminousPower);
 
@@ -62,7 +62,7 @@ namespace
 }
 
 
-namespace fr
+namespace pr
 {
 	Light::TypeProperties::TypeProperties()
 	{
@@ -383,34 +383,34 @@ namespace fr
 
 		switch (lightType)
 		{
-		case fr::Light::Type::AmbientIBL:
+		case pr::Light::Type::AmbientIBL:
 		{
-			fr::Light::TypeProperties::AmbientProperties const* properties = 
-				static_cast<fr::Light::TypeProperties::AmbientProperties const*>(typeProperties);
+			pr::Light::TypeProperties::AmbientProperties const* properties = 
+				static_cast<pr::Light::TypeProperties::AmbientProperties const*>(typeProperties);
 
 			m_typeProperties.m_ambient = *properties;
 		}
 		break;
-		case fr::Light::Type::Directional:
+		case pr::Light::Type::Directional:
 		{
-			fr::Light::TypeProperties::DirectionalProperties const* properties =
-				static_cast<fr::Light::TypeProperties::DirectionalProperties const*>(typeProperties);
+			pr::Light::TypeProperties::DirectionalProperties const* properties =
+				static_cast<pr::Light::TypeProperties::DirectionalProperties const*>(typeProperties);
 			
 			m_typeProperties.m_directional = *properties;
 		}
 		break;
-		case fr::Light::Type::Point:
+		case pr::Light::Type::Point:
 		{
-			fr::Light::TypeProperties::PointProperties const* properties =
-				static_cast<fr::Light::TypeProperties::PointProperties const*>(typeProperties);
+			pr::Light::TypeProperties::PointProperties const* properties =
+				static_cast<pr::Light::TypeProperties::PointProperties const*>(typeProperties);
 			
 			m_typeProperties.m_point = *properties;
 		}
 		break;
-		case fr::Light::Type::Spot:
+		case pr::Light::Type::Spot:
 		{
-			fr::Light::TypeProperties::SpotProperties const* properties =
-				static_cast<fr::Light::TypeProperties::SpotProperties const*>(typeProperties);
+			pr::Light::TypeProperties::SpotProperties const* properties =
+				static_cast<pr::Light::TypeProperties::SpotProperties const*>(typeProperties);
 
 			SEAssert(properties->m_innerConeAngle >= 0 && properties->m_innerConeAngle < properties->m_outerConeAngle,
 				"Invalid inner cone angle. Must be greater than or equal to 0 and less than m_outerConeAngle");

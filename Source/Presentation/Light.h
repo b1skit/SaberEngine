@@ -3,7 +3,7 @@
 #include "Renderer/LightRenderData.h"
 
 
-namespace fr
+namespace pr
 {
 	class Light final
 	{
@@ -17,27 +17,27 @@ namespace fr
 
 			Type_Count
 		};
-		static_assert(static_cast<uint8_t>(fr::Light::Type::Type_Count) ==
+		static_assert(static_cast<uint8_t>(pr::Light::Type::Type_Count) ==
 			static_cast<uint8_t>(gr::Light::Type::Type_Count));
 
-		static constexpr std::array<char const*, fr::Light::Type::Type_Count> k_lightTypeNames = {
+		static constexpr std::array<char const*, pr::Light::Type::Type_Count> k_lightTypeNames = {
 			"Ambient Light",
 			"Directional Light",
 			"Point Light",
 			"Spot Light",
 		};
-		static_assert(k_lightTypeNames.size() == fr::Light::Type::Type_Count);
+		static_assert(k_lightTypeNames.size() == pr::Light::Type::Type_Count);
 
 
-		static constexpr gr::Light::Type ConvertToGrLightType(fr::Light::Type);
+		static constexpr gr::Light::Type ConvertToGrLightType(pr::Light::Type);
 
 
 	public:
 		Light(Type lightType, glm::vec4 const& colorIntensity);
 		Light(core::InvPtr<re::Texture> const& iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
 
-		Light(fr::Light&&) noexcept = default;
-		Light& operator=(fr::Light&&) noexcept = default;
+		Light(pr::Light&&) noexcept = default;
+		Light& operator=(pr::Light&&) noexcept = default;
 		~Light() = default;
 
 		bool Update();
@@ -121,19 +121,19 @@ namespace fr
 
 	private: // No copying allowed
 		Light() = delete;
-		Light(fr::Light const&) = delete;
-		Light& operator=(fr::Light const&) = delete;
+		Light(pr::Light const&) = delete;
+		Light& operator=(pr::Light const&) = delete;
 	};
 
 
-	inline constexpr gr::Light::Type Light::ConvertToGrLightType(fr::Light::Type frLightType)
+	inline constexpr gr::Light::Type Light::ConvertToGrLightType(pr::Light::Type frLightType)
 	{
 		switch (frLightType)
 		{
-		case fr::Light::Type::AmbientIBL: return gr::Light::Type::AmbientIBL;
-		case fr::Light::Type::Directional: return gr::Light::Type::Directional;
-		case fr::Light::Type::Point: return gr::Light::Type::Point;
-		case fr::Light::Type::Spot: return gr::Light::Type::Spot;
+		case pr::Light::Type::AmbientIBL: return gr::Light::Type::AmbientIBL;
+		case pr::Light::Type::Directional: return gr::Light::Type::Directional;
+		case pr::Light::Type::Point: return gr::Light::Type::Point;
+		case pr::Light::Type::Spot: return gr::Light::Type::Spot;
 		default: throw std::logic_error("Invalid light type");
 		}
 		return gr::Light::Type::Type_Count;

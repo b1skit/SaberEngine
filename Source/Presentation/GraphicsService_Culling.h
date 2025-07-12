@@ -6,7 +6,7 @@
 #include "Renderer/RenderObjectIDs.h"
 
 
-namespace fr
+namespace pr
 {
 	class CullingGraphicsService final : public virtual IGraphicsService
 	{

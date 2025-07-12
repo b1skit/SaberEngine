@@ -468,14 +468,14 @@ namespace load
 
 	void IBLTextureFromFilePath::OnLoadComplete(core::InvPtr<re::Texture>& newIBL)
 	{
-		fr::EntityManager* em = fr::EntityManager::Get();
+		pr::EntityManager* em = pr::EntityManager::Get();
 
 		em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
 			{
-				const bool ambientExists = em->EntityExists<fr::LightComponent::AmbientIBLDeferredMarker>();
+				const bool ambientExists = em->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
 
 				// Create an Ambient LightComponent, and make it active if requested:
-				const entt::entity ambientLight = fr::LightComponent::CreateDeferredAmbientLightConcept(
+				const entt::entity ambientLight = pr::LightComponent::CreateDeferredAmbientLightConcept(
 					*em,
 					newIBL->GetName().c_str(),
 					newIBL);
@@ -484,14 +484,14 @@ namespace load
 				{
 				case ActivationMode::Always:
 				{
-					em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+					em->EnqueueEntityCommand<pr::SetActiveAmbientLightCommand>(ambientLight);
 				}
 				break;
 				case ActivationMode::IfNoneExists:
 				{
 					if (!ambientExists)
 					{
-						em->EnqueueEntityCommand<fr::SetActiveAmbientLightCommand>(ambientLight);
+						em->EnqueueEntityCommand<pr::SetActiveAmbientLightCommand>(ambientLight);
 					}
 				}
 				break;
@@ -526,15 +526,15 @@ namespace load
 	}
 
 
-	CameraMetadata CreateDefaultCamera(fr::EntityManager* em)
+	CameraMetadata CreateDefaultCamera(pr::EntityManager* em)
 	{
 		constexpr char const* k_defaultCamName = "DefaultCamera";
 
 		const entt::entity sceneNodeEntity = 
-			fr::SceneNode::Create(*em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
+			pr::SceneNode::Create(*em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
 		
-		fr::TransformComponent& cameraTransformCmpt = 
-			fr::TransformComponent::AttachTransformComponent(*em, sceneNodeEntity);
+		pr::TransformComponent& cameraTransformCmpt = 
+			pr::TransformComponent::AttachTransformComponent(*em, sceneNodeEntity);
 
 		LOG("Creating a default camera");
 
@@ -551,7 +551,7 @@ namespace load
 			.m_aspectRatio = aspectRatio,
 		};	
 
-		fr::CameraComponent::CreateCameraConcept(
+		pr::CameraComponent::CreateCameraConcept(
 			*em,
 			sceneNodeEntity,
 			k_defaultCamName,

@@ -2,7 +2,7 @@
 #pragma once
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 	class TransformComponent;
@@ -17,7 +17,7 @@ namespace fr
 		static void AttachMeshConceptMarker(entt::entity, char const* name);
 
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity meshConcept);
+		static void ShowImGuiWindow(pr::EntityManager&, entt::entity meshConcept);
 		static void ShowImGuiSpawnWindow();
 	};
 }

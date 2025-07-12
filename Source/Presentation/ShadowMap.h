@@ -5,7 +5,7 @@
 #include "Renderer/ShadowMapRenderData.h"
 
 
-namespace fr
+namespace pr
 {
 	class Light;
 
@@ -21,10 +21,10 @@ namespace fr
 
 			ShadowType_Count
 		};
-		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowType::ShadowType_Count) == 
+		static_assert(static_cast<uint8_t>(pr::ShadowMap::ShadowType::ShadowType_Count) == 
 			static_cast<uint8_t>(gr::ShadowMap::ShadowType::ShadowType_Count));
 
-		static constexpr gr::ShadowMap::ShadowType GetGrShadowMapType(fr::ShadowMap::ShadowType);
+		static constexpr gr::ShadowMap::ShadowType GetGrShadowMapType(pr::ShadowMap::ShadowType);
 
 		enum class ShadowQuality : uint8_t
 		{
@@ -34,14 +34,14 @@ namespace fr
 
 			ShadowQuality_Count
 		};
-		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowQuality::ShadowQuality_Count) ==
+		static_assert(static_cast<uint8_t>(pr::ShadowMap::ShadowQuality::ShadowQuality_Count) ==
 			static_cast<uint8_t>(gr::ShadowMap::ShadowQuality::ShadowQuality_Count));
 
-		static constexpr gr::ShadowMap::ShadowQuality GetGrShadowQuality(fr::ShadowMap::ShadowQuality);
+		static constexpr gr::ShadowMap::ShadowQuality GetGrShadowQuality(pr::ShadowMap::ShadowQuality);
 
 
 	public:
-		ShadowMap(fr::Light::Type lightType);
+		ShadowMap(pr::Light::Type lightType);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
@@ -55,7 +55,7 @@ namespace fr
 		float GetSoftness() const;
 
 		ShadowType GetShadowMapType() const;
-		fr::Light::Type GetOwningLightType() const;
+		pr::Light::Type GetOwningLightType() const;
 
 		ShadowQuality GetShadowQuality() const;
 
@@ -94,7 +94,7 @@ namespace fr
 			};
 
 			const ShadowType m_shadowType;
-			const fr::Light::Type m_lightType;
+			const pr::Light::Type m_lightType;
 
 			ShadowQuality m_shadowQuality;
 
@@ -117,26 +117,26 @@ namespace fr
 
 
 	inline constexpr gr::ShadowMap::ShadowType ShadowMap::GetGrShadowMapType(
-		fr::ShadowMap::ShadowType frShadowMapType)
+		pr::ShadowMap::ShadowType frShadowMapType)
 	{
 		switch (frShadowMapType)
 		{
-		case fr::ShadowMap::ShadowType::Orthographic: return gr::ShadowMap::ShadowType::Orthographic;
-		case fr::ShadowMap::ShadowType::Perspective: return gr::ShadowMap::ShadowType::Perspective;
-		case fr::ShadowMap::ShadowType::CubeMap: return gr::ShadowMap::ShadowType::CubeMap;
+		case pr::ShadowMap::ShadowType::Orthographic: return gr::ShadowMap::ShadowType::Orthographic;
+		case pr::ShadowMap::ShadowType::Perspective: return gr::ShadowMap::ShadowType::Perspective;
+		case pr::ShadowMap::ShadowType::CubeMap: return gr::ShadowMap::ShadowType::CubeMap;
 		default: throw std::logic_error("Invalid light type");
 		}
 		return gr::ShadowMap::ShadowType::ShadowType_Count;
 	}
 
 
-	inline constexpr gr::ShadowMap::ShadowQuality ShadowMap::GetGrShadowQuality(fr::ShadowMap::ShadowQuality quality)
+	inline constexpr gr::ShadowMap::ShadowQuality ShadowMap::GetGrShadowQuality(pr::ShadowMap::ShadowQuality quality)
 	{
 		switch (quality)
 		{
-		case fr::ShadowMap::ShadowQuality::PCF: return gr::ShadowMap::ShadowQuality::PCF;
-		case fr::ShadowMap::ShadowQuality::PCSS_LOW: return gr::ShadowMap::ShadowQuality::PCSS_LOW;
-		case fr::ShadowMap::ShadowQuality::PCSS_HIGH: return gr::ShadowMap::ShadowQuality::PCSS_HIGH;
+		case pr::ShadowMap::ShadowQuality::PCF: return gr::ShadowMap::ShadowQuality::PCF;
+		case pr::ShadowMap::ShadowQuality::PCSS_LOW: return gr::ShadowMap::ShadowQuality::PCSS_LOW;
+		case pr::ShadowMap::ShadowQuality::PCSS_HIGH: return gr::ShadowMap::ShadowQuality::PCSS_HIGH;
 		default: SEAssertF("Invalid quality");
 		}
 		return gr::ShadowMap::ShadowQuality::PCF;
@@ -161,13 +161,13 @@ namespace fr
 	}
 
 
-	inline fr::Light::Type ShadowMap::GetOwningLightType() const
+	inline pr::Light::Type ShadowMap::GetOwningLightType() const
 	{
 		return m_typeProperties.m_lightType;
 	}
 
 
-	inline fr::ShadowMap::ShadowQuality  fr::ShadowMap::GetShadowQuality() const
+	inline pr::ShadowMap::ShadowQuality  pr::ShadowMap::GetShadowQuality() const
 	{
 		return m_typeProperties.m_shadowQuality;
 	}

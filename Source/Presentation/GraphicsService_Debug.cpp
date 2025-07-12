@@ -5,7 +5,7 @@
 #include "Core/SystemLocator.h"
 
 
-namespace fr
+namespace pr
 {
 	gr::DebugServiceData GraphicsService_Debug::s_debugData{};
 	std::shared_mutex GraphicsService_Debug::s_debugDataMutex;

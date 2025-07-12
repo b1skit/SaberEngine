@@ -4,7 +4,7 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 
-namespace fr
+namespace pr
 {
 	class EntityManager;
 

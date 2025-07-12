@@ -10,17 +10,17 @@
 #include "Renderer/RenderManager.h"
 
 
-namespace fr
+namespace pr
 {
-	TransformComponent& TransformComponent::AttachTransformComponent(fr::EntityManager& em, entt::entity entity)
+	TransformComponent& TransformComponent::AttachTransformComponent(pr::EntityManager& em, entt::entity entity)
 	{
-		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
+		em.EmplaceComponent<pr::TransformComponent::NewIDMarker>(entity);
 		
 		// Retrieve the parent transform, if one exists:
-		fr::Relationship const& relationship = em.GetComponent<fr::Relationship>(entity);
+		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(entity);
 		TransformComponent* parentTransformCmpt = relationship.GetFirstInHierarchyAbove<TransformComponent>();
 
-		fr::Transform* parentTransform = nullptr;
+		pr::Transform* parentTransform = nullptr;
 		if (parentTransformCmpt)
 		{
 			parentTransform = &parentTransformCmpt->GetTransform();
@@ -28,22 +28,22 @@ namespace fr
 
 		// Attach our TransformComponent:
 		TransformComponent& transformCmpt = 
-			*em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parentTransform);
+			*em.EmplaceComponent<pr::TransformComponent>(entity, PrivateCTORTag{}, parentTransform);
 		
 		// A Transform must be associated with a RenderDataID; Attach a RenderDataComponent if one doesn't already exist
-		fr::RenderDataComponent::GetCreateRenderDataComponent(em, entity, transformCmpt.GetTransformID());
+		pr::RenderDataComponent::GetCreateRenderDataComponent(em, entity, transformCmpt.GetTransformID());
 
 		// Note: We don't emplace a dirty marker; The Transform/TransformComponent currently track their dirty state
 		return transformCmpt;
 	}
 
 
-	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::TransformComponent& transformComponent)
+	gr::Transform::RenderData TransformComponent::CreateRenderData(pr::TransformComponent& transformComponent)
 	{
-		fr::Transform& transform = transformComponent.GetTransform();
+		pr::Transform& transform = transformComponent.GetTransform();
 
 		gr::TransformID parentTransformID = gr::k_invalidTransformID;
-		fr::Transform const* parentTransform = transform.GetParent();
+		pr::Transform const* parentTransform = transform.GetParent();
 		if (parentTransform)
 		{
 			parentTransformID = parentTransform->GetTransformID();
@@ -68,13 +68,13 @@ namespace fr
 	}
 
 
-	void TransformComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
+	void TransformComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
 	{
 		if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
-			if (fr::TransformComponent* transformCmpt = em.TryGetComponent<fr::TransformComponent>(owningEntity))
+			if (pr::TransformComponent* transformCmpt = em.TryGetComponent<pr::TransformComponent>(owningEntity))
 			{
 				transformCmpt->GetTransform().ShowImGuiWindow(em, owningEntity);
 			}
@@ -88,7 +88,7 @@ namespace fr
 	}
 
 
-	TransformComponent::TransformComponent(PrivateCTORTag, fr::Transform* parent)
+	TransformComponent::TransformComponent(PrivateCTORTag, pr::Transform* parent)
 		: m_transform(parent)
 	{
 	}
@@ -98,7 +98,7 @@ namespace fr
 
 
 	void TransformComponent::DispatchTransformUpdateThreads(
-		std::vector<std::future<void>>& taskFuturesOut, fr::Transform* rootNode)
+		std::vector<std::future<void>>& taskFuturesOut, pr::Transform* rootNode)
 	{
 		// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to minimize the
 		// (re)computation required when we copy Transforms for the Render thread
@@ -106,19 +106,19 @@ namespace fr
 		taskFuturesOut.emplace_back(core::ThreadPool::Get()->EnqueueJob(
 			[rootNode]()
 			{
-				std::stack<fr::Transform*> transforms;
+				std::stack<pr::Transform*> transforms;
 				transforms.push(rootNode);
 
 				bool parentChanged = false;
 
 				while (!transforms.empty())
 				{
-					fr::Transform* topTransform = transforms.top();
+					pr::Transform* topTransform = transforms.top();
 					transforms.pop();
 
 					parentChanged |= topTransform->Recompute(parentChanged);
 
-					for (fr::Transform* child : topTransform->GetChildren())
+					for (pr::Transform* child : topTransform->GetChildren())
 					{
 						transforms.push(child);
 					}
@@ -130,9 +130,9 @@ namespace fr
 	// ---
 
 
-	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(fr::TransformComponent& transformComponent)
+	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(pr::TransformComponent& transformComponent)
 		: m_transformID(transformComponent.GetTransformID())
-		, m_data(fr::TransformComponent::CreateRenderData(transformComponent))
+		, m_data(pr::TransformComponent::CreateRenderData(transformComponent))
 	{
 	}
 

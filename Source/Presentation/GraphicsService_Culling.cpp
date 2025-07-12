@@ -14,7 +14,7 @@
 #include "Renderer/GraphicsSystem_Culling.h"
 
 
-namespace fr
+namespace pr
 {
 	gr::CullingServiceData CullingGraphicsService::s_cullingData{};
 
@@ -115,7 +115,7 @@ namespace fr
 		if (ImGui::BeginMenu("Culling override"))
 		{
 			std::vector<std::pair<std::string, gr::RenderDataID>> const& cameras =
-				fr::EntityManager::Get()->QueryRegistry<fr::CameraComponent, fr::NameComponent, fr::RenderDataComponent>(
+				pr::EntityManager::Get()->QueryRegistry<pr::CameraComponent, pr::NameComponent, pr::RenderDataComponent>(
 					[](auto const& view) -> std::vector<std::pair<std::string, gr::RenderDataID>>
 					{
 						std::vector<std::pair<std::string, gr::RenderDataID>>  camIDs;

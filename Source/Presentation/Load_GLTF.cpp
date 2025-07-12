@@ -40,7 +40,7 @@ namespace
 
 
 	// Each element/index corresponds to an animation: Multiple animations may target the same node
-	using NodeToAnimationDataMaps = std::vector<std::unordered_map<cgltf_node const*, fr::AnimationData>>;
+	using NodeToAnimationDataMaps = std::vector<std::unordered_map<cgltf_node const*, pr::AnimationData>>;
 
 	// We pre-parse the GLTF scene hierarchy into our EnTT registry, and then update the entities later on
 	using NodeToEntityMap = std::unordered_map<cgltf_node const*, entt::entity>;
@@ -67,7 +67,7 @@ namespace
 		std::string m_filePath;
 		std::string m_sceneRootPath;
 
-		std::unique_ptr<fr::AnimationController> m_animationController;
+		std::unique_ptr<pr::AnimationController> m_animationController;
 		NodeToAnimationDataMaps m_nodeToAnimationData;
 
 		SkinToSkinMetadata m_skinToSkinMetadata;
@@ -97,7 +97,7 @@ namespace
 	};
 
 
-	inline fr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
+	inline pr::InterpolationMode CGLTFInterpolationTypeToFrInterpolationType(
 		cgltf_interpolation_type interpolationType,
 		cgltf_animation_path_type animationPathType)
 	{
@@ -107,31 +107,31 @@ namespace
 		{
 			if (animationPathType == cgltf_animation_path_type_rotation)
 			{
-				return fr::InterpolationMode::SphericalLinearInterpolation;
+				return pr::InterpolationMode::SphericalLinearInterpolation;
 			}
-			return fr::InterpolationMode::Linear;
+			return pr::InterpolationMode::Linear;
 		}
-		case cgltf_interpolation_type::cgltf_interpolation_type_step: return fr::InterpolationMode::Step;
-		case cgltf_interpolation_type::cgltf_interpolation_type_cubic_spline: return fr::InterpolationMode::CubicSpline;
+		case cgltf_interpolation_type::cgltf_interpolation_type_step: return pr::InterpolationMode::Step;
+		case cgltf_interpolation_type::cgltf_interpolation_type_cubic_spline: return pr::InterpolationMode::CubicSpline;
 		default: SEAssertF("Invalid interpolation type");
 		}
-		return fr::InterpolationMode::Linear; // This should never happen
+		return pr::InterpolationMode::Linear; // This should never happen
 	}
 
 
-	inline fr::AnimationPath CGLTFAnimationPathToFrAnimationPath(cgltf_animation_path_type pathType)
+	inline pr::AnimationPath CGLTFAnimationPathToFrAnimationPath(cgltf_animation_path_type pathType)
 	{
 		switch (pathType)
 		{
-		case cgltf_animation_path_type::cgltf_animation_path_type_translation: return fr::AnimationPath::Translation;
-		case cgltf_animation_path_type::cgltf_animation_path_type_rotation: return fr::AnimationPath::Rotation;
-		case cgltf_animation_path_type::cgltf_animation_path_type_scale: return fr::AnimationPath::Scale;
-		case cgltf_animation_path_type::cgltf_animation_path_type_weights: return fr::AnimationPath::Weights;
+		case cgltf_animation_path_type::cgltf_animation_path_type_translation: return pr::AnimationPath::Translation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_rotation: return pr::AnimationPath::Rotation;
+		case cgltf_animation_path_type::cgltf_animation_path_type_scale: return pr::AnimationPath::Scale;
+		case cgltf_animation_path_type::cgltf_animation_path_type_weights: return pr::AnimationPath::Weights;
 		case cgltf_animation_path_type::cgltf_animation_path_type_invalid:
 		case cgltf_animation_path_type::cgltf_animation_path_type_max_enum:
 		default: SEAssertF("Invalid animation path type");
 		}
-		return fr::AnimationPath::Translation; // This should never happen
+		return pr::AnimationPath::Translation; // This should never happen
 	}
 
 
@@ -1075,16 +1075,16 @@ namespace
 	}
 
 
-	void SetGLTFTransformValues(fr::EntityManager* em, cgltf_node const* current, entt::entity sceneNode)
+	void SetGLTFTransformValues(pr::EntityManager* em, cgltf_node const* current, entt::entity sceneNode)
 	{
 		SEAssert((current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
 			(current->has_matrix == 0 && current->has_rotation == 0 &&
 				current->has_scale == 0 && current->has_translation == 0),
 			"Transform has both matrix and decomposed properties");
 
-		SEAssert(em->HasComponent<fr::TransformComponent>(sceneNode), "Entity does not have a TransformComponent");
+		SEAssert(em->HasComponent<pr::TransformComponent>(sceneNode), "Entity does not have a TransformComponent");
 
-		fr::Transform& targetTransform = em->GetComponent<fr::TransformComponent>(sceneNode).GetTransform();
+		pr::Transform& targetTransform = em->GetComponent<pr::TransformComponent>(sceneNode).GetTransform();
 
 		if (current->has_matrix)
 		{
@@ -1122,7 +1122,7 @@ namespace
 
 
 	inline entt::entity CreateGLTFSceneNode(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		std::shared_ptr<FileMetadata> const& fileMetadata,
 		cgltf_node const* gltfNode,
 		entt::entity parent,
@@ -1130,7 +1130,7 @@ namespace
 	{
 		std::string const& nodeName = GenerateGLTFNodeName(fileMetadata, gltfNode, nodeIdx);
 
-		entt::entity newSceneNode = fr::SceneNode::Create(*em, nodeName, parent);
+		entt::entity newSceneNode = pr::SceneNode::Create(*em, nodeName, parent);
 
 		// We ensure there is a Transform (even just the identity) for all skeleton nodes
 		bool isSkeletonNode = false;
@@ -1145,7 +1145,7 @@ namespace
 			gltfNode->has_matrix ||
 			isSkeletonNode)
 		{
-			fr::TransformComponent::AttachTransformComponent(*em, newSceneNode);
+			pr::TransformComponent::AttachTransformComponent(*em, newSceneNode);
 			SetGLTFTransformValues(em, gltfNode, newSceneNode);
 		}
 
@@ -1154,7 +1154,7 @@ namespace
 
 
 	void LoadAddGLTFCamera(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		cgltf_node const* current,
 		size_t nodeIdx,
 		entt::entity sceneNodeEntity,		
@@ -1196,7 +1196,7 @@ namespace
 		}
 
 		// Create the camera and set the transform values on the parent object:
-		fr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName.c_str(), camConfig);
+		pr::CameraComponent::CreateCameraConcept(*em, sceneNodeEntity, camName.c_str(), camConfig);
 
 		// Update the camera metadata:
 		{
@@ -1210,7 +1210,7 @@ namespace
 
 
 	void LoadAddGLTFLight(
-		fr::EntityManager* em, 
+		pr::EntityManager* em, 
 		cgltf_node const* current, 
 		size_t nodeIdx,
 		entt::entity sceneNode,
@@ -1236,18 +1236,18 @@ namespace
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
 		{
-			fr::LightComponent::AttachDeferredDirectionalLightConcept(
+			pr::LightComponent::AttachDeferredDirectionalLightConcept(
 				*em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_point:
 		{
-			fr::LightComponent::AttachDeferredPointLightConcept(*em, sceneNode, lightName, colorIntensity, attachShadow);
+			pr::LightComponent::AttachDeferredPointLightConcept(*em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_spot:
 		{
-			fr::LightComponent::AttachDeferredSpotLightConcept(*em, sceneNode, lightName, colorIntensity, attachShadow);
+			pr::LightComponent::AttachDeferredSpotLightConcept(*em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_invalid:
@@ -2025,7 +2025,7 @@ namespace
 		std::shared_ptr<cgltf_data const> const& data,
 		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
-		fileMetadata->m_animationController = fr::AnimationController::CreateAnimationControllerObject();
+		fileMetadata->m_animationController = pr::AnimationController::CreateAnimationControllerObject();
 
 		for (uint64_t animIdx = 0; animIdx < data->animations_count; ++animIdx)
 		{
@@ -2044,7 +2044,7 @@ namespace
 			fileMetadata->m_animationController->AddNewAnimation(animationName.c_str());
 
 			// Pack the Channels of an AnimationData struct:
-			std::unordered_map<cgltf_node const*, fr::AnimationData>& nodeToData =
+			std::unordered_map<cgltf_node const*, pr::AnimationData>& nodeToData =
 				fileMetadata->m_nodeToAnimationData.emplace_back();
 			for (uint64_t channelIdx = 0; channelIdx < data->animations[animIdx].channels_count; ++channelIdx)
 			{
@@ -2060,20 +2060,20 @@ namespace
 
 				// Get/create a new AnimationData structure:
 				cgltf_node const* targetNode = data->animations[animIdx].channels[channelIdx].target_node;
-				fr::AnimationData* animationData = nullptr;
+				pr::AnimationData* animationData = nullptr;
 				if (nodeToData.contains(targetNode))
 				{
 					animationData = &nodeToData.at(targetNode);
 				}
 				else
 				{
-					animationData = &nodeToData.emplace(targetNode, fr::AnimationData{}).first->second;
+					animationData = &nodeToData.emplace(targetNode, pr::AnimationData{}).first->second;
 				}
 
 				animationData->m_animationIdx = animIdx;
 
 				// Create a new animation channel entry:
-				fr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
+				pr::AnimationData::Channel& animChannel = animationData->m_channels.emplace_back();
 
 				// Channel interpolation mode:
 				animChannel.m_interpolationMode = CGLTFInterpolationTypeToFrInterpolationType(
@@ -2178,7 +2178,7 @@ namespace
 
 
 	inline void AttachGLTFGeometry(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNodeEntity,
@@ -2200,7 +2200,7 @@ namespace
 		std::vector<entt::entity> meshAndMeshPrimitiveEntities;
 		meshAndMeshPrimitiveEntities.reserve(current->mesh->primitives_count + 1);
 
-		fr::Mesh::AttachMeshConceptMarker(sceneNodeEntity, meshName.c_str());
+		pr::Mesh::AttachMeshConceptMarker(sceneNodeEntity, meshName.c_str());
 		meshAndMeshPrimitiveEntities.emplace_back(sceneNodeEntity);
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
@@ -2212,8 +2212,8 @@ namespace
 				"Failed to find the primitive in our metadata map. This is unexpected");
 
 			// Parse the min/max positions for our Bounds:
-			glm::vec3 positionsMinXYZ = fr::BoundsComponent::k_invalidMinXYZ;
-			glm::vec3 positionsMaxXYZ = fr::BoundsComponent::k_invalidMaxXYZ;
+			glm::vec3 positionsMinXYZ = pr::BoundsComponent::k_invalidMinXYZ;
+			glm::vec3 positionsMaxXYZ = pr::BoundsComponent::k_invalidMaxXYZ;
 			GetGLTFMinMaxXYZ(curPrimitive, positionsMinXYZ, positionsMaxXYZ);
 
 			// Note: No locks here, the work should have already finished and been waited on
@@ -2221,7 +2221,7 @@ namespace
 				fileMetadata->m_primitiveToMeshPrimitiveMetadata.at(&curPrimitive);
 
 			// Attach the MeshPrimitive to the MeshConcept:
-			const entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
+			const entt::entity meshPrimimitiveEntity = pr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
 				*em,
 				sceneNodeEntity,
 				meshPrimMetadata.m_meshPrimitive,
@@ -2231,7 +2231,7 @@ namespace
 			meshAndMeshPrimitiveEntities.emplace_back(meshPrimimitiveEntity);
 
 			// Attach the MaterialInstanceComponent to the MeshPrimitive:
-			fr::MaterialInstanceComponent::AttachMaterialComponent(*em, meshPrimimitiveEntity, meshPrimMetadata.m_material);
+			pr::MaterialInstanceComponent::AttachMaterialComponent(*em, meshPrimimitiveEntity, meshPrimMetadata.m_material);
 		} // primitives loop
 
 		// Store our Mesh entity -> vector of Mesh/MeshPrimive Bounds entities:
@@ -2243,7 +2243,7 @@ namespace
 
 
 	void AttachGLTFInstancedGeometry(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		cgltf_node const* current,
 		size_t nodeIdx, // For default/fallback name
 		entt::entity sceneNodeEntity,
@@ -2334,10 +2334,10 @@ namespace
 		for (size_t instance = 0; instance < numInstances; ++instance)
 		{
 			std::string const& instanceName = std::format("{}_{}", parentName, instance);
-			entt::entity instanceEntity = fr::SceneNode::Create(*em, instanceName, sceneNodeEntity);
+			entt::entity instanceEntity = pr::SceneNode::Create(*em, instanceName, sceneNodeEntity);
 			
-			fr::Transform& instanceTransform = 
-				fr::TransformComponent::AttachTransformComponent(*em, instanceEntity).GetTransform();
+			pr::Transform& instanceTransform = 
+				pr::TransformComponent::AttachTransformComponent(*em, instanceEntity).GetTransform();
 
 			// Set the transform data:
 			if (!translationData.empty())
@@ -2367,12 +2367,12 @@ namespace
 
 
 	void AttachGLTFMeshAnimationComponents(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
 		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
 		// Move our pre-populated AnimationController into an entity/component so we can obtain its final pointer:
-		fr::AnimationController* animationController = fr::AnimationController::CreateAnimationController(
+		pr::AnimationController* animationController = pr::AnimationController::CreateAnimationController(
 			*em, GenerateGLTFAnimationControllerName(fileMetadata).c_str(), std::move(fileMetadata->m_animationController));
 
 		for (size_t nodeIdx = 0; nodeIdx < data->nodes_count; ++nodeIdx)
@@ -2408,7 +2408,7 @@ namespace
 
 					meshHasWeights = weightsCount > 0;
 
-					fr::MeshMorphComponent::AttachMeshMorphComponent(
+					pr::MeshMorphComponent::AttachMeshMorphComponent(
 						*em,
 						curSceneNodeEntity,
 						current->mesh->weights,
@@ -2436,8 +2436,8 @@ namespace
 
 					jointEntities.emplace_back(jointNodeEntity);
 
-					fr::TransformComponent const* transformCmpt =
-						em->TryGetComponent<fr::TransformComponent>(jointNodeEntity);
+					pr::TransformComponent const* transformCmpt =
+						em->TryGetComponent<pr::TransformComponent>(jointNodeEntity);
 
 					// GLTF Specs: Animated nodes can only have TRS properties (no matrix)
 					if (transformCmpt && !current->skin->joints[jointIdx]->has_matrix)
@@ -2468,16 +2468,16 @@ namespace
 
 					// Note: The entity associated with the skeleton node might not be the entity with the next 
 					// TransformationComponent in the hierarchy above; it might be modified here
-					fr::Relationship const& skeletonRootRelationship = em->GetComponent<fr::Relationship>(skeletonRootEntity);
-					fr::TransformComponent const* skeletonTransformCmpt =
-						skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(skeletonRootEntity);
+					pr::Relationship const& skeletonRootRelationship = em->GetComponent<pr::Relationship>(skeletonRootEntity);
+					pr::TransformComponent const* skeletonTransformCmpt =
+						skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(skeletonRootEntity);
 					if (skeletonTransformCmpt)
 					{
 						skeletonTransformID = skeletonTransformCmpt->GetTransformID();
 					}
 				}
 
-				fr::SkinningComponent::AttachSkinningComponent(
+				pr::SkinningComponent::AttachSkinningComponent(
 					curSceneNodeEntity,
 					std::move(jointToTransformIDs),
 					std::move(jointEntities),
@@ -2514,9 +2514,9 @@ namespace
 					animationController != nullptr,
 					"m_animationController should have already been moved, finalAnimationController cannot be null");
 
-				SEAssert(!em->HasComponent<fr::AnimationComponent>(curSceneNodeEntity), "Node already has an animation component");
+				SEAssert(!em->HasComponent<pr::AnimationComponent>(curSceneNodeEntity), "Node already has an animation component");
 
-				fr::AnimationComponent* animationCmpt = fr::AnimationComponent::AttachAnimationComponent(
+				pr::AnimationComponent* animationCmpt = pr::AnimationComponent::AttachAnimationComponent(
 					*em, curSceneNodeEntity, animationController);
 
 				// Attach each/all animations that target the current node to its animation component:
@@ -2535,7 +2535,7 @@ namespace
 
 
 	void AttachGLTFNodeComponents(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
 		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
@@ -2572,7 +2572,7 @@ namespace
 
 
 	void CreateGLTFSceneNodeEntities(
-		fr::EntityManager* em,
+		pr::EntityManager* em,
 		std::shared_ptr<cgltf_data const> const& data,
 		std::shared_ptr<FileMetadata>& fileMetadata)
 	{
@@ -2699,7 +2699,7 @@ namespace
 		{
 			SEAssert(m_sceneMetadata, "Scene metadata should not be null here");
 
-			fr::EntityManager* em = fr::EntityManager::Get();
+			pr::EntityManager* em = pr::EntityManager::Get();
 			std::shared_ptr<FileMetadata> fileMetadata = m_sceneMetadata;
 			std::shared_ptr<cgltf_data> sceneData = m_sceneData;
 			em->EnqueueEntityCommand(
@@ -2746,7 +2746,7 @@ namespace
 					// TODO: It would be nice to not need to double-enqueue this
 					if (mainCameraEntity != entt::null)
 					{
-						em->EnqueueEntityCommand<fr::SetMainCameraCommand>(mainCameraEntity);
+						em->EnqueueEntityCommand<pr::SetMainCameraCommand>(mainCameraEntity);
 					}
 				});
 		}

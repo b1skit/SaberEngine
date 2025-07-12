@@ -7,12 +7,12 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace fr
+namespace pr
 {
-	CameraData Camera::BuildCameraData(fr::Camera const& camera)
+	CameraData Camera::BuildCameraData(pr::Camera const& camera)
 	{
 		gr::Camera::Config const& cameraConfig = camera.GetCameraConfig();
-		fr::Transform const& transform = *camera.GetTransform();
+		pr::Transform const& transform = *camera.GetTransform();
 
 		CameraData cameraParams{};
 
@@ -89,7 +89,7 @@ namespace fr
 	}
 
 
-	Camera::Camera(gr::Camera::Config const& camConfig, fr::Transform const* transform)
+	Camera::Camera(gr::Camera::Config const& camConfig, pr::Transform const* transform)
 		: m_transform(transform)
 		, m_cameraConfig(camConfig)
 		, m_isActive(false) // Cameras must be activated before rendering anything
@@ -230,7 +230,7 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			CameraData const& camParams = fr::Camera::BuildCameraData(*this);
+			CameraData const& camParams = pr::Camera::BuildCameraData(*this);
 
 			util::DisplayMat4x4("View Matrix:", camParams.g_view);
 			util::DisplayMat4x4("Inverse View Matrix:", camParams.g_invView);

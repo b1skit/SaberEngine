@@ -13,7 +13,7 @@
 #include "Core/Util/ImGuiUtils.h"
 
 
-namespace fr
+namespace pr
 {
 	SkinningComponent& SkinningComponent::AttachSkinningComponent(
 		entt::entity owningEntity,
@@ -25,16 +25,16 @@ namespace fr
 		float longestAnimationTimeSec,
 		std::vector<entt::entity>&& boundsEntities)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
+		pr::EntityManager& em = *pr::EntityManager::Get();
 
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(owningEntity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A SkinningComponent's owningEntity requires a RenderDataComponent");
 
-		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(owningEntity),
+		SEAssert(em.HasComponent<pr::Mesh::MeshConceptMarker>(owningEntity),
 			"A SkinningComponent should be attached to the same node as a MeshConceptMarker");
 
 		SkinningComponent* newSkinningCmpt = 
-			em.EmplaceComponent<fr::SkinningComponent>(
+			em.EmplaceComponent<pr::SkinningComponent>(
 				owningEntity, 
 				PrivateCTORTag{}, 
 				std::move(jointTranformIDs),
@@ -45,7 +45,7 @@ namespace fr
 				longestAnimationTimeSec,
 				std::move(boundsEntities));
 
-		em.EmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
+		em.EmplaceComponent<DirtyMarker<pr::SkinningComponent>>(owningEntity);
 
 		return *newSkinningCmpt;
 	}
@@ -72,7 +72,7 @@ namespace fr
 		m_jointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 		m_transposeInvJointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 
-		fr::EntityManager& em = *fr::EntityManager::Get();
+		pr::EntityManager& em = *pr::EntityManager::Get();
 
 		// Find the first entity with a Transform component in the hierarchy above, that is NOT part of the skeletal
 		// hierarchy:
@@ -91,15 +91,15 @@ namespace fr
 		// hierarchy from within the transformation hierarchy
 		for (entt::entity entity : jointEntitiesSet)
 		{
-			fr::Relationship const& entityRelationship = em.GetComponent<fr::Relationship>(entity);
+			pr::Relationship const& entityRelationship = em.GetComponent<pr::Relationship>(entity);
 			const entt::entity entityParent = entityRelationship.GetParent();
 			if (entityParent != entt::null && !jointEntitiesSet.contains(entityParent))
 			{
-				fr::Relationship const& parentRelationship = em.GetComponent<fr::Relationship>(entityParent);
+				pr::Relationship const& parentRelationship = em.GetComponent<pr::Relationship>(entityParent);
 
 				entt::entity transformEntity = entt::null;
-				if (fr::TransformComponent const* transformCmpt = 
-					parentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(transformEntity))
+				if (pr::TransformComponent const* transformCmpt = 
+					parentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(transformEntity))
 				{
 					m_parentOfCommonRootEntity = transformEntity;
 					m_parentOfCommonRootTransformID = transformCmpt->GetTransformID();
@@ -107,18 +107,18 @@ namespace fr
 					// If there is an AnimationComponent AT OR ABOVE the m_parentOfCommonRootEntity, we don't want to
 					// cancel out its recursive contribution
 					entt::entity recursiveRoot = m_parentOfCommonRootEntity;
-					fr::Relationship const& curParentRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
-					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<fr::AnimationComponent>(recursiveRoot))
+					pr::Relationship const& curParentRelationship = em.GetComponent<pr::Relationship>(recursiveRoot);
+					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<pr::AnimationComponent>(recursiveRoot))
 					{
-						fr::Relationship const& recursiveRootRelationship = em.GetComponent<fr::Relationship>(recursiveRoot);
+						pr::Relationship const& recursiveRootRelationship = em.GetComponent<pr::Relationship>(recursiveRoot);
 						if (recursiveRootRelationship.HasParent())
 						{
-							fr::Relationship const& nextParentRelationship =
-								em.GetComponent<fr::Relationship>(recursiveRootRelationship.GetParent());
+							pr::Relationship const& nextParentRelationship =
+								em.GetComponent<pr::Relationship>(recursiveRootRelationship.GetParent());
 
 							entt::entity parentTransformEntity = entt::null;
-							fr::TransformComponent const* parentTransform =
-								nextParentRelationship.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(parentTransformEntity);
+							pr::TransformComponent const* parentTransform =
+								nextParentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(parentTransformEntity);
 							if (parentTransform)
 							{
 								// If the last AnimationComponent in the hierarchy above has a parent, and it has a Transform,
@@ -145,18 +145,18 @@ namespace fr
 
 
 	void SkinningComponent::UpdateSkinMatrices(
-		fr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt, float deltaTime)
+		pr::EntityManager& em, entt::entity owningEntity, SkinningComponent& skinningCmpt, float deltaTime)
 	{
 		bool foundDirty = false;
 
 		// As an optimization, we'll use the inverse of the common root's parent transform's global matrix to cancel out
 		// any unnecessary matrices in the transformation hierarchy, rather than recompute subranges in the skeletal 
 		// hierarchy: i.e. (ABC)^-1 * (ABCDEF) = DEF
-		fr::Transform const* parentOfRootTransform = nullptr;
+		pr::Transform const* parentOfRootTransform = nullptr;
 		if (skinningCmpt.m_parentOfCommonRootEntity != entt::null)
 		{
-			fr::TransformComponent const& parentOfRootTransformCmpt = 
-				em.GetComponent<fr::TransformComponent>(skinningCmpt.m_parentOfCommonRootEntity);
+			pr::TransformComponent const& parentOfRootTransformCmpt = 
+				em.GetComponent<pr::TransformComponent>(skinningCmpt.m_parentOfCommonRootEntity);
 
 			parentOfRootTransform = &parentOfRootTransformCmpt.GetTransform();
 		}
@@ -166,11 +166,11 @@ namespace fr
 		{
 			const entt::entity curEntity = skinningCmpt.m_jointEntities[jointIdx];
 
-			fr::TransformComponent const* jointTransformCmpt = em.TryGetComponent<fr::TransformComponent>(curEntity);
+			pr::TransformComponent const* jointTransformCmpt = em.TryGetComponent<pr::TransformComponent>(curEntity);
 			
 			if (jointTransformCmpt) // If null, no update necessary: Joints are initialized to the identity
 			{
-				fr::Transform const& jointTransform = jointTransformCmpt->GetTransform();
+				pr::Transform const& jointTransform = jointTransformCmpt->GetTransform();
 				if (jointTransform.HasChanged())
 				{
 					foundDirty = true;
@@ -202,7 +202,7 @@ namespace fr
 
 		if (foundDirty)
 		{
-			em.TryEmplaceComponent<DirtyMarker<fr::SkinningComponent>>(owningEntity);
+			em.TryEmplaceComponent<DirtyMarker<pr::SkinningComponent>>(owningEntity);
 		}
 
 
@@ -215,7 +215,7 @@ namespace fr
 			{
 				for (entt::entity boundsEntity : skinningCmpt.m_boundsEntities)
 				{
-					fr::BoundsComponent& bounds = em.GetComponent<fr::BoundsComponent>(boundsEntity);
+					pr::BoundsComponent& bounds = em.GetComponent<pr::BoundsComponent>(boundsEntity);
 
 					bounds.ExpandBounds(
 						(skinningCmpt.m_jointTransforms[jointIdx] * glm::vec4(bounds.GetOriginalMinXYZ(), 1.f)).xyz,
@@ -237,11 +237,11 @@ namespace fr
 	}
 
 
-	void SkinningComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningMesh)
+	void SkinningComponent::ShowImGuiWindow(pr::EntityManager& em, entt::entity owningMesh)
 	{
 		const uint64_t uniqueID = static_cast<uint64_t>(owningMesh);
 
-		fr::SkinningComponent const* skinningCmpt = em.TryGetComponent<fr::SkinningComponent>(owningMesh);
+		pr::SkinningComponent const* skinningCmpt = em.TryGetComponent<pr::SkinningComponent>(owningMesh);
 
 		if (!skinningCmpt)
 		{

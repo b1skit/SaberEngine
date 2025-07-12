@@ -7,7 +7,7 @@
 #include "RenderDataComponent.h"
 
 
-namespace fr
+namespace pr
 {
 	MeshMorphComponent::MeshMorphComponent(PrivateCTORTag)
 	{
@@ -16,16 +16,16 @@ namespace fr
 
 
 	MeshMorphComponent* MeshMorphComponent::AttachMeshMorphComponent(
-		fr::EntityManager& em, entt::entity entity, float const* defaultWeights, uint32_t count)
+		pr::EntityManager& em, entt::entity entity, float const* defaultWeights, uint32_t count)
 	{
-		SEAssert(em.HasComponent<fr::Mesh::MeshConceptMarker>(entity),
+		SEAssert(em.HasComponent<pr::Mesh::MeshConceptMarker>(entity),
 			"An MeshAnimationComponent can only be attached to nodes that have a Mesh::MeshConceptMarker");
 
-		SEAssert(em.HasComponent<fr::RenderDataComponent>(entity),
+		SEAssert(em.HasComponent<pr::RenderDataComponent>(entity),
 			"A MeshAnimationComponent's owningEntity requires a RenderDataComponent");
 
-		fr::MeshMorphComponent* meshAnimCmpt =
-			em.EmplaceComponent<fr::MeshMorphComponent>(entity, PrivateCTORTag{});
+		pr::MeshMorphComponent* meshAnimCmpt =
+			em.EmplaceComponent<pr::MeshMorphComponent>(entity, PrivateCTORTag{});
 
 		SEAssert(defaultWeights && count > 0, "Invalid default weights");
 		for (uint32_t weightIdx = 0; weightIdx < count; ++weightIdx)
@@ -33,7 +33,7 @@ namespace fr
 			meshAnimCmpt->SetMorphWeight(weightIdx, defaultWeights[weightIdx]);
 		}
 
-		em.EmplaceComponent<DirtyMarker<fr::MeshMorphComponent>>(entity);
+		em.EmplaceComponent<DirtyMarker<pr::MeshMorphComponent>>(entity);
 
 		return meshAnimCmpt;
 	}
@@ -41,8 +41,8 @@ namespace fr
 
 	void MeshMorphComponent::ApplyAnimation(
 		entt::entity meshConcept,
-		fr::AnimationComponent const& animCmpt,
-		fr::MeshMorphComponent& meshAnimCmpt)
+		pr::AnimationComponent const& animCmpt,
+		pr::MeshMorphComponent& meshAnimCmpt)
 	{
 		if (animCmpt.GetAnimationController()->GetAnimationState() != AnimationState::Playing)
 		{
@@ -87,7 +87,7 @@ namespace fr
 				const size_t prevIdx = prevKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx;
 				const size_t nextIdx = nextKeyframeIdx * channel.m_dataFloatsPerKeyframe + weightIdx;
 
-				const float interpolatedValue = fr::GetInterpolatedValue<float>(
+				const float interpolatedValue = pr::GetInterpolatedValue<float>(
 					channel.m_interpolationMode,
 					channelData.data(),
 					channelData.size(),
@@ -105,7 +105,7 @@ namespace fr
 
 		if (didAnimate)
 		{
-			fr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<fr::MeshMorphComponent>>(meshConcept);
+			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::MeshMorphComponent>>(meshConcept);
 		}
 	}
 
