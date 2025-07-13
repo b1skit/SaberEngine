@@ -112,8 +112,8 @@ namespace app
 		core::Logger::Get()->Startup(
 			core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
-		// Create a window (and interally pass it to the re::Context)
-		constexpr bool k_allowDragAndDrop = true; // Allways allowed, for now
+		// Create a window (and internally pass it to the re::Context)
+		constexpr bool k_allowDragAndDrop = true; // Always allowed, for now
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
 		pr::EntityManager* entityMgr = pr::EntityManager::Get();
