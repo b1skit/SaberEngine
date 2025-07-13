@@ -98,6 +98,8 @@ namespace re
 		uint64_t GetCurrentRenderFrameNum() const noexcept;
 		uint8_t GetNumFramesInFlight() const noexcept;
 
+		uint8_t GetFrameOffsetIdx() const noexcept; // Get an index in [0, NumFramesInFight)
+
 
 	public:
 		// Deferred API-object creation queues. New resources can be constructed on other threads (e.g. loading
@@ -231,6 +233,12 @@ namespace re
 	inline uint8_t Context::GetNumFramesInFlight() const noexcept
 	{
 		return m_numFramesInFlight;
+	}
+
+
+	inline uint8_t Context::GetFrameOffsetIdx() const noexcept
+	{
+		return GetCurrentRenderFrameNum() % GetNumFramesInFlight();
 	}
 
 

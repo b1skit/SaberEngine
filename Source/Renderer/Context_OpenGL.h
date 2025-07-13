@@ -29,6 +29,8 @@ namespace opengl
 		void EndFrame_Platform() override;
 		void Destroy_Platform() override;
 
+
+	public:
 		void Present() override;
 
 		re::BindlessResourceManager* GetBindlessResourceManager() override;
@@ -41,9 +43,7 @@ namespace opengl
 	public: // OpenGL-specific interface:
 		void SetRasterizationState(re::RasterizationState const*);
 
-		GLuint GetCreateVAO(
-			gr::StageBatchHandle const&,
-			re::VertexBufferInput const& indexStream);
+		GLuint GetCreateVAO(gr::StageBatchHandle const&, re::VertexBufferInput const& indexStream);
 
 
 	protected:

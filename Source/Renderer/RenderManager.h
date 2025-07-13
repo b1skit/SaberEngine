@@ -60,9 +60,7 @@ namespace gr
 		virtual void Shutdown_Platform() = 0;
 		virtual void BeginFrame_Platform(uint64_t frameNum) = 0;
 		virtual void EndFrame_Platform() = 0;
-
-	public:
-		virtual uint8_t GetNumFramesInFlight() const = 0;
+		virtual uint8_t GetNumFramesInFlight_Platform() const = 0;
 
 
 	public:

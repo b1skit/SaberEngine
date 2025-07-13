@@ -183,11 +183,11 @@ namespace gr
 		
 		// Create the context:
 		m_context = re::Context::CreateContext_Platform(
-			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight(), m_windowCache);
+			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight_Platform(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");	
 		
 		// The swap chain requires the context be fully created before it is created
-		m_context->GetSwapChain().Create(re::Texture::Format::RGBA8_UNORM, GetNumFramesInFlight(), m_context.get());
+		m_context->GetSwapChain().Create(re::Texture::Format::RGBA8_UNORM, GetNumFramesInFlight_Platform(), m_context.get());
 
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
@@ -217,7 +217,7 @@ namespace gr
 
 		m_effectDB.LoadEffectManifest();
 
-		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight());
+		m_batchPool = std::make_unique<gr::BatchPool>(GetNumFramesInFlight_Platform());
 
 		SEBeginCPUEvent("RenderManager::Initialize_Platform");
 		Initialize_Platform();

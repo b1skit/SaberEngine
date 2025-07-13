@@ -23,9 +23,9 @@ namespace dx12
 {
 	RenderManager::RenderManager()
 		: gr::RenderManager(platform::RenderingAPI::DX12)
-		, m_numFrames(core::Config::GetValue<int>(core::configkeys::k_numBackbuffersKey))
+		, m_numFramesInFlight(core::Config::GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
-		SEAssert(m_numFrames >= 2 && m_numFrames <= 3, "Invalid number of frames in flight");
+		SEAssert(m_numFramesInFlight >= 2 && m_numFramesInFlight <= 3, "Invalid number of frames in flight");
 	}
 
 

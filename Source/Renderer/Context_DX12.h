@@ -21,9 +21,11 @@ namespace dx12
 		void EndFrame_Platform() override;
 		void Destroy_Platform() override;
 		
+	public:
 		void Present() override;
 
 		re::BindlessResourceManager* GetBindlessResourceManager() override;
+
 
 	private:
 		void CreateAPIResources_Platform() override;

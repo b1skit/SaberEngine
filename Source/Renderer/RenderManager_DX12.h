@@ -12,17 +12,13 @@ namespace dx12
 		~RenderManager() override = default;
 
 
-	public:
-		static uint8_t GetFrameOffsetIdx(); // Get an index in [0, NumFramesInFight)
-
-
-	public: // Platform-specific virtual interface implementation:
+	private: // Platform-specific virtual interface implementation:
 		void Initialize_Platform() override;
 		void Shutdown_Platform() override;
 		void BeginFrame_Platform(uint64_t frameNum) override;
 		void EndFrame_Platform() override;
 
-		uint8_t GetNumFramesInFlight() const override;
+		uint8_t GetNumFramesInFlight_Platform() const override;
 
 
 	private: // gr::RenderManager interface:
@@ -30,19 +26,12 @@ namespace dx12
 		
 
 	private:
-		const uint8_t m_numFrames;
+		const uint8_t m_numFramesInFlight;
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight() const
+	inline uint8_t RenderManager::GetNumFramesInFlight_Platform() const
 	{
-		return m_numFrames;
-	}
-
-
-	inline uint8_t RenderManager::GetFrameOffsetIdx()
-	{
-		dx12::RenderManager const* renderMgr = dynamic_cast<dx12::RenderManager const*>(gr::RenderManager::Get());
-		return renderMgr->GetCurrentRenderFrameNum() % renderMgr->GetNumFramesInFlight();
+		return m_numFramesInFlight;
 	}
 }

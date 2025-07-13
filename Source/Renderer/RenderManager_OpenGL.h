@@ -18,7 +18,7 @@ namespace opengl
 		void BeginFrame_Platform(uint64_t frameNum) override;
 		void EndFrame_Platform() override;
 
-		uint8_t GetNumFramesInFlight() const override;
+		uint8_t GetNumFramesInFlight_Platform() const override;
 
 
 	private: // gr::RenderManager interface:
@@ -26,9 +26,9 @@ namespace opengl
 	};
 
 
-	inline uint8_t RenderManager::GetNumFramesInFlight() const
+	inline uint8_t RenderManager::GetNumFramesInFlight_Platform() const
 	{
-		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
-		return k_numFrames;
+		constexpr uint8_t k_numFramesInFlight = 2; // OpenGL only supports double buffering via a front and back buffer
+		return k_numFramesInFlight;
 	}
 }
