@@ -51,6 +51,8 @@ namespace gr
 		// IEventListener interface:
 		void HandleEvents() override;
 
+
+	protected:
 		uint64_t GetCurrentRenderFrameNum() const;
 
 
