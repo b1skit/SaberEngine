@@ -115,11 +115,12 @@ namespace core
 	class LambdaCommandWrapper final
 	{
 	public:
-		inline LambdaCommandWrapper(std::function<void(void)>&& lambda) : m_lambda(std::move(lambda)) { }
+		inline LambdaCommandWrapper(std::function<void(void)>&& lambda) noexcept
+			: m_lambda(std::forward<std::function<void(void)>>(lambda))  {}
 
-		LambdaCommandWrapper(LambdaCommandWrapper const&) = default;
+		LambdaCommandWrapper(LambdaCommandWrapper const&) noexcept = default;
 		LambdaCommandWrapper(LambdaCommandWrapper&&) noexcept = default;
-		LambdaCommandWrapper& operator=(LambdaCommandWrapper const&) = default;
+		LambdaCommandWrapper& operator=(LambdaCommandWrapper const&) noexcept = default;
 		LambdaCommandWrapper& operator=(LambdaCommandWrapper&&) noexcept = default;
 		~LambdaCommandWrapper() = default;
 
@@ -191,7 +192,7 @@ namespace core
 	inline void CommandManager::Enqueue(std::function<void(void)>&& lambda)
 	{
 		SEBeginCPUEvent("CommandManager::Enqueue");
-		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::move(lambda)));
+		Enqueue<LambdaCommandWrapper>(LambdaCommandWrapper(std::forward<std::function<void(void)>>(lambda)));
 		SEEndCPUEvent();
 	}
 

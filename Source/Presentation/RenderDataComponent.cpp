@@ -2,8 +2,7 @@
 #include "EntityManager.h"
 #include "RenderDataComponent.h"
 
-#include "Renderer/RenderManager.h"
-#include "Renderer/RenderSystem.h"
+#include <Renderer/RenderDataManager.h>
 
 
 namespace pr
@@ -142,7 +141,7 @@ namespace pr
 	// ---
 
 
-	RegisterRenderObjectCommand::RegisterRenderObjectCommand(RenderDataComponent const& newRenderDataComponent)
+	RegisterRenderObject::RegisterRenderObject(RenderDataComponent const& newRenderDataComponent)
 		: m_renderDataID(newRenderDataComponent.GetRenderDataID())
 		, m_transformID(newRenderDataComponent.GetTransformID())
 		, m_featureBits(newRenderDataComponent.GetFeatureBits())
@@ -150,54 +149,54 @@ namespace pr
 	}
 
 
-	void RegisterRenderObjectCommand::Execute(void* cmdData)
+	void RegisterRenderObject::Execute(void* cmdData)
 	{
-		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
+		RegisterRenderObject* cmdPtr = reinterpret_cast<RegisterRenderObject*>(cmdData);
 
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
 		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 	}
 
 
-	void RegisterRenderObjectCommand::Destroy(void* cmdData)
+	void RegisterRenderObject::Destroy(void* cmdData)
 	{
-		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
-		cmdPtr->~RegisterRenderObjectCommand();
+		RegisterRenderObject* cmdPtr = reinterpret_cast<RegisterRenderObject*>(cmdData);
+		cmdPtr->~RegisterRenderObject();
 	}
 
 
 	// ---
 
 
-	DestroyRenderObjectCommand::DestroyRenderObjectCommand(gr::RenderDataID objectID)
+	DestroyRenderObject::DestroyRenderObject(gr::RenderDataID objectID)
 		: m_renderDataID(objectID)
 	{
 	}
 
 
-	void DestroyRenderObjectCommand::Execute(void* cmdData)
+	void DestroyRenderObject::Execute(void* cmdData)
 	{
-		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
+		DestroyRenderObject* cmdPtr = reinterpret_cast<DestroyRenderObject*>(cmdData);
 
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.DestroyObject(cmdPtr->m_renderDataID);
 	}
 
 
-	void DestroyRenderObjectCommand::Destroy(void* cmdData)
+	void DestroyRenderObject::Destroy(void* cmdData)
 	{
-		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
-		cmdPtr->~DestroyRenderObjectCommand();
+		DestroyRenderObject* cmdPtr = reinterpret_cast<DestroyRenderObject*>(cmdData);
+		cmdPtr->~DestroyRenderObject();
 	}
 
 
 	// ---
 
 
-	RenderDataFeatureBitsRenderCommand::RenderDataFeatureBitsRenderCommand(
+	SetRenderDataFeatureBits::SetRenderDataFeatureBits(
 		gr::RenderDataID renderDataID, gr::FeatureBitmask featureBits)
 		: m_renderDataID(renderDataID)
 		, m_featureBits(featureBits)
@@ -205,19 +204,19 @@ namespace pr
 	}
 
 
-	void RenderDataFeatureBitsRenderCommand::Execute(void* cmdData)
+	void SetRenderDataFeatureBits::Execute(void* cmdData)
 	{
-		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
+		SetRenderDataFeatureBits* cmdPtr = reinterpret_cast<SetRenderDataFeatureBits*>(cmdData);
 
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 	}
 
 
-	void RenderDataFeatureBitsRenderCommand::Destroy(void* cmdData)
+	void SetRenderDataFeatureBits::Destroy(void* cmdData)
 	{
-		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
-		cmdPtr->~RenderDataFeatureBitsRenderCommand();
+		SetRenderDataFeatureBits* cmdPtr = reinterpret_cast<SetRenderDataFeatureBits*>(cmdData);
+		cmdPtr->~SetRenderDataFeatureBits();
 	}
 }

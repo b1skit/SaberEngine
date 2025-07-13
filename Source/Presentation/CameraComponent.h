@@ -2,6 +2,7 @@
 #pragma once
 #include "Camera.h"
 
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderObjectIDs.h"
 
 
@@ -79,7 +80,7 @@ namespace pr
 	// ---
 
 
-	class SetActiveCameraRenderCommand final
+	class SetActiveCameraRenderCommand final : public virtual gr::RenderCommand
 	{
 	public:
 		SetActiveCameraRenderCommand(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);

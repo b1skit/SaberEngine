@@ -23,6 +23,7 @@
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EventKeys.h"
 
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderManager.h"
 
 
@@ -135,7 +136,7 @@ namespace pr
 
 			CmptType const& component = componentsView.get<CmptType>(entity);
 
-			renderManager->EnqueueRenderCommand<pr::UpdateRenderDataRenderCommand<RenderDataType>>(
+			gr::RenderCommand::Enqueue<pr::UpdateRenderData<RenderDataType>>(
 				renderDataComponent.GetRenderDataID(),
 				CmptType::CreateRenderData(entity, component));
 
@@ -162,7 +163,7 @@ namespace pr
 				// Enqueue a command to create a new object on the render thread:
 				auto& renderDataComponent = newRenderableEntitiesView.get<pr::RenderDataComponent>(entity);
 
-				renderManager->EnqueueRenderCommand<pr::RegisterRenderObjectCommand>(renderDataComponent);
+				gr::RenderCommand::Enqueue<pr::RegisterRenderObject>(renderDataComponent);
 				
 				m_registry.erase<pr::RenderDataComponent::NewRegistrationMarker>(entity);
 			}
@@ -175,7 +176,7 @@ namespace pr
 				pr::TransformComponent& transformComponent =
 					newTransformComponentsView.get<pr::TransformComponent>(entity);
 
-				renderManager->EnqueueRenderCommand<pr::UpdateTransformDataRenderCommand>(transformComponent);
+				gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(transformComponent);
 
 				m_registry.erase<pr::TransformComponent::NewIDMarker>(entity);
 			}
@@ -202,7 +203,7 @@ namespace pr
 
 				if (transformComponent.GetTransform().HasChanged())
 				{
-					renderManager->EnqueueRenderCommand<pr::UpdateTransformDataRenderCommand>(transformComponent);
+					gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(transformComponent);
 					transformComponent.GetTransform().ClearHasChangedFlag();
 				}
 			}
@@ -218,7 +219,7 @@ namespace pr
 				pr::RenderDataComponent const& renderDataComponent =
 					newMainCameraView.get<pr::RenderDataComponent>(entity);
 
-				renderManager->EnqueueRenderCommand<pr::SetActiveCameraRenderCommand>(
+				gr::RenderCommand::Enqueue<pr::SetActiveCameraRenderCommand>(
 					renderDataComponent.GetRenderDataID(), renderDataComponent.GetTransformID());
 
 				m_registry.erase<pr::CameraComponent::NewMainCameraMarker>(entity);
@@ -239,7 +240,7 @@ namespace pr
 			{
 				pr::NameComponent const& nameComponent = lightComponentsView.get<pr::NameComponent>(entity);
 				pr::LightComponent const& lightComponent = lightComponentsView.get<pr::LightComponent>(entity);
-				renderManager->EnqueueRenderCommand<pr::UpdateLightDataRenderCommand>(nameComponent, lightComponent);
+				gr::RenderCommand::Enqueue<pr::UpdateLightDataRenderCommand>(nameComponent, lightComponent);
 
 				m_registry.erase<DirtyMarker<pr::LightComponent>>(entity);
 			}
@@ -512,35 +513,35 @@ namespace pr
 					// Bounds:
 					if (m_registry.all_of<pr::BoundsComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::Bounds::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// MeshPrimitives:
 					if (m_registry.all_of<pr::MeshPrimitiveComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::MeshPrimitive::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Mesh Morph Animations:
 					if (m_registry.all_of<pr::MeshMorphComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::MeshMorphRenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::MeshPrimitive::MeshMorphRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Skinning:
 					if (m_registry.all_of<pr::SkinningComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::SkinningRenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::MeshPrimitive::SkinningRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Materials:
 					if (m_registry.all_of<pr::MaterialInstanceComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceRenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::Material::MaterialInstanceRenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
@@ -551,11 +552,11 @@ namespace pr
 
 						if (entity == mainCamera)
 						{
-							renderManager->EnqueueRenderCommand<pr::SetActiveCameraRenderCommand>(
+							gr::RenderCommand::Enqueue<pr::SetActiveCameraRenderCommand>(
 								gr::k_invalidRenderDataID, gr::k_invalidTransformID);
 						}
 
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::Camera::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
@@ -563,20 +564,19 @@ namespace pr
 					if (m_registry.all_of<pr::LightComponent>(entity))
 					{
 						pr::LightComponent const& lightCmpt = m_registry.get<pr::LightComponent>(entity);
-						renderManager->EnqueueRenderCommand<pr::DestroyLightDataRenderCommand>(lightCmpt);
+						gr::RenderCommand::Enqueue<pr::DestroyLightDataRenderCommand>(lightCmpt);
 					}
 
 					// ShadowMaps:
 					if (m_registry.all_of<pr::ShadowMapComponent>(entity))
 					{
-						renderManager->EnqueueRenderCommand<pr::DestroyRenderDataRenderCommand<gr::ShadowMap::RenderData>>(
+						gr::RenderCommand::Enqueue<pr::DestroyRenderData<gr::ShadowMap::RenderData>>(
 							renderDataComponent.GetRenderDataID());
 					}
 
 					// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
 					// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
-					renderManager->EnqueueRenderCommand<pr::DestroyRenderObjectCommand>(
-						renderDataComponent.GetRenderDataID());
+					gr::RenderCommand::Enqueue<pr::DestroyRenderObject>(renderDataComponent.GetRenderDataID());
 				}
 
 				// Manually destroy the relationship, while the component is still active in the registry

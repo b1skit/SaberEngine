@@ -3,6 +3,7 @@
 #include "Transform.h"
 
 #include "Renderer/TransformRenderData.h"
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderObjectIDs.h"
 
 
@@ -73,7 +74,7 @@ namespace pr
 	// ---
 
 
-	class UpdateTransformDataRenderCommand
+	class UpdateTransformDataRenderCommand final : public virtual gr::RenderCommand
 	{
 	public:
 		UpdateTransformDataRenderCommand(pr::TransformComponent&);

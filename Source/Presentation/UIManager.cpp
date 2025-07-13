@@ -16,6 +16,7 @@
 #include "Core/Host/Window.h"
 
 #include "Renderer/GraphicsSystem_ImGui.h"
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderManager.h"
 
 
@@ -197,7 +198,7 @@ namespace pr
 		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
 		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
 
-		gr::RenderManager::Get()->EnqueueRenderCommand([createdFlag, cmdMgrPtr, imguiMutexPtr]()
+		gr::RenderCommand::Enqueue([createdFlag, cmdMgrPtr, imguiMutexPtr]()
 			{
 				constexpr char const* k_debugUIPipelineFilename = "UI.json";
 

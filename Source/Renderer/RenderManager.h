@@ -99,11 +99,6 @@ namespace gr
 
 
 	public: // Render commands:
-		template<typename T, typename... Args>
-		void EnqueueRenderCommand(Args&&... args);
-
-		void EnqueueRenderCommand(std::function<void(void)>&&);
-
 		using CommandManagerAccessKey = accesscontrol::AccessKey<pr::IGraphicsService>;
 		core::CommandManager* GetRenderCommandManager(CommandManagerAccessKey);
 
@@ -208,19 +203,6 @@ namespace gr
 	{
 		SEAssert(window != nullptr, "Trying to set a null window. This is unexpected");
 		m_windowCache = window; // Cache this to pass to the context
-	}
-
-
-	template<typename T, typename... Args>
-	inline void RenderManager::EnqueueRenderCommand(Args&&... args)
-	{
-		m_renderCommandManager.Enqueue<T>(std::forward<Args>(args)...);
-	}
-
-
-	inline void RenderManager::EnqueueRenderCommand(std::function<void(void)>&& lambda)
-	{
-		m_renderCommandManager.Enqueue(std::move(lambda));
 	}
 
 

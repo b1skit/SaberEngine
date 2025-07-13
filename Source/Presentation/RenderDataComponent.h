@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderObjectIDs.h"
 #include "Renderer/RenderManager.h"
 
@@ -74,10 +75,10 @@ namespace pr
 	// ---
 
 
-	class RegisterRenderObjectCommand
+	class RegisterRenderObject final : public virtual gr::RenderCommand
 	{
 	public:
-		RegisterRenderObjectCommand(RenderDataComponent const&);
+		RegisterRenderObject(RenderDataComponent const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -92,10 +93,10 @@ namespace pr
 	// ---
 
 
-	class DestroyRenderObjectCommand
+	class DestroyRenderObject final : public virtual gr::RenderCommand
 	{
 	public:
-		DestroyRenderObjectCommand(gr::RenderDataID);
+		DestroyRenderObject(gr::RenderDataID);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -109,10 +110,10 @@ namespace pr
 
 
 	template<typename T>
-	class UpdateRenderDataRenderCommand
+	class UpdateRenderData final : public virtual gr::RenderCommand
 	{
 	public:
-		UpdateRenderDataRenderCommand(gr::RenderDataID, T const&);
+		UpdateRenderData(gr::RenderDataID, T const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -124,7 +125,7 @@ namespace pr
 
 
 	template<typename T>
-	UpdateRenderDataRenderCommand<T>::UpdateRenderDataRenderCommand(gr::RenderDataID objectID, T const& data)
+	UpdateRenderData<T>::UpdateRenderData(gr::RenderDataID objectID, T const& data)
 		: m_renderDataID(objectID)
 		, m_data(data)
 	{
@@ -132,9 +133,9 @@ namespace pr
 
 
 	template<typename T>
-	void UpdateRenderDataRenderCommand<T>::Execute(void* cmdData)
+	void UpdateRenderData<T>::Execute(void* cmdData)
 	{
-		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
+		UpdateRenderData<T>* cmdPtr = reinterpret_cast<UpdateRenderData<T>*>(cmdData);
 		
 		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
@@ -143,10 +144,10 @@ namespace pr
 
 
 	template<typename T>
-	void UpdateRenderDataRenderCommand<T>::Destroy(void* cmdData)
+	void UpdateRenderData<T>::Destroy(void* cmdData)
 	{
-		UpdateRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<UpdateRenderDataRenderCommand<T>*>(cmdData);
-		cmdPtr->~UpdateRenderDataRenderCommand<T>();
+		UpdateRenderData<T>* cmdPtr = reinterpret_cast<UpdateRenderData<T>*>(cmdData);
+		cmdPtr->~UpdateRenderData<T>();
 	}
 
 
@@ -154,10 +155,10 @@ namespace pr
 
 
 	template<typename T>
-	class DestroyRenderDataRenderCommand
+	class DestroyRenderData final : public virtual gr::RenderCommand
 	{
 	public:
-		DestroyRenderDataRenderCommand(gr::RenderDataID);
+		DestroyRenderData(gr::RenderDataID);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -168,16 +169,16 @@ namespace pr
 
 
 	template<typename T>
-	DestroyRenderDataRenderCommand<T>::DestroyRenderDataRenderCommand(gr::RenderDataID objectID)
+	DestroyRenderData<T>::DestroyRenderData(gr::RenderDataID objectID)
 		: m_renderDataID(objectID)
 	{
 	}
 
 
 	template<typename T>
-	void DestroyRenderDataRenderCommand<T>::Execute(void* cmdData)
+	void DestroyRenderData<T>::Execute(void* cmdData)
 	{
-		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
+		DestroyRenderData<T>* cmdPtr = reinterpret_cast<DestroyRenderData<T>*>(cmdData);
 
 		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
 
@@ -186,20 +187,20 @@ namespace pr
 
 
 	template<typename T>
-	void DestroyRenderDataRenderCommand<T>::Destroy(void* cmdData)
+	void DestroyRenderData<T>::Destroy(void* cmdData)
 	{
-		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
-		cmdPtr->~DestroyRenderDataRenderCommand();
+		DestroyRenderData<T>* cmdPtr = reinterpret_cast<DestroyRenderData<T>*>(cmdData);
+		cmdPtr->~DestroyRenderData();
 	}
 
 
 	// ---
 
 
-	class RenderDataFeatureBitsRenderCommand
+	class SetRenderDataFeatureBits final : public virtual gr::RenderCommand
 	{
 	public:
-		RenderDataFeatureBitsRenderCommand(gr::RenderDataID, gr::FeatureBitmask);
+		SetRenderDataFeatureBits(gr::RenderDataID, gr::FeatureBitmask);
 
 		static void Execute(void*);
 		static void Destroy(void*);

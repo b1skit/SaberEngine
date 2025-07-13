@@ -4,6 +4,7 @@
 #include "NameComponent.h"
 
 #include "Renderer/LightRenderData.h"
+#include "Renderer/RenderCommand.h"
 #include "Renderer/RenderObjectIDs.h"
 
 
@@ -99,7 +100,7 @@ namespace pr
 	// ---
 
 
-	class UpdateLightDataRenderCommand final
+	class UpdateLightDataRenderCommand final : public virtual gr::RenderCommand
 	{
 	public:
 		UpdateLightDataRenderCommand(pr::NameComponent const&, LightComponent const&);
@@ -123,7 +124,7 @@ namespace pr
 	};
 
 
-	class DestroyLightDataRenderCommand final
+	class DestroyLightDataRenderCommand final : public virtual gr::RenderCommand
 	{
 	public:
 		DestroyLightDataRenderCommand(LightComponent const&);

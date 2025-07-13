@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "IndexedBuffer.h"
+#include "RenderCommand.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
@@ -106,6 +107,9 @@ namespace gr
 #elif defined(SE_RELEASE)
 		SEFatalAssert(buildConfig == util::BuildConfiguration::Release, "Shader directory build configuration marker mismatch");
 #endif
+
+		gr::RenderCommand::s_renderCommandManager = &newRenderManager->m_renderCommandManager;
+		gr::RenderCommand::s_renderDataManager = &newRenderManager->m_renderData;
 
 		return newRenderManager;
 	}
@@ -382,6 +386,9 @@ namespace gr
 		// Need to do this here so the EngineApp's Window can be destroyed
 		m_context->Destroy();
 		m_context = nullptr;
+
+		gr::RenderCommand::s_renderCommandManager = nullptr;
+		gr::RenderCommand::s_renderDataManager = nullptr;
 
 		SEEndCPUEvent();
 	}
