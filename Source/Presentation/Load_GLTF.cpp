@@ -3,6 +3,7 @@
 #include "BoundsComponent.h"
 #include "Camera.h"
 #include "CameraComponent.h"
+#include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "Load_Common.h"

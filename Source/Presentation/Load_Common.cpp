@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
+#include "EntityCommands.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "Load_Common.h"

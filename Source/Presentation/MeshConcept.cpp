@@ -7,10 +7,11 @@
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "SceneManager.h"
 #include "SceneNodeConcept.h"
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
+
+#include "Core/Inventory.h"
 
 #include "Core/Definitions/ConfigKeys.h"
 

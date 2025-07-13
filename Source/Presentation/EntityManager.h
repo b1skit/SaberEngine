@@ -1,9 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "EntityCommands.h" // Required for EnqueueEntityCommand
-
 #include "Core/CommandQueue.h"
-#include "Core/Inventory.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
@@ -12,6 +9,8 @@
 namespace pr
 {
 	class BoundsComponent;
+	class SetMainCameraCommand;
+	class SetActiveAmbientLightCommand;
 
 
 	class EntityManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
