@@ -65,7 +65,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GenerateIEM_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "IBLGeneration",
+				"RasterState": "IBLGeneration",
 				"VertexStream": "PositionOnly"
 			},
 			{
@@ -74,7 +74,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "GeneratePMREM_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "IBLGeneration",
+				"RasterState": "IBLGeneration",
 				"VertexStream": "PositionOnly"
 			},
 			{
@@ -83,7 +83,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredAmbientLight_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "DeferredFullscreenQuad",
+				"RasterState": "DeferredFullscreenQuad",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -92,7 +92,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredDirectionalLight_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "DeferredFullscreenQuad",
+				"RasterState": "DeferredFullscreenQuad",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -101,7 +101,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredPointLight_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "DeferredMesh",
+				"RasterState": "DeferredMesh",
 				"VertexStream": "PositionOnly"
 			},
 			{
@@ -110,7 +110,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredSpotLight_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "DeferredMesh",
+				"RasterState": "DeferredMesh",
 				"VertexStream": "PositionOnly"
 			},
 			{

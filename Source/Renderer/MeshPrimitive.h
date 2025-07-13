@@ -2,6 +2,7 @@
 #pragma once
 #include "AccelerationStructure.h"
 #include "Buffer.h"
+#include "RasterState.h"
 #include "RenderObjectIDs.h"
 #include "VertexStream.h"
 
@@ -41,25 +42,10 @@ namespace gr
 
 
 	public:
-		// Specific format the IA will use to interpret the topology contained within the vertex/index buffers.
-		// Elements of the same basic type here can be used interchangeably with PSO's that map to the more general 
-		// re::RasterizationState::PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
-		enum class PrimitiveTopology : uint8_t
-		{
-			PointList,
-			LineList,
-			LineStrip,
-			TriangleList, // Default
-			TriangleStrip,
-			LineListAdjacency,
-			LineStripAdjacency,
-			TriangleListAdjacency,
-			TriangleStripAdjacency
-		};
-
 		struct MeshPrimitiveParams final
 		{
-			PrimitiveTopology m_primitiveTopology = PrimitiveTopology::TriangleList;
+			re::RasterState::PrimitiveTopology m_primitiveTopology = 
+				re::RasterState::PrimitiveTopology::TriangleList;
 		};
 
 		struct MeshVertexStream final

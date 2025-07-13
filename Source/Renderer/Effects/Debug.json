@@ -98,21 +98,21 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Line",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "Debug_Line",
+				"RasterState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},
 			{
 				"Name": "Debug_Line_VertexIDInstancingLUTIdx",
 				"Parent" : "Debug_Line",
 				"VShaderDefines" : ["VERTEXID_INSTANCING_LUT_IDX"],
-				"RasterizationState": "Debug_Line",
+				"RasterState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},
 			{
 				"Name": "Debug_Line_InstanceIDTransformIdx",
 				"Parent" : "Debug_Line",
 				"VShaderDefines" : ["INSTANCEID_TRANSFORM_IDX"],
-				"RasterizationState": "Debug_Line",
+				"RasterState": "Debug_Line",
 				"VertexStream": "PositionColor"
 			},
 			{
@@ -120,7 +120,7 @@
 				"Parent" : "Debug_Line",
 				"VShaderDefines" : ["DEBUG_WIREFRAME"],
 				"PShaderDefines" : ["DEBUG_WIREFRAME"],
-				"RasterizationState": "Debug_Wireframe",
+				"RasterState": "Debug_Wireframe",
 				"VertexStream": "PositionOnly"
 			},
 			{
@@ -131,7 +131,7 @@
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_NORMAL"],
 				"PShaderDefines" : ["DEBUG_NORMAL"],
-				"RasterizationState": "Debug_Point",
+				"RasterState": "Debug_Point",
 				"VertexStream": "PositionNormal"
 			},
 			{
@@ -142,7 +142,7 @@
 				"GShaderEntryPoint": "GShader",
 				"GShaderDefines" : ["DEBUG_AXIS"],
 				"PShaderDefines" : ["DEBUG_AXIS"],
-				"RasterizationState": "Debug_Point",
+				"RasterState": "Debug_Point",
 				"VertexStream": "PositionOnly"
 			}
 		]

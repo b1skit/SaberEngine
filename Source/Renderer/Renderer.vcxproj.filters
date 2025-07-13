@@ -422,7 +422,7 @@
     <ClInclude Include="AccelerationStructure_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="RasterizationState.h">
+    <ClInclude Include="RasterState.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h">
@@ -850,7 +850,7 @@
     <ClCompile Include="AccelerationStructure_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="RasterizationState.cpp">
+    <ClCompile Include="RasterState.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp">

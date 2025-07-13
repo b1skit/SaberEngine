@@ -23,7 +23,7 @@ namespace effect
 		effect::Technique const* GetTechnique(TechniqueID) const;
 		effect::Technique const* GetTechnique(EffectID, effect::drawstyle::Bitmask drawStyleBitmask) const;
 
-		re::RasterizationState const* GetRasterizationState(std::string const&) const;
+		re::RasterState const* GetRasterizationState(std::string const&) const;
 		re::VertexStreamMap const* GetVertexStreamMap(std::string const&) const;
 		
 		core::InvPtr<re::Shader> const& GetResolvedShader(
@@ -40,7 +40,7 @@ namespace effect
 		effect::Technique* AddTechnique(effect::Technique&&);
 
 		bool HasRasterizationState(std::string const& name) const;
-		re::RasterizationState* AddRasterizationState(std::string const& name, re::RasterizationState&&);
+		re::RasterState* AddRasterizationState(std::string const& name, re::RasterState&&);
 
 		bool HasVertexStreamMap(std::string const& name) const;
 		re::VertexStreamMap* AddVertexStreamMap(std::string const& name, re::VertexStreamMap const&);
@@ -53,7 +53,7 @@ namespace effect
 		std::unordered_map<TechniqueID, effect::Technique> m_techniques;
 		mutable std::shared_mutex m_techniquesMutex;
 
-		std::unordered_map<std::string, re::RasterizationState> m_rasterizationStates;
+		std::unordered_map<std::string, re::RasterState> m_rasterizationStates;
 		mutable std::shared_mutex m_rasterizationStatesMutex;
 
 		std::unordered_map<std::string, re::VertexStreamMap> m_vertexStreamMaps;
@@ -106,13 +106,13 @@ namespace effect
 	}
 
 
-	inline re::RasterizationState const* EffectDB::GetRasterizationState(std::string const& rasterStateName) const
+	inline re::RasterState const* EffectDB::GetRasterizationState(std::string const& rasterStateName) const
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_rasterizationStatesMutex);
 
 			SEAssert(m_rasterizationStates.contains(rasterStateName),
-				"No RasterizationState with the given name exists");
+				"No RasterState with the given name exists");
 
 			return &m_rasterizationStates.at(rasterStateName);
 		}

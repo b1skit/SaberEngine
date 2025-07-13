@@ -8,19 +8,19 @@
 
 namespace
 {
-	constexpr char const* TopologyModeToCStr(gr::MeshPrimitive::PrimitiveTopology drawMode)
+	constexpr char const* TopologyModeToCStr(re::RasterState::PrimitiveTopology drawMode)
 	{
 		switch (drawMode)
 		{
-		case gr::MeshPrimitive::PrimitiveTopology::PointList: return "PointList";
-		case gr::MeshPrimitive::PrimitiveTopology::LineList: return "LineList";
-		case gr::MeshPrimitive::PrimitiveTopology::LineStrip: return "LineStrip";
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleList: return "TriangleList";
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleStrip: return "TriangleStrip";
-		case gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency: return "LineListAdjacency";
-		case gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency: return "LineStripAdjacency";
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency: return "TriangleListAdjacency";
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency: return "TriangleStripAdjacency";
+		case re::RasterState::PrimitiveTopology::PointList: return "PointList";
+		case re::RasterState::PrimitiveTopology::LineList: return "LineList";
+		case re::RasterState::PrimitiveTopology::LineStrip: return "LineStrip";
+		case re::RasterState::PrimitiveTopology::TriangleList: return "TriangleList";
+		case re::RasterState::PrimitiveTopology::TriangleStrip: return "TriangleStrip";
+		case re::RasterState::PrimitiveTopology::LineListAdjacency: return "LineListAdjacency";
+		case re::RasterState::PrimitiveTopology::LineStripAdjacency: return "LineStripAdjacency";
+		case re::RasterState::PrimitiveTopology::TriangleListAdjacency: return "TriangleListAdjacency";
+		case re::RasterState::PrimitiveTopology::TriangleStripAdjacency: return "TriangleStripAdjacency";
 		default: return "INVALID TOPOLOGY MODE";
 		}
 	}

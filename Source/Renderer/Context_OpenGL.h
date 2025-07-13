@@ -12,7 +12,7 @@ namespace re
 {
 	class BindlessResourceManager;
 	class VertexBufferInput;
-	class RasterizationState;
+	class RasterState;
 	class VertexStream;
 }
 
@@ -41,7 +41,7 @@ namespace opengl
 
 
 	public: // OpenGL-specific interface:
-		void SetRasterizationState(re::RasterizationState const*);
+		void SetRasterizationState(re::RasterState const*);
 
 		GLuint GetCreateVAO(gr::StageBatchHandle const&, re::VertexBufferInput const& indexStream);
 
@@ -52,9 +52,9 @@ namespace opengl
 
 
 	private:
-		void SetRasterizerState(re::RasterizationState const*);
-		void SetDepthStencilState(re::RasterizationState const*);
-		void SetBlendState(re::RasterizationState const*);
+		void SetRasterizerState(re::RasterState const*);
+		void SetDepthStencilState(re::RasterState const*);
+		void SetBlendState(re::RasterState const*);
 
 		static uint64_t ComputeVAOHash(
 			gr::StageBatchHandle::ResolvedVertexBuffers const&,

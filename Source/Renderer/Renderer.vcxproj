@@ -173,7 +173,7 @@
     <ClInclude Include="MeshPrimitive.h" />
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PipelineState_DX12.h" />
-    <ClInclude Include="RasterizationState.h" />
+    <ClInclude Include="RasterState.h" />
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="RenderDataManager.h" />
     <ClInclude Include="RenderManager.h" />
@@ -321,7 +321,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PipelineState_DX12.cpp" />
-    <ClCompile Include="RasterizationState.cpp" />
+    <ClCompile Include="RasterState.cpp" />
     <ClCompile Include="RenderCommand.cpp" />
     <ClCompile Include="RenderDataManager.cpp" />
     <ClCompile Include="RenderManager.cpp" />

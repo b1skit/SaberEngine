@@ -38,7 +38,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
 			.SetGeometryMode(gr::Batch::GeometryMode::ArrayInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::PointList)
 			.SetVertexBuffer(0, axisPositionStream)
 			.SetEffectID(k_debugEffectID)
 			.SetDrawstyleBitmask(effect::drawstyle::Debug_Axis)
@@ -78,7 +78,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
 			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::LineList)
 			.SetVertexBuffers({ linePositionsStream, lineColorStream })
 			.SetIndexBuffer(lineIndexStream)
 			.SetEffectID(k_debugEffectID)
@@ -168,7 +168,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
 			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::LineList)
 			.SetVertexBuffer(0, boxPositionsStream)
 			.SetVertexBuffer(1, boxColorStream)
 			.SetIndexBuffer(boxIndexStream)
@@ -199,7 +199,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder::CloneAndModify(existingBatch)
 			.SetGeometryMode(gr::Batch::GeometryMode::ArrayInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::PointList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::PointList)
 			.SetEffectID(k_debugEffectID)
 			.SetDrawstyleBitmask(effect::drawstyle::Debug_Normal)
 			.Build();
@@ -273,7 +273,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
 			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::LineList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::LineList)
 			.SetVertexBuffer(0, frustumPositionsStream)
 			.SetVertexBuffer(1, frustumColorStream)
 			.SetIndexBuffer(frustumIndexStream)
@@ -298,7 +298,7 @@ namespace
 
 		gr::BatchHandle batch = gr::RasterBatchBuilder()
 			.SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced)
-			.SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology::TriangleList)
+			.SetPrimitiveTopology(re::RasterState::PrimitiveTopology::TriangleList)
 			.SetVertexBuffer(0, positionStream)
 			.SetIndexBuffer(indexStream)
 			.SetEffectID(k_debugEffectID)

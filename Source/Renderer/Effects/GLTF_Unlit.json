@@ -67,7 +67,7 @@
 				"PShader": "GLTF_Unlit_GBufferFill_PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PosUvCol"
 			},
 			{
@@ -78,12 +78,12 @@
 			{
 				"Name": "FillGBuffer_UnlitDoubleSidedOpaque",
 				"Parent" :  "FillGBuffer_UnlitSingleSidedOpaque",
-				"RasterizationState": "DoubleSided"
+				"RasterState": "DoubleSided"
 			},
 			{
 				"Name": "FillGBuffer_UnlitDoubleSidedAlphaClip",
 				"Parent" :  "FillGBuffer_UnlitSingleSidedAlphaClip",
-				"RasterizationState": "DoubleSided"
+				"RasterState": "DoubleSided"
 			},
 			{
 				"Name": "AlphaBlend_UnlitSingleSided",
@@ -93,7 +93,7 @@
 				"PShader": "GLTF_Unlit_Transparency_PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SingleSided_AlphaBlend",
+				"RasterState": "SingleSided_AlphaBlend",
 				"VertexStream": "PosUvCol"				
 			},
 			{
@@ -104,7 +104,7 @@
 				"PShader": "GLTF_Unlit_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
-				"RasterizationState": "DoubleSided_AlphaBlend",
+				"RasterState": "DoubleSided_AlphaBlend",
 				"VertexStream": "PosUvCol"
 			}
 		]

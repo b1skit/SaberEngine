@@ -12,7 +12,7 @@ using TechniqueID = util::HashKey;
 
 namespace re
 {
-	class RasterizationState;
+	class RasterState;
 }
 
 namespace effect
@@ -27,7 +27,7 @@ namespace effect
 		Technique(
 			char const* name,
 			std::vector<re::Shader::Metadata>&&,
-			re::RasterizationState const*,
+			re::RasterState const*,
 			re::VertexStreamMap const*);
 
 		Technique(Technique&&) noexcept = default;
@@ -49,7 +49,7 @@ namespace effect
 
 		// For deferred shader resolution:
 		std::vector<re::Shader::Metadata> m_shaderMetadata;
-		re::RasterizationState const* m_rasterizationState;
+		re::RasterState const* m_rasterizationState;
 		re::VertexStreamMap const* m_vertexStreamMap;
 
 

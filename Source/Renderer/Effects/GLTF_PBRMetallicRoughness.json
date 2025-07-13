@@ -167,7 +167,7 @@
 				"PShader": "GLTF_PBRMetallicRoughness_GBufferFill_PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PosNmlTanUvCol"
 			},
 			{
@@ -178,12 +178,12 @@
 			{
 				"Name": "FillGBuffer_DoubleSidedOpaque",
 				"Parent" :  "FillGBuffer_SingleSidedOpaque",
-				"RasterizationState": "DoubleSided"
+				"RasterState": "DoubleSided"
 			},
 			{
 				"Name": "FillGBuffer_DoubleSidedAlphaClip",
 				"Parent" :  "FillGBuffer_SingleSidedAlphaClip",
-				"RasterizationState": "DoubleSided"
+				"RasterState": "DoubleSided"
 			},
 			{
 				"Name": "AlphaBlend_SingleSided",
@@ -193,7 +193,7 @@
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SingleSided_AlphaBlend",
+				"RasterState": "SingleSided_AlphaBlend",
 				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
@@ -204,7 +204,7 @@
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
-				"RasterizationState": "DoubleSided_AlphaBlend",
+				"RasterState": "DoubleSided_AlphaBlend",
 				"VertexStream": "PosNmlTanUvCol"
 			},
 		
@@ -215,7 +215,7 @@
 				"Name": "Shadow_2D_SingleSided_Opaque",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -226,14 +226,14 @@
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
 				"Name": "Shadow_2D_DoubleSided_Opaque",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
-				"RasterizationState": "DoubleSided",
+				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -244,7 +244,7 @@
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
-				"RasterizationState": "DoubleSided",
+				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -253,7 +253,7 @@
 				"VShaderEntryPoint": "VShader",
 				"GShader": "CubeDepth_GShader",
 				"GShaderEntryPoint": "GShader",
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -267,7 +267,7 @@
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SingleSided",
+				"RasterState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -276,7 +276,7 @@
 				"VShaderEntryPoint": "VShader",
 				"GShader": "CubeDepth_GShader",
 				"GShaderEntryPoint": "GShader",
-				"RasterizationState": "DoubleSided",
+				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
@@ -290,7 +290,7 @@
 				"PShader": "DepthAlphaMask_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
-				"RasterizationState": "DoubleSided",
+				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV",
 				"Defines": ["SABER_INSTANCING", "VOUT_UV0"]
 			}

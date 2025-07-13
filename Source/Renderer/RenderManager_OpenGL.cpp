@@ -21,19 +21,19 @@
 
 namespace
 {
-	constexpr GLenum PrimitiveTopologyToGLPrimitiveType(gr::MeshPrimitive::PrimitiveTopology topologyMode)
+	constexpr GLenum PrimitiveTopologyToGLPrimitiveType(re::RasterState::PrimitiveTopology topologyMode)
 	{
 		switch (topologyMode)
 		{
-		case gr::MeshPrimitive::PrimitiveTopology::PointList: return GL_POINTS;
-		case gr::MeshPrimitive::PrimitiveTopology::LineList: return GL_LINES;
-		case gr::MeshPrimitive::PrimitiveTopology::LineStrip: return GL_LINE_STRIP;
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleList: return GL_TRIANGLES;
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleStrip: return GL_TRIANGLE_STRIP;
-		case gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency: return GL_LINES_ADJACENCY;
-		case gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency: return GL_LINE_STRIP_ADJACENCY;
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency: return GL_TRIANGLES_ADJACENCY;
-		case gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency: return GL_TRIANGLE_STRIP_ADJACENCY;
+		case re::RasterState::PrimitiveTopology::PointList: return GL_POINTS;
+		case re::RasterState::PrimitiveTopology::LineList: return GL_LINES;
+		case re::RasterState::PrimitiveTopology::LineStrip: return GL_LINE_STRIP;
+		case re::RasterState::PrimitiveTopology::TriangleList: return GL_TRIANGLES;
+		case re::RasterState::PrimitiveTopology::TriangleStrip: return GL_TRIANGLE_STRIP;
+		case re::RasterState::PrimitiveTopology::LineListAdjacency: return GL_LINES_ADJACENCY;
+		case re::RasterState::PrimitiveTopology::LineStripAdjacency: return GL_LINE_STRIP_ADJACENCY;
+		case re::RasterState::PrimitiveTopology::TriangleListAdjacency: return GL_TRIANGLES_ADJACENCY;
+		case re::RasterState::PrimitiveTopology::TriangleStripAdjacency: return GL_TRIANGLE_STRIP_ADJACENCY;
 		default:
 			SEAssertF("Unsupported topology mode");
 			return GL_TRIANGLES;

@@ -2,7 +2,7 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "EnumTypes_DX12.h"
-#include "RasterizationState.h"
+#include "RasterState.h"
 #include "RenderManager.h"
 #include "PipelineState_DX12.h"
 #include "RootSignature_DX12.h"
@@ -100,101 +100,101 @@ namespace
 	}
 
 
-	D3D12_RASTERIZER_DESC BuildRasterizerDesc(re::RasterizationState const* rasterizationState)
+	D3D12_RASTERIZER_DESC BuildRasterizerDesc(re::RasterState const* rasterState)
 	{
 		D3D12_RASTERIZER_DESC rasterizerDesc{};
 
 		// Polygon fill mode:
-		switch (rasterizationState->GetFillMode())
+		switch (rasterState->GetFillMode())
 		{
-		case re::RasterizationState::FillMode::Wireframe: rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; break;
-		case re::RasterizationState::FillMode::Solid: rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID; break;
+		case re::RasterState::FillMode::Wireframe: rasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME; break;
+		case re::RasterState::FillMode::Solid: rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID; break;
 		default:
 			SEAssertF("Invalid fill mode");
 			rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 		}
 
 		// Face culling mode:
-		switch (rasterizationState->GetFaceCullingMode())
+		switch (rasterState->GetFaceCullingMode())
 		{
-		case re::RasterizationState::FaceCullingMode::Disabled: rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE; break;
-		case re::RasterizationState::FaceCullingMode::Front: rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT; break;
-		case re::RasterizationState::FaceCullingMode::Back: rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK; break;			
+		case re::RasterState::FaceCullingMode::Disabled: rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE; break;
+		case re::RasterState::FaceCullingMode::Front: rasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT; break;
+		case re::RasterState::FaceCullingMode::Back: rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK; break;			
 		default:
 			SEAssertF("Invalid cull mode");
 			rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 		}
 
 		// Winding order:
-		switch (rasterizationState->GetWindingOrder())
+		switch (rasterState->GetWindingOrder())
 		{
-		case re::RasterizationState::WindingOrder::CCW: rasterizerDesc.FrontCounterClockwise = true; break;
-		case re::RasterizationState::WindingOrder::CW: rasterizerDesc.FrontCounterClockwise = false; break;
+		case re::RasterState::WindingOrder::CCW: rasterizerDesc.FrontCounterClockwise = true; break;
+		case re::RasterState::WindingOrder::CW: rasterizerDesc.FrontCounterClockwise = false; break;
 		default:
 			SEAssertF("Invalid winding order");
 			rasterizerDesc.FrontCounterClockwise = true;
 		}
 		
-		rasterizerDesc.DepthBias = rasterizationState->GetDepthBias();
-		rasterizerDesc.DepthBiasClamp = rasterizationState->GetDepthBiasClamp();
-		rasterizerDesc.SlopeScaledDepthBias = rasterizationState->GetSlopeScaledDepthBias();
-		rasterizerDesc.DepthClipEnable = rasterizationState->GetDepthClipEnabled();
-		rasterizerDesc.MultisampleEnable = rasterizationState->GetMultiSampleEnabled();
-		rasterizerDesc.AntialiasedLineEnable = rasterizationState->GetAntiAliasedLineEnabled(); // Only applies if drawing lines with .MultisampleEnable = false
-		rasterizerDesc.ForcedSampleCount = rasterizationState->GetForcedSampleCount();
-		rasterizerDesc.ConservativeRaster = rasterizationState->GetConservativeRaster() ? 
+		rasterizerDesc.DepthBias = rasterState->GetDepthBias();
+		rasterizerDesc.DepthBiasClamp = rasterState->GetDepthBiasClamp();
+		rasterizerDesc.SlopeScaledDepthBias = rasterState->GetSlopeScaledDepthBias();
+		rasterizerDesc.DepthClipEnable = rasterState->GetDepthClipEnabled();
+		rasterizerDesc.MultisampleEnable = rasterState->GetMultiSampleEnabled();
+		rasterizerDesc.AntialiasedLineEnable = rasterState->GetAntiAliasedLineEnabled(); // Only applies if drawing lines with .MultisampleEnable = false
+		rasterizerDesc.ForcedSampleCount = rasterState->GetForcedSampleCount();
+		rasterizerDesc.ConservativeRaster = rasterState->GetConservativeRaster() ? 
 			D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
 		return rasterizerDesc;
 	}
 
 
-	constexpr D3D12_DEPTH_WRITE_MASK DepthWriteMaskToD3DDepthWriteMask(re::RasterizationState::DepthWriteMask depthWriteMask)
+	constexpr D3D12_DEPTH_WRITE_MASK DepthWriteMaskToD3DDepthWriteMask(re::RasterState::DepthWriteMask depthWriteMask)
 	{
 		switch (depthWriteMask)
 		{
-		case re::RasterizationState::DepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
-		case re::RasterizationState::DepthWriteMask::All: return D3D12_DEPTH_WRITE_MASK_ALL;
+		case re::RasterState::DepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
+		case re::RasterState::DepthWriteMask::All: return D3D12_DEPTH_WRITE_MASK_ALL;
 		}
 		return D3D12_DEPTH_WRITE_MASK_ALL; // This should never happen
 	}
 
 
-	constexpr D3D12_STENCIL_OP StencilOpToD3DStencilOp(re::RasterizationState::StencilOp stencilOp)
+	constexpr D3D12_STENCIL_OP StencilOpToD3DStencilOp(re::RasterState::StencilOp stencilOp)
 	{
 		switch (stencilOp)
 		{
-		case re::RasterizationState::StencilOp::Keep: return D3D12_STENCIL_OP_KEEP;
-		case re::RasterizationState::StencilOp::Zero: return D3D12_STENCIL_OP_ZERO;
-		case re::RasterizationState::StencilOp::Replace: return D3D12_STENCIL_OP_REPLACE;
-		case re::RasterizationState::StencilOp::IncrementSaturate: return D3D12_STENCIL_OP_INCR_SAT;
-		case re::RasterizationState::StencilOp::DecrementSaturate: return D3D12_STENCIL_OP_DECR_SAT;
-		case re::RasterizationState::StencilOp::Invert: return D3D12_STENCIL_OP_INVERT;
-		case re::RasterizationState::StencilOp::Increment: return D3D12_STENCIL_OP_INCR;
-		case re::RasterizationState::StencilOp::Decrement: return D3D12_STENCIL_OP_DECR;
+		case re::RasterState::StencilOp::Keep: return D3D12_STENCIL_OP_KEEP;
+		case re::RasterState::StencilOp::Zero: return D3D12_STENCIL_OP_ZERO;
+		case re::RasterState::StencilOp::Replace: return D3D12_STENCIL_OP_REPLACE;
+		case re::RasterState::StencilOp::IncrementSaturate: return D3D12_STENCIL_OP_INCR_SAT;
+		case re::RasterState::StencilOp::DecrementSaturate: return D3D12_STENCIL_OP_DECR_SAT;
+		case re::RasterState::StencilOp::Invert: return D3D12_STENCIL_OP_INVERT;
+		case re::RasterState::StencilOp::Increment: return D3D12_STENCIL_OP_INCR;
+		case re::RasterState::StencilOp::Decrement: return D3D12_STENCIL_OP_DECR;
 		}
 		return D3D12_STENCIL_OP_KEEP; // This should never happen
 	}
 
 
-	constexpr D3D12_COMPARISON_FUNC ComparisonFuncToD3DComparisonFunc(re::RasterizationState::ComparisonFunc comparison)
+	constexpr D3D12_COMPARISON_FUNC ComparisonFuncToD3DComparisonFunc(re::RasterState::ComparisonFunc comparison)
 	{
 		switch (comparison)
 		{
-		case re::RasterizationState::ComparisonFunc::Less: return D3D12_COMPARISON_FUNC_LESS;
-		case re::RasterizationState::ComparisonFunc::Never: return D3D12_COMPARISON_FUNC_NEVER;
-		case re::RasterizationState::ComparisonFunc::Equal: return D3D12_COMPARISON_FUNC_EQUAL;
-		case re::RasterizationState::ComparisonFunc::LEqual: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
-		case re::RasterizationState::ComparisonFunc::Greater: return D3D12_COMPARISON_FUNC_GREATER;
-		case re::RasterizationState::ComparisonFunc::NotEqual: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
-		case re::RasterizationState::ComparisonFunc::GEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
-		case re::RasterizationState::ComparisonFunc::Always: return D3D12_COMPARISON_FUNC_ALWAYS;
+		case re::RasterState::ComparisonFunc::Less: return D3D12_COMPARISON_FUNC_LESS;
+		case re::RasterState::ComparisonFunc::Never: return D3D12_COMPARISON_FUNC_NEVER;
+		case re::RasterState::ComparisonFunc::Equal: return D3D12_COMPARISON_FUNC_EQUAL;
+		case re::RasterState::ComparisonFunc::LEqual: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		case re::RasterState::ComparisonFunc::Greater: return D3D12_COMPARISON_FUNC_GREATER;
+		case re::RasterState::ComparisonFunc::NotEqual: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+		case re::RasterState::ComparisonFunc::GEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+		case re::RasterState::ComparisonFunc::Always: return D3D12_COMPARISON_FUNC_ALWAYS;
 		}
 		return D3D12_COMPARISON_FUNC_NONE; // This should never happen
 	}
 
 
-	D3D12_DEPTH_STENCILOP_DESC StencilOpDescToD3DStencilOpDesc(re::RasterizationState::StencilOpDesc const& stencilOpDesc)
+	D3D12_DEPTH_STENCILOP_DESC StencilOpDescToD3DStencilOpDesc(re::RasterState::StencilOpDesc const& stencilOpDesc)
 	{
 		return D3D12_DEPTH_STENCILOP_DESC{
 			.StencilFailOp = StencilOpToD3DStencilOp(stencilOpDesc.m_failOp),
@@ -205,106 +205,106 @@ namespace
 	}
 
 
-	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(re::RasterizationState const* rasterizationState)
+	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(re::RasterState const* rasterState)
 	{
 		// We make assumptions when recording resource transitions on our command lists that depth targets will 
 		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
-		SEAssert(rasterizationState->GetDepthTestEnabled() ||
-			(!rasterizationState->GetDepthTestEnabled() &&
-				(rasterizationState->GetDepthWriteMask() == re::RasterizationState::DepthWriteMask::Zero)),
+		SEAssert(rasterState->GetDepthTestEnabled() ||
+			(!rasterState->GetDepthTestEnabled() &&
+				(rasterState->GetDepthWriteMask() == re::RasterState::DepthWriteMask::Zero)),
 			"Depth test state does not match the write mask state");
 
 		return D3D12_DEPTH_STENCIL_DESC {
-			.DepthEnable = rasterizationState->GetDepthTestEnabled(),
-			.DepthWriteMask = DepthWriteMaskToD3DDepthWriteMask(rasterizationState->GetDepthWriteMask()),
-			.DepthFunc = ComparisonFuncToD3DComparisonFunc(rasterizationState->GetDepthComparison()),
-			.StencilEnable = rasterizationState->GetStencilEnabled(),
-			.StencilReadMask = rasterizationState->GetStencilReadMask(),
-			.StencilWriteMask = rasterizationState->GetStencilWriteMask(),
-			.FrontFace = StencilOpDescToD3DStencilOpDesc(rasterizationState->GetFrontFaceStencilOpDesc()),
-			.BackFace = StencilOpDescToD3DStencilOpDesc(rasterizationState->GetBackFaceStencilOpDesc()),
+			.DepthEnable = rasterState->GetDepthTestEnabled(),
+			.DepthWriteMask = DepthWriteMaskToD3DDepthWriteMask(rasterState->GetDepthWriteMask()),
+			.DepthFunc = ComparisonFuncToD3DComparisonFunc(rasterState->GetDepthComparison()),
+			.StencilEnable = rasterState->GetStencilEnabled(),
+			.StencilReadMask = rasterState->GetStencilReadMask(),
+			.StencilWriteMask = rasterState->GetStencilWriteMask(),
+			.FrontFace = StencilOpDescToD3DStencilOpDesc(rasterState->GetFrontFaceStencilOpDesc()),
+			.BackFace = StencilOpDescToD3DStencilOpDesc(rasterState->GetBackFaceStencilOpDesc()),
 		};
 	}
 
 
-	constexpr D3D12_BLEND BlendModeToD3DBlendMode(re::RasterizationState::BlendMode blendMode)
+	constexpr D3D12_BLEND BlendModeToD3DBlendMode(re::RasterState::BlendMode blendMode)
 	{
 		switch (blendMode)
 		{
-			case re::RasterizationState::BlendMode::Zero: return D3D12_BLEND_ZERO;
-			case re::RasterizationState::BlendMode::One: return D3D12_BLEND_ONE;
-			case re::RasterizationState::BlendMode::SrcColor: return D3D12_BLEND_SRC_COLOR;
-			case re::RasterizationState::BlendMode::InvSrcColor: return D3D12_BLEND_INV_SRC_COLOR;
-			case re::RasterizationState::BlendMode::SrcAlpha: return D3D12_BLEND_SRC_ALPHA;
-			case re::RasterizationState::BlendMode::InvSrcAlpha: return D3D12_BLEND_INV_SRC_ALPHA;
-			case re::RasterizationState::BlendMode::DstAlpha: return D3D12_BLEND_DEST_ALPHA;
-			case re::RasterizationState::BlendMode::InvDstAlpha: return D3D12_BLEND_INV_DEST_ALPHA;
-			case re::RasterizationState::BlendMode::DstColor: return D3D12_BLEND_DEST_COLOR;
-			case re::RasterizationState::BlendMode::InvDstColor: return D3D12_BLEND_INV_DEST_COLOR;
-			case re::RasterizationState::BlendMode::SrcAlphaSat: return D3D12_BLEND_SRC_ALPHA_SAT;
-			case re::RasterizationState::BlendMode::BlendFactor: return D3D12_BLEND_BLEND_FACTOR;
-			case re::RasterizationState::BlendMode::InvBlendFactor: return D3D12_BLEND_INV_BLEND_FACTOR;
-			case re::RasterizationState::BlendMode::SrcOneColor: return D3D12_BLEND_SRC1_COLOR;
-			case re::RasterizationState::BlendMode::InvSrcOneColor: return D3D12_BLEND_INV_SRC1_COLOR;
-			case re::RasterizationState::BlendMode::SrcOneAlpha: return D3D12_BLEND_SRC1_ALPHA;
-			case re::RasterizationState::BlendMode::InvSrcOneAlpha: return D3D12_BLEND_INV_SRC1_ALPHA;
-			case re::RasterizationState::BlendMode::AlphaFactor: return D3D12_BLEND_ALPHA_FACTOR;
-			case re::RasterizationState::BlendMode::InvAlphaFactor: return D3D12_BLEND_INV_ALPHA_FACTOR;
+			case re::RasterState::BlendMode::Zero: return D3D12_BLEND_ZERO;
+			case re::RasterState::BlendMode::One: return D3D12_BLEND_ONE;
+			case re::RasterState::BlendMode::SrcColor: return D3D12_BLEND_SRC_COLOR;
+			case re::RasterState::BlendMode::InvSrcColor: return D3D12_BLEND_INV_SRC_COLOR;
+			case re::RasterState::BlendMode::SrcAlpha: return D3D12_BLEND_SRC_ALPHA;
+			case re::RasterState::BlendMode::InvSrcAlpha: return D3D12_BLEND_INV_SRC_ALPHA;
+			case re::RasterState::BlendMode::DstAlpha: return D3D12_BLEND_DEST_ALPHA;
+			case re::RasterState::BlendMode::InvDstAlpha: return D3D12_BLEND_INV_DEST_ALPHA;
+			case re::RasterState::BlendMode::DstColor: return D3D12_BLEND_DEST_COLOR;
+			case re::RasterState::BlendMode::InvDstColor: return D3D12_BLEND_INV_DEST_COLOR;
+			case re::RasterState::BlendMode::SrcAlphaSat: return D3D12_BLEND_SRC_ALPHA_SAT;
+			case re::RasterState::BlendMode::BlendFactor: return D3D12_BLEND_BLEND_FACTOR;
+			case re::RasterState::BlendMode::InvBlendFactor: return D3D12_BLEND_INV_BLEND_FACTOR;
+			case re::RasterState::BlendMode::SrcOneColor: return D3D12_BLEND_SRC1_COLOR;
+			case re::RasterState::BlendMode::InvSrcOneColor: return D3D12_BLEND_INV_SRC1_COLOR;
+			case re::RasterState::BlendMode::SrcOneAlpha: return D3D12_BLEND_SRC1_ALPHA;
+			case re::RasterState::BlendMode::InvSrcOneAlpha: return D3D12_BLEND_INV_SRC1_ALPHA;
+			case re::RasterState::BlendMode::AlphaFactor: return D3D12_BLEND_ALPHA_FACTOR;
+			case re::RasterState::BlendMode::InvAlphaFactor: return D3D12_BLEND_INV_ALPHA_FACTOR;
 		}
 		return D3D12_BLEND_ONE; // This should never happen
 	}
 
 
-	constexpr D3D12_BLEND_OP BlendOpToD3DBlendOp(re::RasterizationState::BlendOp blendOp)
+	constexpr D3D12_BLEND_OP BlendOpToD3DBlendOp(re::RasterState::BlendOp blendOp)
 	{
 		switch (blendOp)
 		{
-			case re::RasterizationState::BlendOp::Add: return D3D12_BLEND_OP_ADD;
-			case re::RasterizationState::BlendOp::Subtract: return D3D12_BLEND_OP_SUBTRACT;
-			case re::RasterizationState::BlendOp::RevSubtract: return D3D12_BLEND_OP_REV_SUBTRACT;
-			case re::RasterizationState::BlendOp::Min: return D3D12_BLEND_OP_MIN;
-			case re::RasterizationState::BlendOp::Max: return D3D12_BLEND_OP_MAX;
+			case re::RasterState::BlendOp::Add: return D3D12_BLEND_OP_ADD;
+			case re::RasterState::BlendOp::Subtract: return D3D12_BLEND_OP_SUBTRACT;
+			case re::RasterState::BlendOp::RevSubtract: return D3D12_BLEND_OP_REV_SUBTRACT;
+			case re::RasterState::BlendOp::Min: return D3D12_BLEND_OP_MIN;
+			case re::RasterState::BlendOp::Max: return D3D12_BLEND_OP_MAX;
 		}
 		return D3D12_BLEND_OP_ADD; // This should never happen
 	}
 
 
-	constexpr D3D12_LOGIC_OP LogicOpToD3DLogicOp(re::RasterizationState::LogicOp logicOp)
+	constexpr D3D12_LOGIC_OP LogicOpToD3DLogicOp(re::RasterState::LogicOp logicOp)
 	{
 		switch (logicOp)
 		{
-			case re::RasterizationState::LogicOp::Clear: return D3D12_LOGIC_OP_CLEAR;
-			case re::RasterizationState::LogicOp::Set: return D3D12_LOGIC_OP_SET;
-			case re::RasterizationState::LogicOp::Copy: return D3D12_LOGIC_OP_COPY;
-			case re::RasterizationState::LogicOp::CopyInverted: return D3D12_LOGIC_OP_COPY_INVERTED;
-			case re::RasterizationState::LogicOp::NoOp: return D3D12_LOGIC_OP_NOOP;
-			case re::RasterizationState::LogicOp::Invert: return D3D12_LOGIC_OP_INVERT;
-			case re::RasterizationState::LogicOp::AND: return D3D12_LOGIC_OP_AND;
-			case re::RasterizationState::LogicOp::NAND: return D3D12_LOGIC_OP_NAND;
-			case re::RasterizationState::LogicOp::OR: return D3D12_LOGIC_OP_OR;
-			case re::RasterizationState::LogicOp::NOR: return D3D12_LOGIC_OP_NOR;
-			case re::RasterizationState::LogicOp::XOR: return D3D12_LOGIC_OP_XOR;
-			case re::RasterizationState::LogicOp::EQUIV: return D3D12_LOGIC_OP_EQUIV;
-			case re::RasterizationState::LogicOp::ANDReverse: return D3D12_LOGIC_OP_AND_REVERSE;
-			case re::RasterizationState::LogicOp::AndInverted: return D3D12_LOGIC_OP_AND_INVERTED;
-			case re::RasterizationState::LogicOp::ORReverse: return D3D12_LOGIC_OP_OR_REVERSE;
-			case re::RasterizationState::LogicOp::ORInverted: return D3D12_LOGIC_OP_OR_INVERTED;
+			case re::RasterState::LogicOp::Clear: return D3D12_LOGIC_OP_CLEAR;
+			case re::RasterState::LogicOp::Set: return D3D12_LOGIC_OP_SET;
+			case re::RasterState::LogicOp::Copy: return D3D12_LOGIC_OP_COPY;
+			case re::RasterState::LogicOp::CopyInverted: return D3D12_LOGIC_OP_COPY_INVERTED;
+			case re::RasterState::LogicOp::NoOp: return D3D12_LOGIC_OP_NOOP;
+			case re::RasterState::LogicOp::Invert: return D3D12_LOGIC_OP_INVERT;
+			case re::RasterState::LogicOp::AND: return D3D12_LOGIC_OP_AND;
+			case re::RasterState::LogicOp::NAND: return D3D12_LOGIC_OP_NAND;
+			case re::RasterState::LogicOp::OR: return D3D12_LOGIC_OP_OR;
+			case re::RasterState::LogicOp::NOR: return D3D12_LOGIC_OP_NOR;
+			case re::RasterState::LogicOp::XOR: return D3D12_LOGIC_OP_XOR;
+			case re::RasterState::LogicOp::EQUIV: return D3D12_LOGIC_OP_EQUIV;
+			case re::RasterState::LogicOp::ANDReverse: return D3D12_LOGIC_OP_AND_REVERSE;
+			case re::RasterState::LogicOp::AndInverted: return D3D12_LOGIC_OP_AND_INVERTED;
+			case re::RasterState::LogicOp::ORReverse: return D3D12_LOGIC_OP_OR_REVERSE;
+			case re::RasterState::LogicOp::ORInverted: return D3D12_LOGIC_OP_OR_INVERTED;
 		}
 		return D3D12_LOGIC_OP_NOOP; // This should never happen
 	}
 
 
-	D3D12_BLEND_DESC BuildBlendDesc(re::RasterizationState const& rasterizationState)
+	D3D12_BLEND_DESC BuildBlendDesc(re::RasterState const& rasterState)
 	{
 		D3D12_BLEND_DESC blendDesc{};
 
-		blendDesc.AlphaToCoverageEnable = rasterizationState.GetAlphaToCoverageEnabled();
-		blendDesc.IndependentBlendEnable = rasterizationState.GetIndependentBlendEnabled();
+		blendDesc.AlphaToCoverageEnable = rasterState.GetAlphaToCoverageEnabled();
+		blendDesc.IndependentBlendEnable = rasterState.GetIndependentBlendEnabled();
 
 		// Configure the blend mode for each target:
 		for (uint32_t i = 0; i < dx12::SysInfo::GetMaxRenderTargets(); i++)
 		{
-			re::RasterizationState::RenderTargetBlendDesc const& reBlendDesc = rasterizationState.GetRenderTargetBlendDescs()[i];
+			re::RasterState::RenderTargetBlendDesc const& reBlendDesc = rasterState.GetRenderTargetBlendDescs()[i];
 
 			D3D12_RENDER_TARGET_BLEND_DESC& rtBlendDesc = blendDesc.RenderTarget[i];
 
@@ -324,14 +324,14 @@ namespace
 	}
 
 	
-	constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3DTopologyType(re::RasterizationState::PrimitiveTopologyType topologyType)
+	constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3DTopologyType(re::RasterState::PrimitiveTopologyType topologyType)
 	{
 		switch (topologyType)
 		{
-		case re::RasterizationState::PrimitiveTopologyType::Point: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-		case re::RasterizationState::PrimitiveTopologyType::Line: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-		case re::RasterizationState::PrimitiveTopologyType::Triangle: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		case re::RasterizationState::PrimitiveTopologyType::Patch: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+		case re::RasterState::PrimitiveTopologyType::Point: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+		case re::RasterState::PrimitiveTopologyType::Line: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+		case re::RasterState::PrimitiveTopologyType::Triangle: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		case re::RasterState::PrimitiveTopologyType::Patch: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
 		default:
 			SEAssertF("Invalid topology type");
 		}
@@ -370,7 +370,7 @@ namespace dx12
 		{
 			SEAssert(targetSet, "Raster pipelines require a valid target set");
 
-			re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
+			re::RasterState const* rasterState = shader.GetRasterizationState();
 
 			// Get the shader reflection:
 			ComPtr<IDxcUtils> dxcUtils;
@@ -400,7 +400,7 @@ namespace dx12
 			GraphicsPipelineStateStream graphicsStateStream {};
 			graphicsStateStream.rootSignature = shaderPlatObj->m_rootSignature->GetD3DRootSignature();
 			graphicsStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
-			graphicsStateStream.primitiveTopologyType = GetD3DTopologyType(rasterizationState->GetPrimitiveTopologyType());
+			graphicsStateStream.primitiveTopologyType = GetD3DTopologyType(rasterState->GetPrimitiveTopologyType());
 			graphicsStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderPlatObj->m_shaderBlobs[re::Shader::Vertex].Get());
 
 			if (shaderPlatObj->m_shaderBlobs[re::Shader::Geometry])
@@ -427,14 +427,14 @@ namespace dx12
 			}			
 
 			// Rasterizer description:
-			D3D12_RASTERIZER_DESC const& rasterizerDesc = BuildRasterizerDesc(rasterizationState);
+			D3D12_RASTERIZER_DESC const& rasterizerDesc = BuildRasterizerDesc(rasterState);
 			graphicsStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			// Depth stencil description:
-			graphicsStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(BuildDepthStencilDesc(rasterizationState));
+			graphicsStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(BuildDepthStencilDesc(rasterState));
 
 			// Blend description:
-			D3D12_BLEND_DESC const& blendDesc = BuildBlendDesc(*rasterizationState);
+			D3D12_BLEND_DESC const& blendDesc = BuildBlendDesc(*rasterState);
 			graphicsStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =

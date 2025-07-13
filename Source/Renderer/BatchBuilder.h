@@ -122,7 +122,7 @@ namespace gr
 
 	public:
 		RasterBatchBuilder&& SetGeometryMode(gr::Batch::GeometryMode)&& noexcept;
-		RasterBatchBuilder&& SetPrimitiveTopology(gr::MeshPrimitive::PrimitiveTopology)&& noexcept;
+		RasterBatchBuilder&& SetPrimitiveTopology(re::RasterState::PrimitiveTopology)&& noexcept;
 
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput&&)&& noexcept;
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput const&)&& noexcept;
@@ -346,7 +346,7 @@ namespace gr
 
 
 	inline RasterBatchBuilder&& RasterBatchBuilder::SetPrimitiveTopology(
-		gr::MeshPrimitive::PrimitiveTopology primitiveTopology) && noexcept
+		re::RasterState::PrimitiveTopology primitiveTopology) && noexcept
 	{
 		m_batch.m_rasterParams.m_primitiveTopology = primitiveTopology;
 		return std::move(*this);

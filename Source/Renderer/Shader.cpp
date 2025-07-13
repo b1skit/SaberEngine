@@ -20,7 +20,7 @@ namespace
 	// to represent a particular configuration
 	ShaderID ComputeShaderIdentifier(
 		std::vector<re::Shader::Metadata> const& metadata,
-		re::RasterizationState const* rasterizationState)
+		re::RasterState const* rasterState)
 	{
 		SEAssert(!metadata.empty(), "Shader source filenames is empty");
 
@@ -39,9 +39,9 @@ namespace
 
 		if (re::Shader::IsRasterizationType(firstShaderType))
 		{
-			SEAssert(rasterizationState, "Pipeline state is null. This is unexpected for rasterization pipelines");
+			SEAssert(rasterState, "Pipeline state is null. This is unexpected for rasterization pipelines");
 
-			util::CombineHash(hashResult, rasterizationState->GetDataHash());
+			util::CombineHash(hashResult, rasterState->GetDataHash());
 		}
 		
 		return hashResult;
@@ -110,10 +110,10 @@ namespace re
 {
 	[[nodiscard]] core::InvPtr<re::Shader> Shader::GetOrCreate(
 		std::vector<Metadata> const& metadata,
-		re::RasterizationState const* rasterizationState,
+		re::RasterState const* rasterState,
 		re::VertexStreamMap const* vertexStreamMap)
 	{
-		const ShaderID shaderID = ComputeShaderIdentifier(metadata, rasterizationState);
+		const ShaderID shaderID = ComputeShaderIdentifier(metadata, rasterState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		if (core::Inventory::Has<re::Shader>(shaderID))
@@ -154,7 +154,7 @@ namespace re
 				SEAssert(!re::Shader::IsComputeType(firstShaderType) || m_metadata.size() == 1,
 					"A compute shader should only have a single shader entry. This is unexpected");
 				SEAssert(m_rasterizationState || !re::Shader::IsRasterizationType(firstShaderType),
-					"RasterizationState is null. This is unexpected for rasterization pipelines");
+					"RasterState is null. This is unexpected for rasterization pipelines");
 				SEAssert(m_vertexStreamMap || !re::Shader::IsRasterizationType(firstShaderType),
 					"VertexStreamMap is null. This is unexpected for rasterization pipelines");
 
@@ -164,14 +164,14 @@ namespace re
 
 			ShaderID m_shaderID;
 			std::vector<Metadata> m_metadata;
-			re::RasterizationState const* m_rasterizationState;
+			re::RasterState const* m_rasterizationState;
 			re::VertexStreamMap const* m_vertexStreamMap;
 		};
 		std::shared_ptr<ShaderLoadContext> shaderLoadContext = std::make_shared<ShaderLoadContext>();
 
 		shaderLoadContext->m_shaderID = shaderID;
 		shaderLoadContext->m_metadata = metadata;
-		shaderLoadContext->m_rasterizationState = rasterizationState;
+		shaderLoadContext->m_rasterizationState = rasterState;
 		shaderLoadContext->m_vertexStreamMap = vertexStreamMap;
 
 		return core::Inventory::Get(
@@ -183,18 +183,18 @@ namespace re
 	Shader::Shader(
 		std::string const& shaderName,
 		std::vector<Metadata> const& metadata,
-		re::RasterizationState const* rasterizationState,
+		re::RasterState const* rasterState,
 		re::VertexStreamMap const* m_vertexStreamMap,
 		ShaderID shaderIdentifier)
 		: INamedObject(shaderName)
 		, m_shaderIdentifier(shaderIdentifier)
 		, m_metadata(metadata)
 		, m_pipelineType(FindPipelineType(metadata))
-		, m_rasterizationState(rasterizationState)
+		, m_rasterizationState(rasterState)
 		, m_vertexStreamMap(m_vertexStreamMap)
 	{
-		SEAssert(rasterizationState || !IsRasterizationType(m_metadata[0].m_type),
-			"RasterizationState is null. This is unexpected for rasterization pipelines");
+		SEAssert(rasterState || !IsRasterizationType(m_metadata[0].m_type),
+			"RasterState is null. This is unexpected for rasterization pipelines");
 
 		platform::Shader::CreatePlatformObject(*this);
 	}

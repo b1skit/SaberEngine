@@ -51,36 +51,36 @@ namespace
 
 
 	bool IsBatchAndShaderTopologyCompatible(
-		gr::MeshPrimitive::PrimitiveTopology topologyMode, re::RasterizationState::PrimitiveTopologyType topologyType)
+		re::RasterState::PrimitiveTopology topologyMode, re::RasterState::PrimitiveTopologyType topologyType)
 	{
 		switch (topologyType)
 		{
-		case re::RasterizationState::PrimitiveTopologyType::Point:
+		case re::RasterState::PrimitiveTopologyType::Point:
 		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::PointList;
+			return topologyMode == re::RasterState::PrimitiveTopology::PointList;
 		}
 		break;
-		case re::RasterizationState::PrimitiveTopologyType::Line:
+		case re::RasterState::PrimitiveTopologyType::Line:
 		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::LineStripAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
+			return topologyMode == re::RasterState::PrimitiveTopology::LineList ||
+				topologyMode == re::RasterState::PrimitiveTopology::LineStrip ||
+				topologyMode == re::RasterState::PrimitiveTopology::LineListAdjacency ||
+				topologyMode == re::RasterState::PrimitiveTopology::LineStripAdjacency ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleList ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleStrip ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleListAdjacency ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::RasterizationState::PrimitiveTopologyType::Triangle:
+		case re::RasterState::PrimitiveTopologyType::Triangle:
 		{
-			return topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleList ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStrip ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleListAdjacency ||
-				topologyMode == gr::MeshPrimitive::PrimitiveTopology::TriangleStripAdjacency;
+			return topologyMode == re::RasterState::PrimitiveTopology::TriangleList ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleStrip ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleListAdjacency ||
+				topologyMode == re::RasterState::PrimitiveTopology::TriangleStripAdjacency;
 		}
 		break;
-		case re::RasterizationState::PrimitiveTopologyType::Patch:
+		case re::RasterState::PrimitiveTopologyType::Patch:
 		{
 			SEAssertF("Patch topology is (currently) unsupported");
 		}

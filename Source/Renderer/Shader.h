@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "RasterizationState.h"
+#include "RasterState.h"
 #include "VertexStream.h"
 #include "VertexStreamMap.h"
 
@@ -96,7 +96,7 @@ namespace re
 		};
 		[[nodiscard]] static core::InvPtr<re::Shader> GetOrCreate(
 			std::vector<Metadata> const& metadata,
-			re::RasterizationState const*,
+			re::RasterState const*,
 			re::VertexStreamMap const*);
 
 		Shader(Shader&&) noexcept = default;
@@ -112,7 +112,7 @@ namespace re
 
 		PipelineType GetPipelineType() const;
 
-		re::RasterizationState const* GetRasterizationState() const;
+		re::RasterState const* GetRasterizationState() const;
 			
 		inline PlatObj* GetPlatformObject() const;
 		inline void SetPlatformObject(std::unique_ptr<PlatObj>);
@@ -127,7 +127,7 @@ namespace re
 		explicit Shader(
 			std::string const& shaderName,
 			std::vector<Metadata> const&,
-			re::RasterizationState const*,
+			re::RasterState const*,
 			re::VertexStreamMap const*,
 			ShaderID);
 
@@ -139,7 +139,7 @@ namespace re
 
 		std::unique_ptr<PlatObj> m_platObj;
 
-		re::RasterizationState const* m_rasterizationState;
+		re::RasterState const* m_rasterizationState;
 		re::VertexStreamMap const* m_vertexStreamMap;
 
 
@@ -303,7 +303,7 @@ namespace re
 	}
 
 
-	inline re::RasterizationState const* Shader::GetRasterizationState() const
+	inline re::RasterState const* Shader::GetRasterizationState() const
 	{
 		return m_rasterizationState;
 	}

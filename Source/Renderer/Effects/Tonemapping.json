@@ -54,7 +54,7 @@
 				"VShaderDefines": ["GLSL_FLIP_FULLSCREEN_QUAD_UVS"], // OpenGL only
 				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "SwapchainBlitRasterState",
+				"RasterState": "SwapchainBlitRasterState",
 				"VertexStream": "PositionUV"
 			}
 		]

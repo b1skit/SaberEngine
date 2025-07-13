@@ -19,7 +19,7 @@
 				"VShaderEntryPoint": "VShader",
 				"PShader": "Blit_PShader",
 				"PShaderEntryPoint": "PShader",
-				"RasterizationState": "EmissiveBlitRasterState",
+				"RasterState": "EmissiveBlitRasterState",
 				"VertexStream": "PositionUV"
 			},
 			{

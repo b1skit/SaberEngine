@@ -88,7 +88,7 @@ namespace
 	// "Techniques":
 	constexpr char const* key_techniques = "Techniques";
 	constexpr char const* key_parent = "Parent";
-	constexpr char const* key_rasterizationState = "RasterizationState";
+	constexpr char const* key_rasterizationState = "RasterState";
 	constexpr char const* key_vertexStream = "VertexStream";
 	
 

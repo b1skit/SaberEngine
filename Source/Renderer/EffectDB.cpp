@@ -126,15 +126,15 @@ namespace
 	}
 
 
-	re::RasterizationState ParseRasterizationStateEntry(auto const& rasterizationStateEntry)
+	re::RasterState ParseRasterizationStateEntry(auto const& rasterizationStateEntry)
 	{
-		// Create a new RasterizationState, and update it as necessary:
-		re::RasterizationState newRasterizationState;
+		// Create a new RasterState, and update it as necessary:
+		re::RasterState newRasterizationState;
 
 		// "TopologyType":
 		if (rasterizationStateEntry.contains(key_topologyType))
 		{
-			newRasterizationState.SetPrimitiveTopologyType(re::RasterizationState::CStrToPrimitiveTopologyType(
+			newRasterizationState.SetPrimitiveTopologyType(re::RasterState::CStrToPrimitiveTopologyType(
 				rasterizationStateEntry.at(key_topologyType).template get<std::string>().c_str()));
 		}
 
@@ -146,21 +146,21 @@ namespace
 			// "FillMode":
 			if (rasterizerBlock.contains(key_fillMode))
 			{
-				newRasterizationState.SetFillMode(re::RasterizationState::GetFillModeByName(
+				newRasterizationState.SetFillMode(re::RasterState::GetFillModeByName(
 					rasterizerBlock.at(key_fillMode).template get<std::string>().c_str()));
 			}
 
 			// "FaceCullingMode":
 			if (rasterizerBlock.contains(key_faceCullingMode))
 			{
-				newRasterizationState.SetFaceCullingMode(re::RasterizationState::GetFaceCullingModeByName(
+				newRasterizationState.SetFaceCullingMode(re::RasterState::GetFaceCullingModeByName(
 					rasterizerBlock.at(key_faceCullingMode).template get<std::string>().c_str()));
 			}
 
 			// "WindingOrder":
 			if (rasterizerBlock.contains(key_windingOrder))
 			{
-				newRasterizationState.SetWindingOrder(re::RasterizationState::GetWindingOrderByName(
+				newRasterizationState.SetWindingOrder(re::RasterState::GetWindingOrderByName(
 					rasterizerBlock.at(key_windingOrder).template get<std::string>().c_str()));
 			}
 
@@ -226,14 +226,14 @@ namespace
 			// "DepthWriteMask":
 			if (depthStencilBlock.contains(key_depthWriteMask))
 			{
-				newRasterizationState.SetDepthWriteMask(re::RasterizationState::GetDepthWriteMaskByName(
+				newRasterizationState.SetDepthWriteMask(re::RasterState::GetDepthWriteMaskByName(
 					depthStencilBlock.at(key_depthWriteMask).template get<std::string>().c_str()));
 			}
 
 			// "DepthComparison":
 			if (depthStencilBlock.contains(key_depthComparison))
 			{
-				newRasterizationState.SetDepthComparison(re::RasterizationState::GetComparisonByName(
+				newRasterizationState.SetDepthComparison(re::RasterState::GetComparisonByName(
 					depthStencilBlock.at(key_depthComparison).template get<std::string>().c_str()));
 			}
 
@@ -255,31 +255,31 @@ namespace
 				newRasterizationState.SetStencilWriteMask(depthStencilBlock.at(key_stencilWriteMask).template get<uint8_t>());
 			}
 
-			auto ParseStencilOpDesc = [](auto const& stencilOpDesc) -> re::RasterizationState::StencilOpDesc
+			auto ParseStencilOpDesc = [](auto const& stencilOpDesc) -> re::RasterState::StencilOpDesc
 				{
-					re::RasterizationState::StencilOpDesc desc{};
+					re::RasterState::StencilOpDesc desc{};
 
 					if (stencilOpDesc.contains(key_stencilFailOp))
 					{
-						desc.m_failOp = re::RasterizationState::GetStencilOpByName(
+						desc.m_failOp = re::RasterState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilFailOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilDepthFailOp))
 					{
-						desc.m_depthFailOp = re::RasterizationState::GetStencilOpByName(
+						desc.m_depthFailOp = re::RasterState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilDepthFailOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilPassOp))
 					{
-						desc.m_passOp = re::RasterizationState::GetStencilOpByName(
+						desc.m_passOp = re::RasterState::GetStencilOpByName(
 							stencilOpDesc.at(key_stencilPassOp).template get<std::string>().c_str());
 					}
 
 					if (stencilOpDesc.contains(key_stencilComparison))
 					{
-						desc.m_comparison = re::RasterizationState::GetComparisonByName(
+						desc.m_comparison = re::RasterState::GetComparisonByName(
 							stencilOpDesc.at(key_stencilComparison).template get<std::string>().c_str());
 					}
 
@@ -289,14 +289,14 @@ namespace
 			if (depthStencilBlock.contains(key_frontStencilOpDesc))
 			{
 				auto const& frontStencilOpDesc = rasterizationStateEntry.at(key_frontStencilOpDesc);
-				re::RasterizationState::StencilOpDesc desc = ParseStencilOpDesc(frontStencilOpDesc);
+				re::RasterState::StencilOpDesc desc = ParseStencilOpDesc(frontStencilOpDesc);
 				newRasterizationState.SetFrontFaceStencilOpDesc(desc);
 			}
 
 			if (depthStencilBlock.contains(key_backStencilOpDesc))
 			{
 				auto const& backStencilOpDesc = rasterizationStateEntry.at(key_backStencilOpDesc);
-				re::RasterizationState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
+				re::RasterState::StencilOpDesc desc = ParseStencilOpDesc(backStencilOpDesc);
 				newRasterizationState.SetBackFaceStencilOpDesc(desc);
 			}
 		}
@@ -325,7 +325,7 @@ namespace
 				uint8_t index = 0;
 				for (auto const& renderTargetDesc : blendStateBlock.at(key_renderTargets))
 				{
-					re::RasterizationState::RenderTargetBlendDesc blendDesc{};
+					re::RasterState::RenderTargetBlendDesc blendDesc{};
 
 					// "BlendEnable":
 					if (renderTargetDesc.contains(key_blendEnable))
@@ -342,49 +342,49 @@ namespace
 					// "SrcBlend":
 					if (renderTargetDesc.contains(key_srcBlend))
 					{
-						blendDesc.m_srcBlend = re::RasterizationState::GetBlendModeByName(
+						blendDesc.m_srcBlend = re::RasterState::GetBlendModeByName(
 							renderTargetDesc.at(key_srcBlend).template get<std::string>().c_str());
 					}
 
 					// "DstBlend":
 					if (renderTargetDesc.contains(key_dstBlend))
 					{
-						blendDesc.m_dstBlend = re::RasterizationState::GetBlendModeByName(
+						blendDesc.m_dstBlend = re::RasterState::GetBlendModeByName(
 							renderTargetDesc.at(key_dstBlend).template get<std::string>().c_str());
 					}
 
 					// "BlendOp":
 					if (renderTargetDesc.contains(key_blendOp))
 					{
-						blendDesc.m_blendOp = re::RasterizationState::GetBlendOpByName(
+						blendDesc.m_blendOp = re::RasterState::GetBlendOpByName(
 							renderTargetDesc.at(key_blendOp).template get<std::string>().c_str());
 					}
 
 					// "SrcBlendAlpha":
 					if (renderTargetDesc.contains(key_srcBlendAlpha))
 					{
-						blendDesc.m_srcBlendAlpha = re::RasterizationState::GetBlendModeByName(
+						blendDesc.m_srcBlendAlpha = re::RasterState::GetBlendModeByName(
 							renderTargetDesc.at(key_srcBlendAlpha).template get<std::string>().c_str());
 					}
 
 					// "DstBlendAlpha":
 					if (renderTargetDesc.contains(key_dstBlendAlpha))
 					{
-						blendDesc.m_dstBlendAlpha = re::RasterizationState::GetBlendModeByName(
+						blendDesc.m_dstBlendAlpha = re::RasterState::GetBlendModeByName(
 							renderTargetDesc.at(key_dstBlendAlpha).template get<std::string>().c_str());
 					}
 
 					// "BlendOpAlpha":
 					if (renderTargetDesc.contains(key_blendOpAlpha))
 					{
-						blendDesc.m_blendOpAlpha = re::RasterizationState::GetBlendOpByName(
+						blendDesc.m_blendOpAlpha = re::RasterState::GetBlendOpByName(
 							renderTargetDesc.at(key_blendOpAlpha).template get<std::string>().c_str());
 					}
 
 					// "LogicOp":
 					if (renderTargetDesc.contains(key_logicOp))
 					{
-						blendDesc.m_logicOp = re::RasterizationState::GetLogicOpByName(
+						blendDesc.m_logicOp = re::RasterState::GetLogicOpByName(
 							renderTargetDesc.at(key_logicOp).template get<std::string>().c_str());
 					}
 
@@ -437,23 +437,23 @@ namespace
 		}
 
 		SEAssert(!re::Shader::IsRasterizationType(firstShaderType) || techniqueEntry.contains(key_rasterizationState),
-			"Failed to find RasterizationState entry. This is required for rasterization pipeline shaders");
+			"Failed to find RasterState entry. This is required for rasterization pipeline shaders");
 
 		SEAssert(!re::Shader::IsRasterizationType(firstShaderType) || techniqueEntry.contains(key_vertexStream),
 			"Failed to find VertexStream entry. This is required for rasterization pipeline shaders");
 
-		re::RasterizationState const* rasterizationState = nullptr;
+		re::RasterState const* rasterState = nullptr;
 		re::VertexStreamMap const* vertexStreamMap = nullptr;
 		if (re::Shader::IsRasterizationType(firstShaderType))
 		{
 			std::string const& rasterizationStateName = techniqueEntry.at(key_rasterizationState).template get<std::string>();
-			rasterizationState = effectDB.GetRasterizationState(rasterizationStateName);
+			rasterState = effectDB.GetRasterizationState(rasterizationStateName);
 
 			std::string const& vertexStreamName = techniqueEntry.at(key_vertexStream).template get<std::string>();
 			vertexStreamMap = effectDB.GetVertexStreamMap(vertexStreamName);
 		}
 
-		return effect::Technique(techniqueName.c_str(), std::move(shaderMetadata), rasterizationState, vertexStreamMap);
+		return effect::Technique(techniqueName.c_str(), std::move(shaderMetadata), rasterState, vertexStreamMap);
 	}
 
 
@@ -668,7 +668,7 @@ namespace effect
 				auto const& rasterizationStateBlock = effectJSON.at(key_RasterizationStatesBlock);
 				for (auto const& piplineStateEntry : rasterizationStateBlock)
 				{
-					SEAssert(piplineStateEntry.contains(key_name), "Incomplete RasterizationState definition");
+					SEAssert(piplineStateEntry.contains(key_name), "Incomplete RasterState definition");
 
 					if (ExcludesPlatform(piplineStateEntry))
 					{
@@ -856,8 +856,8 @@ namespace effect
 	}
 
 
-	re::RasterizationState* EffectDB::AddRasterizationState(
-		std::string const& name, re::RasterizationState&& newRasterizationState)
+	re::RasterState* EffectDB::AddRasterizationState(
+		std::string const& name, re::RasterState&& newRasterizationState)
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_rasterizationStatesMutex);
@@ -865,7 +865,7 @@ namespace effect
 			if (m_rasterizationStates.contains(name))
 			{
 				SEAssert(m_rasterizationStates.at(name).GetDataHash() == newRasterizationState.GetDataHash(),
-					"A RasterizationState with the given name but different data hash exists. Names must be unique");
+					"A RasterState with the given name but different data hash exists. Names must be unique");
 
 				return &m_rasterizationStates.at(name);
 			}

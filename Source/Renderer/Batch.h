@@ -100,7 +100,8 @@ namespace gr
 			UniqueID m_materialUniqueID = k_invalidUniqueID;
 
 			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
-			gr::MeshPrimitive::PrimitiveTopology m_primitiveTopology = gr::MeshPrimitive::PrimitiveTopology::TriangleList;
+			re::RasterState::PrimitiveTopology m_primitiveTopology =
+				re::RasterState::PrimitiveTopology::TriangleList;
 		};
 
 		struct ComputeParams final

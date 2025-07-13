@@ -1,5 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "RasterizationState.h"
+#include "RasterState.h"
 #include "Technique.h"
 #include "VertexStreamMap.h"
 
@@ -11,12 +11,12 @@ namespace effect
 	Technique::Technique(
 		char const* name,
 		std::vector<re::Shader::Metadata>&& shaderMetadata,
-		re::RasterizationState const* rasterizationState,
+		re::RasterState const* rasterState,
 		re::VertexStreamMap const* vertexStreamMap)
 		: INamedObject(name)
 		, m_resolvedShader(nullptr)
 		, m_shaderMetadata(std::move(shaderMetadata))
-		, m_rasterizationState(rasterizationState)
+		, m_rasterizationState(rasterState)
 		, m_vertexStreamMap(vertexStreamMap)
 	{
 		SEAssert(!m_shaderMetadata.empty(), "No shader metadata received");

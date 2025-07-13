@@ -5,16 +5,16 @@
 
 namespace re
 {
-	class RasterizationState : public virtual core::IHashedDataObject
+	class RasterState : public virtual core::IHashedDataObject
 	{
 	public:
-		RasterizationState();
+		RasterState();
 		
-		RasterizationState(RasterizationState const&) = default;
-		RasterizationState(RasterizationState&&) noexcept = default;
-		RasterizationState& operator=(RasterizationState const&) = default;
-		RasterizationState& operator=(RasterizationState&&) noexcept = default;
-		~RasterizationState() = default;
+		RasterState(RasterState const&) = default;
+		RasterState(RasterState&&) noexcept = default;
+		RasterState& operator=(RasterState const&) = default;
+		RasterState& operator=(RasterState&&) noexcept = default;
+		~RasterState() = default;
 			
 	public: // IHashedDataObject:
 		util::HashKey GetDataHash() const override;
@@ -24,8 +24,24 @@ namespace re
 		
 
 	public:
+		// Specific format the IA will use to interpret the topology contained within the vertex/index buffers.
+		// Elements of the same basic type here can be used interchangeably with PSO's that map to the more general 
+		// re::RasterState::PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
+		enum class PrimitiveTopology : uint8_t
+		{
+			PointList,
+			LineList,
+			LineStrip,
+			TriangleList, // Default
+			TriangleStrip,
+			LineListAdjacency,
+			LineStripAdjacency,
+			TriangleListAdjacency,
+			TriangleStripAdjacency
+		};
+
 		// High-level primitive topology type used to configure the PSO. 
-		// Any similar gr::MeshPrimitive::PrimitiveTopology elements can be used interchangeably with a PSO with a 
+		// Any similar re::RasterState::PrimitiveTopology elements can be used interchangeably with a PSO with a 
 		// matching PrimitiveTopologyType. E.g. PrimitiveTopology::Line* -> PrimitiveTopologyType::Line
 		enum class PrimitiveTopologyType : uint8_t
 		{
@@ -294,28 +310,28 @@ namespace re
 	};
 
 
-	inline util::HashKey RasterizationState::GetDataHash() const
+	inline util::HashKey RasterState::GetDataHash() const
 	{
 		SEAssert(!m_isDirty, "Trying to get the data hash from a dirty pipeline state");
 		return core::IHashedDataObject::GetDataHash();
 	}
 
 
-	inline RasterizationState::PrimitiveTopologyType RasterizationState::GetPrimitiveTopologyType() const
+	inline RasterState::PrimitiveTopologyType RasterState::GetPrimitiveTopologyType() const
 	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		SEAssert(!m_isDirty, "RasterState is dirty");
 		return m_primitiveTopologyType;
 	}
 
 
-	inline RasterizationState::FillMode RasterizationState::GetFillMode() const
+	inline RasterState::FillMode RasterState::GetFillMode() const
 	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		SEAssert(!m_isDirty, "RasterState is dirty");
 		return m_fillMode;
 	}
 
 
-	inline void RasterizationState::SetFillMode(FillMode fillMode)
+	inline void RasterState::SetFillMode(FillMode fillMode)
 	{
 		m_fillMode = fillMode;
 		m_isDirty = true;
@@ -323,14 +339,14 @@ namespace re
 	}
 
 
-	inline RasterizationState::FaceCullingMode RasterizationState::GetFaceCullingMode() const
+	inline RasterState::FaceCullingMode RasterState::GetFaceCullingMode() const
 	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		SEAssert(!m_isDirty, "RasterState is dirty");
 		return m_faceCullingMode;
 	}
 
 
-	inline void RasterizationState::SetFaceCullingMode(RasterizationState::FaceCullingMode faceCullingMode)
+	inline void RasterState::SetFaceCullingMode(RasterState::FaceCullingMode faceCullingMode)
 	{
 		m_faceCullingMode = faceCullingMode;
 		m_isDirty = true;
@@ -338,14 +354,14 @@ namespace re
 	}
 
 
-	inline RasterizationState::WindingOrder RasterizationState::GetWindingOrder() const
+	inline RasterState::WindingOrder RasterState::GetWindingOrder() const
 	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		SEAssert(!m_isDirty, "RasterState is dirty");
 		return m_windingOrder;
 	}
 
 
-	inline void RasterizationState::SetWindingOrder(RasterizationState::WindingOrder windingOrder)
+	inline void RasterState::SetWindingOrder(RasterState::WindingOrder windingOrder)
 	{
 		m_windingOrder = windingOrder;
 		m_isDirty = true;
@@ -353,7 +369,7 @@ namespace re
 	}
 
 
-	inline void RasterizationState::SetPrimitiveTopologyType(RasterizationState::PrimitiveTopologyType topologyType)
+	inline void RasterState::SetPrimitiveTopologyType(RasterState::PrimitiveTopologyType topologyType)
 	{
 		m_primitiveTopologyType = topologyType;
 		m_isDirty = true;
@@ -361,13 +377,13 @@ namespace re
 	}
 
 
-	inline int RasterizationState::GetDepthBias() const
+	inline int RasterState::GetDepthBias() const
 	{
 		return m_depthBias;
 	}
 
 
-	inline void RasterizationState::SetDepthBias(int depthBias)
+	inline void RasterState::SetDepthBias(int depthBias)
 	{
 		m_depthBias = depthBias;
 		m_isDirty = true;
@@ -375,13 +391,13 @@ namespace re
 	}
 
 
-	inline float RasterizationState::GetDepthBiasClamp() const
+	inline float RasterState::GetDepthBiasClamp() const
 	{
 		return m_depthBiasClamp;
 	}
 
 
-	inline void RasterizationState::SetDepthBiasClamp(float depthBiasClamp)
+	inline void RasterState::SetDepthBiasClamp(float depthBiasClamp)
 	{
 		m_depthBiasClamp = depthBiasClamp;
 		m_isDirty = true;
@@ -389,13 +405,13 @@ namespace re
 	}
 
 
-	inline float RasterizationState::GetSlopeScaledDepthBias() const
+	inline float RasterState::GetSlopeScaledDepthBias() const
 	{
 		return m_slopeScaledDepthBias;
 	}
 
 
-	inline void RasterizationState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
+	inline void RasterState::SetSlopeScaledDepthBias(float slopeScaledDepthBias)
 	{
 		m_slopeScaledDepthBias = slopeScaledDepthBias;
 		m_isDirty = true;
@@ -403,13 +419,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetDepthClipEnabled() const
+	inline bool RasterState::GetDepthClipEnabled() const
 	{
 		return m_depthClipEnable;
 	}
 
 
-	inline void RasterizationState::SetDepthClipEnabled(bool depthClipEnable)
+	inline void RasterState::SetDepthClipEnabled(bool depthClipEnable)
 	{
 		m_depthClipEnable = depthClipEnable;
 		m_isDirty = true;
@@ -417,13 +433,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetMultiSampleEnabled() const
+	inline bool RasterState::GetMultiSampleEnabled() const
 	{
 		return m_multisampleEnable;
 	}
 
 
-	inline void RasterizationState::SetMultiSampleEnabled(bool multisampleEnable)
+	inline void RasterState::SetMultiSampleEnabled(bool multisampleEnable)
 	{
 		m_multisampleEnable = multisampleEnable;
 		m_isDirty = true;
@@ -431,13 +447,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetAntiAliasedLineEnabled() const
+	inline bool RasterState::GetAntiAliasedLineEnabled() const
 	{
 		return m_antialiasedLineEnable;
 	}
 
 
-	inline void RasterizationState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
+	inline void RasterState::SetAntiAliasedLineEnabled(bool antialiasedLineEnable)
 	{
 		m_antialiasedLineEnable = antialiasedLineEnable;
 		m_isDirty = true;
@@ -445,13 +461,13 @@ namespace re
 	}
 
 
-	inline uint8_t RasterizationState::GetForcedSampleCount() const
+	inline uint8_t RasterState::GetForcedSampleCount() const
 	{
 		return m_forcedSampleCount;
 	}
 
 
-	inline void RasterizationState::SetForcedSampleCount(uint8_t forcedSampleCount)
+	inline void RasterState::SetForcedSampleCount(uint8_t forcedSampleCount)
 	{
 		SEAssert(forcedSampleCount == 0 ||
 			forcedSampleCount == 1 || 
@@ -465,13 +481,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetConservativeRaster() const
+	inline bool RasterState::GetConservativeRaster() const
 	{
 		return m_conservativeRaster;
 	}
 
 
-	inline void RasterizationState::SetConservativeRaster(bool conservativeRaster)
+	inline void RasterState::SetConservativeRaster(bool conservativeRaster)
 	{
 		m_conservativeRaster = conservativeRaster;
 		m_isDirty = true;
@@ -479,13 +495,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetDepthTestEnabled() const
+	inline bool RasterState::GetDepthTestEnabled() const
 	{
 		return m_depthTestEnable;
 	}
 
 
-	inline void RasterizationState::SetDepthTestEnabled(bool depthTestEnable)
+	inline void RasterState::SetDepthTestEnabled(bool depthTestEnable)
 	{
 		m_depthTestEnable = depthTestEnable;
 		m_isDirty = true;
@@ -493,13 +509,13 @@ namespace re
 	}
 
 
-	inline RasterizationState::DepthWriteMask RasterizationState::GetDepthWriteMask() const
+	inline RasterState::DepthWriteMask RasterState::GetDepthWriteMask() const
 	{
 		return m_depthWriteMask;
 	}
 
 
-	inline void RasterizationState::SetDepthWriteMask(DepthWriteMask depthWriteMask)
+	inline void RasterState::SetDepthWriteMask(DepthWriteMask depthWriteMask)
 	{
 		m_depthWriteMask = depthWriteMask;
 		m_isDirty = true;
@@ -507,14 +523,14 @@ namespace re
 	}
 
 
-	inline RasterizationState::ComparisonFunc RasterizationState::GetDepthComparison() const
+	inline RasterState::ComparisonFunc RasterState::GetDepthComparison() const
 	{
-		SEAssert(!m_isDirty, "RasterizationState is dirty");
+		SEAssert(!m_isDirty, "RasterState is dirty");
 		return m_depthFunc;
 	}
 
 
-	inline void RasterizationState::SetDepthComparison(RasterizationState::ComparisonFunc depthTestMode)
+	inline void RasterState::SetDepthComparison(RasterState::ComparisonFunc depthTestMode)
 	{
 		m_depthFunc = depthTestMode;
 		m_isDirty = true;
@@ -522,13 +538,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetStencilEnabled() const
+	inline bool RasterState::GetStencilEnabled() const
 	{
 		return m_stencilEnabled;
 	}
 
 
-	inline void RasterizationState::SetStencilEnabled(bool stencilEnabled)
+	inline void RasterState::SetStencilEnabled(bool stencilEnabled)
 	{
 		m_stencilEnabled = stencilEnabled;
 		m_isDirty = true;
@@ -536,13 +552,13 @@ namespace re
 	}
 
 
-	inline uint8_t RasterizationState::GetStencilReadMask() const
+	inline uint8_t RasterState::GetStencilReadMask() const
 	{
 		return m_stencilReadMask;
 	}
 
 
-	inline void RasterizationState::SetStencilReadMask(uint8_t stencilReadMask)
+	inline void RasterState::SetStencilReadMask(uint8_t stencilReadMask)
 	{
 		m_stencilReadMask = stencilReadMask;
 		m_isDirty = true;
@@ -550,13 +566,13 @@ namespace re
 	}
 
 
-	inline uint8_t RasterizationState::GetStencilWriteMask() const
+	inline uint8_t RasterState::GetStencilWriteMask() const
 	{
 		return m_stencilWriteMask;
 	}
 
 
-	inline void RasterizationState::SetStencilWriteMask(uint8_t stencilWriteMask)
+	inline void RasterState::SetStencilWriteMask(uint8_t stencilWriteMask)
 	{
 		m_stencilWriteMask = stencilWriteMask;
 		m_isDirty = true;
@@ -564,13 +580,13 @@ namespace re
 	}
 
 
-	inline RasterizationState::StencilOpDesc const& RasterizationState::GetFrontFaceStencilOpDesc() const
+	inline RasterState::StencilOpDesc const& RasterState::GetFrontFaceStencilOpDesc() const
 	{
 		return m_frontFace;
 	}
 
 
-	inline void RasterizationState::SetFrontFaceStencilOpDesc(StencilOpDesc const& frontFace)
+	inline void RasterState::SetFrontFaceStencilOpDesc(StencilOpDesc const& frontFace)
 	{
 		m_frontFace = frontFace;
 		m_isDirty = true;
@@ -578,13 +594,13 @@ namespace re
 	}
 
 
-	inline RasterizationState::StencilOpDesc const& RasterizationState::GetBackFaceStencilOpDesc() const
+	inline RasterState::StencilOpDesc const& RasterState::GetBackFaceStencilOpDesc() const
 	{
 		return m_backFace;
 	}
 
 
-	inline void RasterizationState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
+	inline void RasterState::SetBackFaceStencilOpDesc(StencilOpDesc const& backFace)
 	{
 		m_backFace = backFace;
 		m_isDirty = true;
@@ -592,13 +608,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetAlphaToCoverageEnabled() const
+	inline bool RasterState::GetAlphaToCoverageEnabled() const
 	{
 		return m_alphaToCoverageEnable;
 	}
 
 
-	inline void RasterizationState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
+	inline void RasterState::SetAlphaToCoverageEnabled(bool alphaToCoverageEnable)
 	{
 		m_alphaToCoverageEnable = alphaToCoverageEnable;
 		m_isDirty = true;
@@ -606,13 +622,13 @@ namespace re
 	}
 
 
-	inline bool RasterizationState::GetIndependentBlendEnabled() const
+	inline bool RasterState::GetIndependentBlendEnabled() const
 	{
 		return m_independentBlendEnable;
 	}
 
 
-	inline void RasterizationState::SetIndependentBlendEnabled(bool independentBlendEnable)
+	inline void RasterState::SetIndependentBlendEnabled(bool independentBlendEnable)
 	{
 		m_independentBlendEnable = independentBlendEnable;
 		m_isDirty = true;
@@ -620,13 +636,13 @@ namespace re
 	}
 
 
-	inline std::array<RasterizationState::RenderTargetBlendDesc, 8> const& RasterizationState::GetRenderTargetBlendDescs() const
+	inline std::array<RasterState::RenderTargetBlendDesc, 8> const& RasterState::GetRenderTargetBlendDescs() const
 	{
 		return m_renderTargetBlendDescs;
 	}
 
 
-	inline void RasterizationState::SetRenderTargetBlendDesc(RenderTargetBlendDesc const& blendDesc, uint8_t index)
+	inline void RasterState::SetRenderTargetBlendDesc(RenderTargetBlendDesc const& blendDesc, uint8_t index)
 	{
 		SEAssert(blendDesc.m_logicOpEnable != blendDesc.m_blendEnable ||
 			(!blendDesc.m_logicOpEnable &&

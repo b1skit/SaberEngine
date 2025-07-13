@@ -36,15 +36,15 @@ namespace
 	{
 		uint64_t psoKey = shader.GetShaderIdentifier();
 
-		re::RasterizationState const* rasterizationState = shader.GetRasterizationState();
+		re::RasterState const* rasterState = shader.GetRasterizationState();
 
 		SEAssert(shader.GetPipelineType() != re::Shader::PipelineType::Rasterization ||
-			(rasterizationState && targetSet),
+			(rasterState && targetSet),
 			"Rasterization shader does not have a pipeline state or target set. This is unexpected");
 
-		if (rasterizationState)
+		if (rasterState)
 		{
-			util::CombineHash(psoKey, rasterizationState->GetDataHash());
+			util::CombineHash(psoKey, rasterState->GetDataHash());
 			
 			// We must consider the target set, as we must specify the RTV/DSV formats when creating a rasterization
 			// pipeline state stream

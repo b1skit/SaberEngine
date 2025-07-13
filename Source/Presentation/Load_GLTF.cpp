@@ -135,22 +135,22 @@ namespace
 	}
 
 
-	inline gr::MeshPrimitive::PrimitiveTopology CGLTFPrimitiveTypeToPrimitiveTopology(cgltf_primitive_type primitiveType)
+	inline re::RasterState::PrimitiveTopology CGLTFPrimitiveTypeToPrimitiveTopology(cgltf_primitive_type primitiveType)
 	{
 		switch (primitiveType)
 		{
-		case cgltf_primitive_type::cgltf_primitive_type_points: return gr::MeshPrimitive::PrimitiveTopology::PointList;
-		case cgltf_primitive_type::cgltf_primitive_type_lines: return gr::MeshPrimitive::PrimitiveTopology::LineList;
-		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return gr::MeshPrimitive::PrimitiveTopology::LineStrip;
-		case cgltf_primitive_type::cgltf_primitive_type_triangles: return gr::MeshPrimitive::PrimitiveTopology::TriangleList;
-		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return gr::MeshPrimitive::PrimitiveTopology::TriangleStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_points: return re::RasterState::PrimitiveTopology::PointList;
+		case cgltf_primitive_type::cgltf_primitive_type_lines: return re::RasterState::PrimitiveTopology::LineList;
+		case cgltf_primitive_type::cgltf_primitive_type_line_strip: return re::RasterState::PrimitiveTopology::LineStrip;
+		case cgltf_primitive_type::cgltf_primitive_type_triangles: return re::RasterState::PrimitiveTopology::TriangleList;
+		case cgltf_primitive_type::cgltf_primitive_type_triangle_strip: return re::RasterState::PrimitiveTopology::TriangleStrip;
 		case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
 		case cgltf_primitive_type::cgltf_primitive_type_line_loop:
 		case cgltf_primitive_type::cgltf_primitive_type_invalid:
 		case cgltf_primitive_type::cgltf_primitive_type_max_enum:
 		default: SEAssertF("Invalid/unsupported primitive type/draw mode. SE does not support line loops or triangle fans");
 		}
-		return gr::MeshPrimitive::PrimitiveTopology::TriangleList; // This should never happen
+		return re::RasterState::PrimitiveTopology::TriangleList; // This should never happen
 	}
 
 
