@@ -74,8 +74,6 @@ namespace gr
 		gr::RenderDataManager& GetRenderDataManagerForModification();
 		gr::RenderDataManager const& GetRenderDataManager() const;
 
-		effect::EffectDB const& GetEffectDB() const;
-
 
 	private:
 		host::Window* m_windowCache; // Passed to the m_context at creation
@@ -203,12 +201,6 @@ namespace gr
 	inline gr::RenderDataManager const& RenderManager::GetRenderDataManager() const
 	{
 		return m_renderData;
-	}
-
-
-	inline effect::EffectDB const& RenderManager::GetEffectDB() const
-	{
-		return m_effectDB;
 	}
 
 

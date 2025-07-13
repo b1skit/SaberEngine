@@ -74,16 +74,14 @@ namespace re
 		m_platObj = platform::ShaderBindingTable::CreatePlatformObject();
 
 		// Resolve our shaders:
-		effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
-
-		auto ResolveShaders = [&effectDB](
+		auto ResolveShaders = [](
 			std::set<ShaderID>& seenShaders,
 			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> const& styles,
 			std::vector<core::InvPtr<re::Shader>>& shadersOut)
 			{
 				for (auto const& entry : styles)
 				{
-					core::InvPtr<re::Shader> const& shader = effectDB.GetResolvedShader(entry.first, entry.second);
+					core::InvPtr<re::Shader> const& shader = entry.first.GetResolvedShader(entry.second);
 					if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
 					{
 						shadersOut.emplace_back(shader);
@@ -120,7 +118,7 @@ namespace re
 				const effect::drawstyle::Bitmask finalBitmask =
 					geo.GetDrawstyleBits() | m_sbtParams.m_hitgroupStyles;
 
-				effect::Technique const* technique = effectDB.GetTechnique(geo.GetEffectID(), finalBitmask);
+				effect::Technique const* technique = geo.GetEffectID().GetTechnique(finalBitmask);
 
 				core::InvPtr<re::Shader> const& shader = technique->GetShader();
 				if (seenHitShaders.emplace(shader->GetShaderIdentifier()).second)

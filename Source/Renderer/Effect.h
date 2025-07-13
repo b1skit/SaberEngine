@@ -9,8 +9,69 @@
 
 #include "_generated/DrawStyles.h"
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
+namespace effect
+{
+	class Effect;
+	class EffectDB;
+	class Technique;
+}
+namespace re
+{
+	class Shader;
+}
 
-using EffectID = util::HashKey;
+struct EffectID // Wrapper around util::HashKey, with a EffectDB getter
+{
+	EffectID() noexcept = default;
+	EffectID(util::HashKey const& hashKey) noexcept : m_effectID(hashKey) {}
+	EffectID(util::HashKey&& hashKey) noexcept : m_effectID(std::move(hashKey)) {}
+	EffectID(uint64_t hash) noexcept : m_effectID(hash) {}
+	EffectID(char const* const cStr) noexcept : m_effectID(cStr) {}
+	EffectID(std::string const& str) noexcept : m_effectID(str) {}
+
+	EffectID(EffectID const&) noexcept = default;
+	EffectID(EffectID&&) noexcept = default;
+	EffectID& operator=(EffectID const&) noexcept = default;
+	EffectID& operator=(EffectID&&) noexcept = default;
+
+	EffectID& operator=(uint64_t hash) noexcept { m_effectID = hash; return *this; }
+	EffectID& operator=(int zeroInit) noexcept { m_effectID = util::HashKey(zeroInit); return *this; }
+
+	operator uint64_t() const noexcept { return m_effectID; }
+
+	// Implicit conversions to/from HashKey
+	operator util::HashKey& () noexcept { return m_effectID; }
+	operator util::HashKey const& () const noexcept { return m_effectID; }
+
+	bool operator==(EffectID const& rhs) const noexcept { return m_effectID == rhs.m_effectID; }
+	bool operator!=(EffectID const& rhs) const noexcept { return m_effectID != rhs.m_effectID; }
+	bool operator<(EffectID const& rhs) const noexcept { return m_effectID < rhs.m_effectID; }
+	bool operator>(EffectID const& rhs) const noexcept { return m_effectID > rhs.m_effectID; }
+
+	bool operator==(int rhs) const noexcept { return m_effectID == rhs; }
+	bool operator!=(int rhs) const noexcept { return m_effectID != rhs; }
+
+	effect::Effect const* GetEffect() const noexcept;
+	effect::Technique const* GetTechnique(effect::drawstyle::Bitmask drawStyleBitmask) const;
+
+	core::InvPtr<re::Shader> const& GetResolvedShader(effect::drawstyle::Bitmask drawStyleBitmask) const;
+
+	util::HashKey const& GetEffectIDHashKey() const noexcept { return m_effectID; }
+
+
+private:
+	util::HashKey m_effectID;
+
+
+private:
+	friend class effect::EffectDB;
+	static effect::EffectDB* s_effectDB;
+};
 
 
 namespace effect::drawstyle
@@ -107,3 +168,29 @@ namespace effect
 		return m_requestedBufferShaderNames;
 	}
 }
+
+
+template <>
+struct std::hash<EffectID>
+{
+	std::size_t operator()(EffectID const& effectID) const noexcept
+	{
+		return std::hash<util::HashKey>()(effectID.GetEffectIDHashKey());
+	}
+};
+
+
+template <>
+struct std::formatter<EffectID>
+{
+	constexpr auto parse(std::format_parse_context& ctx)
+	{
+		return ctx.begin();
+	}
+
+	template <typename FormatContext>
+	auto format(EffectID const& effectID, FormatContext& ctx) const
+	{
+		return std::format_to(ctx.out(), "{}", effectID.GetEffectIDHashKey());
+	}
+};

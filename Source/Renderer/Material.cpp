@@ -4,7 +4,6 @@
 #include "Material.h"
 #include "Material_GLTF_PBRMetallicRoughness.h"
 #include "Material_GLTF_Unlit.h"
-#include "RenderManager.h"
 #include "SysInfo_Platform.h"
 #include "Texture.h"
 
@@ -20,8 +19,8 @@ namespace gr
 {
 	Material::MaterialID Material::EffectIDToMaterialID(EffectID effectID)
 	{
-		util::CHashKey matEffectHashKey =
-			util::CHashKey::Create(gr::RenderManager::Get()->GetEffectDB().GetEffect(effectID)->GetName());
+		
+		util::CHashKey matEffectHashKey = util::CHashKey::Create(effectID.GetEffect()->GetName());
 
 		switch (matEffectHashKey.GetHash())
 		{

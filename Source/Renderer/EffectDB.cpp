@@ -525,10 +525,18 @@ namespace
 
 namespace effect
 {
+	EffectDB::EffectDB()
+	{
+		EffectID::s_effectDB = this;
+	};
+
+
 	EffectDB::~EffectDB()
 	{
 		SEAssert(m_effects.empty() && m_techniques.empty(), 
 			"EffectDB is being deconstructed before Destroy() was called");
+
+		EffectID::s_effectDB = nullptr;
 	}
 
 

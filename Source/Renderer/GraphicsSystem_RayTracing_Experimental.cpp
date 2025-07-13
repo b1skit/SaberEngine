@@ -91,8 +91,6 @@ namespace
 		re::AccelerationStructure::TLASParams const* tlasParams =
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
 
-		effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
-
 		const ResourceHandle transformBufferHandle = 
 			ibm.GetIndexedBuffer(TransformData::s_shaderName)->GetResourceHandle(re::ViewType::SRV);
 		const ResourceHandle unlitMaterialBufferHandle = 
@@ -112,8 +110,9 @@ namespace
 			for (auto const& geometry : blasParams->m_geometry)
 			{
 				SEAssert(blasGeoIDs[geoIdx++] == geometry.GetOwnerID(), "Geometry and IDs are out of sync");
+				
+				effect::Effect const* geoEffect = geometry.GetEffectID().GetEffect();
 
-				effect::Effect const* geoEffect = effectDB.GetEffect(geometry.GetEffectID());
 				ResourceHandle materialResourceHandle = INVALID_RESOURCE_IDX;
 				if (geoEffect->UsesBuffer(PBRMetallicRoughnessData::s_shaderName))
 				{
@@ -125,7 +124,7 @@ namespace
 				}
 				SEAssert(materialResourceHandle != INVALID_RESOURCE_IDX, "Failed to find a material resource handle");
 				
-				SEAssert(effectDB.GetEffect(geometry.GetEffectID())->UsesBuffer(TransformData::s_shaderName),
+				SEAssert(geoEffect->UsesBuffer(TransformData::s_shaderName),
 					"Effect does not use TransformData. This is unexpected");
 
 				initialLUTData.emplace_back(InstancedBufferLUTData{

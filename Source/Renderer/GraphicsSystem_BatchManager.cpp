@@ -2,14 +2,12 @@
 #include "Batch.h"
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
-#include "EffectDB.h"
 #include "GraphicsSystem_BatchManager.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "Material.h"
 #include "RenderDataManager.h"
-#include "RenderManager.h"
 
 #include "Core/ProfilingMarkers.h"
 
@@ -221,8 +219,6 @@ namespace gr
 			SEBeginCPUEvent("Assemble batches");
 			std::vector<gr::BatchHandle>& viewBatches = m_viewBatches[curView];
 			viewBatches.reserve(renderDataIDs.size());
-
-			effect::EffectDB const& effectDB = gr::RenderManager::Get()->GetEffectDB();
 
 			for (gr::RenderDataID renderDataID : renderDataIDs)
 			{

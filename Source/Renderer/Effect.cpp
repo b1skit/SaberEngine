@@ -1,7 +1,32 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Effect.h"
+#include "EffectDB.h"
 
 #include "Core/Assert.h"
+
+
+effect::EffectDB* EffectID::s_effectDB = nullptr;
+
+effect::Effect const* EffectID::GetEffect() const noexcept
+{
+	SEAssert(s_effectDB != nullptr, "EffectDB is not initialized");
+	return s_effectDB->GetEffect(m_effectID);
+}
+
+
+core::InvPtr<re::Shader> const& EffectID::GetResolvedShader(effect::drawstyle::Bitmask drawStyleBitmask) const
+{
+	return s_effectDB->GetResolvedShader(m_effectID, drawStyleBitmask);
+}
+
+
+effect::Technique const* EffectID::GetTechnique(effect::drawstyle::Bitmask drawStyleBitmask) const
+{
+	return s_effectDB->GetTechnique(m_effectID, drawStyleBitmask);
+}
+
+
+// ---
 
 
 namespace effect::drawstyle

@@ -8,7 +8,8 @@ namespace effect
 	class EffectDB
 	{
 	public:
-		EffectDB() = default;
+		EffectDB();
+
 		EffectDB(EffectDB&&) noexcept = default;
 		EffectDB& operator=(EffectDB&&) noexcept = default;
 		~EffectDB();
