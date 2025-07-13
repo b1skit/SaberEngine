@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// Â© 2023 Adam Badke. All rights reserved.
 #include "CommandQueue.h"
 
 
@@ -25,7 +25,7 @@ namespace core
 			
 			if (m_buffer != nullptr)
 			{
-				delete m_buffer;
+				free(m_buffer);
 				m_buffer = nullptr;
 				m_baseIdx = 0;
 			}
