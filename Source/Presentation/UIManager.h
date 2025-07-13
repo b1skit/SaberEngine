@@ -7,11 +7,14 @@
 #include "Core/Interfaces/IEngineComponent.h"
 
 
+namespace gr
+{
+	class RenderManager;
+}
 namespace host
 {
 	class Window;
 }
-
 namespace pr
 {
 	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
@@ -23,6 +26,10 @@ namespace pr
 	public:
 		UIManager();
 		~UIManager() = default;
+
+		
+	public:
+		void SetRenderManager(gr::RenderManager*); // Must be called before Startup()
 
 
 	public: // IEngineComponent interface:
@@ -78,10 +85,18 @@ namespace pr
 
 	private:
 		host::Window* m_window;
+		gr::RenderManager* m_renderManager;
 
 
 	private: // Graphics services:
 		pr::CullingGraphicsService m_cullingGraphicsService;
 		pr::GraphicsService_Debug m_debugGraphicsService;
 	};
+
+
+	inline void UIManager::SetRenderManager(gr::RenderManager* renderMgr)
+	{
+		SEAssert(m_renderManager == nullptr, "Render manager already set. This is unexpected");
+		m_renderManager = renderMgr;
+	}
 }

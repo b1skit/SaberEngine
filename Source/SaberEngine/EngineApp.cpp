@@ -123,6 +123,7 @@ namespace app
 		// Dependency injection:
 		renderManager->SetWindow(m_window.get());
 		uiMgr->SetWindow(m_window.get());
+		uiMgr->SetRenderManager(renderManager);
 
 		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()

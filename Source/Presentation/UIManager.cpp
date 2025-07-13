@@ -170,6 +170,7 @@ namespace pr
 		, m_imguiWantsTextInput(false)
 		, m_show{0}
 		, m_window(nullptr)
+		, m_renderManager(nullptr)
 		, m_vsyncState(false) // Will be updated by the initial state broadcast event
 	{
 	}
@@ -180,6 +181,8 @@ namespace pr
 		SEAssert(m_window, "Window should have been set by now");
 
 		LOG("UI manager starting...");
+
+		SEAssert(m_renderManager, "Render manager has not been set");
 
 		// Event subscriptions:
 		// Input events:
@@ -217,8 +220,8 @@ namespace pr
 		m_window->SetRelativeMouseMode(!m_imguiMenuActive);
 
 		// Service initialization:
-		m_cullingGraphicsService.Initialize(gr::RenderManager::Get());
-		m_debugGraphicsService.Initialize(gr::RenderManager::Get());
+		m_cullingGraphicsService.Initialize(m_renderManager->GetRenderCommandQueue());
+		m_debugGraphicsService.Initialize(m_renderManager->GetRenderCommandQueue());
 	}
 
 
@@ -668,10 +671,10 @@ namespace pr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				gr::RenderManager::Get()->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
-				gr::RenderManager::Get()->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
-				gr::RenderManager::Get()->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
-				gr::RenderManager::Get()->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
+				m_renderManager->ShowRenderSystemsImGuiWindow(&m_show[Show::RenderMgrDbg]);
+				m_renderManager->ShowRenderDataImGuiWindow(&m_show[Show::RenderDataDbg]);
+				m_renderManager->ShowIndexedBufferManagerImGuiWindow(&m_show[Show::IndexedBufferMgrDbg]);
+				m_renderManager->ShowGPUCapturesImGuiWindow(&m_show[Show::GPUCaptures]);
 				
 			};
 		if (m_show[Show::RenderMgrDbg] ||

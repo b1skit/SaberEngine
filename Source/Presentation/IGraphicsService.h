@@ -1,9 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
-#include "Renderer/RenderManager.h"
-
 #include "Core/CommandQueue.h"
-#include "Core/AccessKey.h"
 
 
 namespace re
@@ -19,7 +16,7 @@ namespace pr
 	public:
 		virtual ~IGraphicsService() = default;
 
-		void Initialize(gr::RenderManager*);
+		void Initialize(core::CommandManager*);
 
 
 	protected:
@@ -38,10 +35,9 @@ namespace pr
 	};
 
 
-	inline void IGraphicsService::Initialize(gr::RenderManager* renderManager)
+	inline void IGraphicsService::Initialize(core::CommandManager* renderCmdQueue)
 	{
-		SEAssert(renderManager != nullptr, "RenderManager must not be null");
-		m_commandQueue = renderManager->GetRenderCommandManager(ACCESS_KEY(gr::RenderManager::CommandManagerAccessKey));
+		m_commandQueue = renderCmdQueue;
 
 		DoInitialize();
 	}

@@ -6,7 +6,6 @@
 #include "RenderDataManager.h"
 #include "RenderSystem.h"
 
-#include "Core/AccessKey.h"
 #include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
 
@@ -93,10 +92,8 @@ namespace gr
 		std::unique_ptr<gr::BatchPool> m_batchPool;
 
 
-	public: // Render commands:
-		using CommandManagerAccessKey = accesscontrol::AccessKey<pr::IGraphicsService>;
-		core::CommandManager* GetRenderCommandManager(CommandManagerAccessKey);
-
+	public:
+		core::CommandManager* GetRenderCommandQueue() noexcept;
 
 	private:
 		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
@@ -169,7 +166,7 @@ namespace gr
 	}
 
 
-	inline core::CommandManager* RenderManager::GetRenderCommandManager(CommandManagerAccessKey)
+	inline core::CommandManager* RenderManager::GetRenderCommandQueue() noexcept
 	{
 		return &m_renderCommandManager;
 	}
