@@ -7,7 +7,6 @@
 #include "Core/ThreadPool.h"
 
 #include "Renderer/RenderDataManager.h"
-#include "Renderer/RenderManager.h"
 
 
 namespace pr
@@ -141,7 +140,7 @@ namespace pr
 	{
 		UpdateTransformDataRenderCommand* cmdPtr = reinterpret_cast<UpdateTransformDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);
 	}

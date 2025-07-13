@@ -2,7 +2,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
-#include "Sampler.h"
+#include "RenderDataManager.h"
 #include "Texture.h"
 #include "TextureTarget.h"
 

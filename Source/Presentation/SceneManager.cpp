@@ -19,7 +19,7 @@
 #include "Core/Util/FileIOUtils.h"
 
 #include "Renderer/RenderCommand.h"
-#include "Renderer/RenderManager.h"
+#include "Renderer/RenderSystem.h"
 
 
 namespace pr
@@ -44,17 +44,12 @@ namespace pr
 		Reset();
 
 		// Create a scene render system:
-		gr::RenderCommand::Enqueue([]()
-			{
-				std::string pipelineFileName;
-				if (!core::Config::TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
-				{
-					pipelineFileName = core::configkeys::k_defaultRenderPipelineFileName;
-				}
-
-				gr::RenderSystem const* sceneRenderSystem = 
-					gr::RenderManager::Get()->CreateAddRenderSystem(pipelineFileName);
-			});
+		std::string pipelineFileName;
+		if (!core::Config::TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
+		{
+			pipelineFileName = core::configkeys::k_defaultRenderPipelineFileName;
+		}
+		gr::RenderCommand::Enqueue<gr::CreateAddRenderSystem>(pipelineFileName);
 	}
 
 	void SceneManager::Reset()

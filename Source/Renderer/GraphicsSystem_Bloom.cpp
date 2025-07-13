@@ -5,6 +5,7 @@
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsUtils.h"
+#include "RenderDataManager.h"
 #include "Sampler.h"
 
 #include "Core/InvPtr.h"

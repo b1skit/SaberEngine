@@ -198,22 +198,7 @@ namespace pr
 		core::FrameIndexedCommandManager** cmdMgrPtr = &m_debugUICommandMgr;
 		std::mutex** imguiMutexPtr = &m_imguiGlobalMutex;
 
-		gr::RenderCommand::Enqueue([createdFlag, cmdMgrPtr, imguiMutexPtr]()
-			{
-				constexpr char const* k_debugUIPipelineFilename = "UI.json";
-
-				gr::RenderSystem const* debugUIRenderSystem = 
-					gr::RenderManager::Get()->CreateAddRenderSystem(k_debugUIPipelineFilename);
-
-				gr::GraphicsSystemManager const& gsm = debugUIRenderSystem->GetGraphicsSystemManager();
-
-				gr::ImGuiGraphicsSystem* debugUIGraphicsSystem = gsm.GetGraphicsSystem<gr::ImGuiGraphicsSystem>();
-
-				*cmdMgrPtr = debugUIGraphicsSystem->GetFrameIndexedCommandManager();
-				*imguiMutexPtr = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
-
-				createdFlag->store(true);
-			});
+		gr::RenderCommand::Enqueue<gr::CreateAddImGuiRenderSystem>(createdFlag, cmdMgrPtr, imguiMutexPtr);
 
 		// Default visible debug ImGui panels:
 		m_show[Logger] = true;

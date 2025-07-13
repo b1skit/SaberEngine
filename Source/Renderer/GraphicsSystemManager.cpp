@@ -6,7 +6,7 @@
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "LightRenderData.h"
-#include "RenderManager.h"
+#include "RenderDataManager.h"
 #include "RenderSystem.h"
 #include "Sampler.h"
 
@@ -42,13 +42,11 @@ namespace gr
 	}
 
 
-	void GraphicsSystemManager::Create()
+	void GraphicsSystemManager::Create(gr::RenderDataManager const* renderData)
 	{
 		SEAssert(m_isCreated == false, "GSM already created");
 
-		gr::RenderManager* renderManager = gr::RenderManager::Get();
-
-		m_renderData = &renderManager->GetRenderDataManager();
+		m_renderData = renderData;
 
 		CameraData defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
 

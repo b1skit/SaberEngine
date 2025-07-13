@@ -1,8 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Renderer/RenderCommand.h"
+#include "Renderer/RenderDataManager.h"
 #include "Renderer/RenderObjectIDs.h"
-#include "Renderer/RenderManager.h"
 
 
 namespace pr
@@ -137,7 +137,7 @@ namespace pr
 	{
 		UpdateRenderData<T>* cmdPtr = reinterpret_cast<UpdateRenderData<T>*>(cmdData);
 		
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
 	}
@@ -180,7 +180,7 @@ namespace pr
 	{
 		DestroyRenderData<T>* cmdPtr = reinterpret_cast<DestroyRenderData<T>*>(cmdData);
 
-		gr::RenderDataManager& renderData = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
 	}

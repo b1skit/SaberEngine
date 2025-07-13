@@ -6,6 +6,8 @@
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
 
+#include "Renderer/RenderSystem.h"
+
 
 namespace pr
 {
@@ -120,10 +122,9 @@ namespace pr
 
 	void SetActiveCameraRenderCommand::Execute(void* cmdData)
 	{
-		std::vector<std::unique_ptr<gr::RenderSystem>> const& renderSystems =
-			gr::RenderManager::Get()->GetRenderSystems();
-
 		SetActiveCameraRenderCommand* cmdPtr = reinterpret_cast<SetActiveCameraRenderCommand*>(cmdData);
+
+		std::vector<std::unique_ptr<gr::RenderSystem>> const& renderSystems = cmdPtr->GetRenderSystems();
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{

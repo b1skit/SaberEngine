@@ -108,9 +108,6 @@ namespace gr
 		SEFatalAssert(buildConfig == util::BuildConfiguration::Release, "Shader directory build configuration marker mismatch");
 #endif
 
-		gr::RenderCommand::s_renderCommandManager = &newRenderManager->m_renderCommandManager;
-		gr::RenderCommand::s_renderDataManager = &newRenderManager->m_renderData;
-
 		return newRenderManager;
 	}
 
@@ -205,6 +202,11 @@ namespace gr
 			m_context->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
 		}
 
+		gr::RenderCommand::s_renderCommandManager = &m_renderCommandManager;
+		gr::RenderCommand::s_renderDataManager = &m_renderData;
+		gr::RenderCommand::s_renderSystems = &m_renderSystems;
+		gr::RenderCommand::s_context = m_context.get();
+
 		SEEndCPUEvent();
 	}
 	
@@ -239,10 +241,7 @@ namespace gr
 
 	gr::RenderSystem const* RenderManager::CreateAddRenderSystem(std::string const& pipelineFileName)
 	{
-		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, m_context.get()));
-
-		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
-		m_renderSystems.back()->ExecuteInitializationPipeline();
+		m_renderSystems.emplace_back(gr::RenderSystem::Create(pipelineFileName, &m_renderData, m_context.get()));
 
 		return m_renderSystems.back().get();
 	}
@@ -389,6 +388,8 @@ namespace gr
 
 		gr::RenderCommand::s_renderCommandManager = nullptr;
 		gr::RenderCommand::s_renderDataManager = nullptr;
+		gr::RenderCommand::s_renderSystems = nullptr;
+		gr::RenderCommand::s_context = nullptr;
 
 		SEEndCPUEvent();
 	}

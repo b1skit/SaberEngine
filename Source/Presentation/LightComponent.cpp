@@ -19,6 +19,7 @@
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/MeshFactory.h"
+#include "Renderer/RenderDataManager.h"
 #include "Renderer/RenderSystem.h"
 
 
@@ -703,7 +704,7 @@ namespace pr
 	{
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderDataMgr = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderDataMgr = cmdPtr->GetRenderDataManagerForModification();
 
 		switch (cmdPtr->m_type)
 		{
@@ -757,7 +758,7 @@ namespace pr
 	{
 		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
 
-		gr::RenderDataManager& renderDataMgr = gr::RenderManager::Get()->GetRenderDataManagerForModification();
+		gr::RenderDataManager& renderDataMgr = cmdPtr->GetRenderDataManagerForModification();
 
 		switch (cmdPtr->m_type)
 		{

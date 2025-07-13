@@ -3,6 +3,7 @@
 #include "BatchPool.h"
 #include "Context.h"
 #include "EffectDB.h"
+#include "RenderDataManager.h"
 #include "RenderSystem.h"
 
 #include "Core/AccessKey.h"
@@ -65,14 +66,8 @@ namespace gr
 		virtual uint8_t GetNumFramesInFlight_Platform() const = 0;
 
 
-	public:
+	protected:
 		gr::RenderSystem const* CreateAddRenderSystem(std::string const& pipelineFileName);
-		std::vector<std::unique_ptr<gr::RenderSystem>> const& GetRenderSystems() const;
-		gr::RenderSystem* GetRenderSystem(util::HashKey const&);
-
-		// Not thread safe: Can only be called when other threads are not accessing the render data
-		gr::RenderDataManager& GetRenderDataManagerForModification();
-		gr::RenderDataManager const& GetRenderDataManager() const;
 
 
 	private:
@@ -164,38 +159,6 @@ namespace gr
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{
 		return m_renderFrameNum;
-	}
-
-
-	inline std::vector<std::unique_ptr<gr::RenderSystem>> const& RenderManager::GetRenderSystems() const
-	{
-		return m_renderSystems;
-	}
-
-
-	inline gr::RenderSystem* RenderManager::GetRenderSystem(util::HashKey const& nameHash)
-	{
-		for (auto& renderSystem : m_renderSystems)
-		{
-			if (renderSystem->GetNameHash() == nameHash)
-			{
-				return renderSystem.get();
-			}
-		}
-		SEAssertF("Failed to find render system with the given nameHash. This is unexpected");
-		return nullptr;
-	}
-
-
-	inline gr::RenderDataManager& RenderManager::GetRenderDataManagerForModification()
-	{
-		return m_renderData;
-	}
-
-
-	inline gr::RenderDataManager const& RenderManager::GetRenderDataManager() const
-	{
-		return m_renderData;
 	}
 
 

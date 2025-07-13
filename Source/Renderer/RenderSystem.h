@@ -2,6 +2,7 @@
 #pragma once
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
+#include "RenderCommand.h"
 #include "RenderPipeline.h"
 
 #include "Core/Interfaces/INamedObject.h"
@@ -22,6 +23,7 @@ namespace re
 }
 namespace gr
 {
+	class RenderDataManager;
 	struct RenderSystemDescription;
 	class IndexedBufferManager;
 
@@ -30,7 +32,7 @@ namespace gr
 	{
 	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(
-			std::string const& pipelineFileName, re::Context*);
+			std::string const& pipelineFileName, RenderDataManager const*, re::Context*);
 		
 		void Destroy();
 
@@ -42,8 +44,12 @@ namespace gr
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipeline(gr::RenderSystemDescription const&); // Creates graphics systems + init/update pipelines
+		void BuildPipeline(gr::RenderSystemDescription const&, gr::RenderDataManager const*); // Creates graphics systems + init/update pipelines
+
+	private:
 		void ExecuteInitializationPipeline();
+
+	public:
 		void ExecuteUpdatePipeline(uint64_t currentFrameNum);
 
 
@@ -108,5 +114,22 @@ namespace gr
 	{
 		return m_renderPipeline;
 	}
+
+
+	// ---
+
+
+	class CreateAddRenderSystem : public virtual gr::RenderCommand
+	{
+	public:
+		CreateAddRenderSystem(std::string const& pipelineFileName) : m_pipelineFileName(pipelineFileName) {}
+		~CreateAddRenderSystem() = default;
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		std::string m_pipelineFileName;
+	};
 }
 

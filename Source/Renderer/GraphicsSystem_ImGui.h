@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
+#include "RenderSystem.h"
 #include "RLibrary_ImGui_Platform.h"
 
 
@@ -64,4 +65,34 @@ namespace gr
 	{
 		return m_imGuiGlobalMutex;
 	}
+
+
+	// ---
+
+
+	class CreateAddImGuiRenderSystem : public virtual gr::CreateAddRenderSystem
+	{
+	public:
+		CreateAddImGuiRenderSystem(
+			std::atomic<bool>* createdFlag,
+			core::FrameIndexedCommandManager** cmdMgrPtr,
+			std::mutex** imguiMutexPtr)
+			: gr::CreateAddRenderSystem(k_debugUIPipelineFilename)
+			, m_createdFlag(createdFlag)
+			, m_cmdMgrPtr(cmdMgrPtr)
+			, m_imguiMutexPtr(imguiMutexPtr)
+		{};
+
+		~CreateAddImGuiRenderSystem() = default;
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		std::atomic<bool>* m_createdFlag = nullptr;
+		core::FrameIndexedCommandManager** m_cmdMgrPtr = nullptr;
+		std::mutex** m_imguiMutexPtr = nullptr;
+
+		static constexpr char const* k_debugUIPipelineFilename = "UI.json";
+	};
 }

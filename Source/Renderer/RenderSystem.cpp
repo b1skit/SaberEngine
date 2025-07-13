@@ -3,6 +3,7 @@
 #include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
+#include "RenderDataManager.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
@@ -362,7 +363,7 @@ namespace
 namespace gr
 {
 	std::unique_ptr<RenderSystem> RenderSystem::Create(
-		std::string const& pipelineFileName, re::Context* context)
+		std::string const& pipelineFileName, RenderDataManager const* renderData, re::Context* context)
 	{
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
@@ -376,7 +377,10 @@ namespace gr
 
 		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, context));
 
-		newRenderSystem->BuildPipeline(renderSystemDesc); // Builds initialization/update functions
+		newRenderSystem->BuildPipeline(renderSystemDesc, renderData); // Builds initialization/update functions
+
+		// Initialize the render system (which will in turn initialize each of its graphics systems & stage pipelines)
+		newRenderSystem->ExecuteInitializationPipeline();
 
 		return std::move(newRenderSystem);
 	}
@@ -417,11 +421,12 @@ namespace gr
 	}
 
 
-	void RenderSystem::BuildPipeline(gr::RenderSystemDescription const& renderSysDesc)
+	void RenderSystem::BuildPipeline(
+		gr::RenderSystemDescription const& renderSysDesc, gr::RenderDataManager const* renderData)
 	{
 		SEBeginCPUEvent(GetName().c_str());
 		// Create our GraphicsSystems:
-		m_graphicsSystemManager.Create();
+		m_graphicsSystemManager.Create(renderData);
 
 		for (std::string const& gsName : renderSysDesc.m_pipelineOrder)
 		{
@@ -584,5 +589,26 @@ namespace gr
 			m_graphicsSystemManager.ShowImGuiWindow();
 			ImGui::Unindent();
 		}
+	}
+
+
+	// ---
+
+
+	void CreateAddRenderSystem::Execute(void* cmdData)
+	{
+		CreateAddRenderSystem* cmdPtr = reinterpret_cast<CreateAddRenderSystem*>(cmdData);
+
+		cmdPtr->GetRenderSystemsForModification().emplace_back(gr::RenderSystem::Create(
+			cmdPtr->m_pipelineFileName,
+			&cmdPtr->GetRenderData(),
+			cmdPtr->GetContextForModification()));
+	}
+
+
+	void CreateAddRenderSystem::Destroy(void* cmdData)
+	{
+		CreateAddRenderSystem* cmdPtr = reinterpret_cast<CreateAddRenderSystem*>(cmdData);
+		cmdPtr->~CreateAddRenderSystem();
 	}
 }

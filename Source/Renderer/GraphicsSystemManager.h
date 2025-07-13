@@ -1,7 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsEvent.h"
-#include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 
 #include "Core/Util/CHashKey.h"
@@ -16,10 +15,12 @@ namespace re
 {
 	class Context;
 	class BufferInput;
+	class Sampler;
 }
 namespace gr
 {
 	class GraphicsSystem;
+	class RenderDataManager;
 	class RenderSystem;
 
 	template<typename T>
@@ -34,7 +35,7 @@ namespace gr
 
 		void Destroy();
 
-		void Create();
+		void Create(gr::RenderDataManager const*);
 		void PreRender(uint64_t currentFrameNum);
 
 		void CreateAddGraphicsSystemByScriptName(std::string_view scriptName);

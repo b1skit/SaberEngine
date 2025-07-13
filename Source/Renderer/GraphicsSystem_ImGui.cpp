@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "GraphicsSystem_ImGui.h"
 #include "GraphicsSystemManager.h"
+#include "RenderSystem.h"
 
 
 namespace gr
@@ -36,5 +37,35 @@ namespace gr
 		framePayload->m_perFrameCommands = &m_perFrameCommands;
 
 		dynamic_cast<gr::LibraryStage*>(m_imguiLibraryStage.get())->SetPayload(std::move(framePayload));
+	}
+
+
+	// ---
+
+
+	void CreateAddImGuiRenderSystem::Execute(void* cmdData)
+	{
+		CreateAddImGuiRenderSystem* cmdPtr = reinterpret_cast<CreateAddImGuiRenderSystem*>(cmdData);
+
+		cmdPtr->GetRenderSystemsForModification().emplace_back(gr::RenderSystem::Create(
+			k_debugUIPipelineFilename,
+			&cmdPtr->GetRenderData(),
+			cmdPtr->GetContextForModification()));
+
+		gr::GraphicsSystemManager const& gsm = cmdPtr->GetRenderSystemsForModification().back()->GetGraphicsSystemManager();
+
+		gr::ImGuiGraphicsSystem* debugUIGraphicsSystem = gsm.GetGraphicsSystem<gr::ImGuiGraphicsSystem>();
+
+		*cmdPtr->m_cmdMgrPtr = debugUIGraphicsSystem->GetFrameIndexedCommandManager();
+		*cmdPtr->m_imguiMutexPtr = &debugUIGraphicsSystem->GetGlobalImGuiMutex();
+
+		cmdPtr->m_createdFlag->store(true);
+	}
+
+
+	void CreateAddImGuiRenderSystem::Destroy(void* cmdData)
+	{
+		CreateAddImGuiRenderSystem* cmdPtr = reinterpret_cast<CreateAddImGuiRenderSystem*>(cmdData);
+		cmdPtr->~CreateAddImGuiRenderSystem();
 	}
 }

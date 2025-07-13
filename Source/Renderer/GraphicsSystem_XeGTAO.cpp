@@ -3,7 +3,7 @@
 #include "GraphicsSystem_XeGTAO.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
-#include "Sampler.h"
+#include "RenderDataManager.h"
 
 #include "Core/Config.h"
 
