@@ -200,7 +200,7 @@ namespace pr
 
 			static bool s_useRoundBlurRadius = true;
 			m_isDirty |= ImGui::Checkbox(
-				std::format("Round blur raduis?##{}", uniqueID).c_str(), &s_useRoundBlurRadius);
+				std::format("Round blur radius?##{}", uniqueID).c_str(), &s_useRoundBlurRadius);
 			if (!s_useRoundBlurRadius)
 			{
 				m_isDirty |= ImGui::SliderFloat(
