@@ -12,34 +12,27 @@
 
 namespace core
 {
-	Config* Config::Get()
-	{
-		static std::unique_ptr<core::Config> instance = std::make_unique<core::Config>();
-		return instance.get();
-	}
-
-
-	Config::Config()
-		: m_isDirty(false)
-		, m_argc(0)
-		, m_argv(nullptr)
-	{
-		// Insert engine defaults:
-		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true, Config::SettingType::Runtime);
-		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true, Config::SettingType::Runtime);
-	}
+	std::unordered_map<util::CHashKey, std::pair<Config::ConfigValue, Config::SettingType>> Config::s_configValues;
+	std::shared_mutex Config::s_configValuesMutex;
+	bool Config::s_isDirty = false;
+	int Config::s_argc = 0;
+	char** Config::s_argv = nullptr;
 
 
 	void Config::SetCommandLineArgs(int argc, char** argv)
 	{
-		m_argc = argc;
-		m_argv = argv;
+		s_argc = argc;
+		s_argv = argv;
 	}
 
 
 	void Config::ProcessCommandLineArgs()
 	{
-		if (m_argc == 0)
+		// Insert engine defaults:
+		SetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey, true, Config::SettingType::Runtime);
+		SetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey, true, Config::SettingType::Runtime);
+
+		if (s_argc == 0)
 		{
 			return; // Early out if no command line args were received
 		}
@@ -59,18 +52,18 @@ namespace core
 			bool HasValue() const noexcept { return !m_value.empty(); }
 		};
 		std::vector<KeyValue> keysValues;
-		keysValues.reserve(static_cast<size_t>(m_argc) - 1);
+		keysValues.reserve(static_cast<size_t>(s_argc) - 1);
 
 		// Pre-parse the args into key/value pairs:
 		std::string argString; // The full list of all command line args received		
-		for (int i = 1; i < m_argc; i++)
+		for (int i = 1; i < s_argc; i++)
 		{
-			std::string currentToken = m_argv[i];
+			std::string currentToken = s_argv[i];
 
 			// Append the current token to our argument std::string:
 			argString += std::format("{}{}",
 				currentToken,
-				i + 1 < m_argc ? " " : ""); // Don't add a space if it's the last token
+				i + 1 < s_argc ? " " : ""); // Don't add a space if it's the last token
 
 			auto CurrentTokenIsKey = [&]()
 				{
@@ -80,7 +73,7 @@ namespace core
 			if (CurrentTokenIsKey())
 			{
 				keysValues.emplace_back(KeyValue{
-					StripKeyDelimiter(m_argv[i]),
+					StripKeyDelimiter(s_argv[i]),
 					""}); // Empty, until we check the next token and see it's a value
 			}
 			else
@@ -109,7 +102,7 @@ namespace core
 		SetValue(core::configkeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
 
 		LOG("Config: Received %d command line tokens: %s",
-			m_argc - 1, // -1, as 1st arg is program name
+			s_argc - 1, // -1, as 1st arg is program name
 			argString.c_str());
 
 		// Process the key/value pairs:
@@ -167,7 +160,7 @@ namespace core
 		}
 
 		// We don't count command line arg entries as dirtying the config
-		m_isDirty = false;
+		s_isDirty = false;
 	}
 
 
@@ -177,7 +170,7 @@ namespace core
 		InitializeOSValues();
 		InitializeDefaultValues();
 		SetRuntimeDefaults();
-		m_isDirty = false; // Don't consider setting defaults as dirtying the config
+		s_isDirty = false; // Don't consider setting defaults as dirtying the config
 
 		LOG("Loading %s...", core::configkeys::k_configFileName);
 
@@ -189,7 +182,7 @@ namespace core
 		if (!foundExistingConfig)
 		{
 			LOG_WARNING("No %s file found! Attempting to create a default version", core::configkeys::k_configFileName);
-			m_isDirty = true;
+			s_isDirty = true;
 			SaveConfigFile();
 		}
 
@@ -351,7 +344,7 @@ namespace core
 		}
 
 		// We don't count existing entries as dirtying the config
-		m_isDirty |= !foundExistingConfig;
+		s_isDirty |= !foundExistingConfig;
 
 		SaveConfigFile(); // Write out the results immediately
 
@@ -446,25 +439,25 @@ namespace core
 	}
 	
 
-	bool Config::KeyExists(util::CHashKey const& valueName) const
+	bool Config::KeyExists(util::CHashKey const& valueName)
 	{
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+			std::shared_lock<std::shared_mutex> readLock(s_configValuesMutex);
 
-			auto const& result = m_configValues.find(valueName);
-			return result != m_configValues.end();
+			auto const& result = s_configValues.find(valueName);
+			return result != s_configValues.end();
 		}
 	}
 
 
-	std::string Config::GetValueAsString(util::CHashKey const& valueName) const
+	std::string Config::GetValueAsString(util::CHashKey const& valueName)
 	{
 		std::string returnVal;
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+			std::shared_lock<std::shared_mutex> readLock(s_configValuesMutex);
 
-			auto const& result = m_configValues.find(valueName);
-			if (result != m_configValues.end())
+			auto const& result = s_configValues.find(valueName);
+			if (result != s_configValues.end())
 			{
 				if (std::string const* val = std::get_if<std::string>(&result->second.first))
 				{
@@ -501,7 +494,7 @@ namespace core
 	}
 
 
-	std::wstring Config::GetValueAsWString(util::CHashKey const& valueName) const
+	std::wstring Config::GetValueAsWString(util::CHashKey const& valueName)
 	{
 		std::string const& result = GetValueAsString(valueName);
 		return util::ToWideString(result);
@@ -510,7 +503,7 @@ namespace core
 
 	void Config::SaveConfigFile()
 	{
-		if (m_isDirty == false)
+		if (s_isDirty == false)
 		{
 			LOG("SaveConfigFile called, but config has not changed. Returning without modifying file on disk");
 			return;
@@ -527,7 +520,7 @@ namespace core
 		}
 
 		{
-			std::shared_lock<std::shared_mutex> readLock(m_configValuesMutex);
+			std::shared_lock<std::shared_mutex> readLock(s_configValuesMutex);
 
 			// Build a list of the std::strings we plan to write, so we can sort them
 			struct ConfigEntry
@@ -537,9 +530,9 @@ namespace core
 				std::string m_value;
 			};
 			std::vector<ConfigEntry> configEntries;
-			configEntries.reserve(m_configValues.size());
+			configEntries.reserve(s_configValues.size());
 
-			for (auto const& currentElement : m_configValues)
+			for (auto const& currentElement : s_configValues)
 			{
 				if (currentElement.second.second == SettingType::Runtime)
 				{
@@ -637,7 +630,7 @@ namespace core
 			}
 			config_ofstream.close();
 
-			m_isDirty = false;
+			s_isDirty = false;
 		}
 	}
 }

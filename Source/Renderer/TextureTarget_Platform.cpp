@@ -13,7 +13,7 @@ namespace platform
 	void TextureTarget::CreatePlatformObject(re::TextureTarget& texTarget)
 	{
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{
@@ -38,7 +38,7 @@ namespace platform
 	void TextureTargetSet::CreatePlatformObject(re::TextureTargetSet& texTarget)
 	{
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

@@ -752,7 +752,7 @@ namespace gr
 					case gr::Light::Directional:
 					{
 						const int defaultDirectionalWidthHeight =
-							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
+							core::Config::GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
 
 						shadowArrayParams.m_width = defaultDirectionalWidthHeight;
 						shadowArrayParams.m_height = defaultDirectionalWidthHeight;
@@ -764,7 +764,7 @@ namespace gr
 					case gr::Light::Point:
 					{
 						const int defaultCubemapWidthHeight =
-							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
+							core::Config::GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
 
 						shadowArrayParams.m_width = defaultCubemapWidthHeight;
 						shadowArrayParams.m_height = defaultCubemapWidthHeight;
@@ -776,7 +776,7 @@ namespace gr
 					case gr::Light::Spot:
 					{
 						const int defaultSpotWidthHeight =
-							core::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
+							core::Config::GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
 
 						shadowArrayParams.m_width = defaultSpotWidthHeight;
 						shadowArrayParams.m_height = defaultSpotWidthHeight;

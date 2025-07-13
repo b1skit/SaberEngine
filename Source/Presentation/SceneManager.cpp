@@ -46,7 +46,7 @@ namespace pr
 		gr::RenderManager::Get()->EnqueueRenderCommand([]()
 			{
 				std::string pipelineFileName;
-				if (!core::Config::Get()->TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
+				if (!core::Config::TryGetValue(core::configkeys::k_scenePipelineCmdLineArg, pipelineFileName))
 				{
 					pipelineFileName = core::configkeys::k_defaultRenderPipelineFileName;
 				}
@@ -193,8 +193,8 @@ namespace pr
 			return;
 		}
 
-		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

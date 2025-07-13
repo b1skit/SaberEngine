@@ -170,7 +170,7 @@ namespace
 	{
 		// Assemble the default shader file path:
 		std::string const& shaderDir = 
-			core::Config::Get()->GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
+			core::Config::GetValue<std::string>(core::configkeys::k_shaderDirectoryKey);
 		std::string filepath = shaderDir + filenameAndExtension;
 
 
@@ -718,7 +718,7 @@ namespace opengl
 		//	//auto const& bindingUnit = platObj->m_samplerUnits.find(uniformName);
 		//	//if (bindingUnit == platObj->m_samplerUnits.end())
 		//	//{
-		//	//	SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+		//	//	SEAssert(core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 		//	//		std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
 		//	//			shader.GetName(), uniformName).c_str());
 		//	//	return;
@@ -733,7 +733,7 @@ namespace opengl
 
 		//	if (bindingUnit == platObj->m_samplerUnits.end())
 		//	{
-		//		SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+		//		SEAssert(core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 		//			std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
 		//				shader.GetName(), uniformName).c_str());
 		//		return;
@@ -757,7 +757,7 @@ namespace opengl
 		re::Buffer::PlatObj const* bufferPlatformParams = bufferInput.GetBuffer()->GetPlatformObject();
 
 		SEAssert(shaderPlatObj->m_bufferMetadata.contains(bufferInput.GetShaderNameHash()) ||
-			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Failed to find buffer with the given shader name. This is is not an error, but a useful debugging helper");
 
 		auto bufferTypeItr = shaderPlatObj->m_bufferMetadata.find(bufferInput.GetShaderNameHash());
@@ -783,7 +783,7 @@ namespace opengl
 		if (textureBindingUnit == platObj->m_samplerUnits.end())
 		{
 			
-			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			SEAssert(core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled",
 					shader.GetName(), texSamplerInput.m_shaderName).c_str());
 			return;
@@ -795,7 +795,7 @@ namespace opengl
 		auto const& samplerBindingUnit = platObj->m_samplerUnits.find(texSamplerInput.m_shaderName);
 		if (samplerBindingUnit == platObj->m_samplerUnits.end())
 		{
-			SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			SEAssert(core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled",
 					shader.GetName(), texSamplerInput.m_shaderName).c_str());
 			return;

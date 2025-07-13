@@ -977,8 +977,8 @@ namespace pr
 		SEBeginCPUEvent("Transform::ShowImGuiWindow");
 
 		SEBeginCPUEvent("Transform::ShowImGuiWindow: Window setup");
-		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

@@ -34,7 +34,7 @@ namespace
 		ComPtr<IDXGIFactory4> dxgiFactory;
 		uint32_t createFactoryFlags = 0;
 #if defined(_DEBUG)
-		if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
+		if (core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 		}
@@ -114,7 +114,7 @@ namespace
 
 
 #if defined(USE_NSIGHT_AFTERMATH)
-		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		if (core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
 		{
 			constexpr uint32_t k_aftermathFlags =
 				GFSDK_Aftermath_FeatureFlags_EnableMarkers |				// Enable event marker tracking.
@@ -181,7 +181,7 @@ namespace
 				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, // Intentional usage
 			};
 
-			if (core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false)
+			if (core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false)
 			{
 				// Empty RTVs in final MIP generation stages
 				denyIds.emplace_back(D3D12_MESSAGE_ID_CREATEGRAPHICSPIPELINESTATE_RENDERTARGETVIEW_NOT_SET); 
@@ -217,7 +217,7 @@ namespace dx12
 		m_dxgiAdapter = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_device = CreateDevice(m_dxgiAdapter); // Create a device from the selected adapter
 
-		const uint32_t debugLevel = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
+		const uint32_t debugLevel = core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 		if (debugLevel > 0)
 		{
 			ConfigureD3DInfoQueue(m_device, debugLevel);

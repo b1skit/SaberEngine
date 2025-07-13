@@ -471,8 +471,8 @@ namespace pr
 			}
 		}
 		
-		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		static ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
 

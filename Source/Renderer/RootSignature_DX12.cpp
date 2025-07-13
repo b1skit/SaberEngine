@@ -1687,7 +1687,7 @@ namespace dx12
 		const bool hasResource = result != m_namesToRootParamsIdx.end();
 
 		SEAssert(hasResource || 
-			core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 			"Root signature does not contain a parameter with that name");
 
 		return hasResource ? &m_rootParamMetadata[result->second] : nullptr;

@@ -22,7 +22,7 @@ namespace
 		if (entry.contains(key_excludedPlatforms))
 		{
 			std::string const& currentPlatformVal =	platform::RenderingAPIToCStr(
-					core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
+					core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
 
 			for (auto const& excludedPlatform : entry[key_excludedPlatforms])
 			{
@@ -555,8 +555,8 @@ namespace effect
 		std::ifstream effectManifestInputStream(effectManifestFilepath);
 		SEAssert(effectManifestInputStream.is_open(), "Failed to open effect manifest input stream");
 
-		const bool allowExceptions = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
-		const bool ignoreComments = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
+		const bool allowExceptions = core::Config::GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
+		const bool ignoreComments = core::Config::GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
 		nlohmann::json effectManifestJSON;
 		try
@@ -573,7 +573,7 @@ namespace effect
 			taskFutures.reserve(effectManifestJSON.at(key_effectsBlock).size());
 
 			static const bool s_threadedEffectLoading = 
-				core::Config::Get()->KeyExists(core::configkeys::k_singleThreadEffectLoading) == false;
+				core::Config::KeyExists(core::configkeys::k_singleThreadEffectLoading) == false;
 
 			for (auto const& effectManifestEntry : effectManifestJSON.at(key_effectsBlock))
 			{
@@ -643,8 +643,8 @@ namespace effect
 		std::ifstream effectInputStream(effectFilepath);
 		SEAssert(effectInputStream.is_open(), "Failed to open Effect definition input stream");
 
-		const bool allowExceptions = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
-		const bool ignoreComments = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
+		const bool allowExceptions = core::Config::GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
+		const bool ignoreComments = core::Config::GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
 		nlohmann::json effectJSON;
 		try

@@ -33,7 +33,7 @@ namespace dx12
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
 		// Catch errors during device creation. Should not be used in release builds
-		if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
+		if (core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0)
 		{
 			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 		}
@@ -43,8 +43,8 @@ namespace dx12
 		CheckHResult(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4)),
 			"Failed to create DXGIFactory2");
 
-		const int width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		const int width = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int height = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		re::Texture::TextureParams colorParams;
 		colorParams.m_width = width;

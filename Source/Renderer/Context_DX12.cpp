@@ -72,9 +72,9 @@ namespace dx12
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
-			core::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+			core::Config::KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 		const bool enablePIXPCPUProgrammaticCaptures =
-			core::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+			core::Config::KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 		if (enablePIXPGPUrogrammaticCaptures && enablePIXPCPUProgrammaticCaptures)
 		{
@@ -219,7 +219,7 @@ namespace dx12
 		createTasks.reserve(k_createTasksReserveAmt);
 
 		static const bool singleThreadResourceCreate =
-			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
+			core::Config::KeyExists(core::configkeys::k_singleThreadGPUResourceCreation);
 
 		// Textures:
 		if (m_newTextures.HasReadData())

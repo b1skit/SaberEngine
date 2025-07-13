@@ -139,8 +139,8 @@ namespace pr
 		const float mousePxDeltaY = 
 			en::InputManager::GetRelativeMouseInput(definitions::Input_MouseY) * camController.m_mouseYawSensitivity * -1;
 
-		const float xRes = static_cast<float>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
-		const float yRes = static_cast<float>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
+		const float xRes = static_cast<float>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey));
+		const float yRes = static_cast<float>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey));
 
 		const float yFOV = camera.GetFieldOfViewYRad();
 		const float xFOV = (xRes * yFOV) / yRes;
@@ -276,9 +276,9 @@ namespace pr
 		, m_prevLocalRotation(1.f, 0.f, 0.f, 0.f)
 		, m_prevLocalScale(1.f, 1.f, 1.f)
 	{
-		m_sprintSpeedModifier = core::Config::Get()->GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
+		m_sprintSpeedModifier = core::Config::GetValue<float>(core::configkeys::k_sprintSpeedModifierKey);
 
-		m_mousePitchSensitivity = core::Config::Get()->GetValue<float>(core::configkeys::k_mousePitchSensitivityKey);
-		m_mouseYawSensitivity = core::Config::Get()->GetValue<float>(core::configkeys::k_mouseYawSensitivityKey);
+		m_mousePitchSensitivity = core::Config::GetValue<float>(core::configkeys::k_mousePitchSensitivityKey);
+		m_mouseYawSensitivity = core::Config::GetValue<float>(core::configkeys::k_mouseYawSensitivityKey);
 	}
 }

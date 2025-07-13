@@ -331,7 +331,7 @@ namespace dx12
 			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(rootConstants.GetShaderName(i));
 			SEAssert(rootParam ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootParam)
@@ -400,7 +400,7 @@ namespace dx12
 			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(bufferInput.GetShaderName());
 			SEAssert(rootParam ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootParam)
@@ -1076,7 +1076,7 @@ namespace dx12
 				m_currentRootSignature->GetRootSignatureEntry(rwTexInput.m_shaderName);
 
 			SEAssert(rootParam ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootParam)
@@ -1405,7 +1405,7 @@ namespace dx12
 			RootSignature::RootParameter const* rootParam =
 				m_currentRootSignature->GetRootSignatureEntry(texSamplerInput.m_shaderName);
 			SEAssert(rootParam ||
-				core::Config::Get()->KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+				core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");
 
 			if (rootParam)

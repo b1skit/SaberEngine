@@ -26,7 +26,7 @@ namespace re
 
 	void SwapChain::Create(re::Texture::Format format, uint8_t numFramesInFlight, re::Context* ctx)
 	{
-		m_platObj->m_vsyncEnabled = core::Config::Get()->GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
+		m_platObj->m_vsyncEnabled = core::Config::GetValue<bool>(core::configkeys::k_vsyncEnabledKey);
 
 		platform::SwapChain::Create(*this, format, numFramesInFlight, ctx);
 

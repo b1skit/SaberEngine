@@ -147,8 +147,8 @@ namespace gr
 	void XeGTAOGraphicsSystem::InitPipeline(
 		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
 	{
-		m_xRes = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey));
-		m_yRes = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey));
+		m_xRes = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey));
+		m_yRes = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey));
 
 		m_hilbertLUT = CreateHilbertLUT();
 
@@ -434,8 +434,8 @@ namespace gr
 
 	void XeGTAOGraphicsSystem::CreateBatches()
 	{
-		SEAssert(m_xRes == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) && 
-			m_yRes == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+		SEAssert(m_xRes == core::Config::GetValue<int>(core::configkeys::k_windowWidthKey) && 
+			m_yRes == core::Config::GetValue<int>(core::configkeys::k_windowHeightKey),
 			"Resolution has changed, this graphics system needs to be recreated");
 
 		// Depth pre-filter stage:

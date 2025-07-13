@@ -15,8 +15,8 @@ namespace opengl
 			swapChain.GetPlatformObject()->As<opengl::SwapChain::PlatObj*>();
 
 		swapChainParams->m_backbufferDimensions = glm::uvec2(
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)));
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)));
 
 		swapChainParams->m_backbufferFormat = format;
 

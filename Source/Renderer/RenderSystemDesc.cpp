@@ -14,7 +14,7 @@ namespace gr
 	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
 	{
 		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
 
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformStr)](auto entry) -> bool
 			{
@@ -162,8 +162,8 @@ namespace gr
 		std::ifstream pipelineInputStream(filepath);
 		SEAssert(pipelineInputStream.is_open(), "Failed to open render pipeline input stream");
 
-		const bool allowExceptions = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
-		const bool ignoreComments = core::Config::Get()->GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
+		const bool allowExceptions = core::Config::GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
+		const bool ignoreComments = core::Config::GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
 		RenderSystemDescription systemDesc;
 		nlohmann::json pipelineDescJSON;

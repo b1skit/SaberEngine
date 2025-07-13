@@ -69,10 +69,10 @@ namespace re
 		SEAssert(m_window, "Received a null window");
 
 		// RenderDoc cannot be enabled when DRED is enabled
-		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
+		const bool dredEnabled = core::Config::KeyExists(core::configkeys::k_enableDredCmdLineArg);
 
 		const bool enableRenderDocProgrammaticCaptures =
-			core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg);
+			core::Config::KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg);
 
 		if (enableRenderDocProgrammaticCaptures && dredEnabled)
 		{
@@ -106,7 +106,7 @@ namespace re
 				captureOptionResult =
 					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_CaptureCallstacksOnlyActions, 0);
 
-				if (core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 1)
+				if (core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 1)
 				{
 					captureOptionResult =
 						m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_APIValidation, 1);
@@ -121,7 +121,7 @@ namespace re
 
 				// Set the default output folder/file path. RenderDoc appends "_frameXYZ.rdc" to the end
 				std::string const& renderDocCapturePath = std::format("{}\\{}\\{}_{}_{}",
-					core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+					core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 					core::configkeys::k_renderDocCaptureFolderName,
 					core::configkeys::k_captureTitle,
 					platform::RenderingAPIToCStr(api),

@@ -12,7 +12,7 @@ namespace platform
 	std::unique_ptr<re::GPUTimer::PlatObj> platform::GPUTimer::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

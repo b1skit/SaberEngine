@@ -11,7 +11,7 @@ namespace platform
 		BindlessResourceManager::CreatePlatformObject()
 	{
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		switch (api)
 		{

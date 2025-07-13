@@ -23,7 +23,7 @@ namespace dx12
 {
 	RenderManager::RenderManager()
 		: gr::RenderManager(platform::RenderingAPI::DX12)
-		, m_numFrames(core::Config::Get()->GetValue<int>(core::configkeys::k_numBackbuffersKey))
+		, m_numFrames(core::Config::GetValue<int>(core::configkeys::k_numBackbuffersKey))
 	{
 		SEAssert(m_numFrames >= 2 && m_numFrames <= 3, "Invalid number of frames in flight");
 	}
@@ -612,7 +612,7 @@ namespace dx12
 				}
 
 				static const bool s_recordSingleThreaded = 
-					core::Config::Get()->KeyExists(core::configkeys::k_singleThreadCmdListRecording);
+					core::Config::KeyExists(core::configkeys::k_singleThreadCmdListRecording);
 				if (s_recordSingleThreaded)
 				{
 					cmdList = RecordCommandList(std::move(workRange), std::move(cmdList));

@@ -17,7 +17,7 @@ namespace platform
 	bool RLibrary::RegisterPlatformLibraries()
 	{
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 
 		bool result = true;
 

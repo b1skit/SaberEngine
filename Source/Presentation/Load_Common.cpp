@@ -536,16 +536,15 @@ namespace load
 
 		LOG("Creating a default camera");
 
-		core::Config const* config = core::Config::Get();
-		const int width = config->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int height = config->GetValue<int>(core::configkeys::k_windowHeightKey);
+		const int width = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int height = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		const float aspectRatio = static_cast<float>(width) / height;
 
 		const gr::Camera::Config defaultCamConfig
 		{
-			.m_yFOV = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFOVKey),			
-			.m_near = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultNearKey),
-			.m_far = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultFarKey),
+			.m_yFOV = core::Config::GetValue<float>(core::configkeys::k_defaultFOVKey),			
+			.m_near = core::Config::GetValue<float>(core::configkeys::k_defaultNearKey),
+			.m_far = core::Config::GetValue<float>(core::configkeys::k_defaultFarKey),
 			.m_aspectRatio = aspectRatio,
 		};	
 

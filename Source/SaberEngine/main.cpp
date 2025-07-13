@@ -12,8 +12,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	// Store the HINSTANCE for when we initialize our window
 	win32::Window::s_platformState.m_hInstance = hInstance;
 
-	core::Config::Get()->LoadConfigFile();
-	core::Config::Get()->SetCommandLineArgs(__argc, __argv);
+	core::Config::LoadConfigFile();
+	core::Config::SetCommandLineArgs(__argc, __argv);
 
 	LOG("\nWelcome to the Saber Engine!\n");
 

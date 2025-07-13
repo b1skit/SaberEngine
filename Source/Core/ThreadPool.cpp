@@ -35,9 +35,9 @@ namespace core
 		LOG("System has %d logical threads", numLogicalThreads);
 
 		size_t actualNumThreads = numLogicalThreads;
-		if (Config::Get()->KeyExists(configkeys::k_numWorkerThreads))
+		if (Config::KeyExists(configkeys::k_numWorkerThreads))
 		{
-			actualNumThreads = util::CheckedCast<size_t>(Config::Get()->GetValue<int>(configkeys::k_numWorkerThreads));
+			actualNumThreads = util::CheckedCast<size_t>(Config::GetValue<int>(configkeys::k_numWorkerThreads));
 		}		
 
 		m_isRunning = true; // Must be true BEFORE a new thread checks this in ExecuteJobs()

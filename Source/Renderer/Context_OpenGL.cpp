@@ -358,7 +358,7 @@ namespace opengl
 			false);			// Enable/disable state
 
 		// Debugging:
-		const int debugLevel = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
+		const int debugLevel = core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 		if (debugLevel >= 1)
 		{
 			// All debug levels get all high severity messages

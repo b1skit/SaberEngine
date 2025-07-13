@@ -34,12 +34,10 @@ namespace gr
 
 	std::unique_ptr<gr::RenderManager> RenderManager::Create()
 	{
-		core::Config* config = core::Config::Get();
-
 		platform::RenderingAPI renderingAPI = platform::RenderingAPI::RenderingAPI_Count;
-		if (config->KeyExists(core::configkeys::k_platformCmdLineArg))
+		if (core::Config::KeyExists(core::configkeys::k_platformCmdLineArg))
 		{
-			std::string const& platformParam = config->GetValue<std::string>(core::configkeys::k_platformCmdLineArg);
+			std::string const& platformParam = core::Config::GetValue<std::string>(core::configkeys::k_platformCmdLineArg);
 
 			if (platformParam.find("opengl") != std::string::npos)
 			{
@@ -56,7 +54,7 @@ namespace gr
 		}
 
 		// Update the config:
-		config->SetValue(core::configkeys::k_renderingAPIKey, renderingAPI, core::Config::SettingType::Runtime);
+		core::Config::SetValue(core::configkeys::k_renderingAPIKey, renderingAPI, core::Config::SettingType::Runtime);
 
 		std::unique_ptr<gr::RenderManager> newRenderManager = nullptr;
 
@@ -64,12 +62,12 @@ namespace gr
 		{
 		case platform::RenderingAPI::DX12:
 		{
-			config->TrySetValue(
+			core::Config::TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_hlslShaderDirName),
 				core::Config::SettingType::Runtime);
 
-			config->TrySetValue(
+			core::Config::TrySetValue(
 				core::configkeys::k_numBackbuffersKey,
 				3,
 				core::Config::SettingType::Runtime);
@@ -79,12 +77,12 @@ namespace gr
 		break;
 		case platform::RenderingAPI::OpenGL:
 		{
-			config->TrySetValue(
+			core::Config::TrySetValue(
 				core::configkeys::k_shaderDirectoryKey,
 				std::string(core::configkeys::k_glslShaderDirName),
 				core::Config::SettingType::Runtime);
 
-			config->TrySetValue(
+			core::Config::TrySetValue(
 				core::configkeys::k_numBackbuffersKey,
 				2, // Note: OpenGL only supports double-buffering
 				core::Config::SettingType::Runtime);
@@ -97,7 +95,7 @@ namespace gr
 
 		// Validate the shader directory build configuration file matches the current compiled build configuration:
 		const util::BuildConfiguration buildConfig = util::GetBuildConfigurationMarker(
-			config->GetValueAsString(core::configkeys::k_shaderDirectoryKey));
+			core::Config::GetValueAsString(core::configkeys::k_shaderDirectoryKey));
 		
 #if defined(SE_DEBUG)
 		SEFatalAssert(buildConfig == util::BuildConfiguration::Debug, "Shader directory build configuration marker mismatch");
@@ -671,7 +669,7 @@ namespace gr
 				re::Context::RenderDocAPI* renderDocApi = m_context->GetRenderDocAPI();
 
 				const bool renderDocCmdLineEnabled =
-					core::Config::Get()->KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
+					core::Config::KeyExists(core::configkeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
 					renderDocApi != nullptr;
 
 				if (!renderDocCmdLineEnabled)
@@ -795,9 +793,9 @@ namespace gr
 
 				const bool isDX12 = m_renderingAPI == platform::RenderingAPI::DX12;
 				const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
-					core::Config::Get()->KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+					core::Config::KeyExists(core::configkeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 				const bool pixCPUCaptureCmdLineEnabled = isDX12 &&
-					core::Config::Get()->KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+					core::Config::KeyExists(core::configkeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 				if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 				{
@@ -818,7 +816,7 @@ namespace gr
 					{
 						loadedPath = true;
 						std::string const& pixFilePath = std::format("{}\\{}\\",
-							core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+							core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 							core::configkeys::k_pixCaptureFolderName);
 						memcpy(s_pixGPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 					}
@@ -872,7 +870,7 @@ namespace gr
 					{
 						loadedPath = true;
 						std::string const& pixFilePath = std::format("{}\\{}\\",
-							core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+							core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
 							core::configkeys::k_pixCaptureFolderName);
 						memcpy(s_pixCPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 					}
@@ -986,8 +984,8 @@ namespace gr
 			return;
 		}
 
-		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 
@@ -1013,8 +1011,8 @@ namespace gr
 			return;
 		}
 
-		static const int windowWidth = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		static const int windowHeight = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		static const int windowWidth = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		static const int windowHeight = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
 		constexpr float k_windowWidthPercentage = 0.25f;
 

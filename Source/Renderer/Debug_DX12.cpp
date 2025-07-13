@@ -209,7 +209,7 @@ namespace dx12
 
 
 #if defined(USE_NSIGHT_AFTERMATH)
-		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		if (core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
 		{
 			// DXGI_ERROR error notification is asynchronous to the NVIDIA display driver's GPU crash handling. Give the
 			// Nsight Aftermath GPU crash dump thread some time to do its work before terminating the process:
@@ -244,7 +244,7 @@ namespace dx12
 
 		// DRED reporting:
 		if (hr == DXGI_ERROR_DEVICE_REMOVED && 
-			core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 3)
+			core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 3)
 		{
 			HandleDRED();
 		}
@@ -263,7 +263,7 @@ namespace dx12
 	{
 		ComPtr<ID3D12Debug> debugInterface;
 
-		const int debugLevel = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
+		const int debugLevel = core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg);
 
 		// Enable the debug layer for debuglevel 1 and above:
 		if (debugLevel >= 1)
@@ -294,7 +294,7 @@ namespace dx12
 			LOG("Debug level %d: Enabled D3D12 GPU-based validation", debugLevel);
 		}
 
-		const bool dredEnabled = core::Config::Get()->KeyExists(core::configkeys::k_enableDredCmdLineArg);
+		const bool dredEnabled = core::Config::KeyExists(core::configkeys::k_enableDredCmdLineArg);
 		if (dredEnabled)
 		{
 			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
@@ -310,16 +310,16 @@ namespace dx12
 
 		
 #if defined(USE_NSIGHT_AFTERMATH)	
-		if (core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		if (core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
 		{
-			SEAssert(core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) == 0,
+			SEAssert(core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) == 0,
 				"Aftermath requires the D3D12 debug layer to be disabled");
 
 			// Enable Nsight Aftermath GPU crash dump creation. Must be done before the D3D device is created.
 			aftermath::s_instance.InitializeGPUCrashTracker();
 		}
 #else
-		SEAssert(core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg) == false,
+		SEAssert(core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg) == false,
 			"\"-%s\" command line argument received, but USE_NSIGHT_AFTERMATH is not defined",
 			core::configkeys::k_enableAftermathCmdLineArg)
 #endif
@@ -441,7 +441,7 @@ namespace aftermath
 {
 	Aftermath::Aftermath()
 		: m_gpuCrashTracker(m_markerMap)
-		, m_isEnabled(core::Config::Get()->KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
+		, m_isEnabled(core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg))
 	{
 	}
 

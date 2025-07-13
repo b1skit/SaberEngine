@@ -754,8 +754,8 @@ namespace opengl
 
 		if (!dst.IsValid()) // If no valid destination is provided, we use the backbuffer
 		{
-			SEAssert(src->Width() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey) &&
-				src->Height() == core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey),
+			SEAssert(src->Width() == core::Config::GetValue<int>(core::configkeys::k_windowWidthKey) &&
+				src->Height() == core::Config::GetValue<int>(core::configkeys::k_windowHeightKey),
 				"Can only copy to the backbuffer from textures with identical dimensions");
 
 			re::TextureTargetSet const* backbufferTargetSet = opengl::SwapChain::GetBackBufferTargetSet(

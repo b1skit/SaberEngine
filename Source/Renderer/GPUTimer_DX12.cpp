@@ -100,7 +100,7 @@ namespace dx12
 		// Note: There is currently a bug in the D3D12 runtime that causes a GPU-based-validation error if we try and
 		// use copy queue timestamp queries, even though it is valid and supported (MS bug 58278860, 
 		// Agility SDK v1.616.1). For now, just disable copy queue timestamp queries when GBV is enabled
-		const bool debugEnabled = core::Config::Get()->GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0;
+		const bool debugEnabled = core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) > 0;
 
 		platObj->m_copyQueriesSupported = options3->CopyQueueTimestampQueriesSupported && !debugEnabled;
 		if (platObj->m_copyQueriesSupported)

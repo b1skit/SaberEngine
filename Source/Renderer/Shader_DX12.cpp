@@ -21,7 +21,7 @@ namespace dx12
 		platObj->m_isCreated = true;
 
 		std::wstring const& shaderDirWStr = 
-			core::Config::Get()->GetValueAsWString(core::configkeys::k_shaderDirectoryKey);
+			core::Config::GetValueAsWString(core::configkeys::k_shaderDirectoryKey);
 
 		constexpr wchar_t const* k_dx12ShaderExt = L".cso";
 

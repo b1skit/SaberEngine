@@ -35,13 +35,13 @@ namespace
 	void InitializeAppWindow(host::Window* appWindow, bool allowDragAndDrop)
 	{
 		std::string commandLineArgs;
-		core::Config::Get()->TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
+		core::Config::TryGetValue<std::string>(core::configkeys::k_commandLineArgsValueKey, commandLineArgs);
 
 		std::string const& windowTitle = std::format("{} {}",
-			core::Config::Get()->GetValue<std::string>("windowTitle"),
+			core::Config::GetValue<std::string>("windowTitle"),
 			commandLineArgs);
-		const int xRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		const int yRes = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		const int xRes = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		const int yRes = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 
 		const host::Window::CreateParams createParams
 		{
@@ -79,7 +79,7 @@ namespace app
 
 		LOG("EngineApp starting...");
 
-		core::Config::Get()->ProcessCommandLineArgs();
+		core::Config::ProcessCommandLineArgs();
 
 		// Create the RenderManager immediately after processing the command line args, as it needs to set the
 		// platform::RenderingAPI in the Config before we bind the platform functions
@@ -98,7 +98,7 @@ namespace app
 		eventManager->Subscribe(eventkey::EngineQuit, this);
 
 		// Show the console if requested now that we've parsed the command line args
-		const bool showConsole = core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
+		const bool showConsole = core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
 		if (showConsole)
 		{
 			AllocConsole();
@@ -110,7 +110,7 @@ namespace app
 
 		// Start the logging thread:
 		core::Logger::Get()->Startup(
-			core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
+			core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window (and interally pass it to the re::Context)
 		constexpr bool k_allowDragAndDrop = true; // Allways allowed, for now
@@ -262,7 +262,7 @@ namespace app
 
 		LOG("EngineApp shutting down...");
 
-		core::Config::Get()->SaveConfigFile();
+		core::Config::SaveConfigFile();
 
 		pr::UIManager::Get()->Shutdown();
 		
@@ -286,7 +286,7 @@ namespace app
 		m_window->Destroy();
 
 		// Finally, close the console if it was opened:
-		if (core::Config::Get()->KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg))
+		if (core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg))
 		{
 			FreeConsole();
 			fclose(stdout);

@@ -31,10 +31,10 @@ namespace
 			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey));
+				core::Config::GetValue<float>(core::configkeys::k_defaultDirectionalLightMinShadowBiasKey),
+				core::Config::GetValue<float>(core::configkeys::k_defaultDirectionalLightMaxShadowBiasKey));
 
-			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey);
+			shadowParams.m_softness = core::Config::GetValue<float>(core::configkeys::k_defaultDirectionalLightShadowSoftnessKey);
 
 			shadowParams.m_orthographic.m_frustumSnapMode = pr::ShadowMap::ShadowParams::Orthographic::ActiveCamera;
 		}
@@ -44,10 +44,10 @@ namespace
 			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightMaxShadowBiasKey));
+				core::Config::GetValue<float>(core::configkeys::k_defaultSpotLightMinShadowBiasKey),
+				core::Config::GetValue<float>(core::configkeys::k_defaultSpotLightMaxShadowBiasKey));
 
-			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultSpotLightShadowSoftnessKey);
+			shadowParams.m_softness = core::Config::GetValue<float>(core::configkeys::k_defaultSpotLightShadowSoftnessKey);
 		}
 		break;
 		case pr::Light::Type::Point:
@@ -55,10 +55,10 @@ namespace
 			shadowParams.m_shadowQuality = pr::ShadowMap::ShadowQuality::PCSS_HIGH;
 
 			shadowParams.m_minMaxShadowBias = glm::vec2(
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
-				core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightMaxShadowBiasKey));
+				core::Config::GetValue<float>(core::configkeys::k_defaultPointLightMinShadowBiasKey),
+				core::Config::GetValue<float>(core::configkeys::k_defaultPointLightMaxShadowBiasKey));
 
-			shadowParams.m_softness = core::Config::Get()->GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
+			shadowParams.m_softness = core::Config::GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
 		}
 		break;
 		case pr::Light::Type::AmbientIBL:

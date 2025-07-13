@@ -148,7 +148,7 @@ std::string GetCreateOutputDirectory()
 {
     // Build the output directory:
     std::string outputDir = std::format("{}\\{}{}\\",
-        core::Config::Get()->GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+        core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
         "SaberEngine",
         "_AftermathDumps");
 

@@ -34,7 +34,7 @@ namespace pr
 				core::SystemLocator::Get<gr::CullingGraphicsSystem>(ACCESS_KEY(gr::CullingGraphicsSystem::AccessKey));
 
 			// Optionally start with culling disabled by the command line
-			if (core::Config::Get()->KeyExists(core::configkeys::k_disableCullingCmdLineArg))
+			if (core::Config::KeyExists(core::configkeys::k_disableCullingCmdLineArg))
 			{
 				{
 					std::unique_lock<std::shared_mutex> lock(s_cullingDataMutex);

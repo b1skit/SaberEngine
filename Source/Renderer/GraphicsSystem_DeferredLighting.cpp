@@ -43,7 +43,7 @@ namespace
 	BRDFIntegrationData GetBRDFIntegrationParamsDataData()
 	{
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
 
 		BRDFIntegrationData brdfIntegrationParams{
 			.g_integrationTargetResolution =
@@ -72,8 +72,8 @@ namespace
 			roughness = 0;
 		}
 
-		const int numIEMSamples = core::Config::Get()->GetValue<int>(core::configkeys::k_iemNumSamplesKey);
-		const int numPMREMSamples = core::Config::Get()->GetValue<int>(core::configkeys::k_pmremNumSamplesKey);
+		const int numIEMSamples = core::Config::GetValue<int>(core::configkeys::k_iemNumSamplesKey);
+		const int numPMREMSamples = core::Config::GetValue<int>(core::configkeys::k_pmremNumSamplesKey);
 
 		generationParams.g_numSamplesRoughnessFaceIdx = glm::vec4(
 			static_cast<float>(numIEMSamples),
@@ -168,7 +168,7 @@ namespace gr
 		brdfStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_BRDFIntegration);
 
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey));
 
 		// Create a render target texture:			
 		re::Texture::TextureParams brdfParams;
@@ -216,7 +216,7 @@ namespace gr
 		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& iemTexOut) const
 	{
 		const uint32_t iemTexWidthHeight =
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_iemTexWidthHeightKey));
 
 		const re::Texture::TextureParams iemTexParams
 		{
@@ -285,7 +285,7 @@ namespace gr
 		gr::StagePipeline* pipeline, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const
 	{
 		const uint32_t pmremTexWidthHeight =
-			static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
+			static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_pmremTexWidthHeightKey));
 
 		// PMREM-specific texture params:
 		re::Texture::TextureParams pmremTexParams;
@@ -483,8 +483,8 @@ namespace gr
 
 		// Create a lighting texture target:
 		re::Texture::TextureParams lightTargetTexParams;
-		lightTargetTexParams.m_width = core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey);
-		lightTargetTexParams.m_height = core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey);
+		lightTargetTexParams.m_width = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
+		lightTargetTexParams.m_height = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
 		lightTargetTexParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
 		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
@@ -736,7 +736,7 @@ namespace gr
 						totalPMREMMipLevels,
 						ambientData.m_diffuseScale,
 						ambientData.m_specularScale,
-						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
+						static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 						m_ssaoTex);
 
 					std::shared_ptr<re::Buffer> const& ambientParams = re::Buffer::Create(
@@ -790,7 +790,7 @@ namespace gr
 					totalPMREMMipLevels,
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
-					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
+					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 					m_ssaoTex);
 
 				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);

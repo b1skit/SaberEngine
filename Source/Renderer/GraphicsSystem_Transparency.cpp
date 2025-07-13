@@ -221,7 +221,7 @@ namespace gr
 						1,
 						0.f,
 						0.f,
-						static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
+						static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
 						nullptr),
 					re::Buffer::BufferParams{
 						.m_lifetime = re::Lifetime::SingleFrame,

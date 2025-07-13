@@ -212,7 +212,7 @@ namespace re
 				streamDesc.m_dataType == re::DataType::Float4))
 		{
 			static const bool s_doNormalize = 
-				core::Config::Get()->KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
+				core::Config::KeyExists(core::configkeys::k_doCPUVertexStreamNormalizationKey);
 
 			if (s_doNormalize)
 			{

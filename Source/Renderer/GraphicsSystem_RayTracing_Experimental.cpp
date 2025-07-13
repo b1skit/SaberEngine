@@ -184,8 +184,8 @@ namespace gr
 		// Add a UAV target:
 		m_rtTarget = re::Texture::Create("RayTracing_Experimental_Target",
 			re::Texture::TextureParams{
-				.m_width = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
-				.m_height = static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
+				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
+				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
 				.m_numMips = 1,
 				.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 				.m_dimension = re::Texture::Dimension::Texture2D,
@@ -212,8 +212,8 @@ namespace gr
 				.SetOperation(gr::Batch::RayTracingParams::Operation::DispatchRays)
 				.SetASInput(re::ASInput("SceneBVH", *m_sceneTLAS))
 				.SetDispatchDimensions(glm::uvec3(
-					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowWidthKey)),
-					static_cast<uint32_t>(core::Config::Get()->GetValue<int>(core::configkeys::k_windowHeightKey)),
+					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
+					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
 					1u))
 				.SetRayGenShaderIdx(m_rayGenIdx)
 				.Build());

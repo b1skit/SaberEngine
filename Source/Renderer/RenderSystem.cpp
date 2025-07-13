@@ -344,10 +344,10 @@ namespace
 		// we disable threaded GS updates in all cases for this API
 
 		const bool singleThreadGSExecutionCmdReceived = 
-			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadGSExecution);
+			core::Config::KeyExists(core::configkeys::k_singleThreadGSExecution);
 
 		const platform::RenderingAPI api =
-			core::Config::Get()->GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
+			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey);
 		switch (api)
 		{
 		case platform::RenderingAPI::DX12: return singleThreadGSExecutionCmdReceived;

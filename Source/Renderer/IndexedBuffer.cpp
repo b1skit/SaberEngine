@@ -42,7 +42,7 @@ namespace gr
 		util::ScopedThreadProtector lock(m_ibmThreadProtector);
 
 		static const bool singleThreadIndexedBufferUpdates =
-			core::Config::Get()->KeyExists(core::configkeys::k_singleThreadIndexedBufferUpdates) == true;
+			core::Config::KeyExists(core::configkeys::k_singleThreadIndexedBufferUpdates) == true;
 
 		// Update the indexed buffers:
 		std::vector<std::future<void>> bufferUpdateFutures;

@@ -185,7 +185,7 @@ namespace gr
 		case gr::Light::Type::Directional:
 		{
 			const int defaultDirectionalWidthHeight =
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
+				core::Config::GetValue<int>(core::configkeys::k_defaultDirectionalShadowMapResolutionKey);
 
 			shadowMapTexelSize = glm::vec4(
 				defaultDirectionalWidthHeight,
@@ -197,7 +197,7 @@ namespace gr
 		case gr::Light::Type::Point:
 		{
 			const int defaultPointWidthHeight =
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
+				core::Config::GetValue<int>(core::configkeys::k_defaultShadowCubeMapResolutionKey);
 
 			shadowMapTexelSize = glm::vec4(
 				defaultPointWidthHeight,
@@ -211,7 +211,7 @@ namespace gr
 		case gr::Light::Type::Spot:
 		{
 			const int defaultSpotWidthHeight =
-				core::Config::Get()->GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
+				core::Config::GetValue<int>(core::configkeys::k_defaultSpotShadowMapResolutionKey);
 
 			shadowMapTexelSize = glm::vec4(
 				defaultSpotWidthHeight,
