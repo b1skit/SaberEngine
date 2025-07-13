@@ -86,7 +86,6 @@ namespace gr
 		~CreateAddImGuiRenderSystem() = default;
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		std::atomic<bool>* m_createdFlag = nullptr;

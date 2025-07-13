@@ -737,13 +737,6 @@ namespace pr
 	}
 
 
-	void UpdateLightDataRenderCommand::Destroy(void* cmdData)
-	{
-		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
-		cmdPtr->~UpdateLightDataRenderCommand();
-	}
-
-
 	// ---
 
 
@@ -784,12 +777,5 @@ namespace pr
 		break;
 		default: SEAssertF("Invalid type");
 		}
-	}
-
-
-	void DestroyLightDataRenderCommand::Destroy(void* cmdData)
-	{
-		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
-		cmdPtr->~DestroyLightDataRenderCommand();
 	}
 }

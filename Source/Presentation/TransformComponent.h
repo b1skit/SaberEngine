@@ -80,7 +80,6 @@ namespace pr
 		UpdateTransformDataRenderCommand(pr::TransformComponent&);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::TransformID m_transformID;

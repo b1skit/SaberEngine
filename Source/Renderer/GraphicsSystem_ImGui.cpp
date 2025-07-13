@@ -61,11 +61,4 @@ namespace gr
 
 		cmdPtr->m_createdFlag->store(true);
 	}
-
-
-	void CreateAddImGuiRenderSystem::Destroy(void* cmdData)
-	{
-		CreateAddImGuiRenderSystem* cmdPtr = reinterpret_cast<CreateAddImGuiRenderSystem*>(cmdData);
-		cmdPtr->~CreateAddImGuiRenderSystem();
-	}
 }

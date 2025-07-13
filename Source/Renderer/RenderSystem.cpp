@@ -604,11 +604,4 @@ namespace gr
 			&cmdPtr->GetRenderData(),
 			cmdPtr->GetContextForModification()));
 	}
-
-
-	void CreateAddRenderSystem::Destroy(void* cmdData)
-	{
-		CreateAddRenderSystem* cmdPtr = reinterpret_cast<CreateAddRenderSystem*>(cmdData);
-		cmdPtr->~CreateAddRenderSystem();
-	}
 }

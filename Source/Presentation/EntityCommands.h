@@ -10,7 +10,6 @@ namespace pr
 		SetMainCameraCommand(entt::entity);
 
 		static void Execute(void* cmdData);
-		static void Destroy(void*);
 
 	private:
 		const entt::entity m_newMainCamera;
@@ -23,7 +22,6 @@ namespace pr
 		SetActiveAmbientLightCommand(entt::entity);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const entt::entity m_newActiveAmbientLight;

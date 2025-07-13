@@ -16,12 +16,6 @@ namespace pr
 		pr::EntityManager::Get()->SetMainCamera(cmdPtr->m_newMainCamera);
 	}
 
-	void SetMainCameraCommand::Destroy(void* cmdData)
-	{
-		SetMainCameraCommand* cmdPtr = reinterpret_cast<SetMainCameraCommand*>(cmdData);
-		cmdPtr->~SetMainCameraCommand();
-	}
-
 
 	SetActiveAmbientLightCommand::SetActiveAmbientLightCommand(entt::entity newActiveAmbient)
 		: m_newActiveAmbientLight(newActiveAmbient)
@@ -32,11 +26,5 @@ namespace pr
 	{
 		SetActiveAmbientLightCommand* cmdPtr = reinterpret_cast<SetActiveAmbientLightCommand*>(cmdData);
 		pr::EntityManager::Get()->SetActiveAmbientLight(cmdPtr->m_newActiveAmbientLight);
-	}
-
-	void SetActiveAmbientLightCommand::Destroy(void* cmdData)
-	{
-		SetActiveAmbientLightCommand* cmdPtr = reinterpret_cast<SetActiveAmbientLightCommand*>(cmdData);
-		cmdPtr->~SetActiveAmbientLightCommand();
 	}
 }

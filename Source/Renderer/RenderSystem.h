@@ -126,7 +126,6 @@ namespace gr
 		~CreateAddRenderSystem() = default;
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		std::string m_pipelineFileName;

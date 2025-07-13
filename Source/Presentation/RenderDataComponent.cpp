@@ -160,13 +160,6 @@ namespace pr
 	}
 
 
-	void RegisterRenderObject::Destroy(void* cmdData)
-	{
-		RegisterRenderObject* cmdPtr = reinterpret_cast<RegisterRenderObject*>(cmdData);
-		cmdPtr->~RegisterRenderObject();
-	}
-
-
 	// ---
 
 
@@ -183,13 +176,6 @@ namespace pr
 		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.DestroyObject(cmdPtr->m_renderDataID);
-	}
-
-
-	void DestroyRenderObject::Destroy(void* cmdData)
-	{
-		DestroyRenderObject* cmdPtr = reinterpret_cast<DestroyRenderObject*>(cmdData);
-		cmdPtr->~DestroyRenderObject();
 	}
 
 
@@ -211,12 +197,5 @@ namespace pr
 		gr::RenderDataManager& renderData = cmdPtr->GetRenderDataManagerForModification();
 
 		renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
-	}
-
-
-	void SetRenderDataFeatureBits::Destroy(void* cmdData)
-	{
-		SetRenderDataFeatureBits* cmdPtr = reinterpret_cast<SetRenderDataFeatureBits*>(cmdData);
-		cmdPtr->~SetRenderDataFeatureBits();
 	}
 }

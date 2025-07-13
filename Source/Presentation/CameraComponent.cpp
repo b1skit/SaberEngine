@@ -133,11 +133,4 @@ namespace pr
 			gsm.SetActiveCamera(cmdPtr->m_cameraRenderDataID, cmdPtr->m_cameraTransformID);
 		}
 	}
-
-
-	void SetActiveCameraRenderCommand::Destroy(void* cmdData)
-	{
-		SetActiveCameraRenderCommand* cmdPtr = reinterpret_cast<SetActiveCameraRenderCommand*>(cmdData);
-		cmdPtr->~SetActiveCameraRenderCommand();
-	}
 }

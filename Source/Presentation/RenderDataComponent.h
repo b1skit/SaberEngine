@@ -81,7 +81,6 @@ namespace pr
 		RegisterRenderObject(RenderDataComponent const&);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;
@@ -99,7 +98,6 @@ namespace pr
 		DestroyRenderObject(gr::RenderDataID);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;
@@ -116,7 +114,6 @@ namespace pr
 		UpdateRenderData(gr::RenderDataID, T const&);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;
@@ -143,14 +140,6 @@ namespace pr
 	}
 
 
-	template<typename T>
-	void UpdateRenderData<T>::Destroy(void* cmdData)
-	{
-		UpdateRenderData<T>* cmdPtr = reinterpret_cast<UpdateRenderData<T>*>(cmdData);
-		cmdPtr->~UpdateRenderData<T>();
-	}
-
-
 	// ---
 
 
@@ -161,7 +150,6 @@ namespace pr
 		DestroyRenderData(gr::RenderDataID);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;
@@ -186,14 +174,6 @@ namespace pr
 	}
 
 
-	template<typename T>
-	void DestroyRenderData<T>::Destroy(void* cmdData)
-	{
-		DestroyRenderData<T>* cmdPtr = reinterpret_cast<DestroyRenderData<T>*>(cmdData);
-		cmdPtr->~DestroyRenderData();
-	}
-
-
 	// ---
 
 
@@ -203,7 +183,6 @@ namespace pr
 		SetRenderDataFeatureBits(gr::RenderDataID, gr::FeatureBitmask);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;

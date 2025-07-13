@@ -43,6 +43,13 @@ namespace core
 		{
 			CommandMetadata m_metadata;
 			T m_commandData;
+
+			// We've type-erased the command data, this allows us to destroy it properly
+			inline static void Destroy(void* cmdData)
+			{
+				SEStaticAssert(std::is_destructible_v<T>, "Command type must be destructible");
+				static_cast<T*>(cmdData)->~T();
+			}
 		};
 
 	private:
@@ -90,7 +97,7 @@ namespace core
 			// Set the metadata so we can access everything later on:
 			packedCommand->m_metadata.m_commandData = newCommand;
 			packedCommand->m_metadata.Execute = &newCommand->T::Execute;
-			packedCommand->m_metadata.Destroy = &newCommand->T::Destroy;
+			packedCommand->m_metadata.Destroy = &PackedCommand<T>::Destroy;
 			
 			m_commandMetadata.emplace_back(&packedCommand->m_metadata);
 		}
@@ -129,14 +136,6 @@ namespace core
 		{
 			SEBeginCPUEvent("LambdaCommandWrapper::Execute");
 			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->m_lambda();
-			SEEndCPUEvent();
-		}
-
-
-		static inline void Destroy(void* cmdData)
-		{
-			SEBeginCPUEvent("LambdaCommandWrapper::Destroy");
-			reinterpret_cast<LambdaCommandWrapper*>(cmdData)->~LambdaCommandWrapper();
 			SEEndCPUEvent();
 		}
 

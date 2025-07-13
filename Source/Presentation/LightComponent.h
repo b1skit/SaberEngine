@@ -107,7 +107,6 @@ namespace pr
 		~UpdateLightDataRenderCommand();
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;
@@ -130,7 +129,6 @@ namespace pr
 		DestroyLightDataRenderCommand(LightComponent const&);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_renderDataID;

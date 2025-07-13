@@ -86,7 +86,6 @@ namespace pr
 		SetActiveCameraRenderCommand(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
 		static void Execute(void*);
-		static void Destroy(void*);
 
 	private:
 		const gr::RenderDataID m_cameraRenderDataID;

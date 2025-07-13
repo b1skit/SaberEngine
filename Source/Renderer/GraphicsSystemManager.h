@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "BufferView.h"
 #include "GraphicsEvent.h"
 #include "RenderObjectIDs.h"
 
@@ -14,7 +15,6 @@ namespace core
 namespace re
 {
 	class Context;
-	class BufferInput;
 	class Sampler;
 }
 namespace gr

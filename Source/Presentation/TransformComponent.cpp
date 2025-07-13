@@ -144,11 +144,4 @@ namespace pr
 
 		renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);
 	}
-
-
-	void UpdateTransformDataRenderCommand::Destroy(void* cmdData)
-	{
-		UpdateTransformDataRenderCommand* cmdPtr = reinterpret_cast<UpdateTransformDataRenderCommand*>(cmdData);
-		cmdPtr->~UpdateTransformDataRenderCommand();
-	}
 }
