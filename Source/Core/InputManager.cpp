@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "Config.h"
 #include "EventManager.h"
@@ -30,6 +30,7 @@ namespace en
 	{
 		InitializeKeyboardStates();
 		InitializeMouseAxisStates();
+		InitializeMouseButtonStates();
 	}
 
 
