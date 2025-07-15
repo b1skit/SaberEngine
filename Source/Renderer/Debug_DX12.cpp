@@ -319,7 +319,7 @@ namespace dx12
 			aftermath::s_instance.InitializeGPUCrashTracker();
 		}
 #else
-		SEAssert(core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg) == false,
+		SEVerify(core::Config::KeyExists(core::configkeys::k_enableAftermathCmdLineArg) == false,
 			"\"-%s\" command line argument received, but USE_NSIGHT_AFTERMATH is not defined",
 			core::configkeys::k_enableAftermathCmdLineArg)
 #endif

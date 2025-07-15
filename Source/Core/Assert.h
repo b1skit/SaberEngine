@@ -37,7 +37,7 @@ namespace assertinternal
 	static_assert(condition, msg);
 
 
-// SEVerify will always evaluate the condition, but does not check the result or abort in non-_DEBUG builds
+// SEVerify will always evaluate the condition, but prints an error message instead of aborting in non-_DEBUG builds
 #if defined(_DEBUG)
 
 #define SEVerify(condition, errorMsg, ...) \
@@ -58,8 +58,19 @@ namespace assertinternal
 
 #else
 
-#define SEVerify(condition, errorMsg) \
-		do { static_cast<void>(condition); } while (0);
+#define SEVerify(condition, errorMsg, ...) \
+	if(!(condition)) \
+	{ \
+		std::string const& errorStr = std::format("\n\n\n\n\nVerification failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+			#condition, \
+			(condition ? "true" : "false"), \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
+		assertinternal::LogAssertAsError(errorStr.c_str()); \
+	}
 
 #endif
 
