@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "BufferView.h"
 #include "Context.h"
+#include "Effect.h"
 
 #include "Core/Assert.h"
 
@@ -266,7 +267,7 @@ namespace re
 	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateTLAS(
 		char const* name,
 		std::unique_ptr<TLASParams>&& tlasParams,
-		re::ShaderBindingTable::SBTParams const& sbtParams)
+		std::map<EffectID, re::ShaderBindingTable::SBTParams>&& sbtParams)
 	{
 		SEAssert(tlasParams, "Invalid TLASParams");
 
@@ -289,8 +290,15 @@ namespace re
 			CreateBindlessLUT(newTLASParams->m_blasInstances, newTLASParams->m_blasGeoOwnerIDs);
 
 		// Create the ShaderBindingTable:
-		newTLASParams->m_sbt = re::ShaderBindingTable::Create("Scene SBT", sbtParams, newAccelerationStructure);
-
+		for (auto const& entry : sbtParams)
+		{
+			
+			newTLASParams->m_SBTs.emplace(
+				entry.first,
+				re::ShaderBindingTable::Create(
+					entry.first.GetEffect()->GetName().c_str(), entry.second, newAccelerationStructure));
+		}
+		
 		// Register for API creation:
 		newAccelerationStructure->m_platObj->GetContext()->RegisterForCreate(newAccelerationStructure);
 
@@ -335,8 +343,11 @@ namespace re
 
 			brm->UnregisterResource(tlasParams->m_srvTLASResourceHandle);
 
-			tlasParams->m_sbt->Destroy();
-			tlasParams->m_sbt = nullptr;
+			for (auto& sbt : tlasParams->m_SBTs)
+			{
+				sbt.second->Destroy();
+			}
+			tlasParams->m_SBTs.clear();
 		}
 	}
 

@@ -217,7 +217,7 @@ namespace gr
 				AmbientLightData::s_shaderName,
 				re::Buffer::Create(
 					AmbientLightData::s_shaderName,
-					GetAmbientLightData(
+					grutil::GetAmbientLightData(
 						1,
 						0.f,
 						0.f,

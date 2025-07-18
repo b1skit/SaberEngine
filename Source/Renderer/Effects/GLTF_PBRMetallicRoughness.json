@@ -1,7 +1,7 @@
 {
 	"Effect": {
 		"Name": "GLTF_PBRMetallicRoughness",
-		"Parents": ["Common", "Debug", "RayTracing"],
+		"Parents": ["Common", "Debug", "RayTracing_Experimental", "RTAO"],
 		"DrawStyles": [
 			// Fill GBuffer:
 			{

@@ -7,16 +7,18 @@
 #include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
 #include "../Common/ResourceCommon.h"
+#include "../Common/RTAOParams.h"
 #include "../Common/TransformParams.h"
 
 
 // TODO: Use code generation to populate this and automate the space assignments
 
+
 // CBV Buffers:
 ConstantBuffer<CameraData> CameraParams[] : register(b0, space20);
 ConstantBuffer<TraceRayData> TraceRayParams[] : register(b0, space21);
 ConstantBuffer<DescriptorIndexData> DescriptorIndexes[] : register(b0, space22);
-
+ConstantBuffer<RTAOParamsData> RTAOParams[] : register(b0, space23);
 
 // SRV Buffers:
 StructuredBuffer<VertexStreamLUTData> VertexStreamLUTs[] : register(t0, space20);
@@ -29,8 +31,9 @@ StructuredBuffer<UnlitData> UnlitParams[] : register(t0, space24);
 RaytracingAccelerationStructure SceneBVH[] : register(t0, space25); // TLAS
 
 // SRV Textures:
-Texture2D<float4> Texture2DFloat4[] : register(t0, space26);
-Texture2D<float> Texture2DFloat[] : register(t0, space27);
+Texture2D<float> Texture2DFloat[] : register(t0, space26);
+Texture2D<float4> Texture2DFloat4[] : register(t0, space27);
+
 Texture2D<uint> Texture2DUint[] : register(t0, space28);
 
 Texture2DArray<float> Texture2DArrayFloat[] : register(t0, space29);
@@ -49,7 +52,10 @@ StructuredBuffer<float4> VertexStreams_Float4[]		: register(t0, space36);
 
 
 // UAV Textures:
-RWTexture2D<float4> Texture2DRWFloat4[] : register(u0, space20);
+RWTexture2D<float> Texture2DRWFloat[]	: register(u0, space20);
+RWTexture2D<float2> Texture2DRWFloat2[] : register(u0, space21);
+RWTexture2D<float3> Texture2DRWFloat3[] : register(u0, space22);
+RWTexture2D<float4> Texture2DRWFloat4[] : register(u0, space23);
 
 
 // ---------------------------------------------------------------------------------------------------------------------

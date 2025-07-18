@@ -11,11 +11,26 @@
 			"GraphicsSystem": "VertexAnimation",
 			"Inputs": [
 				{
+					// We can use culling with RTAO as it's only in screen space
 					"GraphicsSystem": "Culling",
 					"DataDependencies": [
 						{
 							"SourceName": "ViewCullingResults",
 							"DestinationName": "ViewCullingResults"
+						}
+					]
+				}
+			]
+		},
+				{
+			"GraphicsSystem": "SceneAccelerationStructure",
+			"Inputs": [
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
 						}
 					]
 				}
@@ -63,7 +78,7 @@
 			]
 		},
 		{
-			"GraphicsSystem": "XeGTAO",
+			"GraphicsSystem": "RTAO",
 			"ExcludedPlatforms": [ "OpenGL" ],
 			"Inputs": [
 				{
@@ -76,6 +91,15 @@
 						{
 							"SourceName": "GBufferWNormal",
 							"DestinationName": "SceneWNormal"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "SceneAccelerationStructure",
+					"DataDependencies": [
+						{
+							"SourceName": "SceneTLAS",
+							"DestinationName": "SceneTLAS"
 						}
 					]
 				}
@@ -173,10 +197,10 @@
 					]
 				},
 				{
-					"GraphicsSystem": "XeGTAO",
+					"GraphicsSystem": "RTAO",
 					"TextureDependencies": [
 						{
-							"SourceName": "SSAOTex",
+							"SourceName": "RTAOTex",
 							"DestinationName": "AOTex"
 						}
 					]

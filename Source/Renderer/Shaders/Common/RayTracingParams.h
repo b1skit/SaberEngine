@@ -32,6 +32,12 @@ enum RayFlag : uint32_t
 // ---
 
 
+struct RootConstantData
+{
+	uint4 g_data;
+};
+
+
 struct VertexStreamLUTData
 {
 	uint4 g_posNmlTanUV0Index;	// .xyzw = Position, Normal, Tangent, TexCoord0 resource indexes
@@ -93,6 +99,12 @@ struct raypayload HitInfo_Experimental
 };
 
 
+struct raypayload RTAO_HitInfo
+{
+	float g_visibility read(caller) write(caller, miss);
+};
+
+
 struct TraceRayData
 {
 	// .x = InstanceInclusionMask. Default = 0xFF (No geometry will be masked)
@@ -101,7 +113,7 @@ struct TraceRayData
 	// .w = MissShaderIndex: Index of miss shader to use when multiple consecutive miss shaders are present in the SBT
 	uint4 g_traceRayParams;
 
-	// .x = RAY_FLAG
+	// .x = RayFlag, .yzw = unused
 	uint4 g_rayFlags;
 
 

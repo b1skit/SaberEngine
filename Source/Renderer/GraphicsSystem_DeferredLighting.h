@@ -33,7 +33,7 @@ namespace gr
 			);
 		}
 
-		static constexpr util::CHashKey k_ssaoInput = "SSAOTex";
+		static constexpr util::CHashKey k_AOTexInput = "AOTex";
 		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
@@ -102,7 +102,7 @@ namespace gr
 
 		std::shared_ptr<gr::Stage> m_ambientStage;
 		re::BufferInput m_ambientParams;
-		core::InvPtr<re::Texture> m_ssaoTex;
+		core::InvPtr<re::Texture> m_AOTex;
 
 		gr::StagePipeline* m_resourceCreationStagePipeline;
 		gr::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;

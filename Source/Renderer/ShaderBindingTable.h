@@ -32,11 +32,13 @@ namespace re
 	public:
 		struct SBTParams final
 		{
-			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> m_rayGenStyles;
-			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> m_missStyles;
-			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> m_callableStyles;
+			std::vector<effect::drawstyle::Bitmask> m_rayGenStyles;
+			std::vector<effect::drawstyle::Bitmask> m_missStyles;
+			std::vector<effect::drawstyle::Bitmask> m_callableStyles;
 
 			effect::drawstyle::Bitmask m_hitgroupStyles; // Combined with BLAS geo bitmasks to resolve hitgroup Techniques
+
+			EffectID m_effectID;
 
 			uint32_t m_maxPayloadByteSize = 0;
 			uint32_t m_maxRecursionDepth = 0;

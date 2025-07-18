@@ -8,6 +8,7 @@
 #include "Renderer/Shaders/Common/CameraParams.h"
 #include "Renderer/Shaders/Common/MaterialParams.h"
 #include "Renderer/Shaders/Common/RayTracingParams.h"
+#include "Renderer/Shaders/Common/RTAOParams.h"
 #include "Renderer/Shaders/Common/TransformParams.h"
 
 
@@ -84,6 +85,18 @@ namespace
 
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
 			.m_shaderName = DescriptorIndexData::s_shaderName,
+			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
+				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
+				.BaseShaderRegister = 0,
+				.RegisterSpace = cbvRegisterSpace++,
+				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+				.OffsetInDescriptorsFromTableStart = 0,
+			},
+		});
+
+		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
+			.m_shaderName = RTAOParamsData::s_shaderName,
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
 				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
@@ -203,22 +216,6 @@ namespace
 		// SRV Textures:
 		//--------------
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
-			.m_shaderName = "Texture2DFloat4",
-			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
-				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
-				.BaseShaderRegister = 0,
-				.RegisterSpace = srvRegisterSpace++,
-				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
-				.OffsetInDescriptorsFromTableStart = 0,
-			},
-			.m_srvDesc = {
-				.m_format = DXGI_FORMAT_R32G32B32A32_FLOAT,
-				.m_viewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
-			}
-		});
-
-		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
 			.m_shaderName = "Texture2DFloat",
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
@@ -230,6 +227,22 @@ namespace
 			},
 			.m_srvDesc = {
 				.m_format = DXGI_FORMAT_R32_FLOAT,
+				.m_viewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+			}
+		});
+
+		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
+			.m_shaderName = "Texture2DFloat4",
+			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
+				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
+				.BaseShaderRegister = 0,
+				.RegisterSpace = srvRegisterSpace++,
+				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+				.OffsetInDescriptorsFromTableStart = 0,
+			},
+			.m_srvDesc = {
+				.m_format = DXGI_FORMAT_R32G32B32A32_FLOAT,
 				.m_viewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
 			}
 		});
@@ -386,6 +399,54 @@ namespace
 		uint32_t uavRegisterSpace = k_firstBindlessRegisterSpace;
 
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
+			.m_shaderName = "Texture2DRWFloat",
+			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
+				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
+				.BaseShaderRegister = 0,
+				.RegisterSpace = uavRegisterSpace++,
+				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+				.OffsetInDescriptorsFromTableStart = 0,
+			},
+			.m_uavDesc = {
+				.m_format = DXGI_FORMAT_R32_FLOAT,
+				.m_viewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
+			}
+		});
+
+		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
+			.m_shaderName = "Texture2DRWFloat2",
+			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
+				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
+				.BaseShaderRegister = 0,
+				.RegisterSpace = uavRegisterSpace++,
+				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+				.OffsetInDescriptorsFromTableStart = 0,
+			},
+			.m_uavDesc = {
+				.m_format = DXGI_FORMAT_R32G32_FLOAT,
+				.m_viewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
+			}
+		});
+
+		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
+			.m_shaderName = "Texture2DRWFloat3",
+			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
+				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded
+				.BaseShaderRegister = 0,
+				.RegisterSpace = uavRegisterSpace++,
+				.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE,
+				.OffsetInDescriptorsFromTableStart = 0,
+			},
+			.m_uavDesc = {
+				.m_format = DXGI_FORMAT_R32G32B32_FLOAT,
+				.m_viewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
+			}
+		});
+
+		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
 			.m_shaderName = "Texture2DRWFloat4",
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
@@ -409,13 +470,24 @@ namespace
 		// TODO: Generalize the root signature creation (or define it directly in HLSL) so we can use bindless resources
 		// in any/all shaders
 		constexpr uint32_t k_firstReservedSpaceIdx = 0;
+		uint32_t reservedRegisterSpace = k_firstReservedSpaceIdx;
 
 		// Root constant:
 		globalRootSig->AddRootParameter(dx12::RootSignature::RootParameterCreateDesc{
-			.m_shaderName = "GlobalConstants",
+			.m_shaderName = "RootConstants0",
 			.m_type = dx12::RootSignature::RootParameter::Type::Constant,
 			.m_registerBindPoint = 0,
-			.m_registerSpace = k_firstReservedSpaceIdx,
+			.m_registerSpace = reservedRegisterSpace++,
+			.m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
+			.m_visibility = D3D12_SHADER_VISIBILITY_ALL,
+			.m_numRootConstants = 4,
+		});
+
+		globalRootSig->AddRootParameter(dx12::RootSignature::RootParameterCreateDesc{
+			.m_shaderName = "RootConstants1",
+			.m_type = dx12::RootSignature::RootParameter::Type::Constant,
+			.m_registerBindPoint = 0,
+			.m_registerSpace = reservedRegisterSpace++,
 			.m_flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
 			.m_visibility = D3D12_SHADER_VISIBILITY_ALL,
 			.m_numRootConstants = 4,

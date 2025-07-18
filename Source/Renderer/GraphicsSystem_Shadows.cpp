@@ -270,7 +270,7 @@ namespace gr
 		// PCSS sample buffer::
 		m_poissonSampleParamsBuffer = re::Buffer::Create(
 			PoissonSampleParamsData::s_shaderName,
-			GetPoissonSampleParamsData(),
+			grutil::GetPoissonSampleParamsData(),
 			re::Buffer::BufferParams{
 				.m_stagingPool = re::Buffer::StagingPool::Temporary,
 				.m_memPoolPreference = re::Buffer::UploadHeap,

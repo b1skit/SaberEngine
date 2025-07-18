@@ -7,12 +7,8 @@
 #include "../Common/ResourceCommon.h"
 
 
-struct GlobalConstantsData
-{
-	// .x = SceneBVH idx, .y = TraceRayParams idx, .z = DescriptorIndexes, .w = unused
-	uint4 g_indexes; 
-};
-ConstantBuffer<GlobalConstantsData> GlobalConstants : register(b0, space0);
+// .x = SceneBVH idx, .y = TraceRayParams idx, .z = DescriptorIndexes, .w = unused
+ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
 
 
 [shader("closesthit")]
@@ -23,7 +19,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
-	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
 	// Get our Vertex stream LUTs buffer:
@@ -197,9 +193,9 @@ void RayGeneration_Experimental()
 	// Perspective
 	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
-	const uint sceneBVHDescriptorIdx = GlobalConstants.g_indexes.x;
-	const uint traceRayParamsIdx = GlobalConstants.g_indexes.y;
-	const uint descriptorIndexesIdx = GlobalConstants.g_indexes.z;
+	const uint sceneBVHDescriptorIdx = RootConstants0.g_data.x;
+	const uint traceRayParamsIdx = RootConstants0.g_data.y;
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	
 	const TraceRayData traceRayParams = TraceRayParams[traceRayParamsIdx];
 	

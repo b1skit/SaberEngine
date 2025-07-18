@@ -45,7 +45,7 @@ void PShader()
 	lightingParams.RemappedRoughness = RemapRoughness(gbuffer.LinearRoughness);
 
 	lightingParams.FineAO = gbuffer.AO;
-	lightingParams.CoarseAO = GetSSAO(In.UV0, uvec2(_AmbientLightParams.g_ssaoTexDims.xy));
+	lightingParams.CoarseAO = GetSSAO(In.UV0, uvec2(_AmbientLightParams.g_AOTexDims.xy));
 	
 	FragColor = vec4(ComputeAmbientLighting(lightingParams), 1.f);
 }

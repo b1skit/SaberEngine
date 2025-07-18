@@ -431,8 +431,11 @@ namespace dx12
 									SEAssert(!batchRTParams.m_ASInput.m_shaderName.empty(),
 										"Acceleration structure input shader name is empty");
 
-									SEAssert(batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
-										"ShaderBindingTable is null");
+									std::shared_ptr<re::ShaderBindingTable> const& sbt = 
+										batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(
+											(*batch)->GetEffectID());
+
+									SEAssert(sbt, "ShaderBindingTable is null");
 
 									SEAssert(batchRTParams.m_dispatchDimensions.x > 0 || 
 										batchRTParams.m_dispatchDimensions.y > 0 ||
@@ -440,7 +443,7 @@ namespace dx12
 										"Dispatch dimensions cannot be 0");
 									
 									cmdList->AttachBindlessResources(
-										*batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
+										*sbt,
 										*context->GetBindlessResourceManager(),
 										GetCurrentRenderFrameNum());
 
@@ -448,7 +451,7 @@ namespace dx12
 									cmdList->SetRootConstants((*batch)->GetRootConstants());
 
 									cmdList->DispatchRays(
-										*batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(),
+										*sbt,
 										batchRTParams.m_dispatchDimensions,
 										batchRTParams.m_rayGenShaderIdx,
 										GetCurrentRenderFrameNum());

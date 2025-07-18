@@ -139,6 +139,10 @@
           "Command": "-scenepipeline DeferredRasterization.json"
         },
         {
+          "Id": "28b3f50e-e4ef-4b56-8f69-102f799cb0fa",
+          "Command": "-scenepipeline Deferred_RTAO.json"
+        },
+        {
           "Id": "84306581-d976-4879-8c44-018b3d4130ac",
           "Command": "-scenepipeline RayTracing_Experimental.json"
         }

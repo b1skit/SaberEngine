@@ -236,15 +236,15 @@ namespace gr
 		SEAssert((*m_batchHandle).GetDataHash() != 0,
 			"Batch data hash has not been computed. The builder should have called this as the last step");
 
-		// Some specialized batches (e.g. ray tracing) don't have an EffectID
-		SEAssert((*m_batchHandle).GetEffectID() != 0 || 
+		// Some specialized batches (e.g. ray tracing acceleration structure operations) don't have an EffectID
+		SEAssert((*m_batchHandle).GetEffectID() != 0 ||
 			(*m_batchHandle).GetType() == gr::Batch::BatchType::RayTracing,
 			"Invalid EffectID");
 
-		// Resolve the shader:
-		const effect::drawstyle::Bitmask finalDrawstyle = (*m_batchHandle).GetDrawstyleBits() | stageDrawstyleBits;
-		if ((*m_batchHandle).GetEffectID() != 0)
+		// Resolve the shader (except for RT batches, which use a ShaderBindingTable instad)
+		if ((*m_batchHandle).GetType() != gr::Batch::BatchType::RayTracing)
 		{
+			const effect::drawstyle::Bitmask finalDrawstyle = (*m_batchHandle).GetDrawstyleBits() | stageDrawstyleBits;
 			m_batchShader = effectDB.GetResolvedShader((*m_batchHandle).GetEffectID(), finalDrawstyle);
 		}
 

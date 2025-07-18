@@ -467,7 +467,7 @@ namespace dx12
 		std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers)
 	{
 		auto AddRangeInput = [&rangeInputs, &inputBindingDesc, &shaderType]
-			(dx12::RootSignature::DescriptorType descriptorType)
+			(dx12::RootSignature::DescriptorType descriptorType) -> bool // True if a new RangeInput was added
 			{
 				uint32_t maxDescriptorCount = 0;
 				switch (descriptorType)
@@ -491,12 +491,14 @@ namespace dx12
 					newRangeInput.m_name = inputBindingDesc.Name; // Copy the name before it goes out of scope
 					newRangeInput.m_visibility = GetShaderVisibilityFlagFromShaderType(shaderType);
 
-					// Adjust bind counts for unbounded resoruce arrays to the max supported by the system
+					// Adjust bind counts for unbounded resource arrays to the max supported by the system
 					if (newRangeInput.BindCount == 0 || // Bind count zero signals an unbounded array in a library shader
 						newRangeInput.BindCount == std::numeric_limits<uint32_t>::max()) // Unbounded
 					{
 						newRangeInput.BindCount = maxDescriptorCount;
 					}
+
+					return true; // Added a new RangeInput
 				}
 				else
 				{
@@ -512,9 +514,10 @@ namespace dx12
 						result->NumSamples == inputBindingDesc.NumSamples,
 						"Found resource with the same name but a different binding description");
 
+					// Note: We update the visibility of the descriptor table later
 					result->m_visibility = D3D12_SHADER_VISIBILITY_ALL;
 
-					// Note: We update the visibility of the descriptor table later
+					return false; // Didn't add a new RangeInput
 				}
 			};
 
@@ -557,15 +560,21 @@ namespace dx12
 			}
 			else
 			{
-				AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
+				const bool addedNewRangeInput = AddRangeInput(dx12::RootSignature::DescriptorType::SRV);
+				if (addedNewRangeInput)
+				{
+					SEAssert(rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Type == D3D_SIT_RTACCELERATIONSTRUCTURE,
+						"Back element is not an acceleration structure. This should not be possible");
 
-				SEAssert(rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_UNKNOWN ||
-					rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_BUFFEREX,
-					"Unexpected dimension");
+					SEAssert(rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_UNKNOWN ||
+						rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension == D3D_SRV_DIMENSION_BUFFEREX,
+						"Unexpected dimension");
 
-				// Shader reflection gives .Dimension = D3D_SRV_DIMENSION_UNKNOWN, switch it now so it's easier to get
-				// the correct D3D12_SRV_DIMENSION (i.e. D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE) later on
-				rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension = D3D_SRV_DIMENSION_BUFFEREX;
+					// Shader reflection gives .Dimension = D3D_SRV_DIMENSION_UNKNOWN, switch it now so it's easier to
+					// get the correct D3D12_SRV_DIMENSION (i.e. D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
+					// later on
+					rangeInputs[dx12::RootSignature::DescriptorType::SRV].back().Dimension = D3D_SRV_DIMENSION_BUFFEREX;
+				}
 			}
 		}
 		break;

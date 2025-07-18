@@ -112,14 +112,14 @@ namespace
 	}
 }
 
-namespace gr
+namespace grutil
 {
 	AmbientLightData GetAmbientLightData(
 		uint32_t numPMREMMips,
 		float diffuseScale, 
 		float specularScale, 
 		const uint32_t dfgTexWidthHeight, 
-		core::InvPtr<re::Texture> const& ssaoTex)
+		core::InvPtr<re::Texture> const& AOTex)
 	{
 
 		AmbientLightData ambientLightParamsData{};
@@ -133,10 +133,10 @@ namespace gr
 			diffuseScale,
 			specularScale);
 
-		ambientLightParamsData.g_ssaoTexDims = glm::vec4(0.f);
-		if (ssaoTex)
+		ambientLightParamsData.g_AOTexDims = glm::vec4(0.f);
+		if (AOTex)
 		{
-			ambientLightParamsData.g_ssaoTexDims = ssaoTex->GetTextureDimenions();
+			ambientLightParamsData.g_AOTexDims = AOTex->GetTextureDimenions();
 		}
 
 		return ambientLightParamsData;
@@ -145,7 +145,7 @@ namespace gr
 
 	LightData CreateDirectionalLightData(
 		gr::Light::RenderDataDirectional const& lightRenderData,
-		IDType lightID,
+		gr::IDType lightID,
 		gr::RenderDataManager const& renderData)
 	{
 		return CreateLightDataHelper(&lightRenderData, gr::Light::Directional, lightID, renderData);
@@ -154,7 +154,7 @@ namespace gr
 
 	LightData CreatePointLightData(
 		gr::Light::RenderDataPoint const& lightRenderData,
-		IDType lightID,
+		gr::IDType lightID,
 		gr::RenderDataManager const& renderData)
 	{
 		return CreateLightDataHelper(&lightRenderData, gr::Light::Point, lightID, renderData);
@@ -163,7 +163,7 @@ namespace gr
 
 	LightData CreateSpotLightData(
 		gr::Light::RenderDataSpot const& lightRenderData,
-		IDType lightID,
+		gr::IDType lightID,
 		gr::RenderDataManager const& renderData)
 	{
 		return CreateLightDataHelper(&lightRenderData, gr::Light::Spot, lightID, renderData);
@@ -172,7 +172,7 @@ namespace gr
 
 	ShadowData CreateShadowData(
 		gr::ShadowMap::RenderData const& shadowRenderData,
-		IDType lightRenderDataID,
+		gr::IDType lightRenderDataID,
 		gr::RenderDataManager const& renderData)
 	{
 		gr::Camera::RenderData const& shadowCamRenderData =

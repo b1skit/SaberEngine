@@ -54,6 +54,8 @@ namespace gr
 		std::shared_ptr<gr::Stage> m_rtStage;
 		core::InvPtr<re::Texture> m_rtTarget;
 
+		EffectID m_rtEffectID;
+
 		uint32_t m_rayGenIdx;
 		uint32_t m_missShaderIdx;
 		uint8_t m_geometryInstanceMask;

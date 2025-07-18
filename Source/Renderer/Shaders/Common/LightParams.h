@@ -15,7 +15,7 @@ struct AmbientLightData
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	float4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
-	float4 g_ssaoTexDims; // .xyzw = width, height, 1/width, 1/height
+	float4 g_AOTexDims; // .xyzw = width, height, 1/width, 1/height
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "AmbientLightParams";

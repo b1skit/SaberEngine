@@ -1,13 +1,13 @@
 {
 	"Effect" : {
-		"Name" :  "RayTracing",
+		"Name" :  "RayTracing_Experimental",
 		"ExcludedPlatforms": [ "OpenGL" ],
 		"Parents" : [],
 		"DrawStyles" :  [
 			// Hit groups:
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -15,7 +15,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -23,7 +23,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -31,7 +31,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -39,7 +39,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -47,7 +47,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Geometry" },
+					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -57,29 +57,29 @@
 			// Ray gen:
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_RayGen_A" }
+					{ "Rule" : "RT_Experimental", "Mode" : "RayGen_A" }
 				],
-				"Technique": "RT_Experimental_RayGen_A"
+				"Technique": "RayGen_A"
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_RayGen_B" }
+					{ "Rule" : "RT_Experimental", "Mode" : "RayGen_B" }
 				],
-				"Technique": "RT_Experimental_RayGen_B"
+				"Technique": "RayGen_B"
 			},
 
 			// Miss:
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Miss_Blue" }
+					{ "Rule" : "RT_Experimental", "Mode" : "Miss_Blue" }
 				],
-				"Technique": "RT_Experimental_Miss_Blue"
+				"Technique": "Miss_Blue"
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RT_Experimental_Miss_Red" }
+					{ "Rule" : "RT_Experimental", "Mode" : "Miss_Red" }
 				],
-				"Technique": "RT_Experimental_Miss_Red"
+				"Technique": "Miss_Red"
 			}
 
 			// Callable:
@@ -151,13 +151,13 @@
 
 			// Ray gen:
 			{
-				"Name": "RT_Experimental_RayGen_A",
+				"Name": "RayGen_A",
 				"RayGenerationShader": "RayTracing_Experimental",
 				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
 				"RayGenerationShaderDefines": ["RAY_GEN_A"]
 			},
 			{
-				"Name": "RT_Experimental_RayGen_B",
+				"Name": "RayGen_B",
 				"RayGenerationShader": "RayTracing_Experimental",
 				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
 				"RayGenerationShaderDefines": ["RAY_GEN_B"]
@@ -165,13 +165,13 @@
 
 			// Miss:
 			{
-				"Name": "RT_Experimental_Miss_Blue",
+				"Name": "Miss_Blue",
 				"MissShader": "RayTracing_Experimental",
 				"MissShaderEntryPoint": "Miss_Experimental",
 				"MissShaderDefines": ["MISS_BLUE"]
 			},
 			{
-				"Name": "RT_Experimental_Miss_Red",
+				"Name": "Miss_Red",
 				"MissShader": "RayTracing_Experimental",
 				"MissShaderEntryPoint": "Miss_Experimental",
 				"MissShaderDefines": ["MISS_RED"]

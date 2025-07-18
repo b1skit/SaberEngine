@@ -76,12 +76,13 @@ namespace re
 		// Resolve our shaders:
 		auto ResolveShaders = [](
 			std::set<ShaderID>& seenShaders,
-			std::vector<std::pair<EffectID, effect::drawstyle::Bitmask>> const& styles,
+			EffectID effectID, 
+			std::vector<effect::drawstyle::Bitmask> const& styles,
 			std::vector<core::InvPtr<re::Shader>>& shadersOut)
 			{
 				for (auto const& entry : styles)
 				{
-					core::InvPtr<re::Shader> const& shader = entry.first.GetResolvedShader(entry.second);
+					core::InvPtr<re::Shader> const& shader = effectID.GetResolvedShader(entry);
 					if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
 					{
 						shadersOut.emplace_back(shader);
@@ -91,11 +92,11 @@ namespace re
 
 		// Ray generation shaders:
 		std::set<ShaderID> seenRayGenShaders;
-		ResolveShaders(seenRayGenShaders, m_sbtParams.m_rayGenStyles, m_rayGenShaders);
+		ResolveShaders(seenRayGenShaders, m_sbtParams.m_effectID, m_sbtParams.m_rayGenStyles, m_rayGenShaders);
 
 		// Miss shaders:
 		std::set<ShaderID> seenMissShaders;
-		ResolveShaders(seenMissShaders, m_sbtParams.m_missStyles, m_missShaders);
+		ResolveShaders(seenMissShaders, m_sbtParams.m_effectID, m_sbtParams.m_missStyles, m_missShaders);
 
 		// Hit group shaders: Build a unique list of shaders used across all BLAS instances:
 		re::AccelerationStructure::TLASParams const* tlasParams =
@@ -131,7 +132,7 @@ namespace re
 
 		// Callable shaders:
 		std::set<ShaderID> seenCallableShaders;
-		ResolveShaders(seenCallableShaders, m_sbtParams.m_callableStyles, m_callableShaders);
+		ResolveShaders(seenCallableShaders, m_sbtParams.m_effectID, m_sbtParams.m_callableStyles, m_callableShaders);
 
 
 #if defined (_DEBUG)

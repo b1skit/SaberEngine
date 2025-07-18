@@ -119,21 +119,21 @@ namespace gr
 		// Lights:
 		IndexedBufferManager::IIndexedBuffer* indexedDirectionalLights = m_indexedBufferManager->AddIndexedBuffer(
 			LightData::s_directionalLightDataShaderName, // Buffer name (not the shader name)
-			gr::CreateDirectionalLightData,
+			grutil::CreateDirectionalLightData,
 			re::Buffer::DefaultHeap);
 
 		indexedDirectionalLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
 
 		IndexedBufferManager::IIndexedBuffer* indexedPointLights = m_indexedBufferManager->AddIndexedBuffer(
 			LightData::s_pointLightDataShaderName, // Buffer name (not the shader name)
-			gr::CreatePointLightData,
+			grutil::CreatePointLightData,
 			re::Buffer::DefaultHeap);
 
 		indexedPointLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
 
 		IndexedBufferManager::IIndexedBuffer* indexedSpotLights = m_indexedBufferManager->AddIndexedBuffer(
 			LightData::s_spotLightDataShaderName, // Buffer name (not the shader name)
-			gr::CreateSpotLightData,
+			grutil::CreateSpotLightData,
 			re::Buffer::DefaultHeap);
 
 		indexedSpotLights->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetLightBufferIndex);
@@ -142,7 +142,7 @@ namespace gr
 		// Shadows:
 		IndexedBufferManager::IIndexedBuffer* indexedShadows = m_indexedBufferManager->AddIndexedBuffer(
 			ShadowData::s_shaderName, // Buffer name (not the shader name)
-			gr::CreateShadowData,
+			grutil::CreateShadowData,
 			re::Buffer::DefaultHeap);
 
 		indexedShadows->AddLUTWriterCallback<LightShadowLUTData>(LightShadowLUTData::SetShadowBufferIndex);

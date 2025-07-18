@@ -484,6 +484,15 @@ namespace gr
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a texture on");
+
 #if defined(_DEBUG)
 		for (auto const& singleFrameTexInput : m_singleFrameTextureSamplerInputs)
 		{
@@ -543,6 +552,15 @@ namespace gr
 
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0,
 			"Attempting to add a Texture input that does not have an appropriate usage flag");
+
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a texture on");
 
 #if defined(_DEBUG)
 		for (auto const& permanentTexInput : m_permanentTextureSamplerInputs)
@@ -742,6 +760,14 @@ namespace gr
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0 &&
 			(tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
+		SEAssert(m_type == gr::Stage::Type::Raster || 
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a texture on");
 
 #if defined(_DEBUG)
 		for (auto const& singleFrameRWTexInput : m_singleFrameRWTextureInputs)
@@ -789,6 +815,14 @@ namespace gr
 		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::ColorSrc) != 0 &&
 			(tex->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) != 0,
 			"Invalid usage");
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a texture on");
 
 #if defined(_DEBUG)
 		for (auto const& permanentRWTexInput : m_permanentRWTextureInputs)
@@ -1194,6 +1228,14 @@ namespace gr
 		SEAssert(bufferInput.GetLifetime() == re::Lifetime::Permanent, "Invalid BufferInput lifetime");
 		SEAssert(bufferInput.GetBuffer()->GetLifetime() == re::Lifetime::Permanent, "Invalid Buffer lifetime");
 		SEAssert(!bufferInput.GetShaderName().empty() && bufferInput.GetBuffer(), "Buffer cannot be unnamed or null");
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a permanent Buffer on");
 
 		SEAssert(std::find_if(
 			m_permanentBuffers.begin(),
@@ -1283,6 +1325,15 @@ namespace gr
 			}) == m_permanentBuffers.end(),
 				"A permanent Buffer with shader name \"%s\" has already been added",
 				bufferInput.GetShaderName().c_str());
+
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::ClearTargetSet ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Copy ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a buffer on");
 
 		m_singleFrameBuffers.emplace_back(std::move(bufferInput));
 	}

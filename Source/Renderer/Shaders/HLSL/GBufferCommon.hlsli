@@ -20,7 +20,7 @@ Texture2D<float4> GBufferRMAO;
 Texture2D<float4> GBufferEmissive;
 Texture2D<float4> GBufferMatProp0;
 Texture2D<uint> GBufferMaterialID;
-Texture2D<float4> GBufferDepth;
+Texture2D<float> GBufferDepth;
 
 
 struct GBuffer

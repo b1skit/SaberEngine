@@ -126,7 +126,7 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::RegisterInputs()
 	{
-		RegisterTextureInput(k_ssaoInput, TextureInputDefault::OpaqueWhite);
+		RegisterTextureInput(k_AOTexInput, TextureInputDefault::OpaqueWhite);
 
 		RegisterDataInput(k_pointLightCullingDataInput);
 		RegisterDataInput(k_spotLightCullingDataInput);
@@ -524,12 +524,12 @@ namespace gr
 		m_ambientStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());	
 
 		// Get/set the AO texture. If it doesn't exist, we'll get a default opaque white texture
-		m_ssaoTex = *texDependencies.at(k_ssaoInput);
+		m_AOTex = *texDependencies.at(k_AOTexInput);
 
 		core::InvPtr<re::Sampler> const& clampMinMagMipPoint = m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint");
 
 		m_ambientStage->AddPermanentTextureInput(
-			k_ssaoInput.GetKey(), m_ssaoTex, clampMinMagMipPoint, re::TextureView(m_ssaoTex));
+			k_AOTexInput.GetKey(), m_AOTex, clampMinMagMipPoint, re::TextureView(m_AOTex));
 
 		// Append the ambient stage:
 		pipeline.AppendStage(m_ambientStage);
@@ -732,12 +732,12 @@ namespace gr
 
 					const uint32_t totalPMREMMipLevels = pmremTex->GetNumMips();
 
-					const AmbientLightData ambientLightParamsData = GetAmbientLightData(
+					const AmbientLightData ambientLightParamsData = grutil::GetAmbientLightData(
 						totalPMREMMipLevels,
 						ambientData.m_diffuseScale,
 						ambientData.m_specularScale,
 						static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-						m_ssaoTex);
+						m_AOTex);
 
 					std::shared_ptr<re::Buffer> const& ambientParams = re::Buffer::Create(
 						AmbientLightData::s_shaderName,
@@ -786,12 +786,12 @@ namespace gr
 
 				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
 
-				const AmbientLightData ambientLightParamsData = GetAmbientLightData(
+				const AmbientLightData ambientLightParamsData = grutil::GetAmbientLightData(
 					totalPMREMMipLevels,
 					ambientRenderData.m_diffuseScale,
 					ambientRenderData.m_specularScale,
 					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_brdfLUTWidthHeightKey)),
-					m_ssaoTex);
+					m_AOTex);
 
 				ambientLight.second.m_ambientParams->Commit(ambientLightParamsData);
 			}

@@ -146,6 +146,7 @@
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
+    <ClInclude Include="GraphicsSystem_RTAO.h" />
     <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h" />
     <ClInclude Include="GraphicsSystem_BatchManager.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="pch\pch.h" />
     <ClInclude Include="PipelineState_DX12.h" />
     <ClInclude Include="RasterState.h" />
+    <ClInclude Include="RayTracingParamsHelpers.h" />
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="RenderDataManager.h" />
     <ClInclude Include="RenderManager.h" />
@@ -185,6 +187,7 @@
     <ClInclude Include="ShaderBindingTable.h" />
     <ClInclude Include="ShaderBindingTable_DX12.h" />
     <ClInclude Include="ShaderBindingTable_Platform.h" />
+    <ClInclude Include="Shaders\Common\RTAOParams.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="RenderSystemDesc.h" />
@@ -290,6 +293,7 @@
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
+    <ClCompile Include="GraphicsSystem_RTAO.cpp" />
     <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp" />
     <ClCompile Include="GraphicsSystem_BatchManager.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
@@ -322,6 +326,7 @@
     </ClCompile>
     <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RasterState.cpp" />
+    <ClCompile Include="RayTracingParamsHelpers.cpp" />
     <ClCompile Include="RenderCommand.cpp" />
     <ClCompile Include="RenderDataManager.cpp" />
     <ClCompile Include="RenderManager.cpp" />
@@ -373,6 +378,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Dependencies\XeGTAO\XeGTAO.hlsli" />
+    <None Include="Effects\RTAO.json" />
     <None Include="Shaders\GLSL\AmbientCommon.glsli" />
     <None Include="Shaders\GLSL\Blit_PShader.glsl" />
     <None Include="Shaders\GLSL\Bloom_CShader.glsl" />
@@ -476,7 +482,7 @@
     <None Include="Effects\GLTF_PBRMetallicRoughness.json" />
     <None Include="Effects\GLTF_Unlit.json" />
     <None Include="Effects\MipGeneration.json" />
-    <None Include="Effects\RayTracing.json" />
+    <None Include="Effects\RayTracing_Experimental.json" />
     <None Include="Effects\Skybox.json" />
     <None Include="Effects\Tonemapping.json" />
     <None Include="Effects\VertexAnimation.json" />
@@ -489,6 +495,11 @@
     <ProjectReference Include="..\ImGui\ImGui.vcxproj">
       <Project>{2a4b9a77-8f4d-4e9f-8a3a-7b5c6d8e9f10}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\HLSL\RTAO.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

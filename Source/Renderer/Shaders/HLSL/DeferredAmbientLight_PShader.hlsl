@@ -6,14 +6,14 @@
 
 #include "../Common/MaterialParams.h"
 
-Texture2D<uint> SSAOTex;
+Texture2D<uint> AOTex;
 
 
 float GetSSAO(float2 screenUV, uint2 screenPxDims)
 {
 	const uint3 coords = uint3(screenUV * screenPxDims, 0);
 	
-	return SSAOTex.Load(coords).r / 255.0f; // SSAOTex is uint
+	return AOTex.Load(coords).r / 255.0f; // AOTex is uint
 }
 
 
@@ -45,7 +45,7 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.RemappedRoughness = RemapRoughness(gbuffer.LinearRoughness);
 
 	lightingParams.FineAO = gbuffer.AO;
-	lightingParams.CoarseAO = GetSSAO(In.UV0, AmbientLightParams.g_ssaoTexDims.xy);
+	lightingParams.CoarseAO = GetSSAO(In.UV0, AmbientLightParams.g_AOTexDims.xy);
 	
 	return float4(ComputeAmbientLighting(lightingParams), 1.f);
 }

@@ -1,0 +1,151 @@
+{
+	"Effect" : {
+		"Name" :  "RTAO",
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"Parents" : [],
+		"DrawStyles" :  [
+			// Hit groups:
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "RTAO_HitGroup_OpaqueSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "RTAO_HitGroup_ClipSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RTAO_HitGroup_OpaqueDoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RTAO_HitGroup_ClipDoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "RTAO_HitGroup_BlendSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "RTAO_HitGroup_BlendDoubleSided"
+			},
+
+			// Ray gen:
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "RayGen" }
+				],
+				"Technique": "RTAO_RayGen"
+			},
+
+			// Miss:
+			{
+				"Conditions": [
+					{ "Rule" : "RTAO", "Mode" : "Miss" }
+				],
+				"Technique": "RTAO_Miss"
+			}
+
+		],
+		"Techniques" :  [
+			// Hit groups:
+			// Note: For hit groups, we use the Technique name as the hit group name
+			{
+				"Name": "RTAO_HitGroup_OpaqueSingleSided",
+
+				"ClosestHitShader": "RTAO",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
+			},
+			{
+				"Name": "RTAO_HitGroup_ClipSingleSided",
+
+				"AnyHitShader": "RTAO",
+				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
+				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RTAO",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+			},
+			{
+				"Name": "RTAO_HitGroup_OpaqueDoubleSided",
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "RTAO_HitGroup_ClipDoubleSided",
+
+				"AnyHitShader": "RTAO",
+				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
+				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RTAO",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "RTAO_HitGroup_BlendSingleSided",
+
+				"AnyHitShader": "RTAO",
+				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
+				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RTAO",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
+			},
+			{
+				"Name": "RTAO_HitGroup_BlendDoubleSided",
+
+				"AnyHitShader": "RTAO",
+				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
+				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RTAO",
+				"ClosestHitShaderEntryPoint" : "RTAO_ClosestHit",
+				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
+			},
+
+			// Ray gen:
+			{
+				"Name": "RTAO_RayGen",
+				"RayGenerationShader": "RTAO",
+				"RayGenerationShaderEntryPoint": "RTAO_RayGeneration"
+			},
+
+			// Miss:
+			{
+				"Name": "RTAO_Miss",
+				"MissShader": "RTAO",
+				"MissShaderEntryPoint": "RTAO_Miss"
+			}
+		]
+	}
+}
