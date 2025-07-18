@@ -1,0 +1,110 @@
+// © 2025 Adam Badke. All rights reserved.
+#ifndef HLSL_TO_GLSL
+#define HLSL_TO_GLSL
+
+#if defined(SE_OPENGL)
+
+// Type mappings
+#define float1			float
+#define float2			vec2
+#define float3			vec3
+#define float4			vec4
+#define float2x2		mat2
+#define float3x3		mat3
+#define float4x4		mat4
+
+#define int1			int
+#define int2			ivec2
+#define int3			ivec3
+#define int4			ivec4
+
+#define uint1			uint
+#define uint2			uvec2
+#define uint3			uvec3
+#define uint4			uvec4
+
+#define bool1			bool
+#define bool2			bvec2
+#define bool3			bvec3
+#define bool4			bvec4
+
+#define                 float2x2 mat2
+#define                 float3x3 mat3
+#define                 float4x4 mat4
+
+// Matrix operations:
+#define mul(a, b)		((a) * (b))
+
+// Function mappings:
+#define saturate(x)		clamp(x, 0.0, 1.0)
+#define lerp			mix
+#define frac(x)			fract(x)
+#define rsqrt(x)		inversesqrt(x)
+#define ddx				dFdx
+#define ddy				dFdy
+
+
+// Function overloads:
+float select(bool cond, float a, float b)
+{
+	return cond ? a : b;
+}
+
+float2 select(bool cond, float2 a, float2 b)
+{
+	return cond ? a : b;
+}
+
+float3 select(bool cond, float3 a, float3 b)
+{
+	return cond ? a : b;
+}
+
+float4 select(bool cond, float4 a, float4 b)
+{
+	return cond ? a : b;
+}
+
+int select(bool cond, int a, int b)
+{
+	return cond ? a : b;
+}
+
+int2 select(bool cond, int2 a, int2 b)
+{
+	return cond ? a : b;
+}
+
+int3 select(bool cond, int3 a, int3 b)
+{
+	return cond ? a : b;
+}
+
+int4 select(bool cond, int4 a, int4 b)
+{
+	return cond ? a : b;
+}
+
+uint select(bool cond, uint a, uint b)
+{
+	return cond ? a : b;
+}
+
+uint2 select(bool cond, uint2 a, uint2 b)
+{
+	return cond ? a : b;
+}
+
+uint3 select(bool cond, uint3 a, uint3 b)
+{
+	return cond ? a : b;
+}
+
+uint4 select(bool cond, uint4 a, uint4 b)
+{
+	return cond ? a : b;
+}
+
+#endif
+
+#endif // HLSL_TO_GLSL

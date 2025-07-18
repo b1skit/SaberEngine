@@ -1,9 +1,13 @@
 #version 460 // Suppress IDE warnings; Stripped out at compile time
-#include "MathConstants.glsli"
+#include "MathConstants.hlsli"
 #include "Lighting.glsli"
 #include "UVUtils.glsli"
 
+#include "HLSLToGLSL.glsli"
+#include "Sampling.hlsli"
+
 #include "../Common/IBLGenerationParams.h"
+
 
 layout(binding=0) uniform BRDFIntegrationParams { BRDFIntegrationData _BRDFIntegrationParams; };
 

@@ -2,7 +2,7 @@
 #ifndef SABER_UVUTILS
 #define SABER_UVUTILS
 
-#include "MathConstants.glsli"
+#include "MathConstants.hlsli"
 
 
 // Transform pixel coordintes ([0, xRes), [0, yRes)) to [0,1] screen-space UVs.

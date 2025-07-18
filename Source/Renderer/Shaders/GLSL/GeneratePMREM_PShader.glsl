@@ -3,10 +3,13 @@
 #define SABER_VEC4_OUTPUT
 #define VOUT_LOCAL_POS
 
-#include "MathConstants.glsli"
+#include "MathConstants.hlsli"
 #include "SaberCommon.glsli"
 #include "Lighting.glsli"
 #include "UVUtils.glsli"
+
+#include "HLSLToGLSL.glsli"
+#include "Sampling.hlsli"
 
 #include "../Common/IBLGenerationParams.h"
 

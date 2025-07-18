@@ -408,7 +408,6 @@
     <None Include="Shaders\GLSL\GLTF_Unlit_VShader.glsl" />
     <None Include="Shaders\GLSL\Lighting.glsli" />
     <None Include="Shaders\GLSL\Line.glsl" />
-    <None Include="Shaders\GLSL\MathConstants.glsli" />
     <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl" />
     <None Include="Shaders\GLSL\NormalMapUtils.glsli" />
     <None Include="Shaders\GLSL\SaberCommon.glsli" />
@@ -471,6 +470,7 @@
     <None Include="Shaders\HLSL\XeGTAO_MainPass.hlsl" />
     <None Include="Shaders\HLSL\XeGTAO_PrefilterDepths.hlsl" />
     <None Include="Shaders\shadertoolsconfig.json" />
+    <None Include="Shaders\Shared\HLSLToGLSL.glsli" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Effects\Bloom.json" />

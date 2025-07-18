@@ -474,6 +474,7 @@ namespace droid
 			// Assemble a list of directories to search for shaders and #includes
 			const std::vector<std::string> glslIncludeDirectories = {
 				m_parseParams.m_glslShaderSourceDir,
+				m_parseParams.m_hlslShaderSourceDir, // For when HLSLToGLSL.glsli is used
 				m_parseParams.m_glslCodeGenOutputDir,
 				m_parseParams.m_commonShaderSourceDir,
 				m_parseParams.m_dependenciesDir,				

@@ -1039,9 +1039,6 @@
     <None Include="Shaders\GLSL\Line.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\GLSL\MathConstants.glsli">
-      <Filter>Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\GLSL\MorphAnimation_CShader.glsl">
       <Filter>Shaders\GLSL</Filter>
     </None>
@@ -1278,6 +1275,9 @@
     </None>
     <None Include="Shaders\HLSL\RTAO.hlsl">
       <Filter>Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\Shared\HLSLToGLSL.glsli">
+      <Filter>Shaders\GLSL</Filter>
     </None>
   </ItemGroup>
 </Project>
