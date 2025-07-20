@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Core/Assert.h"
 
@@ -86,7 +86,7 @@ namespace dx12
 			PageBlock(uint32_t baseOffset, uint32_t numBytes);
 			PageBlock(HeapAllocation const&);
 
-			bool operator<(PageBlock const&) { return true; }
+			bool operator<(PageBlock const& rhs) const { return m_baseOffset < rhs.m_baseOffset; }
 
 			bool CanFit(uint32_t alignment, uint32_t requestedNumBytes) const;
 		};
@@ -261,7 +261,7 @@ namespace dx12
 
 	private: // No copies allowed:
 		GPUResource(GPUResource const&) = delete;
-		GPUResource& operator=(GPUResource const&) = default;
+		GPUResource& operator=(GPUResource const&) = delete;
 	};
 
 
@@ -312,7 +312,7 @@ namespace dx12
 
 	private: // No copies allowed:
 		HeapManager(HeapManager const&) = delete;
-		HeapManager& operator=(HeapManager const&) = default;
+		HeapManager& operator=(HeapManager const&) = delete;
 	};
 
 

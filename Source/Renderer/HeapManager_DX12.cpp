@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "HeapManager_DX12.h"
 #include "SysInfo_DX12.h"
@@ -539,8 +539,16 @@ namespace dx12
 
 
 	HeapAllocation::HeapAllocation(HeapAllocation&& rhs) noexcept
+		: m_owningHeapPage(rhs.m_owningHeapPage)
+		, m_heap(rhs.m_heap)
+		, m_baseOffset(rhs.m_baseOffset)
+		, m_numBytes(rhs.m_numBytes)
 	{
-		*this = std::move(rhs);
+		// Invalidate rhs
+		rhs.m_owningHeapPage = nullptr;
+		rhs.m_heap = nullptr;
+		rhs.m_baseOffset = 0;
+		rhs.m_numBytes = 0;
 	}
 
 
@@ -548,8 +556,20 @@ namespace dx12
 	{
 		if (&rhs != this)
 		{
-			memcpy(this, &rhs, sizeof(HeapAllocation));
-			memset(&rhs, 0, sizeof(HeapAllocation));
+			// Free current allocation if valid
+			Free();
+			
+			// Move data from rhs
+			m_owningHeapPage = rhs.m_owningHeapPage;
+			m_heap = rhs.m_heap;
+			m_baseOffset = rhs.m_baseOffset;
+			m_numBytes = rhs.m_numBytes;
+			
+			// Invalidate rhs
+			rhs.m_owningHeapPage = nullptr;
+			rhs.m_heap = nullptr;
+			rhs.m_baseOffset = 0;
+			rhs.m_numBytes = 0;
 		}
 		return *this;
 	}
@@ -745,8 +765,8 @@ namespace dx12
 
 		const PageBlock pageBlock(resourceAllocation);
 
-		// Note: m_freeBlocksMutex is already locked when we're calling this
-		util::ScopedThreadProtector threadProtector(m_threadProtector);
+		// Acquire mutex to ensure thread-safe access to free blocks
+		std::lock_guard<std::mutex> lock(m_freeBlocksMutex);
 
 		if (m_freeBlocks.empty())
 		{
@@ -961,7 +981,7 @@ namespace dx12
 			// We support dynamic page sizes: Try to use the default page size, unless a larger request is made
 			const uint32_t pageSize = std::max(
 				k_defaultPageSize,
-				numBytes = util::RoundUpToNearestMultiple(numBytes, m_alignment));
+				util::RoundUpToNearestMultiple(numBytes, m_alignment));
 
 			const size_t pageIdx = m_pages.size(); // For debug naming
 			m_pages.emplace_back(std::make_unique<HeapPage>(m_heapDesc, pageSize, pageIdx));
@@ -984,7 +1004,7 @@ namespace dx12
 			std::unordered_map<HeapPage const*, uint8_t> emptyPageFrameCount;
 
 			size_t pageIdx = 0;
-			for (size_t i = 0; i < m_pages.size(); ++i)
+			while (pageIdx < m_pages.size())
 			{
 				if (m_pages[pageIdx]->IsEmpty())
 				{
@@ -999,18 +1019,23 @@ namespace dx12
 
 					if (emptyCount >= k_numEmptyFramesBeforePageRelease)
 					{
-						std::iter_swap(m_pages.begin() + pageIdx, m_pages.end() - 1);
+						// Remove the page by swapping with the last element and popping
+						if (pageIdx != m_pages.size() - 1)
+						{
+							std::iter_swap(m_pages.begin() + pageIdx, m_pages.end() - 1);
+						}
 						m_pages.pop_back();
+						// Don't increment pageIdx since we moved a new page to this position
 					}
 					else
 					{
 						emptyPageFrameCount.emplace(pagePtr, emptyCount);
-						pageIdx++; // Only increment if we didn't swap'n'pop
+						++pageIdx; // Only increment if we didn't swap'n'pop
 					}
 				}
 				else
 				{
-					pageIdx++; // Only increment if we didn't swap'n'pop
+					++pageIdx; // Only increment if we didn't swap'n'pop
 				}
 			}
 
@@ -1280,10 +1305,20 @@ namespace dx12
 			std::unique_lock<std::recursive_mutex> lock(m_deferredGPUResourceDeletionsMutex);
 
 			// We must clear the deferred delete queue at the end of the frame once our command lists are closed
-			while (!m_deferredGPUResourceDeletions.empty() &&
-				m_deferredGPUResourceDeletions.front().first + m_numFramesInFlight < frameNum)
+			while (!m_deferredGPUResourceDeletions.empty())
 			{
-				SEAssert(m_deferredGPUResourceDeletions.front().second.m_resource != nullptr,
+				const auto& [enqueuedFrame, resource] = m_deferredGPUResourceDeletions.front();
+				
+				// Check if enough frames have passed or if we're in shutdown (frameNum at max)
+				const bool shouldRelease = (frameNum == std::numeric_limits<uint64_t>::max()) ||
+					(enqueuedFrame + m_numFramesInFlight < frameNum);
+					
+				if (!shouldRelease)
+				{
+					break;
+				}
+
+				SEAssert(resource.m_resource != nullptr,
 					"Found a null ID3D12Resource when processing deferred deletions");
 
 				m_deferredGPUResourceDeletions.pop();

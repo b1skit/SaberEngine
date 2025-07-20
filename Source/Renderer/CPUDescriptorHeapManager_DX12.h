@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -58,7 +58,7 @@ namespace dx12
 
 	private:
 		CPUDescriptorHeapManager(CPUDescriptorHeapManager const&) = delete;
-		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager&&) noexcept = delete;
+		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager&&) noexcept = default;
 		CPUDescriptorHeapManager& operator=(CPUDescriptorHeapManager const&) = delete;
 	};
 

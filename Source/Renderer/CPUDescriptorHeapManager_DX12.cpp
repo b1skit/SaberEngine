@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "Core/Assert.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"
@@ -398,7 +398,7 @@ namespace dx12
 		{
 			if (this->IsValid())
 			{
-				Free(0);
+				Free(0); // Free immediately with fence value 0
 			}
 
 			m_baseDescriptor = std::move(rhs.m_baseDescriptor);
@@ -413,7 +413,7 @@ namespace dx12
 
 	DescriptorAllocation::~DescriptorAllocation()
 	{
-		Free(0);
+		Free(0); // Free immediately with fence value 0
 
 		SEAssert(m_baseDescriptor.ptr == 0 && m_allocationPage == nullptr,
 			"DescriptorAllocation has not been correctly invalidated");
