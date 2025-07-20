@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #ifndef SABER_LIGHTING
 #define SABER_LIGHTING
 
@@ -32,7 +32,7 @@ float GetSpotlightAngleAttenuation(
 	float scaleTerm,
 	float offsetTerm)
 {
-	const float cd = dot(normalize(-toLight), lightWorldForwardDir);
+	const float cd = dot(-toLight, lightWorldForwardDir);
 	
 	float attenuation = clamp(cd * scaleTerm + offsetTerm, 0.f, 1.f);
 	
