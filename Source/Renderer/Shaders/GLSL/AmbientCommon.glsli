@@ -30,7 +30,8 @@ float CombineAO(float fineAO, float coarseAO)
 float ComputeSpecularAO(float NoV, float remappedRoughness, float fineAO)
 {
 	const float totalAO = fineAO;
-	return clamp(pow(NoV + totalAO, exp2(-16.f * remappedRoughness - 1.f)) - 1.f + fineAO, 0.f, 1.f);
+	// Use pow(abs(f), e) to suppress warning X3571
+	return clamp(pow(abs(NoV + totalAO), exp2(-16.f * remappedRoughness - 1.f)) - 1.f + fineAO, 0.f, 1.f);
 }
 
 
