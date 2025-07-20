@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "HeapManager_DX12.h"
 #include "SysInfo_DX12.h"
@@ -1137,7 +1137,7 @@ namespace dx12
 			SEAssert(!rhs.m_heapAllocation.IsValid(), "Heap allocation should no longer be valid");
 
 			m_resource = rhs.m_resource;
-			rhs.m_resource = nullptr;
+			rhs.m_resource = nullptr; // Clear the moved-from resource pointer to prevent premature unregistration
 			
 			m_isValid = rhs.m_isValid;
 			rhs.m_isValid = false;
