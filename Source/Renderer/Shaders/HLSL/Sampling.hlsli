@@ -1,4 +1,4 @@
-// � 2023 Adam Badke. All rights reserved.
+﻿// © 2023 Adam Badke. All rights reserved.
 #ifndef SABER_SAMPLING
 #define SABER_SAMPLING
 
@@ -31,9 +31,9 @@ float2 Hammersley2D(uint i, uint N)
 // A referential RHCS, with N equivalent to Z
 struct Referential
 {
-	float3 N;			// Equivalent to Z in a RHCS
-	float3 TangentX;	// Equivalent to right/X in a RHCS
-	float3 BitangentY;	// Equivalent to up/Y in an RHCS
+	float3 N;			// Equivalent to Z+ in a RHCS
+	float3 TangentX;	// Equivalent to right/X+ in a RHCS
+	float3 BitangentY;	// Equivalent to up/Y+ in an RHCS
 };
 
 // Build a referential coordinate system with respect to a normal vector
@@ -96,6 +96,39 @@ void ImportanceSampleCosDir(
 {	
 	Referential localReferential = BuildReferential(N);
 	ImportanceSampleCosDir(u, localReferential, L, NoL, pdf);
+}
+
+
+// Cosine-weighted hemisphere sampling via Fibonacci spiral
+void ImportanceSampleFibonacciSpiralDir(
+	uint sampleIdx,
+	uint numSamples,
+	float angularOffset, // [0, 1) random value: Should be constant for all samples of a given pixel
+	in Referential localReferential,
+	out float3 L,
+	out float NoL,
+	out float pdf)
+{
+	const float i = float(sampleIdx);
+	const float N = float(numSamples);
+	
+	const float r = sqrt((i + 0.5f) / N); // Area-proportional
+	const float phi = (i + angularOffset) * GOLDEN_ANGLE;
+
+	const float x = r * cos(phi);
+	const float y = r * sin(phi);
+	const float z = sqrt(saturate(1.f - r * r)); // Ensure unit hemisphere
+
+	// Convert to world space using the referential basis:
+	const float3 localDir = float3(x, y, z);
+	
+	L = localDir.x * localReferential.TangentX
+	  + localDir.y * localReferential.BitangentY
+	  + localDir.z * localReferential.N;
+
+	NoL = dot(localReferential.N, L);
+	
+	pdf = NoL * M_1_PI;
 }
 
 

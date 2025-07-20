@@ -30,5 +30,5 @@ void PShader()
 
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
-	FragColor = texture(Tex0, sphericalUVs, 0);
+	FragColor = textureLod(Tex0, sphericalUVs, 0);
 }

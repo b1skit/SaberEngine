@@ -99,7 +99,7 @@ void PShader()
 
 			const vec2 sphericalUV = WorldDirToSphericalUV(L);
 			
-			const vec3 Li = texture(Tex0, sphericalUV, mipLevel).rgb;
+			const vec3 Li = textureLod(Tex0, sphericalUV, mipLevel).rgb;
 
 			result += Li * NoL;
 			resultWeight += NoL;

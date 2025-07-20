@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_LOCAL_POS
 
+#include "Random.hlsli"
 #include "SaberCommon.hlsli"
 #include "Sampling.hlsli"
 #include "UVUtils.hlsli"
@@ -12,6 +13,8 @@ ConstantBuffer<IEMPMREMGenerationData> IEMPMREMGenerationParams;
 
 Texture2D<float4> Tex0;
 
+//#define SAMPLE_HAMMERSLEY
+#define SAMPLE_FIBONACCI
 
 // The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the
 // decomposed approximate microfacet BRDF.
@@ -38,18 +41,35 @@ float4 PShader(VertexOut In) : SV_Target
 	// World-space direction from the center of the cube towards the current cubemap pixel
 	const float3 N = normalize(In.LocalPos);
 	
-	float3 result = float3(0.f, 0.f, 0.f);
+#if defined(SAMPLE_FIBONACCI)
+	const uint maxDimension = max(
+		IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.y,
+		IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.z);
 	
+	RNGState1D rngState = InitializeRNGState1D(uint3(
+		(1.f + N.x) * maxDimension,
+		(1.f + N.y) * maxDimension,
+		(1.f + N.z) * maxDimension));
+	
+	const float angularOffset = GetNextFloat(rngState);
+#endif
+	
+	const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
+	
+	float3 result = float3(0.f, 0.f, 0.f);
 	for (uint i = 0; i < numSamples; i++)
-	{
-		const float2 eta = Hammersley2D(i, numSamples);
-
-		const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
-		
+	{		
 		float3 L;
 		float NoL;
 		float pdf;
+		
+#if defined (SAMPLE_HAMMERSLEY)
+		const float2 eta = Hammersley2D(i, numSamples);
 		ImportanceSampleCosDir(eta, localReferential, L, NoL, pdf);
+		
+#elif defined(SAMPLE_FIBONACCI)
+		ImportanceSampleFibonacciSpiralDir(i, numSamples, angularOffset, localReferential, L, NoL, pdf);
+#endif		
 
 		if (NoL > 0)
 		{

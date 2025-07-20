@@ -88,7 +88,7 @@ namespace
 		const float maxDimension = static_cast<float>(std::max(srcWidth, srcHeight));
 
 		generationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips = glm::vec4(
-			glm::log2(glm::sqrt(maxDimension)),
+			glm::log2(glm::sqrt(maxDimension)) + 1,
 			srcWidth, 
 			srcHeight, 
 			numMipLevels);

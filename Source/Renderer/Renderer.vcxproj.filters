@@ -1276,6 +1276,9 @@
     <None Include="Shaders\HLSL\RTAO.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\Random.hlsli">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
     <None Include="Shaders\Shared\HLSLToGLSL.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>

@@ -76,7 +76,7 @@ vec3 GetDiffuseIBLContribution(vec3 N, vec3 V, float NoV, float remappedRoughnes
 	
 	const vec3 diffuseLighting = texture(CubeMapIEM, WorldToCubeSampleDir(dominantN)).rgb; // IEM
 
-	const float fDiffuse = texture(DFG, vec2(NoV, remappedRoughness), 0).z;
+	const float fDiffuse = textureLod(DFG, vec2(NoV, remappedRoughness), 0).z;
 	
 	return diffuseLighting * fDiffuse * diffuseScale;
 }
@@ -135,7 +135,7 @@ vec3 GetSpecularIBLContribution(
 	//	Fc = (1.f - LoH)^5
 	//	PreIntegratedDFG.r = GVis * (1.f - Fc)
 	//	PreIntegratedDFG.g = GVis * Fc	
-	const vec2 preIntegratedDFG = texture(DFG, vec2(NoV, remappedRoughness), 0).xy;
+	const vec2 preIntegratedDFG = textureLod(DFG, vec2(NoV, remappedRoughness), 0).xy;
 	
 	// LD * (f0 * GVis * (1.f - Fc) + GVis * Fc * f90)
 	return preIntegratedLD * (blendedF0 * preIntegratedDFG.r + f90 * preIntegratedDFG.g) * specScale;
