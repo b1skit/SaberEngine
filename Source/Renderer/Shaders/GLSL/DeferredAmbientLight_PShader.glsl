@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #version 460
 #define SABER_VEC4_OUTPUT
 
@@ -9,11 +9,14 @@
 #include "../Common/MaterialParams.h"
 
 layout(binding=7) uniform CameraParams { CameraData _CameraParams; };
+layout(binding=32) uniform usampler2D AOTex;
 
 
 float GetSSAO(vec2 screenUV, uvec2 screenPxDims)
 {
-	return 1.f; // TODO: Implement this
+	const ivec2 coords = ivec2(screenUV * vec2(screenPxDims));
+	
+	return float(texelFetch(AOTex, coords, 0).r) / 255.0f; // AOTex is uint
 }
 
 
