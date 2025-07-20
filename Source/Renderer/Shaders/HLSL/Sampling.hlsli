@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #ifndef SABER_SAMPLING
 #define SABER_SAMPLING
 
@@ -106,7 +106,7 @@ float3 ImportanceSampleGGXDir(in float2 u, in float roughness, in Referential lo
 	const float a = roughness * roughness;
 	
 	const float phi = M_2PI * u.x;
-	const float cosTheta = sqrt((1.f - u.y) / (1.f + (a * a - 1.f) * u.y));
+	const float cosTheta = sqrt((1.f - u.y) / (1.f + (a - 1.f) * u.y));
 	const float sinTheta = sqrt(max(1.f - cosTheta * cosTheta, 0.f));
 	
 	// Spherical to cartesian coordinates:
