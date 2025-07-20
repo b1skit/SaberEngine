@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "TextureView.h"
@@ -39,6 +39,7 @@ namespace dx12
 		DescriptorCache& operator=(DescriptorCache&&) noexcept = default;
 
 		void Destroy();
+		void EndFrame(uint64_t currentFrameNum);
 
 
 	public:
@@ -50,19 +51,29 @@ namespace dx12
 
 
 	private:
-		using CacheEntry = std::pair<util::HashKey, dx12::DescriptorAllocation>;
+		inline void PerformPeriodicCleanup(uint64_t currentFrame);
+
+		struct CacheEntry
+		{
+			util::HashKey m_hash;
+			dx12::DescriptorAllocation m_allocation;
+			uint64_t m_lastUsedFrame;
+
+			CacheEntry(util::HashKey hash, dx12::DescriptorAllocation&& allocation, uint64_t currentFrame)
+				: m_hash(hash), m_allocation(std::move(allocation)), m_lastUsedFrame(currentFrame) {}
+		};
 
 		struct CacheComparator
 		{
 			// Return true if 1st element is ordered before the 2nd
 			inline bool operator()(dx12::DescriptorCache::CacheEntry const& cacheEntry, util::HashKey dataHash)
 			{
-				return cacheEntry.first < dataHash;
+				return cacheEntry.m_hash < dataHash;
 			}
 
 			inline bool operator()(dx12::DescriptorCache::CacheEntry const& a, dx12::DescriptorCache::CacheEntry const& b)
 			{
-				return a.first < b.first;
+				return a.m_hash < b.m_hash;
 			}
 		};
 
@@ -73,6 +84,11 @@ namespace dx12
 		ID3D12Device* m_deviceCache;
 
 		DescriptorType m_descriptorType;
+
+		// Cache cleanup parameters
+		static constexpr uint64_t k_cacheCleanupFrameInterval = 300; // Clean up every 300 frames (~5 seconds at 60fps)
+		static constexpr uint64_t k_maxUnusedFrames = 1800; // Remove descriptors unused for 1800 frames (~30 seconds at 60fps)
+		uint64_t m_lastCleanupFrame;
 
 
 	private: // No copying allowed:

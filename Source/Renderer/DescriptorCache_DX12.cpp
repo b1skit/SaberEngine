@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "Buffer_DX12.h"
 #include "Buffer.h"
 #include "BufferView.h"
@@ -9,6 +9,7 @@
 #include "Texture_DX12.h"
 
 #include "Core/Assert.h"
+#include "Core/Logger.h"
 #include "Core/Util/CastUtils.h"
 
 
@@ -595,6 +596,7 @@ namespace dx12
 		: m_descriptorType(descriptorType)
 		, m_context(context)
 		, m_deviceCache(context->GetDevice().GetD3DDevice().Get())
+		, m_lastCleanupFrame(0)
 	{
 		SEAssert(m_descriptorType != DescriptorType::DescriptorType_Count, "Invalid descriptor type");
 	}
@@ -619,11 +621,62 @@ namespace dx12
 			for (auto& cacheEntry : m_descriptorCache)
 			{
 				// Descriptor cache is destroyed via deferred texture/buffer deletion; It's safe to immediately free here
-				cacheEntry.second.Free(0); 
+				cacheEntry.m_allocation.Free(0); 
 			}
 			m_descriptorCache.clear();
 			m_descriptorType = DescriptorType::DescriptorType_Count;
 		}
+	}
+
+
+	void DescriptorCache::EndFrame(uint64_t currentFrameNum)
+	{
+		// Only perform cleanup periodically to avoid performance overhead every frame
+		if (currentFrameNum - m_lastCleanupFrame < k_cacheCleanupFrameInterval)
+		{
+			return;
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
+
+			// Remove descriptors that haven't been used recently
+			auto removeItr = std::remove_if(m_descriptorCache.begin(), m_descriptorCache.end(),
+				[currentFrameNum](CacheEntry& entry) -> bool
+				{
+					const bool shouldRemove = (currentFrameNum - entry.m_lastUsedFrame) > k_maxUnusedFrames;
+					if (shouldRemove)
+					{
+						// Free the descriptor allocation before removing the entry
+						entry.m_allocation.Free(0);
+					}
+					return shouldRemove;
+				});
+
+			if (removeItr != m_descriptorCache.end())
+			{
+				const size_t removedCount = std::distance(removeItr, m_descriptorCache.end());
+				m_descriptorCache.erase(removeItr, m_descriptorCache.end());
+				
+				// Optional: Log cleanup for debugging (can be removed in release)
+				#ifdef _DEBUG
+				if (removedCount > 0)
+				{
+					LOG_INFO("DescriptorCache: Cleaned up {} unused descriptor(s), {} remaining", 
+						removedCount, m_descriptorCache.size());
+				}
+				#endif
+			}
+
+			m_lastCleanupFrame = currentFrameNum;
+		}
+	}
+
+
+	inline void DescriptorCache::PerformPeriodicCleanup(uint64_t currentFrame)
+	{
+		// Perform cleanup automatically during regular usage
+		EndFrame(currentFrame);
 	}
 
 
@@ -633,6 +686,11 @@ namespace dx12
 		re::TextureView::ValidateView(texture, texView); // _DEBUG only
 
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid, "Invalid view dimension");
+
+		const uint64_t currentFrame = m_context->GetCurrentRenderFrameNum();
+
+		// Perform periodic cleanup to prevent unbounded growth
+		PerformPeriodicCleanup(currentFrame);
 
 		{
 			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
@@ -653,32 +711,33 @@ namespace dx12
 			}
 
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
-			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
+			if (cacheItr == m_descriptorCache.end() || cacheItr->m_hash != texView.GetDataHash())
 			{
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
-					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
+					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1),
+					currentFrame };
 
 				switch (m_descriptorType)
 				{
 				case DescriptorType::SRV:
 				{
-					InitializeTextureSRV(m_deviceCache, newCacheEntry.second, texture, texView);
+					InitializeTextureSRV(m_deviceCache, newCacheEntry.m_allocation, texture, texView);
 				}
 				break;
 				case DescriptorType::UAV:
 				{
-					InitializeTextureUAV(m_deviceCache, newCacheEntry.second, texture, texView);
+					InitializeTextureUAV(m_deviceCache, newCacheEntry.m_allocation, texture, texView);
 				}
 				break;
 				case DescriptorType::RTV:
 				{
-					InitializeTextureRTV(m_deviceCache, newCacheEntry.second, texture, texView);
+					InitializeTextureRTV(m_deviceCache, newCacheEntry.m_allocation, texture, texView);
 				}
 				break;
 				case DescriptorType::DSV:
 				{
-					InitializeTextureDSV(m_deviceCache, newCacheEntry.second, texture, texView);
+					InitializeTextureDSV(m_deviceCache, newCacheEntry.m_allocation, texture, texView);
 				}
 				break;
 				default: SEAssertF("Invalid heap type");
@@ -693,11 +752,13 @@ namespace dx12
 					std::move(newCacheEntry)
 				);
 
-				return insertResult->second.GetBaseDescriptor();
+				return insertResult->m_allocation.GetBaseDescriptor();
 			}
 			else
 			{
-				return cacheItr->second.GetBaseDescriptor();
+				// Update last used frame for existing descriptor
+				cacheItr->m_lastUsedFrame = currentFrame;
+				return cacheItr->m_allocation.GetBaseDescriptor();
 			}
 		}
 	}
@@ -709,6 +770,11 @@ namespace dx12
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
 		re::Buffer const& buffer, re::BufferView const& bufView)
 	{
+		const uint64_t currentFrame = m_context->GetCurrentRenderFrameNum();
+
+		// Perform periodic cleanup to prevent unbounded growth
+		PerformPeriodicCleanup(currentFrame);
+
 		{
 			std::lock_guard<std::mutex> lock(m_descriptorCacheMutex);
 
@@ -730,27 +796,28 @@ namespace dx12
 			}
 
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
-			if (cacheItr == m_descriptorCache.end() || cacheItr->first != bufViewHash)
+			if (cacheItr == m_descriptorCache.end() || cacheItr->m_hash != bufViewHash)
 			{
 				CacheEntry newCacheEntry{
 					bufViewHash,
-					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
+					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1),
+					currentFrame };
 
 				switch (m_descriptorType)
 				{
 				case DescriptorType::CBV:
 				{
-					InitializeBufferCBV(m_deviceCache, newCacheEntry.second, buffer, bufView);
+					InitializeBufferCBV(m_deviceCache, newCacheEntry.m_allocation, buffer, bufView);
 				}
 				break;
 				case DescriptorType::SRV:
 				{
-					InitializeBufferSRV(m_deviceCache, newCacheEntry.second, buffer, bufView);
+					InitializeBufferSRV(m_deviceCache, newCacheEntry.m_allocation, buffer, bufView);
 				}
 				break;
 				case DescriptorType::UAV:
 				{
-					InitializeBufferUAV(m_deviceCache, newCacheEntry.second, buffer, bufView);
+					InitializeBufferUAV(m_deviceCache, newCacheEntry.m_allocation, buffer, bufView);
 				}
 				break;
 				case DescriptorType::RTV:
@@ -771,11 +838,13 @@ namespace dx12
 					std::move(newCacheEntry)
 				);
 
-				return insertResult->second.GetBaseDescriptor();
+				return insertResult->m_allocation.GetBaseDescriptor();
 			}
 			else
 			{
-				return cacheItr->second.GetBaseDescriptor();
+				// Update last used frame for existing descriptor
+				cacheItr->m_lastUsedFrame = currentFrame;
+				return cacheItr->m_allocation.GetBaseDescriptor();
 			}
 		}
 	}
