@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -54,6 +54,9 @@ namespace dx12
 		std::vector<std::unique_ptr<AllocationPage>> m_allocationPages;
 		std::set<size_t> m_freePageIndexes; // Sorted indexes of non-full m_allocationPages
 		std::mutex m_allocationPagesIndexesMutex;
+
+		std::unordered_map<AllocationPage const*, uint8_t> m_emptyPageFrameCount;
+		static constexpr uint8_t k_numEmptyFramesBeforePageRelease = 10; // No. consecutive empty frames before page release
 
 
 	private:

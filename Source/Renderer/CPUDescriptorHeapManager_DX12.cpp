@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "Core/Assert.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "Debug_DX12.h"
@@ -40,6 +40,7 @@ namespace dx12
 
 		m_allocationPages = std::move(rhs.m_allocationPages);
 		m_freePageIndexes = std::move(rhs.m_freePageIndexes);
+		m_emptyPageFrameCount = std::move(rhs.m_emptyPageFrameCount);
 	}
 
 
@@ -58,6 +59,7 @@ namespace dx12
 
 		m_freePageIndexes.clear();
 		m_allocationPages.clear();
+		m_emptyPageFrameCount.clear();
 	}
 
 
@@ -105,16 +107,65 @@ namespace dx12
 	{
 		std::lock_guard<std::mutex> allocationLock(m_allocationPagesIndexesMutex);
 
-		for (size_t i = 0; i < m_allocationPages.size(); i++)
-		{
-			m_allocationPages[i]->ReleaseFreedAllocations(fenceVal);
+		// Free any pages that have been empty for k_numEmptyFramesBeforePageRelease frames
+		std::unordered_map<AllocationPage const*, uint8_t> emptyPageFrameCount;
 
-			if (m_allocationPages[i]->GetNumFreeElements() > 0)
+		size_t pageIdx = 0;
+		for (size_t i = 0; i < m_allocationPages.size(); ++i)
+		{
+			m_allocationPages[pageIdx]->ReleaseFreedAllocations(fenceVal);
+
+			const bool isPageEmpty = (m_allocationPages[pageIdx]->GetNumFreeElements() == k_numDescriptorsPerPage);
+			if (isPageEmpty)
 			{
-				// std::set contains unique keys only; We can safely insert the same index multiple times
-				m_freePageIndexes.insert(i);
+				AllocationPage const* pagePtr = m_allocationPages[pageIdx].get();
+				uint8_t emptyCount = 1;
+
+				auto emptyPageItr = m_emptyPageFrameCount.find(pagePtr);
+				if (emptyPageItr != m_emptyPageFrameCount.end())
+				{
+					emptyCount += emptyPageItr->second;
+				}
+
+				if (emptyCount >= k_numEmptyFramesBeforePageRelease)
+				{
+					// Remove from free page indexes if present
+					m_freePageIndexes.erase(pageIdx);
+
+					// Swap with the last page and remove
+					std::iter_swap(m_allocationPages.begin() + pageIdx, m_allocationPages.end() - 1);
+					m_allocationPages.pop_back();
+
+					// Update free page indexes after swapping
+					if (pageIdx < m_allocationPages.size())
+					{
+						const size_t lastPageIdx = m_allocationPages.size();
+						auto lastPageIdxItr = m_freePageIndexes.find(lastPageIdx);
+						if (lastPageIdxItr != m_freePageIndexes.end())
+						{
+							m_freePageIndexes.erase(lastPageIdxItr);
+							m_freePageIndexes.insert(pageIdx);
+						}
+					}
+				}
+				else
+				{
+					emptyPageFrameCount.emplace(pagePtr, emptyCount);
+					pageIdx++; // Only increment if we didn't swap'n'pop
+				}
+			}
+			else
+			{
+				if (m_allocationPages[pageIdx]->GetNumFreeElements() > 0)
+				{
+					// std::set contains unique keys only; We can safely insert the same index multiple times
+					m_freePageIndexes.insert(pageIdx);
+				}
+				pageIdx++; // Only increment if we didn't swap'n'pop
 			}
 		}
+
+		m_emptyPageFrameCount = std::move(emptyPageFrameCount);
 	}
 
 
