@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #define SABER_VEC4_OUTPUT
 
 #include "SaberCommon.glsli"
@@ -30,5 +30,5 @@ void PShader()
 
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
-	FragColor = texture(Tex0, sphericalUVs, 0);
+	FragColor = textureLod(Tex0, sphericalUVs, 0.0);
 }

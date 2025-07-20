@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #version 460
 #define SABER_VEC4_OUTPUT
 #define VOUT_LOCAL_POS
@@ -99,7 +99,7 @@ void PShader()
 
 			const vec2 sphericalUV = WorldDirToSphericalUV(L);
 			
-			const vec3 Li = texture(Tex0, sphericalUV, mipLevel).rgb;
+			const vec3 Li = textureLod(Tex0, sphericalUV, mipLevel).rgb;
 
 			result += Li * NoL;
 			resultWeight += NoL;

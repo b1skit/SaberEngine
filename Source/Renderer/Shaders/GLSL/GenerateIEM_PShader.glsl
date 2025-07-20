@@ -61,7 +61,7 @@ void PShader()
 		{
 			const vec2 sphericalUV = WorldDirToSphericalUV(L);
 
-			result += texture(Tex0, sphericalUV, srcMip).rgb;
+			result += textureLod(Tex0, sphericalUV, srcMip).rgb;
 		}
 	}
 	
