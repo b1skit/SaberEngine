@@ -192,6 +192,7 @@
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="RenderSystemDesc.h" />
     <ClInclude Include="HeapManager_DX12.h" />
+    <ClInclude Include="HeapManagerValidation_DX12.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
     <ClInclude Include="RLibrary_ImGui_DX12.h" />
     <ClInclude Include="RLibrary_ImGui_OpenGL.h" />

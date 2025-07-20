@@ -395,6 +395,9 @@
     <ClInclude Include="HeapManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="HeapManagerValidation_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
     <ClInclude Include="GPUTimer.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
