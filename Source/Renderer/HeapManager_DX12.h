@@ -6,6 +6,7 @@
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/ThreadProtector.h"
 
+SE_DISABLE_OPTIMIZATIONS;
 
 namespace dx12
 {
@@ -85,8 +86,6 @@ namespace dx12
 
 			PageBlock(uint32_t baseOffset, uint32_t numBytes);
 			PageBlock(HeapAllocation const&);
-
-			bool operator<(PageBlock const&) { return true; }
 
 			bool CanFit(uint32_t alignment, uint32_t requestedNumBytes) const;
 		};

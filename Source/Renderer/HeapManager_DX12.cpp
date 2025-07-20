@@ -961,7 +961,7 @@ namespace dx12
 			// We support dynamic page sizes: Try to use the default page size, unless a larger request is made
 			const uint32_t pageSize = std::max(
 				k_defaultPageSize,
-				numBytes = util::RoundUpToNearestMultiple(numBytes, m_alignment));
+				util::RoundUpToNearestMultiple(numBytes, m_alignment));
 
 			const size_t pageIdx = m_pages.size(); // For debug naming
 			m_pages.emplace_back(std::make_unique<HeapPage>(m_heapDesc, pageSize, pageIdx));
