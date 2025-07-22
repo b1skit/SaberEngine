@@ -15,12 +15,15 @@ namespace dx12
 	public:
 		~Context() override = default;
 
-		// Context interface:
+		
+	private: // Context interface:
 		void Create_Platform() override;
+		void BeginFrame_Platform() override;
 		void Update_Platform() override;
 		void EndFrame_Platform() override;
 		void Destroy_Platform() override;
 		
+
 	public:
 		void Present() override;
 

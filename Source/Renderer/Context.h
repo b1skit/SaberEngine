@@ -75,6 +75,7 @@ namespace re
 
 	private:
 		virtual void Create_Platform() = 0;
+		virtual void BeginFrame_Platform() = 0;
 		virtual void Update_Platform() = 0;
 		virtual void EndFrame_Platform() = 0;
 		virtual void Destroy_Platform() = 0;

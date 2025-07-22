@@ -165,6 +165,8 @@ namespace re
 		{
 			brm->BeginFrame(m_currentFrameNum);
 		}
+
+		BeginFrame_Platform();
 	}
 
 

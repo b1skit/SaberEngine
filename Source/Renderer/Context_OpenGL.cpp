@@ -3,7 +3,6 @@
 #include "BufferView.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"
-#include "MeshPrimitive.h"
 #include "RasterState.h"
 #include "Sampler_OpenGL.h"
 #include "Shader_OpenGL.h"
@@ -431,6 +430,12 @@ namespace opengl
 		// Buffer Allocator:
 		m_bufferAllocator = re::BufferAllocator::Create();
 		m_bufferAllocator->Initialize(this, m_numFramesInFlight, m_currentFrameNum, nullptr /*No platform data in OpenGL*/);
+	}
+
+
+	void Context::BeginFrame_Platform()
+	{
+		//
 	}
 
 

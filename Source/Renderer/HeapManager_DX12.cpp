@@ -1197,6 +1197,7 @@ namespace dx12
 		: m_device(nullptr)
 		, m_numFramesInFlight(0)
 		, m_canMixResourceTypes(false)
+		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 	{
 	}
 
@@ -1264,6 +1265,7 @@ namespace dx12
 
 	void HeapManager::BeginFrame(uint64_t frameNum)
 	{
+		SEAssert(frameNum == m_currentFrameNum + 1, "Unexpected next frame number");
 		m_currentFrameNum = frameNum;
 	}
 

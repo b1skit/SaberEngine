@@ -137,6 +137,12 @@ namespace dx12
 	}
 
 
+	void Context::BeginFrame_Platform()
+	{
+		m_heapManager.BeginFrame(m_currentFrameNum);
+	}
+
+
 	void Context::Update_Platform()
 	{
 		// Update the bindless resource manager.
