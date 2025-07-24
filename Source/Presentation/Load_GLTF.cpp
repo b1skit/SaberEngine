@@ -1,7 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AnimationComponent.h"
 #include "BoundsComponent.h"
-#include "Camera.h"
 #include "CameraComponent.h"
 #include "EntityCommands.h"
 #include "EntityManager.h"
@@ -17,8 +16,10 @@
 #include "SkinningComponent.h"
 #include "TransformComponent.h"
 
-#include "Core/Config.h"
 #include "Core/Inventory.h"
+#include "Core/Logger.h"
+
+#include "Core/Definitions/ConfigKeys.h"
 
 #include "Core/Util/ByteVector.h"
 #include "Core/Util/FileIOUtils.h"
