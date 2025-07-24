@@ -1,4 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
+#ifndef BINDLESS_RESOURCES
+#define BINDLESS_RESOURCES
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Bindless resources
 // Note: We use register spaces to overlap unbounded arrays on index 0
@@ -96,3 +99,6 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 	
 	return vertexIndexes;
 }
+
+
+#endif // BINDLESS_RESOURCES

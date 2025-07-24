@@ -1282,5 +1282,8 @@
     <None Include="Shaders\Shared\HLSLToGLSL.glsli">
       <Filter>Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\GBufferBindless.hlsli">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
 </Project>

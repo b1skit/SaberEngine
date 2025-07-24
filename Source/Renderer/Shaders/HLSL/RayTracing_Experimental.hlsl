@@ -1,6 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "BindlessResources.hlsli"
 #include "RayTracingCommon.hlsli"
+#include "GBufferBindless.hlsli"
 
 #include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
@@ -86,6 +87,18 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
 	uv = uv - floor(uv);
 	
+	// Unpack the GBuffer:
+	const GBuffer gbuffer = UnpackBindlessGBuffer(
+		uv,
+		baseColorResourceIdx,
+		INVALID_RESOURCE_IDX, // worldNormalResourceIdx
+		INVALID_RESOURCE_IDX, // RMAOVnResourceIdx
+		INVALID_RESOURCE_IDX, // emissiveResourceIdx
+		INVALID_RESOURCE_IDX, // matProp0ResourceIdx
+		INVALID_RESOURCE_IDX, // materialIDResourceIdx
+		INVALID_RESOURCE_IDX // depthResourceIdx
+	);
+	
 	// Vertex color:
 	float4 vertexColor = float4(1.f, 1.f, 1.f, 1.f);
 	const uint colorVertexStreamIdx = vertexStreamLUT[geoIdx].g_UV1ColorIndex.y;
@@ -99,23 +112,8 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 			vertexColorStream[vertexIndexes.z] * barycentrics.z;
 	}
 	
-	// Base color texture:
-	float4 baseColor = float4(1.f, 1.f, 1.f, 1.f);
-	if (baseColorResourceIdx != INVALID_RESOURCE_IDX)
-	{
-		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
-	
-		uint3 baseColorDimensions;
-		baseColorTex.GetDimensions(0, baseColorDimensions.x, baseColorDimensions.y, baseColorDimensions.z);
-	
-		// Convert the UVs to pixel coordinates:
-		const uint3 baseColorCoords = uint3(baseColorDimensions.xy * uv, 0);
-	
-		baseColor = baseColorTex.Load(baseColorCoords);
-	}
-	
 	// Combine:
-	colorOut = baseColor * vertexColor * baseColorFactor;
+	colorOut = gbuffer.LinearAlbedo * vertexColor * baseColorFactor;
 	
 	
 #elif defined(TEST_VERTEX_STREAMS)

@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_UV0
-
 #include "AmbientCommon.hlsli"
+#include "CameraCommon.hlsli"
 #include "GBufferCommon.hlsli"
 
 #include "../Common/MaterialParams.h"

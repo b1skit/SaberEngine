@@ -2,6 +2,7 @@
 #define VOUT_UV0
 #define VOUT_COLOR
 #define SABER_INSTANCING
+#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "../Common/InstancingParams.h"

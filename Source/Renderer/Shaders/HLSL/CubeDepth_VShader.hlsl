@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "../Common/InstancingParams.h"

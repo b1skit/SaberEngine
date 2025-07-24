@@ -2,7 +2,6 @@
 #ifndef SABER_COMMON_HLSL
 #define SABER_COMMON_HLSL
 
-#include "CameraCommon.hlsli"
 #include "Samplers.hlsli"
 
 

@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CameraCommon.hlsli"
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "SaberCommon.hlsli"

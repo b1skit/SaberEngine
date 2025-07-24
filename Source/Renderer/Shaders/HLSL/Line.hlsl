@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_COLOR
+#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "../Common/DebugParams.h"

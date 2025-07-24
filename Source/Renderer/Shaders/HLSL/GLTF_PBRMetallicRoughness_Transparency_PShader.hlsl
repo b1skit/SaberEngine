@@ -3,7 +3,7 @@
 #define VOUT_COLOR
 #define VOUT_TBN
 #define SABER_INSTANCING
-
+#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "AmbientCommon.hlsli"

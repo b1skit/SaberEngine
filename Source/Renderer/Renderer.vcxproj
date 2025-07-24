@@ -435,6 +435,7 @@
     <None Include="Shaders\HLSL\Depth_VShader.hlsl" />
     <None Include="Shaders\HLSL\FullscreenQuad_VShader.hlsl" />
     <None Include="Shaders\HLSL\GaussianBlur_PShader.hlsl" />
+    <None Include="Shaders\HLSL\GBufferBindless.hlsli" />
     <None Include="Shaders\HLSL\GBufferCommon.hlsli" />
     <None Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl" />
     <None Include="Shaders\HLSL\GenerateIBL_VShader.hlsl" />

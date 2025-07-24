@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_UV0
-
+#include "CameraCommon.hlsli"
 #include "MathConstants.hlsli"
 #include "SaberCommon.hlsli"
 #include "Transformations.hlsli"
