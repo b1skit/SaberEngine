@@ -421,7 +421,6 @@
     <None Include="Shaders\HLSL\BindlessResources.hlsli" />
     <None Include="Shaders\HLSL\Blit_PShader.hlsl" />
     <None Include="Shaders\HLSL\Bloom_CShader.hlsl" />
-    <None Include="Shaders\HLSL\CameraCommon.hlsli" />
     <None Include="Shaders\HLSL\Color.hlsli" />
     <None Include="Shaders\HLSL\CubeDepth_GShader.hlsl" />
     <None Include="Shaders\HLSL\CubeDepth_VShader.hlsl" />

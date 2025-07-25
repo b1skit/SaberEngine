@@ -1,12 +1,14 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "SaberComputeCommon.hlsli"
 
-#include "CameraCommon.hlsli"
 #include "Color.hlsli"
 #include "Lighting.hlsli"
 #include "Samplers.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/CameraParams.h"
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 RWTexture2D<float4> Lighting;
 Texture2D<float4> Bloom;

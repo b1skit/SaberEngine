@@ -1,6 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_UV0
-#include "CameraCommon.hlsli"
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "MathConstants.hlsli"
@@ -8,7 +7,10 @@
 #include "Shadows.hlsli"
 #include "Transformations.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 StructuredBuffer<LightData> DirectionalLightParams;
 StructuredBuffer<LightShadowLUTData> DirectionalLUT;

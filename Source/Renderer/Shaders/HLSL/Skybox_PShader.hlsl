@@ -1,14 +1,14 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_UV0
-#include "CameraCommon.hlsli"
 #include "MathConstants.hlsli"
 #include "SaberCommon.hlsli"
 #include "Transformations.hlsli"
 #include "UVUtils.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/SkyboxParams.h"
 
-
+ConstantBuffer<CameraData> CameraParams : register(space1);
 ConstantBuffer<SkyboxData> SkyboxParams;
 
 Texture2D<float4> Tex0;

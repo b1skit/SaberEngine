@@ -3,7 +3,6 @@
 #define VOUT_COLOR
 #define VOUT_TBN
 #define SABER_INSTANCING
-#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
 #include "AmbientCommon.hlsli"
@@ -11,6 +10,7 @@
 #include "NormalMapUtils.hlsli"
 #include "Shadows.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/InstancingParams.h"
 #include "../Common/LightParams.h"
 #include "../Common/MaterialParams.h"
@@ -35,6 +35,7 @@ StructuredBuffer<LightShadowLUTData> DirectionalLUT;
 StructuredBuffer<LightShadowLUTData> PointLUT;
 StructuredBuffer<LightShadowLUTData> SpotLUT;
 
+ConstantBuffer<CameraData> CameraParams : register(space1);
 ConstantBuffer<LightMetadata> LightCounts;
 
 // Note: If a resource is used in multiple shader stages, we need to explicitely specify the register and space.

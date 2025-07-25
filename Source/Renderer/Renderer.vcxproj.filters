@@ -1078,9 +1078,6 @@
     <None Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <Filter>Shaders\HLSL</Filter>
     </None>
-    <None Include="Shaders\HLSL\CameraCommon.hlsli">
-      <Filter>Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\HLSL\Color.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>

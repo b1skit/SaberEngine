@@ -1,11 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/InstancingParams.h"
 #include "../Common/TransformParams.h"
 
 #include "../_generated/HLSL/VertexStreams_PositionOnly.hlsli"
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<TransformData> TransformParams : register(t1, space1);

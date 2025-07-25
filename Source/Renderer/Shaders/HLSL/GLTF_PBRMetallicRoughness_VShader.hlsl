@@ -3,10 +3,10 @@
 #define VOUT_TBN
 #define VOUT_COLOR
 #define SABER_INSTANCING
-#include "CameraCommon.hlsli"
 #include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/InstancingParams.h"
 #include "../Common/MaterialParams.h"
 #include "../Common/TransformParams.h"
@@ -21,6 +21,8 @@
 StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<TransformData> TransformParams : register(t1, space1);
 StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t2, space1);
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 
 VertexOut VShader(VertexIn In)

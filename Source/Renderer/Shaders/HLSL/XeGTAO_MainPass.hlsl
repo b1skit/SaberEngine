@@ -1,9 +1,13 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "CameraCommon.hlsli"
 #include "UVUtils.hlsli"
 
 #define XEGTAO_MAIN_PASS
 #include "XeGTAOCommon.hlsli"
+
+#include "../Common/CameraParams.h"
+
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 
 void ExecuteMainPass(ComputeIn In, const lpfloat sliceCount, const lpfloat stepsPerSlice)

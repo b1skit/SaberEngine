@@ -1,13 +1,14 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "CameraCommon.hlsli"
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "SaberCommon.hlsli"
 #include "Shadows.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
 #include "../Common/TargetParams.h"
 
+ConstantBuffer<CameraData> CameraParams : register(space1);
 ConstantBuffer<TargetData> TargetParams;
 
 StructuredBuffer<LightShadowLUTData> PointLUT;

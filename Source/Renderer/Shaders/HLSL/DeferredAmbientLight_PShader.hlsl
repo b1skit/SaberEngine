@@ -1,10 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_UV0
 #include "AmbientCommon.hlsli"
-#include "CameraCommon.hlsli"
 #include "GBufferCommon.hlsli"
 
+#include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 Texture2D<float> AOTex;
 

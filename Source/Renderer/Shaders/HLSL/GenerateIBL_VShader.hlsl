@@ -1,8 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_LOCAL_POS
-#include "CameraCommon.hlsli"
 #include "SaberCommon.hlsli"
+
+#include "../Common/CameraParams.h"
+
 #include "../_generated/HLSL/VertexStreams_PositionOnly.hlsli"
+
+ConstantBuffer<CameraData> CameraParams : register(space1);
 
 
 VertexOut VShader(VertexIn In)
