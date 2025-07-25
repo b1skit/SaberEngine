@@ -25,6 +25,8 @@ namespace
 {
 	RTAOParamsData CreateRTAOParamsData(
 		glm::vec2 const& tMinMax,
+		uint32_t rayCount,
+		bool isEnabled,
 		core::InvPtr<re::Texture> const* depthTex,
 		core::InvPtr<re::Texture> const* wNormalTex)
 	{
@@ -39,8 +41,8 @@ namespace
 			.g_params = glm::vec4(
 				tMinMax.x, 
 				tMinMax.y, 
-				0.f, 
-				0.f),
+				rayCount,
+				static_cast<float>(isEnabled)),
 			.g_indexes = glm::uvec4(
 				(*depthTex)->GetResourceHandle(re::ViewType::SRV),
 				(*wNormalTex)->GetResourceHandle(re::ViewType::SRV),
@@ -58,7 +60,9 @@ namespace gr
 		, m_RTAOEffectID(effect::Effect::ComputeEffectID("RTAO"))
 		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
 		, m_isDirty(true)
-		, m_tMinMax(0.001f, 10.f)
+		, m_tMinMax(0.0001f, 0.2f)
+		, m_rayCount(6)
+		, m_isEnabled(true)
 	{
 	}
 
@@ -106,7 +110,7 @@ namespace gr
 				.m_numMips = 1,
 				.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 				.m_dimension = re::Texture::Dimension::Texture2D,
-				.m_format = re::Texture::Format::R32F,
+				.m_format = re::Texture::Format::R8_UNORM,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,
 				.m_mipMode = re::Texture::MipMode::None,
 			});
@@ -122,7 +126,7 @@ namespace gr
 			// Must create this here, as our textures won't have resource handles until after InitPipeline() is called
 			m_RTAOParams = re::Buffer::Create(
 				"RTAO Params",
-				CreateRTAOParamsData(m_tMinMax, m_depthInput, m_wNormalInput),
+				CreateRTAOParamsData(m_tMinMax, m_rayCount, m_isEnabled, m_depthInput, m_wNormalInput),
 				re::Buffer::BufferParams{
 					.m_lifetime = re::Lifetime::Permanent,
 					.m_stagingPool = re::Buffer::StagingPool::Permanent,
@@ -133,7 +137,7 @@ namespace gr
 		}
 		else if (m_isDirty)
 		{
-			m_RTAOParams->Commit(CreateRTAOParamsData(m_tMinMax, m_depthInput, m_wNormalInput));
+			m_RTAOParams->Commit(CreateRTAOParamsData(m_tMinMax, m_rayCount, m_isEnabled, m_depthInput, m_wNormalInput));
 		}		
 		m_isDirty = false;
 
@@ -166,7 +170,7 @@ namespace gr
 			// Ray tracing params:
 			std::shared_ptr<re::Buffer> const& traceRayParams = grutil::CreateTraceRayParams(
 				m_geometryInstanceMask,
-				RayFlag::None,
+				RayFlag::AcceptFirstHitAndEndSearch | RayFlag::SkipClosestHitShader,
 				0); // Miss shader index
 
 			// Note: We set our Buffers on the Batch to maintain their lifetime; RT uses bindless resources so the
@@ -204,6 +208,8 @@ namespace gr
 
 	void RTAOGraphicsSystem::ShowImGuiWindow()
 	{
+		m_isDirty |= ImGui::Checkbox("Enabled", &m_isEnabled);
+
 		// Present our TMin/TMax ray interval as a base offset and ray length:
 		float rayLength = m_tMinMax.y - m_tMinMax.x;
 
@@ -218,5 +224,7 @@ namespace gr
 			m_tMinMax.y = m_tMinMax.x + rayLength;
 			m_isDirty = true;
 		}
+
+		m_isDirty |= ImGui::SliderInt("Ray count", reinterpret_cast<int*>(&m_rayCount), 1, 64);
 	}
 }

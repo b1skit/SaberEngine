@@ -79,7 +79,10 @@ void ImportanceSampleCosDir(
 		r * sin(phi),
 		sqrt(max(0.0f, 1.f - u1)));
 	
-	L = normalize((localReferential.TangentX * L.y) + (localReferential.BitangentY * L.x) + (localReferential.N * L.z));
+	L = normalize(
+		localReferential.TangentX	* L.x + 
+		localReferential.BitangentY * L.y +
+		localReferential.N			* L.z);
 
 	NoL = dot(L, localReferential.N);
 
@@ -120,12 +123,13 @@ void ImportanceSampleFibonacciSpiralDir(
 	const float z = sqrt(saturate(1.f - r * r)); // Ensure unit hemisphere
 
 	// Convert to world space using the referential basis:
-	const float3 localDir = float3(x, y, z);
+	L = float3(x, y, z);
 	
-	L = localDir.x * localReferential.TangentX
-	  + localDir.y * localReferential.BitangentY
-	  + localDir.z * localReferential.N;
-
+	L = normalize(
+		localReferential.TangentX	* L.x +
+		localReferential.BitangentY * L.y +
+		localReferential.N			* L.z);
+	
 	NoL = dot(localReferential.N, L);
 	
 	pdf = NoL * M_1_PI;

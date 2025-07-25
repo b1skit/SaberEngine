@@ -74,6 +74,8 @@ namespace gr
 		// RTAO parameters:
 		bool m_isDirty;
 		glm::vec2 m_tMinMax; // Min and max ray interval distance
+		uint32_t m_rayCount; // Number of rays to cast per pixel
+		bool m_isEnabled;
 
 		std::shared_ptr<re::Buffer> m_RTAOParams;
 	};

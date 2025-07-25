@@ -6,7 +6,7 @@
 
 struct RTAOParamsData
 {
-	float4 g_params; // .x = TMin, .y = TMax, .zw = unused
+	float4 g_params; // .x = TMin, .y = TMax, .z = ray count, .w = isEnabled
 	uint4 g_indexes; // .x = depth texture idx, .y = wNormal tex idx, .zw = unused
 
 #if defined(__cplusplus)

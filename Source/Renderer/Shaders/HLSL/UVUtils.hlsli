@@ -8,9 +8,9 @@
 // Note: In DX12, SV_POSITION is automatically offset by 0.5 (e.g. the top-left pixel will have an SV_POSITION of
 // (0.5, 0.5) by default). More info here: https://www.asawicki.info/news_1516_half-pixel_offset_in_directx_11
 // Supply an offset of (0.5, 0.5) here when you have non-offset coordinates (i.e. top-left = (0, 0))
-float2 PixelCoordsToScreenUV(uint2 pixelCoords, uint2 texWidthHeight, float2 offset)
+float2 PixelCoordsToScreenUV(uint2 pixelCoords, uint2 screenWidthHeight, float2 offset)
 {
-	return (float2(pixelCoords) + offset) / texWidthHeight;
+	return (float2(pixelCoords) + offset) / screenWidthHeight;
 }
 
 

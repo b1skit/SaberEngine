@@ -26,6 +26,24 @@ enum RayFlag : uint32_t
 	SkipProceduralPrimitives	= 0x200,
 };
 
+inline RayFlag operator|(RayFlag lhs, RayFlag rhs)
+{
+	return static_cast<RayFlag>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+inline RayFlag& operator|=(RayFlag& lhs, RayFlag rhs)
+{
+	return lhs = lhs | rhs;
+};
+inline RayFlag operator&(RayFlag lhs, RayFlag rhs)
+{
+	return static_cast<RayFlag>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+}
+inline RayFlag& operator&=(RayFlag& lhs, RayFlag rhs)
+{
+	return lhs = lhs & rhs;
+};
+
+
 #endif // __cplusplus
 
 
@@ -101,7 +119,7 @@ struct raypayload HitInfo_Experimental
 
 struct raypayload RTAO_HitInfo
 {
-	float g_visibility read(caller) write(caller, miss);
+	float g_visibility read(caller) write(caller, miss, anyhit);
 };
 
 
