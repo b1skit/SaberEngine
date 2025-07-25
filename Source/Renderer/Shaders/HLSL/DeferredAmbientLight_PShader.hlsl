@@ -6,14 +6,14 @@
 
 #include "../Common/MaterialParams.h"
 
-Texture2D<uint> AOTex;
+Texture2D<float> AOTex;
 
 
 float GetSSAO(float2 screenUV, uint2 screenPxDims)
 {
 	const uint3 coords = uint3(screenUV * screenPxDims, 0);
 	
-	return AOTex.Load(coords).r / 255.0f; // AOTex is uint
+	return AOTex.Load(coords).r;
 }
 
 

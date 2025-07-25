@@ -201,6 +201,7 @@ namespace re
 			MipMode m_mipMode = MipMode::AllocateGenerate;
 			MultisampleMode m_multisampleMode = MultisampleMode::Disabled;
 
+			bool m_createAsTypeless = false; // Should this texture be created as a typeless format?
 			bool m_createAsPermanent = false; // Should this texture be kept alive beyond the scope of its InvPtr?
 
 			// Optimized clear values: Choose the value that clear operations will be most commonly called with

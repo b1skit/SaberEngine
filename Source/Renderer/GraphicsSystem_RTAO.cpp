@@ -104,7 +104,7 @@ namespace gr
 				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
 				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
 				.m_numMips = 1,
-				.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget),
+				.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
 				.m_dimension = re::Texture::Dimension::Texture2D,
 				.m_format = re::Texture::Format::R32F,
 				.m_colorSpace = re::Texture::ColorSpace::Linear,

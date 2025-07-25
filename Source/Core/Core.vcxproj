@@ -111,11 +111,11 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Definitions\ConfigKeys.h" />
     <ClInclude Include="Definitions\EventKeys.h" />
+    <ClInclude Include="Definitions\ForwardDeclarations.h" />
     <ClInclude Include="Definitions\KeyConfiguration.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
-    <ClInclude Include="ForwardDeclarations.h" />
     <ClInclude Include="Host\Dialog.h" />
     <ClInclude Include="Host\Dialog_Platform.h" />
     <ClInclude Include="Host\Dialog_Win32.h" />

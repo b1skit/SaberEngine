@@ -262,33 +262,31 @@ namespace gr
 			workingAOTermFormat = re::Texture::Format::R32_UINT;
 		}
 
-		re::Texture::TextureParams workingAOTexParams{};
-		workingAOTexParams.m_width = m_xRes;
-		workingAOTexParams.m_height = m_yRes;
-		workingAOTexParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
-		workingAOTexParams.m_dimension = re::Texture::Dimension::Texture2D;
-		workingAOTexParams.m_format = workingAOTermFormat;
-		workingAOTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		workingAOTexParams.m_mipMode = re::Texture::MipMode::None;
-
-		m_workingAOTex = re::Texture::Create("XeGTAO: Working AO", workingAOTexParams);
-
+		m_workingAOTex = re::Texture::Create(
+			"XeGTAO: Working AO",
+			re::Texture::TextureParams{
+				.m_width = m_xRes,
+				.m_height = m_yRes,
+				.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = workingAOTermFormat,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_createAsTypeless = true, // XeGTAO emits a uint, but we want to use it as a float later
+			});
 		m_mainStage->AddPermanentRWTextureInput("output0", m_workingAOTex, re::TextureView::Texture2DView(0, 1));
 
-
-		re::Texture::TextureParams workingEdgesTexParams{};
-		workingEdgesTexParams.m_width = m_xRes;
-		workingEdgesTexParams.m_height = m_yRes;
-		workingEdgesTexParams.m_usage =
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
-		workingEdgesTexParams.m_dimension = re::Texture::Dimension::Texture2D;
-		workingEdgesTexParams.m_format = re::Texture::Format::R8_UNORM;
-		workingEdgesTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		workingEdgesTexParams.m_mipMode = re::Texture::MipMode::None;
-
-		m_workingEdgesTargetTex = re::Texture::Create("XeGTAO: Working Edges", workingEdgesTexParams);
-
+		m_workingEdgesTargetTex = re::Texture::Create(
+			"XeGTAO: Working Edges",
+			re::Texture::TextureParams{
+				.m_width = m_xRes,
+				.m_height = m_yRes,
+				.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::R8_UNORM,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+		});
 		m_mainStage->AddPermanentRWTextureInput("output1", m_workingEdgesTargetTex, re::TextureView::Texture2DView(0, 1));
 
 		// Main stage texture inputs:
@@ -316,7 +314,7 @@ namespace gr
 
 		// Denoise passes:
 		// Always need at least 1 pass to ensure the final target is filled, even if denoising or AO is disabled
-		const uint8_t numDenoisePasses = std::max((uint8_t)1, static_cast<uint8_t>(m_XeGTAOQuality));
+		const uint8_t numDenoisePasses = std::max(static_cast<uint8_t>(1), static_cast<uint8_t>(m_XeGTAOQuality));
 		m_denoiseStages.resize(numDenoisePasses, nullptr);
 
 		const uint8_t lastPassIdx = (numDenoisePasses - 1);
@@ -325,7 +323,18 @@ namespace gr
 		// Denoise ping-poing target sets:
 	
 		// Create our first ping-pong target:
-		m_denoisePingTargetTex = re::Texture::Create("XeGTAO: Denoise target", workingAOTexParams);
+		m_denoisePingTargetTex = re::Texture::Create(
+			"XeGTAO: Denoise target", 
+			re::Texture::TextureParams{
+				.m_width = m_xRes,
+				.m_height = m_yRes,
+				.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = workingAOTermFormat,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+				.m_createAsTypeless = true, // XeGTAO emits a uint, but we want to use it as a float later
+			});
 		
 		for (uint8_t passIdx = 0; passIdx < numDenoisePasses; passIdx++)
 		{
@@ -398,15 +407,11 @@ namespace gr
 		// We reuse the working AO buffer as our 2nd target
 		if (m_denoiseFinalOutputIdx == 0)
 		{
-			RegisterTextureOutput(
-				k_aoOutput,
-				&m_denoisePingTargetTex);
+			RegisterTextureOutput(k_aoOutput, &m_denoisePingTargetTex);
 		}
 		else
 		{
-			RegisterTextureOutput(
-				k_aoOutput,
-				&m_workingAOTex);
+			RegisterTextureOutput(k_aoOutput, &m_workingAOTex);
 		}
 	}
 

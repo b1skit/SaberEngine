@@ -291,8 +291,7 @@ namespace gr
 		re::Texture::TextureParams pmremTexParams;
 		pmremTexParams.m_width = pmremTexWidthHeight;
 		pmremTexParams.m_height = pmremTexWidthHeight;
-		pmremTexParams.m_usage = 
-			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc);
+		pmremTexParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
 		pmremTexParams.m_dimension = re::Texture::Dimension::TextureCube;
 		pmremTexParams.m_format = re::Texture::Format::RGBA16F;
 		pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -529,7 +528,11 @@ namespace gr
 		core::InvPtr<re::Sampler> const& clampMinMagMipPoint = m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint");
 
 		m_ambientStage->AddPermanentTextureInput(
-			k_AOTexInput.GetKey(), m_AOTex, clampMinMagMipPoint, re::TextureView(m_AOTex));
+			k_AOTexInput.GetKey(),
+			m_AOTex,
+			clampMinMagMipPoint, 
+			re::TextureView(m_AOTex, re::TextureView::ViewFlags{ .m_formatOverride = re::Texture::Format::R8_UNORM,})
+		);
 
 		// Append the ambient stage:
 		pipeline.AppendStage(m_ambientStage);

@@ -794,8 +794,7 @@ namespace gr
 					LOG(std::format("Creating {} shadow array texture with {} elements",
 						gr::Light::LightTypeToCStr(lightType), shadowArrayParams.m_arraySize));
 
-					shadowArrayParams.m_usage =
-						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc);
+					shadowArrayParams.m_usage = re::Texture::Usage::DepthTarget | re::Texture::Usage::ColorSrc;
 
 					shadowArrayParams.m_format = re::Texture::Format::Depth32F;
 					shadowArrayParams.m_colorSpace = re::Texture::ColorSpace::Linear;

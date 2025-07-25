@@ -88,6 +88,10 @@ namespace re
 				ReadOnlyStencil			= 1 << 1,
 				ReadOnlyDepthStencil	= (ReadOnlyDepth | ReadOnlyStencil),
 			} m_depthStencil = DepthFlags::None;
+
+			// Override the texture's format:
+			// Only valid for textures created as typeless, and format must be compatible with the texture's format 
+			re::Texture::Format m_formatOverride = re::Texture::Format::Invalid;
 		} ViewFlags;
 
 		union

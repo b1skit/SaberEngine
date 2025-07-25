@@ -637,6 +637,93 @@ namespace re
 		break;
 		default: SEAssertF("Invalid dimension");
 		}
+
+		SEAssert(view.Flags.m_formatOverride == re::Texture::Format::Invalid || 
+			view.Flags.m_formatOverride == texParams.m_format ||
+			texParams.m_createAsTypeless,
+			"Texture format cannot be overridden unless the texture was created as typeless");
+
+		if (view.Flags.m_formatOverride != re::Texture::Format::Invalid && 
+			view.Flags.m_formatOverride != texParams.m_format) // Only check if the formats are different
+		{
+			switch (view.Flags.m_formatOverride)
+			{
+			case re::Texture::Format::RGBA32F:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::RG32F:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::R32F:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R32_UINT ||
+					texParams.m_format == re::Texture::Format::Depth32F,
+					"Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::R32_UINT:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R32F ||
+					texParams.m_format == re::Texture::Format::Depth32F,
+					"Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::RGBA16F:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::RG16F:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::R16F:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R16_UNORM, "Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::R16_UNORM:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R16F, "Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::RGBA8_UNORM:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::RG8_UNORM:
+			{
+				SEAssertF("This format currently does not have a valid override");
+			}
+			break;
+			case re::Texture::Format::R8_UNORM:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R8_UINT, "Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::R8_UINT:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R8_UNORM, "Incompatible override format");
+			}
+			break;
+			case re::Texture::Format::Depth32F:
+			{
+				SEAssert(texParams.m_format == re::Texture::Format::R32F ||
+					texParams.m_format == re::Texture::Format::R32_UINT,
+					"Incompatible override format");
+			}
+			break;
+			default: SEAssertF("Invalid format override");
+			}
+			SEStaticAssert(static_cast<uint8_t>(re::Texture::Format::Invalid) == 13,
+				"Number of texture formats has changed. This must be updated");
+		}
 #endif
 	}
 

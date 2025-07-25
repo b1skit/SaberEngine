@@ -2,6 +2,7 @@
 #pragma once
 #include "DescriptorCache_DX12.h"
 #include "Texture.h"
+#include "TextureView.h"
 
 
 namespace dx12
@@ -45,6 +46,7 @@ namespace dx12
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(core::InvPtr<re::Texture> const&, re::TextureView const&);
 		static D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(core::InvPtr<re::Texture> const&, re::TextureView const&);
 
+		static DXGI_FORMAT GetTextureFormat(re::Texture::Format, bool getAsTypeless, re::Texture::ColorSpace);
 		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
 		static DXGI_FORMAT GetEquivalentUAVCompatibleFormat(DXGI_FORMAT format); // DXGI_FORMAT_UNKNOWN if none exists
 
@@ -52,4 +54,10 @@ namespace dx12
 		static void Destroy(re::Texture&);
 		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&, float scale);
 	};
+
+
+	inline DXGI_FORMAT Texture::GetTextureFormat(re::Texture::TextureParams const& texParams)
+	{
+		return GetTextureFormat(texParams.m_format, false, texParams.m_colorSpace);
+	}
 }

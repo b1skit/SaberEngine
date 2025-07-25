@@ -209,9 +209,9 @@ namespace
 	bool FormatIsUAVCompatible(ID3D12Device* device, DXGI_FORMAT format)
 	{
 		// Guaranteed UAV support: 
-		if (format == DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT ||
-			format == DXGI_FORMAT::DXGI_FORMAT_R32_UINT ||
-			format == DXGI_FORMAT::DXGI_FORMAT_R32_SINT)
+		if (format == DXGI_FORMAT_R32_FLOAT ||
+			format == DXGI_FORMAT_R32_UINT ||
+			format == DXGI_FORMAT_R32_SINT)
 		{
 			return true;
 		}
@@ -356,6 +356,10 @@ namespace
 
 		const uint32_t numMips = texture->GetNumMips();
 
+		// If the texture is marked as typeless, we need to use the typeless format when creating the resource
+		const DXGI_FORMAT createFormat = texParams.m_createAsTypeless ? 
+			dx12::Texture::GetTextureFormat(texParams.m_format, true, texParams.m_colorSpace) :  texPlatObj->m_format;
+
 		D3D12_RESOURCE_DESC resourceDesc{};
 		switch (texParams.m_dimension)
 		{
@@ -365,7 +369,7 @@ namespace
 			SEAssert(texParams.m_height == 1, "Invalid height for a 1D texture");
 
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex1D(
-				texPlatObj->m_format,
+				createFormat,
 				texParams.m_width,
 				texParams.m_arraySize,
 				numMips,
@@ -378,7 +382,7 @@ namespace
 		case re::Texture::Dimension::Texture2DArray:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatObj->m_format,
+				createFormat,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize,
@@ -393,7 +397,7 @@ namespace
 		case re::Texture::Dimension::Texture3D:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex3D(
-				texPlatObj->m_format,
+				createFormat,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize,			// Number of depth slices
@@ -407,7 +411,7 @@ namespace
 		case re::Texture::Dimension::TextureCubeArray:
 		{
 			resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatObj->m_format,
+				createFormat,
 				texParams.m_width,
 				texParams.m_height,
 				texParams.m_arraySize * 6,
@@ -476,83 +480,91 @@ namespace
 
 namespace dx12
 {
-	DXGI_FORMAT Texture::GetTextureFormat(re::Texture::TextureParams const& texParams)
+	DXGI_FORMAT Texture::GetTextureFormat(
+		re::Texture::Format format, bool getAsTypeless, re::Texture::ColorSpace colorSpace)
 	{
-		switch (texParams.m_format)
+		SEAssert(format != re::Texture::Format::Invalid, "Invalid format received");
+
+		switch (format)
 		{
 		case re::Texture::Format::RGBA32F: // 32 bits per channel x N channels
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R32G32B32A32_TYPELESS : DXGI_FORMAT_R32G32B32A32_FLOAT;
 		}
 		break;
 		case re::Texture::Format::RG32F:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT;
+			return getAsTypeless ?
+				DXGI_FORMAT_R32G32_TYPELESS : DXGI_FORMAT_R32G32_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R32F:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R32_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R32_UINT:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R32_UINT;
+			return getAsTypeless ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R32_UINT;
 		}
 		break;
 		case re::Texture::Format::RGBA16F: // 16 bits per channel x N channels
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R16G16B16A16_TYPELESS : DXGI_FORMAT_R16G16B16A16_FLOAT;
 		}
 		break;
 		case re::Texture::Format::RG16F:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R16G16_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R16G16_TYPELESS : DXGI_FORMAT_R16G16_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R16F:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R16_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R16_TYPELESS : DXGI_FORMAT_R16_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R16_UNORM:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R16_UNORM;
+			return getAsTypeless ? DXGI_FORMAT_R16_TYPELESS : DXGI_FORMAT_R16_UNORM;
 		}
 		break;
 		case re::Texture::Format::RGBA8_UNORM: // 8 bits per channel x N channels
 		{
-			return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
+			if (getAsTypeless)
+			{
+				return DXGI_FORMAT_R8G8B8A8_TYPELESS;
+			}
+			return colorSpace == re::Texture::ColorSpace::sRGB ?
 				DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
 		}
 		break;
 		case re::Texture::Format::RG8_UNORM:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R8G8_UNORM;
+			return getAsTypeless ? DXGI_FORMAT_R8G8_TYPELESS : DXGI_FORMAT_R8G8_UNORM;
 		}
 		break;
 		case re::Texture::Format::R8_UNORM:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R8_UNORM;
+			return getAsTypeless ? DXGI_FORMAT_R8_TYPELESS : DXGI_FORMAT_R8_UNORM;
 		}
 		break;
 		case re::Texture::Format::R8_UINT:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_R8_UINT;
+			return getAsTypeless ? DXGI_FORMAT_R8_TYPELESS : DXGI_FORMAT_R8_UINT;
 		}
 		break;
 		case re::Texture::Format::Depth32F:
 		{
-			return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+			return getAsTypeless ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_D32_FLOAT;
 		}
 		break;
 		case re::Texture::Format::Invalid:
-		default:
-		{
-			SEAssertF("Invalid format");
-		}
+		default: SEAssertF("Invalid format");
 		}
 		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+		SEStaticAssert(static_cast<uint8_t>(re::Texture::Format::Invalid) == 13,
+			"Texture formats have changed. This must be updated");
 	}
 
 
@@ -628,11 +640,9 @@ namespace dx12
 		case DXGI_FORMAT_B5G5R5A1_UNORM: return DXGI_FORMAT_B5G5R5A1_UNORM;
 
 		case DXGI_FORMAT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
-		default:
-			return DXGI_FORMAT_UNKNOWN;
+		
+		default: return DXGI_FORMAT_UNKNOWN;
 		}
-
-		return DXGI_FORMAT_UNKNOWN;
 	}
 
 
@@ -722,16 +732,16 @@ namespace dx12
 
 		// D3D12 Initial resource states:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources
-		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 
 		// Create a committed resource:
-		if ((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0)
+		if (texture->HasUsageBit(re::Texture::Usage::SwapchainColorProxy) == false)
 		{
 			initialState = CreateTextureResource(texture, needsUAV, needsSimultaneousAccess);
 		}
 
 		// Upload initial data via an intermediate upload heap:
-		if ((texParams.m_usage & re::Texture::Usage::ColorSrc) && texture->HasInitialData())
+		if (texture->HasUsageBit(re::Texture::Usage::ColorSrc) && texture->HasInitialData())
 		{
 			const uint8_t numFaces = re::Texture::GetNumFaces(texture);
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);

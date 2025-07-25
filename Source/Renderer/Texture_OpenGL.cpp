@@ -65,15 +65,106 @@ namespace
 		}
 		
 	}
+
+	GLenum GetInternalFormat(re::Texture::Format format, re::Texture::ColorSpace colorSpace)
+	{
+		GLenum internalFormat = GL_INVALID_ENUM;
+
+		switch (format)
+		{
+		case re::Texture::Format::RGBA32F:
+		{
+			internalFormat = GL_RGBA32F;
+		}
+		break;
+		case re::Texture::Format::RG32F:
+		{
+			internalFormat = GL_RG32F;
+		}
+		break;
+		case re::Texture::Format::R32F:
+		{
+			internalFormat = GL_R32F;
+		}
+		break;
+		case re::Texture::Format::R32_UINT:
+		{
+			internalFormat = GL_R32UI;
+		}
+		break;
+		case re::Texture::Format::RGBA16F:
+		{
+			internalFormat = GL_RGBA16F;
+		}
+		break;
+		case re::Texture::Format::RG16F:
+		{
+			internalFormat = GL_RG16F;
+		}
+		break;
+		case re::Texture::Format::R16F:
+		{
+			internalFormat = GL_R16F;
+		}
+		break;
+		case re::Texture::Format::R16_UNORM:
+		{
+			internalFormat = GL_R16;
+		}
+		break;
+		case re::Texture::Format::RGBA8_UNORM:
+		{
+			internalFormat = colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+
+			//switch (texParams.m_usage)
+			//{
+			//case re::Texture::Usage::Color:
+			//{
+			//	internalFormat = colorSpace == re::Texture::ColorSpace::sRGB ? 
+			//		GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : GL_COMPRESSED_RGBA_BPTC_UNORM;
+			//}
+			//break;
+			//case re::Texture::Usage::ColorTarget:
+			//case re::Texture::Usage::SwapchainColorProxy:
+			//{
+			//	internalFormat = colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+			//}
+			//break;
+			//default:
+			//	SEAssertF("Invalid usage");
+			//}
+		}
+		break;
+		case re::Texture::Format::RG8_UNORM:
+		case re::Texture::Format::R8_UNORM:
+		{
+			SEAssertF("Invalid/unsupported texture format");
+		}
+		break;
+		case re::Texture::Format::R8_UINT:
+		{
+			internalFormat = GL_R8UI;
+		}
+		break;
+		case re::Texture::Format::Depth32F:
+		{
+			internalFormat = GL_DEPTH_COMPONENT32F;
+		}
+		break;
+		default: SEAssertF("Invalid/unsupported texture format");
+		}
+
+		return internalFormat;
+	}
 }
 
 namespace opengl
 {
 	Texture::PlatObj::PlatObj(re::Texture& texture)
 		: m_textureID(0)
-		, m_format(GL_RGBA)
-		, m_internalFormat(GL_RGBA32F)
-		, m_type(GL_FLOAT)
+		, m_format(GL_INVALID_ENUM)
+		, m_internalFormat(GL_INVALID_ENUM)
+		, m_type(GL_INVALID_ENUM)
 	{
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
@@ -86,7 +177,6 @@ namespace opengl
 		{
 			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_RGBA;
-			m_internalFormat = GL_RGBA32F;
 			m_type = GL_FLOAT;
 		}
 		break;
@@ -94,7 +184,6 @@ namespace opengl
 		{
 			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_RG;
-			m_internalFormat = GL_RG32F;
 			m_type = GL_FLOAT;
 		}
 		break;
@@ -102,7 +191,6 @@ namespace opengl
 		{
 			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_R;
-			m_internalFormat = GL_R32F;
 			m_type = GL_FLOAT;
 		}
 		break;
@@ -110,35 +198,30 @@ namespace opengl
 		{
 			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_R;
-			m_internalFormat = GL_R32UI;
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
 		case re::Texture::Format::RGBA16F:
 		{
 			m_format = GL_RGBA;
-			m_internalFormat = GL_RGBA16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case re::Texture::Format::RG16F:
 		{
 			m_format = GL_RG;
-			m_internalFormat = GL_RG16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R16F:
 		{
 			m_format = GL_R;
-			m_internalFormat = GL_R16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case re::Texture::Format::R16_UNORM:
 		{
 			m_format = GL_R;
-			m_internalFormat = GL_R16;
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
@@ -147,26 +230,6 @@ namespace opengl
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
 			m_format = GL_RGBA;
 			m_type = GL_UNSIGNED_BYTE;
-
-			m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-
-			//switch (texParams.m_usage)
-			//{
-			//case re::Texture::Usage::Color:
-			//{
-			//	m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? 
-			//		GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : GL_COMPRESSED_RGBA_BPTC_UNORM;
-			//}
-			//break;
-			//case re::Texture::Usage::ColorTarget:
-			//case re::Texture::Usage::SwapchainColorProxy:
-			//{
-			//	m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			//}
-			//break;
-			//default:
-			//	SEAssertF("Invalid usage");
-			//}
 		}
 		break;
 		case re::Texture::Format::RG8_UNORM:
@@ -189,13 +252,14 @@ namespace opengl
 		case re::Texture::Format::Depth32F:
 		{
 			m_format = GL_DEPTH_COMPONENT;
-			m_internalFormat = GL_DEPTH_COMPONENT32F;
 			m_type = GL_FLOAT;
 		}
 		break;
 		default:
 			SEAssertF("Invalid/unsupported texture format");
 		}
+
+		m_internalFormat = GetInternalFormat(texParams.m_format, texParams.m_colorSpace);
 
 		// Is this Texture compatible with compute workloads?
 		m_formatIsImageTextureCompatible = GetFormatIsImageTextureCompatible(m_internalFormat);
@@ -276,14 +340,24 @@ namespace opengl
 
 		const GLuint textureID = opengl::Texture::GetOrCreateTextureView(texture, texView);
 
+		// Get the internal format/override internal format:
+		GLenum internalFormat = texPlatObj->m_internalFormat;
+		if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid)
+		{
+			SEAssert(texture->GetTextureParams().m_createAsTypeless,
+				"Can't override format unless texture was created as typeless");
+
+			internalFormat = GetInternalFormat(texView.Flags.m_formatOverride, texture->GetTextureParams().m_colorSpace);
+		}
+
 		glBindImageTexture(
-			textureUnit,						// unit: Index to bind to
-			textureID,							// texture: Name of the texture being bound
-			0,									// level: 0, as this is relative to the view
-			GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
-			0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
-			accessMode,							// access: Type of access that will be performed
-			texPlatObj->m_internalFormat);	// format: Internal format	
+			textureUnit,		// unit: Index to bind to
+			textureID,			// texture: Name of the texture being bound
+			0,					// level: 0, as this is relative to the view
+			GL_TRUE,			// layered: Use layered binding? Binds the entire 1/2/3D array if true
+			0,					// layer: Layer to bind. Ignored if layered == GL_TRUE
+			accessMode,			// access: Type of access that will be performed
+			internalFormat);	// format: Internal format	
 	}
 
 
@@ -695,11 +769,20 @@ namespace opengl
 			default: SEAssertF("Invalid dimension");
 			}
 
+			// Get the internal format/override internal format:
+			GLenum internalFormat = platObj->m_internalFormat;
+			if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid)
+			{
+				SEAssert(texParams.m_createAsTypeless, "Can't override format unless texture was created as typeless");
+
+				internalFormat = GetInternalFormat(texView.Flags.m_formatOverride, texParams.m_colorSpace);
+			}
+
 			glTextureView(
 				newTexID,						// texture (to be initialized as the view)
 				target,							// target
-				platObj->m_textureID,		// origTexture
-				platObj->m_internalFormat,	// internalFormat
+				platObj->m_textureID,			// origTexture
+				internalFormat,					// internalFormat
 				firstMip,						// minLevel
 				mipLevels,						// numLevels
 				firstArraySlice,				// minLayer

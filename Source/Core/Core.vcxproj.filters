@@ -210,7 +210,7 @@
     <ClInclude Include="SystemLocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ForwardDeclarations.h">
+    <ClInclude Include="Definitions\ForwardDeclarations.h">
       <Filter>Header Files\Definitions</Filter>
     </ClInclude>
   </ItemGroup>

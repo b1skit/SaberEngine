@@ -31,15 +31,25 @@ namespace
 	}
 
 
-	inline DXGI_FORMAT GetTextureSRVFormat(core::InvPtr<re::Texture> const& texture)
+	inline DXGI_FORMAT GetTextureSRVFormat(core::InvPtr<re::Texture> const& texture, re::TextureView const& texView)
 	{
-		dx12::Texture::PlatObj const* texPlatObj =
-			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
+		dx12::Texture::PlatObj const* texPlatObj = texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		switch (texPlatObj->m_format)
+		// Get the format/override format:
+		DXGI_FORMAT format = texPlatObj->m_format;
+		if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid &&
+			texView.Flags.m_formatOverride != texParams.m_format)
+		{
+			SEAssert(texParams.m_createAsTypeless, "Can't override format unless texture was created as typeless");
+
+			format = dx12::Texture::GetTextureFormat(texView.Flags.m_formatOverride, false, texParams.m_colorSpace);
+		}
+
+		switch (format)
 		{
 		case DXGI_FORMAT_D32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
-		default: return texPlatObj->m_format;
+		default: return format;
 		}
 	}
 
@@ -56,7 +66,7 @@ namespace
 			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-		srvDesc.Format = GetTextureSRVFormat(texture);
+		srvDesc.Format = GetTextureSRVFormat(texture, texView);
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 		switch (texView.m_viewDimension)
@@ -173,10 +183,19 @@ namespace
 	{
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
-		dx12::Texture::PlatObj const* texPlatObj = 
-			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
+		dx12::Texture::PlatObj const* texPlatObj = texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
-		const DXGI_FORMAT uavCompatibleFormat = dx12::Texture::GetEquivalentUAVCompatibleFormat(texPlatObj->m_format);
+		// Get the format/override format:
+		DXGI_FORMAT format = texPlatObj->m_format;
+		if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid &&
+			texView.Flags.m_formatOverride != texParams.m_format)
+		{
+			SEAssert(texParams.m_createAsTypeless, "Can't override format unless texture was created as typeless");
+
+			format = dx12::Texture::GetTextureFormat(texView.Flags.m_formatOverride, false, texParams.m_colorSpace);
+		}
+
+		const DXGI_FORMAT uavCompatibleFormat = dx12::Texture::GetEquivalentUAVCompatibleFormat(format);
 		SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
@@ -282,7 +301,18 @@ namespace
 			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-		rtvDesc.Format = texPlatObj->m_format;
+
+		// Get the format/override format:
+		DXGI_FORMAT format = texPlatObj->m_format;
+		if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid &&
+			texView.Flags.m_formatOverride != texParams.m_format)
+		{
+			SEAssert(texParams.m_createAsTypeless, "Can't override format unless texture was created as typeless");
+
+			format = dx12::Texture::GetTextureFormat(texView.Flags.m_formatOverride, false, texParams.m_colorSpace);
+		}		
+
+		rtvDesc.Format = format;
 
 		switch (texView.m_viewDimension)
 		{
@@ -384,7 +414,18 @@ namespace
 			texture->GetPlatformObject()->As<dx12::Texture::PlatObj const*>();
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-		dsvDesc.Format = texPlatObj->m_format;
+
+		// Get the format/override format:
+		DXGI_FORMAT format = texPlatObj->m_format;
+		if (texView.Flags.m_formatOverride != re::Texture::Format::Invalid &&
+			texView.Flags.m_formatOverride != texParams.m_format)
+		{
+			SEAssert(texParams.m_createAsTypeless, "Can't override format unless texture was created as typeless");
+
+			format = dx12::Texture::GetTextureFormat(texView.Flags.m_formatOverride, false, texParams.m_colorSpace);
+		}
+
+		dsvDesc.Format = format;
 
 		dsvDesc.Flags = static_cast<D3D12_DSV_FLAGS>(texView.Flags.m_depthStencil);
 		SEAssert(texView.StencilWritesEnabled(), "TODO: Support stencil buffers");
@@ -630,8 +671,6 @@ namespace dx12
 	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorCache::GetCreateDescriptor(
 		core::InvPtr<re::Texture> const& texture, re::TextureView const& texView)
 	{
-		re::TextureView::ValidateView(texture, texView); // _DEBUG only
-
 		SEAssert(texView.m_viewDimension != re::Texture::Dimension::Dimension_Invalid, "Invalid view dimension");
 
 		{
@@ -655,6 +694,8 @@ namespace dx12
 			// If no cache entries are >= our new data hash, or the one we found doesn't match, create a new descriptor
 			if (cacheItr == m_descriptorCache.end() || cacheItr->first != texView.GetDataHash())
 			{
+				re::TextureView::ValidateView(texture, texView); // _DEBUG only
+
 				CacheEntry newCacheEntry{
 					texView.GetDataHash(),
 					m_context->GetCPUDescriptorHeapMgr(DescriptorTypeToHeapType(m_descriptorType)).Allocate(1) };
