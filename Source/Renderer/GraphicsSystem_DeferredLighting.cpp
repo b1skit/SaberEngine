@@ -3,19 +3,21 @@
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "Effect.h"
-#include "IndexedBuffer.h"
 #include "GraphicsEvent.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
+#include "IndexedBuffer.h"
 #include "LightParamsHelpers.h"
 #include "LightRenderData.h"
 #include "MeshFactory.h"
-#include "Sampler.h"
 #include "RenderDataManager.h"
+#include "Sampler.h"
 #include "Stage.h"
+#include "TextureView.h"
 
+#include "Core/Assert.h"
 #include "Core/Config.h"
 
 #include "Core/Util/HashKey.h"
@@ -453,7 +455,7 @@ namespace gr
 			},
 			glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback", 
+		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback",
 			re::Texture::TextureParams
 			{
 				.m_usage = re::Texture::Usage::ColorSrc,
@@ -480,16 +482,17 @@ namespace gr
 		m_fullscreenStage = gr::Stage::CreateComputeStage("Deferred Fullscreen stage", gr::Stage::ComputeStageParams{});
 
 		// Create a lighting texture target:
-		re::Texture::TextureParams lightTargetTexParams;
-		lightTargetTexParams.m_width = core::Config::GetValue<int>(core::configkeys::k_windowWidthKey);
-		lightTargetTexParams.m_height = core::Config::GetValue<int>(core::configkeys::k_windowHeightKey);
-		lightTargetTexParams.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc;
-		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
-		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
-		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		lightTargetTexParams.m_mipMode = re::Texture::MipMode::None;
-
-		core::InvPtr<re::Texture> const& lightTargetTex = re::Texture::Create("DeferredLightTarget", lightTargetTexParams);
+		core::InvPtr<re::Texture> const& lightTargetTex = re::Texture::Create(
+			"DeferredLightTarget",
+			re::Texture::TextureParams{
+				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
+				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
+				.m_usage = re::Texture::Usage::ColorTarget | re::Texture::Usage::ColorSrc,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::RGBA16F,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+			});
 
 		// Create the lighting target set (shared by all lights/stages):
 		re::TextureTarget::TargetParams deferredTargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1)};
@@ -506,8 +509,8 @@ namespace gr
 			depthTargetParams);
 
 		// Append a color-only clear stage to clear the lighting target:
-		std::shared_ptr<gr::ClearTargetSetStage> clearStage = 
-			gr::Stage::CreateTargetSetClearStage("DeferredLighting: Clear lighting targets", m_lightingTargetSet);
+		std::shared_ptr<gr::ClearTargetSetStage> clearStage = gr::Stage::CreateTargetSetClearStage(
+			"DeferredLighting: Clear lighting targets", m_lightingTargetSet);
 		clearStage->EnableAllColorClear();
 
 		pipeline.AppendStage(clearStage);
