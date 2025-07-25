@@ -14,7 +14,6 @@
 #include "MeshFactory.h"
 #include "Sampler.h"
 #include "RenderDataManager.h"
-#include "RenderManager.h"
 #include "Stage.h"
 
 #include "Core/Config.h"

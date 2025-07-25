@@ -13,6 +13,7 @@
 #include "Core/Interfaces/IUniqueID.h"
 
 #include "Core/Util/CHashKey.h"
+#include "Core/Util/TextUtils.h"
 
 
 namespace re

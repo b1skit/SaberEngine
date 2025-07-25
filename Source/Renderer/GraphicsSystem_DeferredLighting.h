@@ -1,18 +1,25 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "GraphicsSystem.h"
+#include "GraphicsSystemCommon.h"
 #include "LightRenderData.h"
+
+#include "Core/InvPtr.h"
+
+#include "Core/Util/CHashKey.h"
 
 
 namespace re
 {
 	class MeshPrimitive;
-	class StagePipeline;
 	class Texture;
 }
 
 namespace gr
 {
+	class StagePipeline;
+
+
 	class DeferredLightingGraphicsSystem final
 		: public virtual GraphicsSystem
 		, public virtual IScriptableGraphicsSystem<DeferredLightingGraphicsSystem>
