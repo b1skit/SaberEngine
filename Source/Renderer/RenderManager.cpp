@@ -5,10 +5,8 @@
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
-#include "Texture.h"
 
 #include "Core/Config.h"
-#include "Core/Inventory.h"
 #include "Core/PerfLogger.h"
 #include "Core/ProfilingMarkers.h"
 
@@ -23,13 +21,6 @@
 namespace gr
 {
 	constexpr char const* k_renderThreadLogName = "Render thread";
-
-
-	RenderManager* RenderManager::Get()
-	{
-		static std::unique_ptr<gr::RenderManager> instance = std::move(gr::RenderManager::Create());
-		return instance.get();
-	}
 
 
 	std::unique_ptr<gr::RenderManager> RenderManager::Create()

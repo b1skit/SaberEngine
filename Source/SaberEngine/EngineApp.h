@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Core/Inventory.h"
-
 #include "Core/Host/Window.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
+
+#include "Renderer/RenderManager.h"
 
 
 namespace app
@@ -52,6 +52,8 @@ namespace app
 
 	private: 
 		static EngineApp* m_engineApp;
+
+		std::unique_ptr<gr::RenderManager> m_renderManager;
 
 		std::unique_ptr<host::Window> m_window;
 

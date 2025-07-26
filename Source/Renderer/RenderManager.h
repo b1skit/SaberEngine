@@ -39,7 +39,7 @@ namespace gr
 		: public virtual en::IEngineComponent, public virtual en::IEngineThread, public virtual core::IEventListener
 	{
 	public:
-		static RenderManager* Get(); // Singleton functionality
+		[[nodiscard]] static std::unique_ptr<gr::RenderManager> Create();
 
 
 	public:
@@ -132,7 +132,6 @@ namespace gr
 	protected:
 		RenderManager() = delete;
 		RenderManager(platform::RenderingAPI);
-		[[nodiscard]] static std::unique_ptr<gr::RenderManager> Create();
 
 
 	private:

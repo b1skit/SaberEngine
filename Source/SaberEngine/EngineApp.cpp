@@ -83,7 +83,7 @@ namespace app
 
 		// Create the RenderManager immediately after processing the command line args, as it needs to set the
 		// platform::RenderingAPI in the Config before we bind the platform functions
-		gr::RenderManager* renderManager = gr::RenderManager::Get();
+		m_renderManager = gr::RenderManager::Create();
 
 		// Register our API-specific bindings before anything attempts to call them:
 		if (!platform::RegisterPlatformFunctions())
@@ -121,17 +121,17 @@ namespace app
 		pr::UIManager* uiMgr = pr::UIManager::Get();
 
 		// Dependency injection:
-		renderManager->SetWindow(m_window.get());
+		m_renderManager->SetWindow(m_window.get());
 		uiMgr->SetWindow(m_window.get());
-		uiMgr->SetRenderManager(renderManager);
+		uiMgr->SetRenderManager(m_renderManager.get());
 
 		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Render Thread");
-				renderManager->Lifetime(m_syncBarrier.get()); 
+				m_renderManager->Lifetime(m_syncBarrier.get()); 
 			});
-		renderManager->ThreadStartup(); // Initializes context
+		m_renderManager->ThreadStartup(); // Initializes context
 		
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
@@ -139,7 +139,7 @@ namespace app
 
 		entityMgr->Startup();
 
-		renderManager->ThreadInitialize();
+		m_renderManager->ThreadInitialize();
 
 		uiMgr->Startup();
 
@@ -159,7 +159,6 @@ namespace app
 		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
 		pr::SceneManager* sceneManager = pr::SceneManager::Get();
-		gr::RenderManager* renderManager = gr::RenderManager::Get();
 		pr::UIManager* uiManager = pr::UIManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
@@ -230,7 +229,7 @@ namespace app
 			SEEndCPUEvent();
 
 			// Pump the render thread:
-			renderManager->EnqueueUpdate({ m_frameNum, lastOuterFrameTime });
+			m_renderManager->EnqueueUpdate({ m_frameNum, lastOuterFrameTime });
 
 			++m_frameNum;
 
@@ -275,7 +274,7 @@ namespace app
 		// anything it might be using.
 		// Note: The RenderManager destroys the Inventory via the pointer we gave it to ensure render objects are
 		// destroyed on the main render thread (as required by OpenGL)
-		gr::RenderManager::Get()->ThreadShutdown();
+		m_renderManager->ThreadShutdown();
 
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();
