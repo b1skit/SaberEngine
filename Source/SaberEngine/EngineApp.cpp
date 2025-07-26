@@ -106,7 +106,7 @@ namespace app
 		}
 
 		// Stand up critical systems first:
-		core::ThreadPool::Get()->Startup();
+		core::ThreadPool::Startup();
 
 		// Start the logging thread:
 		core::Logger::Startup(core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
@@ -124,7 +124,7 @@ namespace app
 		m_uiManager->SetWindow(m_window.get());
 
 		// Render thread:
-		core::ThreadPool::Get()->EnqueueJob([&]()
+		core::ThreadPool::EnqueueJob([&]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Render Thread");
 				m_renderManager->Lifetime(m_syncBarrier.get()); 
@@ -277,7 +277,7 @@ namespace app
 
 		core::Logger::Shutdown(); // Destroy last
 
-		core::ThreadPool::Get()->Stop();
+		core::ThreadPool::Stop();
 		
 		m_window->Destroy();
 

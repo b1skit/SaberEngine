@@ -492,7 +492,7 @@ namespace gr
 				const bool cameraIsDirty = cameraItr->IsDirty<gr::Camera::RenderData>();
 
 				// Enqueue the culling job:
-				cullingFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				cullingFutures.emplace_back(core::ThreadPool::EnqueueJob(
 					[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
 					this, &renderData]()
 					{

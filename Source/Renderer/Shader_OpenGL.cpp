@@ -217,7 +217,7 @@ namespace
 			std::string const& filename = source.m_extensionlessFilename;
 			const re::Shader::ShaderType shaderType = source.m_type;
 
-			taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+			taskFutures.emplace_back(core::ThreadPool::EnqueueJob(
 				[&shaderTextsOut, filename, shaderType]()
 				{
 					std::string const& filenameAndExtension = filename + ".glsl";

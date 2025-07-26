@@ -1975,7 +1975,7 @@ namespace
 		{
 			cgltf_skin const* skin = &data->skins[skinIdx];
 
-			skinFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+			skinFutures.emplace_back(core::ThreadPool::EnqueueJob(
 				[skin, &fileMetadata]()
 				{
 					std::vector<glm::mat4> inverseBindMatrices;

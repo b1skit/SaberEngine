@@ -2,6 +2,7 @@
 #include "Assert.h"
 #include "Config.h"
 #include "ThreadPool.h"
+#include "Logger.h"
 
 #include "Util/CastUtils.h"
 
@@ -15,17 +16,17 @@ namespace core
 	}
 
 
-	ThreadPool* ThreadPool::Get()
-	{
-		static std::unique_ptr<core::ThreadPool> instance = std::make_unique<core::ThreadPool>();
-		return instance.get();
-	}
+	// ---
 
 
-	ThreadPool::ThreadPool()
-		: m_isRunning(false)
-	{
-	}
+	bool ThreadPool::s_isRunning = false;
+
+	std::mutex ThreadPool::s_jobQueueMutex;
+	std::condition_variable ThreadPool::s_jobQueueCV;
+
+	std::queue<FunctionWrapper> ThreadPool::s_jobQueue;
+
+	std::vector<std::thread> ThreadPool::s_workerThreads;
 
 
 	void ThreadPool::Startup()
@@ -40,7 +41,7 @@ namespace core
 			actualNumThreads = util::CheckedCast<size_t>(Config::GetValue<int>(configkeys::k_numWorkerThreads));
 		}		
 
-		m_isRunning = true; // Must be true BEFORE a new thread checks this in ExecuteJobs()
+		s_isRunning = true; // Must be true BEFORE a new thread checks this in ExecuteJobs()
 
 		for (size_t i = 0; i < actualNumThreads; ++i)
 		{
@@ -52,39 +53,39 @@ namespace core
 	void ThreadPool::Stop()
 	{
 		{
-			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
+			std::unique_lock<std::mutex> waitingLock(s_jobQueueMutex);
 
-			m_isRunning = false;			
+			s_isRunning = false;			
 		}
-		m_jobQueueCV.notify_all();
+		s_jobQueueCV.notify_all();
 
 		// Wait for all of our threads to complete:
-		for (auto& thread : m_workerThreads)
+		for (auto& thread : s_workerThreads)
 		{
 			thread.join();
 		}
-		m_workerThreads.clear();
+		s_workerThreads.clear();
 	}
 
 
 	void ThreadPool::ExecuteJobs()
 	{
-		while (m_isRunning)
+		while (s_isRunning)
 		{
 			// Aquire the lock and get a job, or wait if no jobs exist:
-			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
-			m_jobQueueCV.wait(
+			std::unique_lock<std::mutex> waitingLock(s_jobQueueMutex);
+			s_jobQueueCV.wait(
 				waitingLock, 
-				[this](){ return !m_jobQueue.empty() || !m_isRunning;}); // False if waiting should continue
+				[](){ return !s_jobQueue.empty() || !s_isRunning;}); // False if waiting should continue
 			
-			if (!m_isRunning)
+			if (!s_isRunning)
 			{
 				return;
 			}
 
 			// Get the job from the queue:
-			FunctionWrapper currentJob = std::move(m_jobQueue.front());
-			m_jobQueue.pop();
+			FunctionWrapper currentJob = std::move(s_jobQueue.front());
+			s_jobQueue.pop();
 
 			waitingLock.unlock();
 
@@ -105,10 +106,10 @@ namespace core
 
 	void ThreadPool::AddWorkerThread()
 	{
-		m_workerThreads.emplace_back(std::thread(&ThreadPool::ExecuteJobs, this));
+		s_workerThreads.emplace_back(std::thread(&ThreadPool::ExecuteJobs));
 
 		const HRESULT hr = ::SetThreadDescription(
-			m_workerThreads.back().native_handle(),
+			s_workerThreads.back().native_handle(),
 			L"Worker Thread");
 
 		SEAssert(hr >= 0, "Failed to set thread name");

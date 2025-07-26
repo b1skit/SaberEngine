@@ -642,7 +642,7 @@ namespace dx12
 				}
 				else
 				{
-					commandListJobs.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+					commandListJobs.emplace_back(core::ThreadPool::EnqueueJob(
 						[workRange = std::move(workRange), 
 							cmdList = std::move(cmdList),
 							&RecordCommandList,

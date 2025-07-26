@@ -215,7 +215,7 @@ namespace core
 
 		s_imGuiLogWindow = std::make_unique<ImGuiLogWindow>();
 
-		core::ThreadPool::Get()->EnqueueJob([]()
+		core::ThreadPool::EnqueueJob([]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Logger Thread");
 				Run();

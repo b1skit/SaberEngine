@@ -55,7 +55,7 @@ namespace gr
 
 			if (singleThreadIndexedBufferUpdates == false)
 			{
-				bufferUpdateFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+				bufferUpdateFutures.emplace_back(core::ThreadPool::EnqueueJob(
 					[indexedBufferPtr, &renderData]()
 					{
 						indexedBufferPtr->UpdateBuffer(renderData);

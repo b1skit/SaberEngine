@@ -275,7 +275,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextures));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateTextures));
 			}
 		}
 		// Samplers:
@@ -307,7 +307,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateSamplers));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateSamplers));
 			}
 
 		}
@@ -342,7 +342,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateTextureTargetSets));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateTextureTargetSets));
 			}
 		}
 		// Shaders:
@@ -376,7 +376,7 @@ namespace dx12
 			else
 			{
 				shaderTasksIdx = createTasks.size();
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaders));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateShaders));
 			}
 		}
 		// Vertex streams:
@@ -408,7 +408,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateVertexStreams));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateVertexStreams));
 			}
 		}
 		// Acceleration structures:
@@ -440,7 +440,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateAccelerationStructures));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateAccelerationStructures));
 			}
 		}
 		// Shader binding tables:
@@ -481,7 +481,7 @@ namespace dx12
 			}
 			else
 			{
-				createTasks.emplace_back(core::ThreadPool::Get()->EnqueueJob(CreateShaderBindingTables));
+				createTasks.emplace_back(core::ThreadPool::EnqueueJob(CreateShaderBindingTables));
 			}
 		}
 

@@ -195,7 +195,7 @@ namespace core
 			// require it before the creation can possibly have finished
 			std::dynamic_pointer_cast<ILoadContext<T>>(newInvPtr.m_control->m_loadContext)->CallOnLoadBegin();
 
-			core::ThreadPool::Get()->EnqueueJob([newInvPtr]()
+			core::ThreadPool::EnqueueJob([newInvPtr]()
 				{
 					newInvPtr.TryToLoad();
 				});

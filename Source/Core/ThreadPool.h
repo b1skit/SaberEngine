@@ -47,44 +47,38 @@ namespace core
 	class ThreadPool final
 	{
 	public:
-		static ThreadPool* Get(); // Singleton functionality
-
-
-	public:
-		ThreadPool();
-
-		ThreadPool(ThreadPool&&) noexcept = default;
-		ThreadPool& operator=(ThreadPool&&) noexcept = default;
-		~ThreadPool() = default;
-
-		void Startup();
-		void Stop();
+		static void Startup();
+		static void Stop();
 
 		template<typename FunctionType>
-		std::future<typename std::invoke_result<FunctionType>::type> EnqueueJob(FunctionType job); // Producer
+		static std::future<typename std::invoke_result<FunctionType>::type> EnqueueJob(FunctionType job); // Producer
 
 		static void NameCurrentThread(wchar_t const* threadName);
 
 	private:
-		void ExecuteJobs(); // Consumer loop
+		static void ExecuteJobs(); // Consumer loop
 
-		void AddWorkerThread();
+		static void AddWorkerThread();
 
 
 	private:
-		bool m_isRunning;
+		static bool s_isRunning;
 
-		std::mutex m_jobQueueMutex;
-		std::condition_variable m_jobQueueCV;
+		static std::mutex s_jobQueueMutex;
+		static std::condition_variable s_jobQueueCV;
 
-		std::queue<FunctionWrapper> m_jobQueue;
+		static std::queue<FunctionWrapper> s_jobQueue;
 
-		std::vector<std::thread> m_workerThreads;
+		static std::vector<std::thread> s_workerThreads;
 
 
-	private: // No copying allowed
+	private: // Static class only
+		ThreadPool() = delete;
+		ThreadPool(ThreadPool&&) noexcept = delete;
 		ThreadPool(ThreadPool const&) = delete;
-		ThreadPool& operator=(ThreadPool const&) = delete;		
+		ThreadPool& operator=(ThreadPool&&) noexcept = delete;		
+		ThreadPool& operator=(ThreadPool const&) = delete;
+		~ThreadPool() = default;
 	};
 
 
@@ -98,11 +92,11 @@ namespace core
 
 		// Add the task to our queue:
 		{
-			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
-			m_jobQueue.push(std::move(packagedTask));
+			std::unique_lock<std::mutex> waitingLock(s_jobQueueMutex);
+			s_jobQueue.push(std::move(packagedTask));
 		}
 
-		m_jobQueueCV.notify_one();
+		s_jobQueueCV.notify_one();
 
 		return taskFuture;
 	}

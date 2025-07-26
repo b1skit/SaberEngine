@@ -522,7 +522,7 @@ namespace pr
 		{
 			if (ImGui::Button("Import"))
 			{
-				core::ThreadPool::Get()->EnqueueJob([]()
+				core::ThreadPool::EnqueueJob([]()
 					{
 						std::string filepath;
 						if (host::Dialog::OpenFileDialogBox("HDR Files", {"*.hdr"}, filepath))

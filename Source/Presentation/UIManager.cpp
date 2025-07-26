@@ -131,7 +131,7 @@ namespace
 
 	void FileImport()
 	{
-		core::ThreadPool::Get()->EnqueueJob([]()
+		core::ThreadPool::EnqueueJob([]()
 			{
 				std::string requestedFilepath;
 				const bool didRequestFile = host::Dialog::OpenFileDialogBox(

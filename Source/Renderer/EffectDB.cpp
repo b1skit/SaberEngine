@@ -587,7 +587,7 @@ namespace effect
 			{
 				if (s_threadedEffectLoading)
 				{
-					taskFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob(
+					taskFutures.emplace_back(core::ThreadPool::EnqueueJob(
 						[&effectManifestEntry, this]()
 						{
 							std::string const& effectDefinitionFilename = effectManifestEntry.template get<std::string>();

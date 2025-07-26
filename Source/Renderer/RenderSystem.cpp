@@ -562,7 +562,7 @@ namespace gr
 				}
 				else
 				{
-					updateStepFutures.emplace_back(core::ThreadPool::Get()->EnqueueJob([&]()
+					updateStepFutures.emplace_back(core::ThreadPool::EnqueueJob([&]()
 						{
 							ExecuteUpdateStep(currentStep);
 						}));
