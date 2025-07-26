@@ -202,7 +202,7 @@ namespace win32
 
 		if (doBroadcastSEEvent)
 		{
-			core::EventManager::Get()->Notify(std::move(eventInfo));
+			core::EventManager::Notify(std::move(eventInfo));
 		}
 
 		if (doRebroadcastWinEvent)
@@ -498,7 +498,7 @@ namespace win32
 					// Convert it to a string, and send it as an event:
 					std::string const& filePathStr = util::FromWideCString(filePath);
 
-					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					core::EventManager::Notify(core::EventManager::EventInfo{
 						.m_eventKey = eventkey::DragAndDrop,
 						.m_data = filePathStr, });
 				}

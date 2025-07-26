@@ -1,7 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Interfaces/IEngineComponent.h"
-
 #include "Util/CHashKey.h"
 
 
@@ -16,7 +14,7 @@ namespace re
 
 namespace core
 {
-	class EventManager final : public virtual en::IEngineComponent
+	class EventManager final
 	{
 	public:
 		using EventData = std::variant<
@@ -38,38 +36,32 @@ namespace core
 			EventData m_data;
 		};
 
-
-	public:
-		static EventManager* Get(); // Singleton functionality
-
-	public:
-		EventManager();
-
-		EventManager(EventManager&&) noexcept = default;
-		EventManager& operator=(EventManager&&) noexcept = default;
-		~EventManager() = default;
-		
+	public:		
 		// IEngineComponent interface:
-		void Startup() override;
-		void Shutdown() override;
-		void Update(uint64_t frameNum, double stepTimeMs) override;
+		static void Startup();
+		static void Shutdown();
+		static void Update();
 
 		// Member functions:
-		void Subscribe(util::CHashKey const& eventType, IEventListener* listener); // Subscribe to an event
-		void Notify(EventInfo&&); // Post an event
+		static void Subscribe(util::CHashKey const& eventType, IEventListener* listener); // Subscribe to an event
+		static void Notify(EventInfo&&); // Post an event
 
 
 	private:
-		std::vector<EventInfo> m_eventQueue;
-		std::mutex m_eventQueueMutex;
+		static std::vector<EventInfo> s_eventQueue;
+		static std::mutex s_eventQueueMutex;
 
-		std::unordered_map<util::CHashKey, std::vector<IEventListener*>> m_eventListeners;
-		std::mutex m_eventListenersMutex;
+		static std::unordered_map<util::CHashKey, std::vector<IEventListener*>> s_eventListeners;
+		static std::mutex s_eventListenersMutex;
 
 
-	private:
+	private: // Pure static only:
+		EventManager() = delete;
 		EventManager(EventManager const&) = delete;
+		EventManager(EventManager&&) noexcept = delete;
+		EventManager& operator=(EventManager&&) noexcept = delete;		
 		void operator=(EventManager const&) = delete;
+		~EventManager() = default;
 	};
 
 

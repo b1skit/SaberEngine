@@ -12,6 +12,6 @@ namespace platform
 	class EventManager final
 	{
 	public:
-		static void (*ProcessMessages)(core::EventManager& eventManager);
+		static void (*ProcessMessages)();
 	};
 }

@@ -141,7 +141,7 @@ namespace
 
 				if (didRequestFile)
 				{
-					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					core::EventManager::Notify(core::EventManager::EventInfo{
 						.m_eventKey = eventkey::FileImportRequest,
 						.m_data = requestedFilepath });
 				}
@@ -180,15 +180,15 @@ namespace pr
 
 		// Event subscriptions:
 		// Input events:
-		core::EventManager::Get()->Subscribe(eventkey::TextInputEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::KeyEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseMotionEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseButtonEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseWheelEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::DragAndDrop, this);
-		core::EventManager::Get()->Subscribe(eventkey::VSyncModeChanged, this);
-		core::EventManager::Get()->Subscribe(eventkey::ToggleConsole, this);
-		core::EventManager::Get()->Subscribe(eventkey::ToggleUIVisibility, this);
+		core::EventManager::Subscribe(eventkey::TextInputEvent, this);
+		core::EventManager::Subscribe(eventkey::KeyEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseMotionEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseButtonEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseWheelEvent, this);
+		core::EventManager::Subscribe(eventkey::DragAndDrop, this);
+		core::EventManager::Subscribe(eventkey::VSyncModeChanged, this);
+		core::EventManager::Subscribe(eventkey::ToggleConsole, this);
+		core::EventManager::Subscribe(eventkey::ToggleUIVisibility, this);
 
 		// Create UI render systems:
 		std::atomic<bool>* createdFlag = &m_debugUIRenderSystemCreated;
@@ -206,7 +206,7 @@ namespace pr
 		m_show[EntityComponentDbg] = true;
 		m_show[RenderMgrDbg] = true;
 
-		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+		core::EventManager::Notify(core::EventManager::EventInfo{
 			.m_eventKey = eventkey::TogglePerformanceTimers,
 			.m_data = m_show[PerfLogger],
 			});
@@ -263,14 +263,14 @@ namespace pr
 			const bool imguiWantsButtonCapture = m_imguiWantsToCaptureKeyboard || m_imguiWantsTextInput;
 			if (imguiVisiblityChanged || imguiWantsButtonCapture)
 			{
-				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::KeyboardInputCaptureChange,
 					.m_data = (m_imguiMenuActive || imguiWantsButtonCapture), });
 			}
 
 			if (imguiVisiblityChanged || m_imguiWantsToCaptureMouse)
 			{
-				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::MouseInputCaptureChange,
 					.m_data = (m_imguiMenuActive || m_imguiWantsToCaptureMouse), });
 			}
@@ -317,7 +317,7 @@ namespace pr
 				// Enable/disable the performance logging, for efficiency
 				if (m_show[PerfLogger])
 				{
-					core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+					core::EventManager::Notify(core::EventManager::EventInfo{
 						.m_eventKey = eventkey::TogglePerformanceTimers,
 						.m_data = m_showImGui, });
 				}
@@ -400,7 +400,7 @@ namespace pr
 			{
 				std::string const& filePath = std::get<std::string>(eventInfo.m_data);
 
-				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::FileImportRequest, 
 					.m_data = filePath });
 			}
@@ -514,7 +514,7 @@ namespace pr
 
 						if (ImGui::MenuItem("Reset"))
 						{
-							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							core::EventManager::Notify(core::EventManager::EventInfo{
 								.m_eventKey = eventkey::SceneResetRequest, });
 						}
 
@@ -522,7 +522,7 @@ namespace pr
 
 						if (ImGui::MenuItem("Quit"))
 						{
-							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							core::EventManager::Notify(core::EventManager::EventInfo{
 								.m_eventKey = eventkey::EngineQuit, });
 						}
 
@@ -533,7 +533,7 @@ namespace pr
 					{
 						if (ImGui::Checkbox("V-Sync", &m_vsyncState))
 						{
-							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							core::EventManager::Notify(core::EventManager::EventInfo{
 								.m_eventKey = eventkey::ToggleVSync, });
 						}
 						ImGui::EndMenu();
@@ -588,7 +588,7 @@ namespace pr
 					{
 						if (ImGui::MenuItem("Performance overlay", "", &m_show[Show::PerfLogger]))
 						{
-							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							core::EventManager::Notify(core::EventManager::EventInfo{
 								.m_eventKey = eventkey::TogglePerformanceTimers,
 								.m_data = m_show[PerfLogger],
 							});

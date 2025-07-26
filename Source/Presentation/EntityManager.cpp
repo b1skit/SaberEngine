@@ -53,7 +53,7 @@ namespace pr
 		LOG("EntityManager starting...");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
+		core::EventManager::Subscribe(eventkey::SceneResetRequest, this);
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();

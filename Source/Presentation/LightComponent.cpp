@@ -527,7 +527,7 @@ namespace pr
 						std::string filepath;
 						if (host::Dialog::OpenFileDialogBox("HDR Files", {"*.hdr"}, filepath))
 						{
-							core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+							core::EventManager::Notify(core::EventManager::EventInfo{
 							.m_eventKey = eventkey::FileImportRequest,
 							.m_data = filepath });
 						}

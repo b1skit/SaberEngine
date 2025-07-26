@@ -2,7 +2,6 @@
 #include "EngineApp.h"
 #include "Platform.h"
 
-#include "Core/AccessKey.h"
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/EventManager.h"
@@ -92,10 +91,9 @@ namespace app
 			exit(-1);
 		}
 
-		core::EventManager* eventManager = core::EventManager::Get();
-		eventManager->Startup();
+		core::EventManager::Startup();
 
-		eventManager->Subscribe(eventkey::EngineQuit, this);
+		core::EventManager::Subscribe(eventkey::EngineQuit, this);
 
 		// Show the console if requested now that we've parsed the command line args
 		const bool showConsole = core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg);
@@ -152,14 +150,13 @@ namespace app
 	{
 		LOG("\nEngineApp: Starting main game loop\n");
 
-		core::EventManager* eventManager = core::EventManager::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
 		// Process any events that might have occurred during startup:
-		eventManager->Update(m_frameNum, 0.0);
+		core::EventManager::Update();
 
 		// Initialize game loop timing:
 		double elapsed = k_fixedTimeStep; // Ensure we pump Updates once before the 1st render
@@ -197,7 +194,7 @@ namespace app
 
 				// Pump our events/input:
 				SEBeginCPUEvent("core::EventManager::Update");
-				eventManager->Update(m_frameNum, k_fixedTimeStep);
+				core::EventManager::Update();
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::InputManager::Update");
@@ -273,7 +270,7 @@ namespace app
 		m_renderManager = nullptr;
 
 		en::InputManager::Get()->Shutdown();
-		core::EventManager::Get()->Shutdown();
+		core::EventManager::Shutdown();
 
 		core::Logger::Shutdown(); // Destroy last
 

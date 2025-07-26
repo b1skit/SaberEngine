@@ -4,7 +4,7 @@
 
 namespace win32
 {
-	void EventManager::ProcessMessages(core::EventManager& eventManager)
+	void EventManager::ProcessMessages()
 	{
 		MSG msg;
 		while (::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) // Peek (vs Get) doesn't wait for a message if none exists

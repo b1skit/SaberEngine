@@ -8,51 +8,47 @@
 
 namespace core
 {
-	EventManager* EventManager::Get()
-	{
-		static std::unique_ptr<core::EventManager> instance = std::make_unique<core::EventManager>();
-		return instance.get();
-	}
+	std::vector<EventManager::EventInfo> EventManager::s_eventQueue;
+	std::mutex EventManager::s_eventQueueMutex;
 
-
-	EventManager::EventManager()
-	{
-		m_eventQueue.reserve(1024); // Just a wild guess; we clear this each frame
-	}
+	std::unordered_map<util::CHashKey, std::vector<IEventListener*>> EventManager::s_eventListeners;
+	std::mutex EventManager::s_eventListenersMutex;
 
 
 	void EventManager::Startup()
 	{
 		LOG("Event manager starting...");
+
+		s_eventQueue.reserve(1024); // Just a wild guess; we clear this each frame
 	}
 
 
 	void EventManager::Shutdown()
 	{
-		Update(0, 0.0); // Run one last update
+		Update(); // Run one last update
 
 		LOG("Event manager shutting down...");
 	}
 
 
-	void EventManager::Update(uint64_t frameNum, double stepTimeMs)
+	void EventManager::Update()
 	{
-		platform::EventManager::ProcessMessages(*this);
+		platform::EventManager::ProcessMessages();
 
 		{
-			std::scoped_lock lock(m_eventQueueMutex, m_eventListenersMutex);
+			std::scoped_lock lock(s_eventQueueMutex, s_eventListenersMutex);
 
-			for (auto const& curEvent : m_eventQueue)
+			for (auto const& curEvent : s_eventQueue)
 			{
-				if (m_eventListeners.contains(curEvent.m_eventKey))
+				if (s_eventListeners.contains(curEvent.m_eventKey))
 				{
-					for (auto& listener : m_eventListeners.at(curEvent.m_eventKey))
+					for (auto& listener : s_eventListeners.at(curEvent.m_eventKey))
 					{
 						listener->PostEvent(curEvent);
 					}
 				}
 			}
-			m_eventQueue.clear();
+			s_eventQueue.clear();
 		}
 	}
 
@@ -60,9 +56,9 @@ namespace core
 	void EventManager::Subscribe(util::CHashKey const& eventType, IEventListener* listener)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_eventListenersMutex);
+			std::lock_guard<std::mutex> lock(s_eventListenersMutex);
 
-			m_eventListeners[eventType].emplace_back(listener);
+			s_eventListeners[eventType].emplace_back(listener);
 		}
 	}
 
@@ -70,9 +66,9 @@ namespace core
 	void EventManager::Notify(EventInfo&& eventInfo)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_eventQueueMutex);
+			std::lock_guard<std::mutex> lock(s_eventQueueMutex);
 
-			m_eventQueue.emplace_back(std::move(eventInfo));
+			s_eventQueue.emplace_back(std::move(eventInfo));
 		}
 	}
 }

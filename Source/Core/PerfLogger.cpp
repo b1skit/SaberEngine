@@ -19,7 +19,7 @@ namespace core
 		: m_numFramesInFlight(core::Config::GetValue<int>(core::configkeys::k_numBackbuffersKey))
 		, m_isEnabled(false)
 	{
-		core::EventManager::Get()->Subscribe(eventkey::TogglePerformanceTimers, this);
+		core::EventManager::Subscribe(eventkey::TogglePerformanceTimers, this);
 	}
 
 

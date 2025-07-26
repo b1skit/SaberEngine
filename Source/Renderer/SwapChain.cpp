@@ -31,7 +31,7 @@ namespace re
 		platform::SwapChain::Create(*this, format, numFramesInFlight, ctx);
 
 		// Broadcast the starting VSync state:
-		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+		core::EventManager::Notify(core::EventManager::EventInfo{
 			.m_eventKey = eventkey::VSyncModeChanged,
 			.m_data = m_platObj->m_vsyncEnabled, });
 	}
@@ -54,7 +54,7 @@ namespace re
 	{
 		const bool vsyncState = platform::SwapChain::ToggleVSync(*this);
 
-		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+		core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::VSyncModeChanged,
 					.m_data = vsyncState, });
 

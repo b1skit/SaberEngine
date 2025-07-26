@@ -59,13 +59,13 @@ namespace en
 		LoadInputBindings();
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(eventkey::KeyEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseMotionEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseButtonEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseWheelEvent, this);
-		core::EventManager::Get()->Subscribe(eventkey::WindowFocusChanged, this);
-		core::EventManager::Get()->Subscribe(eventkey::KeyboardInputCaptureChange, this);
-		core::EventManager::Get()->Subscribe(eventkey::MouseInputCaptureChange, this);
+		core::EventManager::Subscribe(eventkey::KeyEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseMotionEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseButtonEvent, this);
+		core::EventManager::Subscribe(eventkey::MouseWheelEvent, this);
+		core::EventManager::Subscribe(eventkey::WindowFocusChanged, this);
+		core::EventManager::Subscribe(eventkey::KeyboardInputCaptureChange, this);
+		core::EventManager::Subscribe(eventkey::MouseInputCaptureChange, this);
 
 		platform::InputManager::Startup(*this);
 	}
@@ -279,7 +279,7 @@ namespace en
 
 			if (doBroadcastToSE)
 			{
-				core::EventManager::Get()->Notify(std::move(transformedEvent));
+				core::EventManager::Notify(std::move(transformedEvent));
 			}
 		}		
 	}

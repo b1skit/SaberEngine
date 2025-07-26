@@ -46,6 +46,10 @@ namespace core
 	private:
 		static void Run(); // Logger thread
 
+		static void PrintMessage(char const* msg);
+		static void FlushMessages();
+
+
 	private:
 		constexpr static uint32_t k_internalStagingBufferSize = 4096;
 

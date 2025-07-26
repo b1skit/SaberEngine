@@ -177,8 +177,8 @@ namespace gr
 			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight_Platform(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");	
 
-		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
-		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
+		core::EventManager::Subscribe(eventkey::ToggleVSync, this);
+		core::EventManager::Subscribe(eventkey::EngineQuit, this);
 
 		gr::RenderCommand::s_renderCommandManager = &m_renderCommandManager;
 		gr::RenderCommand::s_renderDataManager = &m_renderData;

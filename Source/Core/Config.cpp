@@ -92,7 +92,7 @@ namespace core
 			if (keysValues.back().m_key == core::configkeys::k_importCmdLineArg &&
 				!keysValues.back().m_value.empty())
 			{
-				core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::FileImportRequest,
 					.m_data = keysValues.back().m_value });
 			}

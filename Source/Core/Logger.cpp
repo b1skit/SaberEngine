@@ -227,8 +227,39 @@ namespace core
 	{
 		LOG("Log manager shutting down...");
 		s_isRunning = false;
+
+		FlushMessages(); // Flush any remaining messages on the queue
+
 		s_logOutputStream.close();
 		s_imGuiLogWindow = nullptr;
+	}
+
+
+	void Logger::PrintMessage(char const* msg)
+	{
+		s_imGuiLogWindow->AddLog(msg);
+
+		// Print the message to the terminal. Note: We might get different ordering since s_imGuiLogWindow
+		// internally locks a mutex before appending the new message
+		if (s_showHostConsole)
+		{
+			printf(msg);
+		}
+
+		s_logOutputStream << msg;
+		s_logOutputStream.flush(); // Flush every time to keep the log up to date
+	};
+
+
+	void Logger::FlushMessages()
+	{
+		SEAssert(!s_isRunning, "Flushing messages while running. This is unexpected");
+
+		while (!s_messages.empty())
+		{
+			PrintMessage(s_messages.front().data());
+			s_messages.pop();
+		}
 	}
 
 
@@ -241,21 +272,6 @@ namespace core
 			std::ios::out);
 		SEAssert(s_logOutputStream.good(), "Error creating log output stream");
 
-		auto PrintMessage = [&](char const* msg)
-			{
-				s_imGuiLogWindow->AddLog(msg);
-
-				// Print the message to the terminal. Note: We might get different ordering since s_imGuiLogWindow
-				// internally locks a mutex before appending the new message
-				if (s_showHostConsole)
-				{
-					printf(msg);
-				}
-
-				s_logOutputStream << msg;
-				s_logOutputStream.flush(); // Flush every time to keep the log up to date
-			};
-
 		while (s_isRunning)
 		{
 			std::unique_lock<std::mutex> waitingLock(s_messagesMutex);
@@ -263,12 +279,6 @@ namespace core
 				[]() { return !s_messages.empty() || !s_isRunning; }); // while (!stop_waiting())
 			if (!s_isRunning)
 			{
-				// Flush any remaining messages on the queue:
-				while (!s_messages.empty())
-				{
-					PrintMessage(s_messages.front().data());
-					s_messages.pop();
-				}
 				return;
 			}
 

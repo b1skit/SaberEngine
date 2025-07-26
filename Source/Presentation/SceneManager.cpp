@@ -30,8 +30,8 @@ namespace pr
 		LOG("SceneManager starting...");
 
 		// Event subscriptions:
-		core::EventManager::Get()->Subscribe(eventkey::FileImportRequest, this);
-		core::EventManager::Get()->Subscribe(eventkey::SceneResetRequest, this);
+		core::EventManager::Subscribe(eventkey::FileImportRequest, this);
+		core::EventManager::Subscribe(eventkey::SceneResetRequest, this);
 
 		CreateDefaultSceneResources(); // Kick off async loading of mandatory assets
 

@@ -55,7 +55,7 @@ namespace host
 			platform::Window::SetRelativeMouseMode(*this, m_relativeMouseModeEnabled);
 		}
 
-		core::EventManager::Get()->Notify(core::EventManager::EventInfo{
+		core::EventManager::Notify(core::EventManager::EventInfo{
 				.m_eventKey = eventkey::WindowFocusChanged,
 				.m_data = m_hasFocus,
 			});

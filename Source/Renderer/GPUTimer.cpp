@@ -87,7 +87,7 @@ namespace re
 		m_platObj->m_currentDirectComputeTimerCount = 0;
 		m_platObj->m_currentCopyTimerCount = 0;
 
-		core::EventManager::Get()->Subscribe(eventkey::TogglePerformanceTimers, this);
+		core::EventManager::Subscribe(eventkey::TogglePerformanceTimers, this);
 	}
 
 
