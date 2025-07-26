@@ -21,7 +21,6 @@ namespace gr
 {
 	class GraphicsSystem;
 	class RenderDataManager;
-	class RenderSystem;
 
 	template<typename T>
 	concept GraphicsSystemType = std::derived_from<T, gr::GraphicsSystem>;
@@ -30,7 +29,7 @@ namespace gr
 	class GraphicsSystemManager
 	{
 	public:
-		GraphicsSystemManager(gr::RenderSystem*, re::Context*);
+		GraphicsSystemManager(re::Context*);
 		~GraphicsSystemManager() = default;
 
 		void Destroy();
@@ -113,7 +112,6 @@ namespace gr
 		bool m_activeAmbientLightHasChanged;
 
 		re::Context* m_context;
-		gr::RenderSystem const* m_owningRenderSystem;
 
 
 		uint64_t m_currentFrameNum;

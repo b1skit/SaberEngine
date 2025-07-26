@@ -7,7 +7,6 @@
 #include "GraphicsSystem.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
-#include "RenderSystem.h"
 #include "Sampler.h"
 
 #include "Core/Assert.h"
@@ -17,11 +16,9 @@
 
 namespace gr
 {
-	GraphicsSystemManager::GraphicsSystemManager(
-		gr::RenderSystem* owningRS, re::Context* context)
+	GraphicsSystemManager::GraphicsSystemManager(re::Context* context)
 		: m_renderData(nullptr)
 		, m_context(context)
-		, m_owningRenderSystem(owningRS)
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)

@@ -388,7 +388,7 @@ namespace gr
 
 	RenderSystem::RenderSystem(std::string const& name, re::Context* context)
 		: INamedObject(name)
-		, m_graphicsSystemManager(this, context)
+		, m_graphicsSystemManager(context)
 		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
 	{
