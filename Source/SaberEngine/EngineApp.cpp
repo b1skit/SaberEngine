@@ -109,8 +109,7 @@ namespace app
 		core::ThreadPool::Get()->Startup();
 
 		// Start the logging thread:
-		core::Logger::Get()->Startup(
-			core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
+		core::Logger::Startup(core::Config::KeyExists(core::configkeys::k_showSystemConsoleWindowCmdLineArg));
 
 		// Create a window (and internally pass it to the re::Context)
 		constexpr bool k_allowDragAndDrop = true; // Always allowed, for now
@@ -154,7 +153,6 @@ namespace app
 		LOG("\nEngineApp: Starting main game loop\n");
 
 		core::EventManager* eventManager = core::EventManager::Get();
-		core::Logger* logger = core::Logger::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
 
@@ -277,7 +275,7 @@ namespace app
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();
 
-		core::Logger::Get()->Shutdown(); // Destroy last
+		core::Logger::Shutdown(); // Destroy last
 
 		core::ThreadPool::Get()->Stop();
 		

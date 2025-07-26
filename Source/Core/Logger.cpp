@@ -192,29 +192,30 @@ namespace
 
 namespace core
 {
-	Logger* Logger::Get()
-	{
-		static std::unique_ptr<core::Logger> instance = std::make_unique<core::Logger>();
-		return instance.get();
-	}
+	std::unique_ptr<ImGuiLogWindow> Logger::s_imGuiLogWindow = nullptr;
+	bool Logger::s_isRunning = false;
+	bool Logger::s_showHostConsole = false;
+
+	std::queue<std::array<char, Logger::k_internalStagingBufferSize>> Logger::s_messages;
+	std::mutex Logger::s_messagesMutex;
+	std::condition_variable Logger::s_messagesCV;
+
+	std::ofstream Logger::s_logOutputStream;
 
 
-	Logger::Logger()
-		: m_imGuiLogWindow(std::make_unique<ImGuiLogWindow>())
-		, m_isRunning(false)
-		, m_showHostConsole(false)
-	{
-	}
+	// ---
 
 
 	void Logger::Startup(bool isSystemConsoleWindowEnabled)
 	{
 		LOG("Log manager starting...");
 
-		m_isRunning = true; // Start running *before* we kick off a thread
-		m_showHostConsole = isSystemConsoleWindowEnabled;
+		s_isRunning = true; // Start running *before* we kick off a thread
+		s_showHostConsole = isSystemConsoleWindowEnabled;
 
-		core::ThreadPool::Get()->EnqueueJob([this]()
+		s_imGuiLogWindow = std::make_unique<ImGuiLogWindow>();
+
+		core::ThreadPool::Get()->EnqueueJob([]()
 			{
 				core::ThreadPool::NameCurrentThread(L"Logger Thread");
 				Run();
@@ -225,8 +226,9 @@ namespace core
 	void Logger::Shutdown()
 	{
 		LOG("Log manager shutting down...");
-		m_isRunning = false;
-		m_logOutputStream.close();
+		s_isRunning = false;
+		s_logOutputStream.close();
+		s_imGuiLogWindow = nullptr;
 	}
 
 
@@ -234,52 +236,52 @@ namespace core
 	{
 		std::filesystem::create_directory(core::configkeys::k_logOutputDir); // No error if the directory already exists
 
-		m_logOutputStream.open(
+		s_logOutputStream.open(
 			std::format("{}{}", core::configkeys::k_logOutputDir, core::configkeys::k_logFileName).c_str(),
 			std::ios::out);
-		SEAssert(m_logOutputStream.good(), "Error creating log output stream");
+		SEAssert(s_logOutputStream.good(), "Error creating log output stream");
 
 		auto PrintMessage = [&](char const* msg)
 			{
-				m_imGuiLogWindow->AddLog(msg);
+				s_imGuiLogWindow->AddLog(msg);
 
-				// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow
+				// Print the message to the terminal. Note: We might get different ordering since s_imGuiLogWindow
 				// internally locks a mutex before appending the new message
-				if (m_showHostConsole)
+				if (s_showHostConsole)
 				{
 					printf(msg);
 				}
 
-				m_logOutputStream << msg;
-				m_logOutputStream.flush(); // Flush every time to keep the log up to date
+				s_logOutputStream << msg;
+				s_logOutputStream.flush(); // Flush every time to keep the log up to date
 			};
 
-		while (m_isRunning)
+		while (s_isRunning)
 		{
-			std::unique_lock<std::mutex> waitingLock(m_messagesMutex);
-			m_messagesCV.wait(waitingLock,
-				[this]() { return !m_messages.empty() || !m_isRunning; }); // while (!stop_waiting())
-			if (!m_isRunning)
+			std::unique_lock<std::mutex> waitingLock(s_messagesMutex);
+			s_messagesCV.wait(waitingLock,
+				[]() { return !s_messages.empty() || !s_isRunning; }); // while (!stop_waiting())
+			if (!s_isRunning)
 			{
 				// Flush any remaining messages on the queue:
-				while (!m_messages.empty())
+				while (!s_messages.empty())
 				{
-					PrintMessage(m_messages.front().data());
-					m_messages.pop();
+					PrintMessage(s_messages.front().data());
+					s_messages.pop();
 				}
 				return;
 			}
 
 			// Get a pointer to the front message, then release the lock to allow more messages to be added
-			char const* topMsg = m_messages.front().data();
+			char const* topMsg = s_messages.front().data();
 			waitingLock.unlock();
 
 			PrintMessage(topMsg);
 			
 			{
 				// Finally, pop the message
-				std::unique_lock<std::mutex> modifyLock(m_messagesMutex);
-				m_messages.pop();
+				std::unique_lock<std::mutex> modifyLock(s_messagesMutex);
+				s_messages.pop();
 			}
 		}
 	}
@@ -294,7 +296,7 @@ namespace core
 			ImGui::End();
 
 			// Actually call in the regular Log helper (which will Begin() into the same window as we just did)
-			m_imGuiLogWindow->Draw(logWindowTitle, show);
+			s_imGuiLogWindow->Draw(logWindowTitle, show);
 		}
 	}
 
@@ -302,10 +304,10 @@ namespace core
 	void Logger::AddMessage(char const* msg)
 	{
 		{
-			std::unique_lock<std::mutex> lock(m_messagesMutex);
-			m_messages.emplace();
-			strcpy(m_messages.back().data(), msg);
+			std::unique_lock<std::mutex> lock(s_messagesMutex);
+			s_messages.emplace();
+			strcpy(s_messages.back().data(), msg);
 		}
-		m_messagesCV.notify_one();
+		s_messagesCV.notify_one();
 	}
 }

@@ -16,10 +16,6 @@ namespace core
 	class Logger final
 	{
 	public:
-		static Logger* Get(); // Singleton functionality
-
-
-	public:
 		/* Public logging interface:
 		----------------------------*/
 		template<typename...Args>
@@ -42,35 +38,29 @@ namespace core
 
 
 	public:
-		Logger();
+		static void Startup(bool isSystemConsoleWindowEnabled);
+		static void Shutdown();
 
-		Logger(Logger&&) noexcept = default;
-		Logger& operator=(Logger&&) noexcept = default;
-		~Logger() = default;
-
-		void Startup(bool isSystemConsoleWindowEnabled);
-		void Shutdown();
-
-		void ShowImGuiWindow(bool* show);
+		static void ShowImGuiWindow(bool* show);
 
 	private:
-		void Run(); // Logger thread
+		static void Run(); // Logger thread
 
 	private:
 		constexpr static uint32_t k_internalStagingBufferSize = 4096;
 
 
-		void AddMessage(char const*);
-		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
+		static void AddMessage(char const*);
+		static std::unique_ptr<ImGuiLogWindow> s_imGuiLogWindow; // Internally contains a mutex
 
-		bool m_isRunning;
-		bool m_showHostConsole;
+		static bool s_isRunning;
+		static bool s_showHostConsole;
 
-		std::queue<std::array<char, k_internalStagingBufferSize>> m_messages;
-		std::mutex m_messagesMutex;
-		std::condition_variable m_messagesCV;
+		static std::queue<std::array<char, k_internalStagingBufferSize>> s_messages;
+		static std::mutex s_messagesMutex;
+		static std::condition_variable s_messagesCV;
 
-		std::ofstream m_logOutputStream;
+		static std::ofstream s_logOutputStream;
 
 
 	private:
@@ -98,9 +88,13 @@ namespace core
 			T* destBuffer);
 	
 
-	private: // No copying allowed
+	private: // Static class only
+		Logger() = delete;
 		Logger(Logger const&) = delete;
+		Logger(Logger&&) noexcept = delete;
+		Logger& operator=(Logger&&) noexcept = delete;
 		void operator=(Logger const&) = delete;
+		~Logger() = default;
 	};
 
 
@@ -272,14 +266,13 @@ namespace core
 			std::forward<Args>(args)...);
 
 		// Finally, pass the message to our Logger singleton:
-		static Logger* const s_logMgr = Logger::Get();
 		if constexpr (std::is_same<T, wchar_t>::value)
 		{
-			s_logMgr->AddMessage(util::FromWideCString(stagingBuffer.data()).c_str());
+			AddMessage(util::FromWideCString(stagingBuffer.data()).c_str());
 		}
 		else
 		{
-			s_logMgr->AddMessage(stagingBuffer.data());
+			AddMessage(stagingBuffer.data());
 		}
 	}
 

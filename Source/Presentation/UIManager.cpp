@@ -617,7 +617,7 @@ namespace pr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				core::Logger::Get()->ShowImGuiWindow(&m_show[Show::Logger]);
+				core::Logger::ShowImGuiWindow(&m_show[Show::Logger]);
 			};
 		if (m_show[Show::Logger])
 		{
