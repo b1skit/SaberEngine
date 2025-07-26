@@ -117,13 +117,12 @@ namespace app
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
 		pr::EntityManager* entityMgr = pr::EntityManager::Get();
-		pr::SceneManager* sceneMgr = pr::SceneManager::Get();
-		m_uiManager = std::make_unique<pr::UIManager>();
+		m_sceneManager = std::make_unique<pr::SceneManager>();
+		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), m_renderManager.get());
 
 		// Dependency injection:
 		m_renderManager->SetWindow(m_window.get());
 		m_uiManager->SetWindow(m_window.get());
-		m_uiManager->SetRenderManager(m_renderManager.get());
 
 		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()
@@ -135,7 +134,7 @@ namespace app
 		
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		sceneMgr->Startup();
+		m_sceneManager->Startup();
 
 		entityMgr->Startup();
 
@@ -158,7 +157,6 @@ namespace app
 		core::Logger* logger = core::Logger::Get();
 		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
-		pr::SceneManager* sceneManager = pr::SceneManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
@@ -216,7 +214,7 @@ namespace app
 			}
 
 			SEBeginCPUEvent("pr::SceneManager::Update");
-			sceneManager->Update(m_frameNum, lastOuterFrameTime); // Note: Must be updated after entity manager (e.g. Reset)
+			m_sceneManager->Update(m_frameNum, lastOuterFrameTime); // Note: Must be updated after entity manager (e.g. Reset)
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("pr::UIManager::Update");
@@ -268,7 +266,8 @@ namespace app
 		
 		pr::EntityManager::Get()->Shutdown();
 
-		pr::SceneManager::Get()->Shutdown();
+		m_sceneManager->Shutdown();
+		m_sceneManager = nullptr;
 
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using.

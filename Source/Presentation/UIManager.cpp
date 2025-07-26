@@ -151,7 +151,7 @@ namespace
 
 namespace pr
 {
-	UIManager::UIManager()
+	UIManager::UIManager(pr::SceneManager* sceneMgr, gr::RenderManager* renderMgr)
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
@@ -163,7 +163,8 @@ namespace pr
 		, m_imguiWantsTextInput(false)
 		, m_show{0}
 		, m_window(nullptr)
-		, m_renderManager(nullptr)
+		, m_sceneManager(sceneMgr)
+		, m_renderManager(renderMgr)
 		, m_vsyncState(false) // Will be updated by the initial state broadcast event
 	{
 	}
@@ -626,7 +627,7 @@ namespace pr
 		// Scene manager debug:
 		auto ShowSceneMgrDebug = [&]()
 			{
-				pr::SceneManager::Get()->ShowImGuiWindow(&m_show[Show::SceneMgrDbg]);
+				m_sceneManager->ShowImGuiWindow(&m_show[Show::SceneMgrDbg]);
 			};
 		if (m_show[Show::SceneMgrDbg])
 		{

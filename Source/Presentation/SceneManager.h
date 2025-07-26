@@ -9,10 +9,6 @@ namespace pr
 	class SceneManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		static SceneManager* Get(); // Singleton functionality
-
-
-	public:
 		SceneManager() = default;
 		SceneManager(SceneManager&&) noexcept = default;
 		SceneManager& operator=(SceneManager&&) noexcept = default;

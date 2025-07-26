@@ -25,13 +25,6 @@
 
 namespace pr
 {
-	SceneManager* SceneManager::Get()
-	{
-		static std::unique_ptr<pr::SceneManager> instance = std::make_unique<pr::SceneManager>();
-		return instance.get();
-	}
-
-
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
