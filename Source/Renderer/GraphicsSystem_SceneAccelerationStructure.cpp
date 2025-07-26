@@ -110,8 +110,7 @@ namespace gr
 		m_rtParentStageItr = pipeline.AppendStage(gr::Stage::CreateParentStage("Ray Tracing parent stage"));
 
 		m_animatedVertexStreams =
-			GetDataDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
-		SEAssert(m_animatedVertexStreams, "Animated vertex streams map cannot (currently) be null");
+			GetDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
 	}
 
 

@@ -42,12 +42,10 @@ namespace gr
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
 	{
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
-		SEAssert(m_viewCullingResults, "View culling results cannot (currently) be null");
+		m_viewCullingResults = GetDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
 
 		m_animatedVertexStreams = 
-			GetDataDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
-		SEAssert(m_animatedVertexStreams, "Animated vertex streams map cannot (currently) be null");
+			GetDependency<AnimatedVertexStreams>(k_animatedVertexStreamsInput, dataDependencies);
 	}
 
 

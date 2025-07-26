@@ -2,7 +2,8 @@
 #pragma once
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
-#include "LightRenderData.h"
+#include "GraphicsSystemManager.h"
+#include "RenderPipeline.h"
 
 #include "Core/InvPtr.h"
 
@@ -13,19 +14,17 @@ namespace re
 {
 	class MeshPrimitive;
 	class Texture;
+	class TextureTargetSet;
 }
 
 namespace gr
 {
-	class StagePipeline;
-
-
-	class DeferredLightingGraphicsSystem final
+	class DeferredIBLGraphicsSystem final
 		: public virtual GraphicsSystem
-		, public virtual IScriptableGraphicsSystem<DeferredLightingGraphicsSystem>
+		, public virtual IScriptableGraphicsSystem<DeferredIBLGraphicsSystem>
 	{
 	public:
-		static constexpr char const* GetScriptName() { return "DeferredLighting"; }
+		static constexpr char const* GetScriptName() { return "DeferredIBL"; }
 
 		gr::GraphicsSystem::RuntimeBindings GetRuntimeBindings() override
 		{
@@ -33,24 +32,19 @@ namespace gr
 			(
 				INIT_PIPELINE
 				(
-					INIT_PIPELINE_FN(DeferredLightingGraphicsSystem, InitializeResourceGenerationStages),
-					INIT_PIPELINE_FN(DeferredLightingGraphicsSystem, InitPipeline)
+					INIT_PIPELINE_FN(DeferredIBLGraphicsSystem, InitializeResourceGenerationStages),
+					INIT_PIPELINE_FN(DeferredIBLGraphicsSystem, InitPipeline)
 				)
-				PRE_RENDER(PRE_RENDER_FN(DeferredLightingGraphicsSystem, PreRender))
+				PRE_RENDER(PRE_RENDER_FN(DeferredIBLGraphicsSystem, PreRender))
 			);
 		}
 
+		static constexpr util::CHashKey k_lightingTargetTexInput = "LightTargetTex";
 		static constexpr util::CHashKey k_AOTexInput = "AOTex";
-		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
-		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
 
-		static constexpr util::CHashKey k_lightIDToShadowRecordInput = "LightIDToShadowRecordMap";
-		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
-
-		// Note: The DeferredLightingGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
+		// Note: The DeferredIBLGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
 
-		static constexpr util::CHashKey k_lightingTexOutput = "DeferredLightTarget";
 		static constexpr util::CHashKey k_activeAmbientIEMTexOutput = "ActiveAmbientIEMTex";
 		static constexpr util::CHashKey k_activeAmbientPMREMTexOutput = "ActiveAmbientPMREMTex";
 		static constexpr util::CHashKey k_activeAmbientDFGTexOutput = "ActiveAmbientDFGTex";
@@ -59,9 +53,9 @@ namespace gr
 
 
 	public:
-		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
+		DeferredIBLGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~DeferredLightingGraphicsSystem() override = default;
+		~DeferredIBLGraphicsSystem() override = default;
 
 		void InitializeResourceGenerationStages(
 			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
@@ -88,6 +82,11 @@ namespace gr
 		void PopulatePMREMTex(
 			gr::StagePipeline*, core::InvPtr<re::Texture> const& iblTex, core::InvPtr<re::Texture>& pmremTexOut) const;
 
+
+	private:
+		void CreateBatches();
+
+
 	private: // Ambient lights:
 		struct AmbientLightRenderData
 		{
@@ -111,58 +110,14 @@ namespace gr
 		re::BufferInput m_ambientParams;
 		core::InvPtr<re::Texture> m_AOTex;
 
+		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
+
 		gr::StagePipeline* m_resourceCreationStagePipeline;
 		gr::StagePipeline::StagePipelineItr m_resourceCreationStageParentItr;
 
 		// For rendering into a cube map (IEM/PMREM generation)
 		core::InvPtr<gr::MeshPrimitive> m_cubeMeshPrimitive;
 		gr::BatchHandle m_cubeMeshBatch;
-		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;
-
-
-		// TODO: Convert all fullscreen lights (i.e. ambient, directional) to this stage
-		std::shared_ptr<gr::Stage> m_fullscreenStage;
-		gr::BatchHandle m_fullscreenComputeBatch;
-		static constexpr uint32_t k_dispatchXYThreadDims = 8;
-
-
-	private: // Punctual lights:
-		struct PunctualLightRenderData
-		{
-			gr::Light::Type m_type;
-			gr::BatchHandle m_batch;
-			bool m_hasShadow = false;
-			bool m_canContribute = true;
-		};
-		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
-
-		std::shared_ptr<gr::Stage> m_directionalStage;
-		std::shared_ptr<gr::Stage> m_pointStage;
-		std::shared_ptr<gr::Stage> m_spotStage;
-
-	private: // Common:
-		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;
-		
-		core::InvPtr<re::Texture> m_missing2DShadowFallback;
-		core::InvPtr<re::Texture> m_missingCubeShadowFallback;
-
-
-	private: // Cached dependencies:
-		PunctualLightCullingResults const* m_pointCullingResults;
-		PunctualLightCullingResults const* m_spotCullingResults;
-
-		LightIDToShadowRecordMap const* m_lightIDToShadowRecords;
-		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
-
-
-	private:
-		void CreateBatches();
-
-	private:
-		void HandleEvents() override;
-
-		bool m_directionalShadowTexArrayUpdated;
-		bool m_pointShadowTexArrayUpdated;
-		bool m_spotShadowTexArrayUpdated;
+		std::array<std::shared_ptr<re::Buffer>, 6> m_cubemapRenderCamParams;	
 	};
 }

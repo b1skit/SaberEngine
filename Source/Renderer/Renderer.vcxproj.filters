@@ -206,7 +206,7 @@
     <ClInclude Include="GraphicsSystem_Debug.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsSystem_DeferredLighting.h">
+    <ClInclude Include="GraphicsSystem_DeferredLightVolumes.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem_GBuffer.h">
@@ -569,6 +569,12 @@
     <ClInclude Include="Shaders\Common\RTAOParams.h">
       <Filter>Shaders\Common</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_DeferredIBL.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_DeferredUnlit.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -706,7 +712,7 @@
     <ClCompile Include="GraphicsSystem_Debug.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp">
+    <ClCompile Include="GraphicsSystem_DeferredLightVolumes.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_GBuffer.cpp">
@@ -947,6 +953,12 @@
       <Filter>Source Files\gr\grutil</Filter>
     </ClCompile>
     <ClCompile Include="RenderCommand.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_DeferredIBL.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_DeferredUnlit.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>

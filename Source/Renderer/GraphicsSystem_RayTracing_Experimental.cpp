@@ -50,8 +50,7 @@ namespace gr
 	{
 		m_stagePipeline = &pipeline;
 
-		m_sceneTLAS = GetDataDependency<TLAS>(k_sceneTLASInput, dataDependencies);
-		SEAssert(m_sceneTLAS, "Scene TLAS ptr cannot be null");
+		m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 
 
 		// Ray tracing stage:

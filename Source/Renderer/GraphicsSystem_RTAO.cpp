@@ -93,11 +93,10 @@ namespace gr
 		SEAssert(texDependencies.contains(k_wNormalInput) && texDependencies.contains(k_depthInput),
 			"Failed to get required texture dependencies");
 
-		m_depthInput = texDependencies.at(k_depthInput);
-		m_wNormalInput = texDependencies.at(k_wNormalInput);
+		m_depthInput = GetDependency<core::InvPtr<re::Texture>>(k_depthInput, texDependencies);
+		m_wNormalInput = GetDependency<core::InvPtr<re::Texture>>(k_wNormalInput, texDependencies);
 
-		m_sceneTLAS = GetDataDependency<TLAS>(k_sceneTLASInput, dataDependencies);
-		SEAssert(m_sceneTLAS, "Scene TLAS ptr cannot be null");
+		m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 
 		// Ray tracing stage:
 		m_RTAOStage = gr::Stage::CreateRayTracingStage("RTAO", gr::Stage::RayTracingStageParams{});

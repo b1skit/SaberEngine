@@ -4,6 +4,7 @@
 #include "VertexStream.h"
 #include "RenderObjectIDs.h"
 
+#include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Core/Util/CHashKey.h"
@@ -45,11 +46,16 @@ namespace gr
 	};
 	using LightIDToShadowRecordMap = std::unordered_map<gr::RenderDataID, gr::ShadowRecord>;
 
-	// Helpers:
-	template<typename T>
-	T const* GetDataDependency(util::CHashKey const& scriptName, DataDependencies const& dataDependencies)
+	// Helpers:	
+	template<typename T, typename DependencyMap>
+	T const* GetDependency(util::CHashKey const& scriptName, DependencyMap const& dependencyMap, bool isMandatory = true)
 	{
-		auto const& result = dataDependencies.find(scriptName);
-		return result == dataDependencies.end() ? nullptr : static_cast<T const*>(result->second);
+		auto const& result = dependencyMap.find(scriptName);
+
+		SEAssert(!isMandatory || 
+			(result != dependencyMap.end() && result->second != nullptr),
+			"Missing a mandatory dependency: \"%s\"", scriptName.GetKey());
+
+		return result == dependencyMap.end() ? nullptr : static_cast<T const*>(result->second);
 	}
 }

@@ -146,6 +146,7 @@
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
+    <ClInclude Include="GraphicsSystem_DeferredIBL.h" />
     <ClInclude Include="GraphicsSystem_RTAO.h" />
     <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h" />
     <ClInclude Include="GraphicsSystem_BatchManager.h" />
@@ -153,7 +154,7 @@
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Culling.h" />
     <ClInclude Include="GraphicsSystem_Debug.h" />
-    <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
+    <ClInclude Include="GraphicsSystem_DeferredLightVolumes.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem_ImGui.h" />
     <ClInclude Include="GraphicsSystem_RayTracing_Experimental.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="GraphicsSystem_Skybox.h" />
     <ClInclude Include="GraphicsSystem_Tonemapping.h" />
     <ClInclude Include="GraphicsSystem_Transparency.h" />
+    <ClInclude Include="GraphicsSystem_DeferredUnlit.h" />
     <ClInclude Include="GraphicsSystem_VertexAnimation.h" />
     <ClInclude Include="GraphicsSystem_XeGTAO.h" />
     <ClInclude Include="GraphicsUtils.h" />
@@ -293,6 +295,7 @@
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
+    <ClCompile Include="GraphicsSystem_DeferredIBL.cpp" />
     <ClCompile Include="GraphicsSystem_RTAO.cpp" />
     <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp" />
     <ClCompile Include="GraphicsSystem_BatchManager.cpp" />
@@ -300,7 +303,7 @@
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Culling.cpp" />
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
-    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
+    <ClCompile Include="GraphicsSystem_DeferredLightVolumes.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem_ImGui.cpp" />
     <ClCompile Include="GraphicsSystem_RayTracing_Experimental.cpp" />
@@ -308,6 +311,7 @@
     <ClCompile Include="GraphicsSystem_Skybox.cpp" />
     <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
     <ClCompile Include="GraphicsSystem_Transparency.cpp" />
+    <ClCompile Include="GraphicsSystem_DeferredUnlit.cpp" />
     <ClCompile Include="GraphicsSystem_VertexAnimation.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
     <ClCompile Include="IndexedBuffer.cpp" />

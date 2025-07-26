@@ -96,8 +96,8 @@ namespace gr
 		m_owningPipeline->AppendStage(m_gBufferStage);
 
 		// Cache our dependencies:
-		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
-		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		m_viewBatches = GetDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies, false);
+		m_allBatches = GetDependency<AllBatches>(k_allBatchesDataInput, dataDependencies, false);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 	}
 

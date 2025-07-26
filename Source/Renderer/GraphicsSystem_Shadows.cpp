@@ -260,11 +260,11 @@ namespace gr
 		m_spotParentStageItr = pipeline.AppendStage(spotParentStage);
 
 		// Cache our dependencies:
-		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
-		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+		m_pointCullingResults = GetDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies, false);
+		m_spotCullingResults = GetDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies, false);
 
-		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
-		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		m_viewBatches = GetDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies, false);
+		m_allBatches = GetDependency<AllBatches>(k_allBatchesDataInput, dataDependencies, false);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
 		// PCSS sample buffer::

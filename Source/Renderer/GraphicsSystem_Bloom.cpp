@@ -2,16 +2,18 @@
 #include "BatchBuilder.h"
 #include "CameraRenderData.h"
 #include "Effect.h"
-#include "GraphicsSystemManager.h"
 #include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystemCommon.h"
+#include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
 #include "RenderDataManager.h"
+#include "RenderPipeline.h"
 #include "Sampler.h"
+#include "TextureView.h"
 
 #include "Core/InvPtr.h"
 
 #include "Renderer/Shaders/Common/BloomComputeParams.h"
-
 
 
 namespace
@@ -78,14 +80,17 @@ namespace gr
 		m_emissiveBlitStage = gr::Stage::CreateFullscreenQuadStage("Emissive blit stage", emissiveBlitParams);
 
 		// Emissive blit texture inputs:
+		core::InvPtr<re::Texture> const& emissiveTex = 
+			*GetDependency<core::InvPtr<re::Texture>>(k_emissiveInput, texDependencies);
 		m_emissiveBlitStage->AddPermanentTextureInput(
 			"Tex0",
-			*texDependencies.at(k_emissiveInput),
+			emissiveTex,
 			bloomSampler,
-			re::TextureView(*texDependencies.at(k_emissiveInput)));
+			re::TextureView(emissiveTex));
 
 		// Additively blit the emissive values to the deferred lighting target:
-		core::InvPtr<re::Texture> const& deferredLightTargetTex = *texDependencies.at(k_bloomTargetInput);
+		core::InvPtr<re::Texture> const& deferredLightTargetTex =
+			*GetDependency<core::InvPtr<re::Texture>>(k_bloomTargetInput, texDependencies);
 
 		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = 
 			re::TextureTargetSet::Create("Emissive Blit Target Set");

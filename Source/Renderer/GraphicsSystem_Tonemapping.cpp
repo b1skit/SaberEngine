@@ -54,18 +54,22 @@ namespace gr
 		constexpr char const* k_tonemappingTargetShaderName = "Lighting";
 		constexpr char const* k_bloomShaderName = "Bloom";
 
-		core::InvPtr<re::Texture> const& lightingTex = *texDependencies.at(k_tonemappingTargetInput);
+		core::InvPtr<re::Texture> const& lightingTex = 
+			*GetDependency<core::InvPtr<re::Texture>>(k_tonemappingTargetInput, texDependencies);
 
 		m_tonemappingStage->AddPermanentRWTextureInput(
 			k_tonemappingTargetShaderName,
 			lightingTex,
 			re::TextureView(lightingTex));
 
+		core::InvPtr<re::Texture> const& bloomResult = 
+			*GetDependency<core::InvPtr<re::Texture>>(k_bloomResultInput, texDependencies);
+
 		m_tonemappingStage->AddPermanentTextureInput(
 			k_bloomShaderName,
-			*texDependencies.at(k_bloomResultInput),
+			bloomResult,
 			m_graphicsSystemManager->GetSampler("ClampMinMagMipLinear"),
-			re::TextureView(*texDependencies.at(k_bloomResultInput)));
+			re::TextureView(bloomResult));
 
 		pipeline.AppendStage(m_tonemappingStage);
 

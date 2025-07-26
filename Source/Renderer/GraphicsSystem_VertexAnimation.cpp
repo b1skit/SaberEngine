@@ -145,7 +145,7 @@ namespace gr
 		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
 	{
-		m_viewCullingResults = GetDataDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies);
+		m_viewCullingResults = GetDependency<ViewCullingResults>(k_cullingDataInput, dataDependencies, false);
 
 		m_morphAnimationStage = 
 			gr::Stage::CreateComputeStage("Morph Animation Stage", gr::Stage::ComputeStageParams{});

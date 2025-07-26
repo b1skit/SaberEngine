@@ -22,7 +22,7 @@
 				}
 			]
 		},
-				{
+		{
 			"GraphicsSystem": "SceneAccelerationStructure",
 			"Inputs": [
 				{
@@ -137,7 +137,93 @@
 			]
 		},
 		{
-			"GraphicsSystem": "DeferredLighting",
+			"GraphicsSystem": "DeferredUnlit",
+			"Inputs": [
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferAlbedo",
+							"DestinationName": "GBufferAlbedo"
+						},
+						{
+							"SourceName": "GBufferWNormal",
+							"DestinationName": "GBufferWNormal"
+						},
+						{
+							"SourceName": "GBufferRMAO",
+							"DestinationName": "GBufferRMAO"
+						},
+						{
+							"SourceName": "GBufferMatProp0",
+							"DestinationName": "GBufferMatProp0"
+						},
+						{
+							"SourceName": "GBufferMaterialID",
+							"DestinationName": "GBufferMaterialID"
+						},
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "GBufferDepth"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "DeferredIBL",
+			"Inputs": [
+				{
+					"GraphicsSystem": "GBuffer",
+					"TextureDependencies": [
+						{
+							"SourceName": "GBufferAlbedo",
+							"DestinationName": "GBufferAlbedo"
+						},
+						{
+							"SourceName": "GBufferWNormal",
+							"DestinationName": "GBufferWNormal"
+						},
+						{
+							"SourceName": "GBufferRMAO",
+							"DestinationName": "GBufferRMAO"
+						},
+						{
+							"SourceName": "GBufferMatProp0",
+							"DestinationName": "GBufferMatProp0"
+						},
+						{
+							"SourceName": "GBufferMaterialID",
+							"DestinationName": "GBufferMaterialID"
+						},
+						{
+							"SourceName": "GBufferDepth",
+							"DestinationName": "GBufferDepth"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "DeferredUnlit",
+					"TextureDependencies": [
+						{
+							"SourceName": "LightTargetTex",
+							"DestinationName": "LightTargetTex"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "RTAO",
+					"TextureDependencies": [
+						{
+							"SourceName": "RTAOTex",
+							"DestinationName": "AOTex"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "DeferredLightVolumes",
 			"Inputs": [
 				{
 					"GraphicsSystem": "Culling",
@@ -197,11 +283,11 @@
 					]
 				},
 				{
-					"GraphicsSystem": "RTAO",
+					"GraphicsSystem": "DeferredUnlit",
 					"TextureDependencies": [
 						{
-							"SourceName": "RTAOTex",
-							"DestinationName": "AOTex"
+							"SourceName": "LightTargetTex",
+							"DestinationName": "LightTargetTex"
 						}
 					]
 				}
@@ -211,10 +297,10 @@
 			"GraphicsSystem": "Skybox",
 			"Inputs": [
 				{
-					"GraphicsSystem": "DeferredLighting",
+					"GraphicsSystem": "DeferredUnlit",
 					"TextureDependencies": [
 						{
-							"SourceName": "DeferredLightTarget",
+							"SourceName": "LightTargetTex",
 							"DestinationName": "SkyboxTarget"
 						}
 					]
@@ -265,7 +351,7 @@
 						{
 							"SourceName": "PCSSSampleParamsBuffer",
 							"DestinationName": "PCSSSampleParamsBuffer"
-						}				
+						}
 					],
 					"DataDependencies": [
 						{
@@ -298,12 +384,17 @@
 					]
 				},
 				{
-					"GraphicsSystem": "DeferredLighting",
+					"GraphicsSystem": "DeferredUnlit",
 					"TextureDependencies": [
 						{
-							"SourceName": "DeferredLightTarget",
+							"SourceName": "LightTargetTex",
 							"DestinationName": "SceneLightingTarget"
-						},
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "DeferredIBL",
+					"TextureDependencies": [
 						{
 							"SourceName": "ActiveAmbientIEMTex",
 							"DestinationName": "AmbientIEMTex"
@@ -339,10 +430,10 @@
 					]
 				},
 				{
-					"GraphicsSystem": "DeferredLighting",
+					"GraphicsSystem": "DeferredUnlit",
 					"TextureDependencies": [
 						{
-							"SourceName": "DeferredLightTarget",
+							"SourceName": "LightTargetTex",
 							"DestinationName": "BloomTarget"
 						}
 					]
@@ -353,10 +444,10 @@
 			"GraphicsSystem": "Tonemapping",
 			"Inputs": [
 				{
-					"GraphicsSystem": "DeferredLighting",
+					"GraphicsSystem": "DeferredUnlit",
 					"TextureDependencies": [
 						{
-							"SourceName": "DeferredLightTarget",
+							"SourceName": "LightTargetTex",
 							"DestinationName": "TonemappingTarget"
 						}
 					]

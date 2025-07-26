@@ -117,24 +117,24 @@ namespace gr
 			"Missing a required input");
 
 		// Cache our dependencies:
-		m_ambientIEMTex = texDependencies.at(k_ambientIEMTexInput);
-		m_ambientPMREMTex = texDependencies.at(k_ambientPMREMTexInput);
-		m_ambientParams = bufferDependencies.at(k_ambientParamsBufferInput);
+		m_ambientIEMTex = GetDependency<core::InvPtr<re::Texture>>(k_ambientIEMTexInput, texDependencies);
+		m_ambientPMREMTex = GetDependency<core::InvPtr<re::Texture>>(k_ambientPMREMTexInput, texDependencies);
+		m_ambientParams = GetDependency<std::shared_ptr<re::Buffer>>(k_ambientParamsBufferInput, bufferDependencies);
 
-		m_pointCullingResults = GetDataDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
-		m_spotCullingResults = GetDataDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+		m_pointCullingResults = GetDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+		m_spotCullingResults = GetDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
 
-		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
-		m_allBatches = GetDataDependency<AllBatches>(k_allBatchesDataInput, dataDependencies);
+		m_viewBatches = GetDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies, false);
+		m_allBatches = GetDependency<AllBatches>(k_allBatchesDataInput, dataDependencies, false);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
 
-		m_directionalShadowArrayTex = texDependencies.at(k_directionalShadowArrayTexInput);
-		m_pointShadowArrayTex = texDependencies.at(k_pointShadowArrayTexInput);
-		m_spotShadowArrayTex = texDependencies.at(k_spotShadowArrayTexInput);
+		m_directionalShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_directionalShadowArrayTexInput, texDependencies);
+		m_pointShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_pointShadowArrayTexInput, texDependencies);
+		m_spotShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_spotShadowArrayTexInput, texDependencies);
 		
-		m_lightIDToShadowRecords = GetDataDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
+		m_lightIDToShadowRecords = GetDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
 
-		m_PCSSSampleParamsBuffer = bufferDependencies.at(k_PCSSSampleParamsBufferInput);
+		m_PCSSSampleParamsBuffer = GetDependency<std::shared_ptr<re::Buffer>>(k_PCSSSampleParamsBufferInput, bufferDependencies);
 
 
 		// Stage setup:
@@ -149,11 +149,11 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> transparencyTarget = re::TextureTargetSet::Create("Transparency Targets");
 
 		transparencyTarget->SetColorTarget(0,
-			*texDependencies.at(k_sceneLightingTexInput),
+			*GetDependency<core::InvPtr<re::Texture>>(k_sceneLightingTexInput, texDependencies),
 			re::TextureTarget::TargetParams{ .m_textureView = {re::TextureView::Texture2DView(0, 1) } });
 
 		transparencyTarget->SetDepthStencilTarget(
-			*texDependencies.at(k_sceneDepthTexInput),
+			*GetDependency<core::InvPtr<re::Texture>>(k_sceneDepthTexInput, texDependencies),
 			re::TextureTarget::TargetParams{ .m_textureView = {
 				re::TextureView::Texture2DView(0, 1),
 				{re::TextureView::ViewFlags::ReadOnlyDepth} } });
@@ -166,11 +166,13 @@ namespace gr
 		m_transparencyStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
 		// Texture inputs:
+		core::InvPtr<re::Texture> const& ambientDFGTex =
+			*GetDependency<core::InvPtr<re::Texture>>(k_ambientDFGTexInput, texDependencies);
 		m_transparencyStage->AddPermanentTextureInput(
 			"DFG",
-			*texDependencies.at(k_ambientDFGTexInput),
+			ambientDFGTex,
 			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
-			re::TextureView(*texDependencies.at(k_ambientDFGTexInput)));
+			re::TextureView(ambientDFGTex));
 
 		pipeline.AppendStage(m_transparencyStage);
 	}

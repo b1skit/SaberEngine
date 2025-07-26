@@ -1,10 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_Skybox.h"
+#include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "LightRenderData.h"
 #include "RenderDataManager.h"
 #include "Texture.h"
 #include "TextureTarget.h"
+
+#include "Core/InvPtr.h"
 
 #include "Renderer/Shaders/Common/SkyboxParams.h"
 
@@ -54,8 +57,8 @@ namespace gr
 			fallbackParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
 			fallbackParams.m_multisampleMode = re::Texture::MultisampleMode::Disabled;
 
-			m_fallbackColorTex = 
-				re::Texture::Create("Skybox flat color fallback", fallbackParams, glm::vec4(m_backgroundColor.rgb, 1.f));
+			m_fallbackColorTex = re::Texture::Create(
+				"Skybox flat color fallback", fallbackParams, glm::vec4(m_backgroundColor.rgb, 1.f));
 		}
 
 		m_skyboxStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
@@ -65,15 +68,15 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = re::TextureTargetSet::Create("Skybox Targets");
 
 		skyboxTargets->SetColorTarget(
-			0, 
-			*texDependencies.at(k_skyboxTargetInput),
+			0,
+			*GetDependency<core::InvPtr<re::Texture>>(k_skyboxTargetInput, texDependencies),
 			re::TextureTarget::TargetParams{ .m_textureView = re::TextureView::Texture2DView(0, 1) });
 
-		re::TextureTarget::TargetParams depthTargetParams{ .m_textureView = {
-				re::TextureView::Texture2DView(0, 1), 
-				re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth}} };
-		
-		skyboxTargets->SetDepthStencilTarget(*texDependencies.at(k_sceneDepthTexInput), depthTargetParams);
+		skyboxTargets->SetDepthStencilTarget(
+			*GetDependency<core::InvPtr<re::Texture>>(k_sceneDepthTexInput, texDependencies),
+			re::TextureTarget::TargetParams{ .m_textureView = {
+				re::TextureView::Texture2DView(0, 1),
+				re::TextureView::ViewFlags{re::TextureView::ViewFlags::ReadOnlyDepth}} });
 
 		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 

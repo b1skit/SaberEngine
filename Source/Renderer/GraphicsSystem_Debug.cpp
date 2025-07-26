@@ -385,8 +385,7 @@ namespace gr
 		stagePipeline.AppendStage(m_wireframeStage);
 
 		// Cache our dependencies:
-		m_viewBatches = GetDataDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
-		SEAssert(m_viewBatches, "Must have received some batches");
+		m_viewBatches = GetDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies);
 	}
 
 
