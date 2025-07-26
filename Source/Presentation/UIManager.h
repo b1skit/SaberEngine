@@ -20,10 +20,6 @@ namespace pr
 	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		static UIManager* Get(); // Singleton functionality
-
-
-	public:
 		UIManager();
 		~UIManager() = default;
 

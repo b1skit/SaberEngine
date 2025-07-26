@@ -5,6 +5,8 @@
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
 
+#include "Presentation/UIManager.h"
+
 #include "Renderer/RenderManager.h"
 
 
@@ -54,6 +56,7 @@ namespace app
 		static EngineApp* m_engineApp;
 
 		std::unique_ptr<gr::RenderManager> m_renderManager;
+		std::unique_ptr<pr::UIManager> m_uiManager;
 
 		std::unique_ptr<host::Window> m_window;
 

@@ -151,13 +151,6 @@ namespace
 
 namespace pr
 {
-	UIManager* UIManager::Get()
-	{
-		static std::unique_ptr<pr::UIManager> instance = std::make_unique<pr::UIManager>();
-		return instance.get();
-	}
-
-
 	UIManager::UIManager()
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)

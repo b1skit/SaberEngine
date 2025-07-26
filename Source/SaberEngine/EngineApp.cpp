@@ -118,12 +118,12 @@ namespace app
 
 		pr::EntityManager* entityMgr = pr::EntityManager::Get();
 		pr::SceneManager* sceneMgr = pr::SceneManager::Get();
-		pr::UIManager* uiMgr = pr::UIManager::Get();
+		m_uiManager = std::make_unique<pr::UIManager>();
 
 		// Dependency injection:
 		m_renderManager->SetWindow(m_window.get());
-		uiMgr->SetWindow(m_window.get());
-		uiMgr->SetRenderManager(m_renderManager.get());
+		m_uiManager->SetWindow(m_window.get());
+		m_uiManager->SetRenderManager(m_renderManager.get());
 
 		// Render thread:
 		core::ThreadPool::Get()->EnqueueJob([&]()
@@ -141,7 +141,7 @@ namespace app
 
 		m_renderManager->ThreadInitialize();
 
-		uiMgr->Startup();
+		m_uiManager->Startup();
 
 		m_isRunning = true;
 
@@ -159,7 +159,6 @@ namespace app
 		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
 		pr::SceneManager* sceneManager = pr::SceneManager::Get();
-		pr::UIManager* uiManager = pr::UIManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
@@ -221,7 +220,7 @@ namespace app
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("pr::UIManager::Update");
-			uiManager->Update(m_frameNum, lastOuterFrameTime);
+			m_uiManager->Update(m_frameNum, lastOuterFrameTime);
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("pr::EntityManager::EnqueueRenderUpdates");
@@ -264,7 +263,8 @@ namespace app
 
 		core::Config::SaveConfigFile();
 
-		pr::UIManager::Get()->Shutdown();
+		m_uiManager->Shutdown();
+		m_uiManager = nullptr;
 		
 		pr::EntityManager::Get()->Shutdown();
 
@@ -272,9 +272,8 @@ namespace app
 
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using.
-		// Note: The RenderManager destroys the Inventory via the pointer we gave it to ensure render objects are
-		// destroyed on the main render thread (as required by OpenGL)
 		m_renderManager->ThreadShutdown();
+		m_renderManager = nullptr;
 
 		en::InputManager::Get()->Shutdown();
 		core::EventManager::Get()->Shutdown();
