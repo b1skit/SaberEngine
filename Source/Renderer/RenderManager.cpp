@@ -5,7 +5,6 @@
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
-#include "Sampler.h"
 #include "Texture.h"
 
 #include "Core/Config.h"
@@ -186,21 +185,9 @@ namespace gr
 		m_context = re::Context::CreateContext_Platform(
 			m_renderingAPI, m_renderFrameNum, GetNumFramesInFlight_Platform(), m_windowCache);
 		SEAssert(m_context, "Failed to create platform context.");	
-		
-		// The swap chain requires the context be fully created before it is created
-		m_context->GetSwapChain().Create(re::Texture::Format::RGBA8_UNORM, GetNumFramesInFlight_Platform(), m_context.get());
 
 		core::EventManager::Get()->Subscribe(eventkey::ToggleVSync, this);
 		core::EventManager::Get()->Subscribe(eventkey::EngineQuit, this);
-		
-		CreateSamplerLibrary();
-		CreateDefaultTextures();
-
-		// Trigger creation of render libraries:
-		for (uint8_t i = 0; i < platform::RLibrary::Type::Type_Count; ++i)
-		{
-			m_context->GetOrCreateRenderLibrary(static_cast<platform::RLibrary::Type>(i));
-		}
 
 		gr::RenderCommand::s_renderCommandManager = &m_renderCommandManager;
 		gr::RenderCommand::s_renderDataManager = &m_renderData;
@@ -336,8 +323,6 @@ namespace gr
 
 		EndFrame_Platform();
 
-		core::Inventory::OnEndOfFrame(ACCESS_KEY(core::Inventory::AccessKey)); // Free Resources that have gone out of scope
-
 		SEEndCPUEvent(); // "gr::RenderManager::EndFrame"
 	}
 
@@ -369,18 +354,6 @@ namespace gr
 
 		m_renderData.Destroy();
 
-		m_defaultTextures.clear();
-
-		// Destroy the swap chain before forcing deferred deletions. This is safe, as we've already flushed any
-		// remaining outstanding work
-		m_context->GetSwapChain().Destroy();
-
-		// We destroy this on behalf of the EngineApp, as the inventory typically contains GPU resources that need to
-		// be destroyed from the render thread (i.e. for OpenGL)
-		core::Inventory::Destroy(ACCESS_KEY(core::Inventory::AccessKey));
-
-		// Destroy the BufferAllocator before we process deferred deletions, as Buffers free their PlatObj there
-		m_context->GetBufferAllocator()->Destroy();
 
 		// Need to do this here so the EngineApp's Window can be destroyed
 		m_context->Destroy();
@@ -424,216 +397,6 @@ namespace gr
 		}
 
 		SEEndCPUEvent();
-	}
-
-
-	void RenderManager::CreateSamplerLibrary()
-	{
-		// Internally, our Samplers will permanently self-register with the inventory, we're just triggering that here
-
-		constexpr re::Sampler::SamplerDesc k_wrapMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapMinMagLinearMipPoint", k_wrapMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagLinearMipPoint", k_clampMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagMipPoint", k_clampMinMagMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_borderMinMagMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Border,
-			.m_edgeModeV = re::Sampler::EdgeMode::Border,
-			.m_edgeModeW = re::Sampler::EdgeMode::Border,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WhiteBorderMinMagMipPoint", k_borderMinMagMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_clampMinMagMipLinear = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
-			.m_edgeModeU = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeV = re::Sampler::EdgeMode::Clamp,
-			.m_edgeModeW = re::Sampler::EdgeMode::Clamp,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("ClampMinMagMipLinear", k_clampMinMagMipLinear);
-
-		constexpr re::Sampler::SamplerDesc k_wrapMinMagMipLinear = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::MIN_MAG_MIP_LINEAR,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapMinMagMipLinear", k_wrapMinMagMipLinear);
-
-		constexpr re::Sampler::SamplerDesc k_wrapAnisotropic = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::ANISOTROPIC,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::None,
-			.m_borderColor = re::Sampler::BorderColor::TransparentBlack,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapAnisotropic", k_wrapAnisotropic);
-
-		// PCF Samplers
-		constexpr float k_maxLinearDepth = std::numeric_limits<float>::max();
-
-		constexpr re::Sampler::SamplerDesc k_borderCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Border,
-			.m_edgeModeV = re::Sampler::EdgeMode::Border,
-			.m_edgeModeW = re::Sampler::EdgeMode::Border,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("BorderCmpMinMagLinearMipPoint", k_borderCmpMinMagLinearMipPoint);
-
-		constexpr re::Sampler::SamplerDesc k_wrapCmpMinMagLinearMipPoint = re::Sampler::SamplerDesc
-		{
-			.m_filterMode = re::Sampler::FilterMode::COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
-			.m_edgeModeU = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeV = re::Sampler::EdgeMode::Wrap,
-			.m_edgeModeW = re::Sampler::EdgeMode::Wrap,
-			.m_mipLODBias = 0.f,
-			.m_maxAnisotropy = 16,
-			.m_comparisonFunc = re::Sampler::ComparisonFunc::Less,
-			.m_borderColor = re::Sampler::BorderColor::OpaqueWhite,
-			.m_minLOD = 0,
-			.m_maxLOD = std::numeric_limits<float>::max() // No limit
-		};
-		std::ignore = re::Sampler::Create("WrapCmpMinMagLinearMipPoint", k_wrapCmpMinMagLinearMipPoint);
-	}
-
-
-	void RenderManager::CreateDefaultTextures()
-	{
-		// Default 2D texture fallbacks:
-		const re::Texture::TextureParams defaultTexParams = re::Texture::TextureParams
-		{
-			.m_usage = re::Texture::Usage::ColorSrc,
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear,
-			.m_mipMode = re::Texture::MipMode::None,
-			.m_createAsPermanent = true,
-		};
-
-		m_defaultTextures[en::DefaultResourceNames::k_opaqueWhiteDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_transparentWhiteDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_transparentWhiteDefaultTexName,
-			defaultTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_opaqueBlackDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_opaqueBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_transparentBlackDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_transparentBlackDefaultTexName,
-			defaultTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
-
-
-		// Default cube map texture fallbacks:
-		const re::Texture::TextureParams defaultCubeMapTexParams = re::Texture::TextureParams
-		{
-			.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
-			.m_dimension = re::Texture::Dimension::TextureCube,
-			.m_format = re::Texture::Format::RGBA8_UNORM,
-			.m_colorSpace = re::Texture::ColorSpace::Linear,
-			.m_createAsPermanent = true,
-		};
-
-		m_defaultTextures[en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(1.f, 1.f, 1.f, 0.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 1.f));
-
-		m_defaultTextures[en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName] = re::Texture::Create(
-			en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName,
-			defaultCubeMapTexParams,
-			glm::vec4(0.f, 0.f, 0.f, 0.f));
 	}
 
 

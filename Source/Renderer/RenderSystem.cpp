@@ -1,10 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Context.h"
-#include "IndexedBuffer.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
+#include "GraphicsSystemManager.h"
+#include "IndexedBuffer.h"
 #include "RenderDataManager.h"
-#include "RenderManager.h"
 #include "RenderSystem.h"
 #include "RenderSystemDesc.h"
 
@@ -14,6 +14,7 @@
 #include "Core/ThreadPool.h"
 
 #include "Core/Definitions/ConfigKeys.h"
+
 
 using GSName = gr::RenderSystemDescription::GSName;
 using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
@@ -27,10 +28,8 @@ namespace
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::TextureDependencies texDependencies;
-
+		
 		gr::GraphicsSystem* dstGS = gsm.GetGraphicsSystemByScriptName(dstGSScriptName);
-
-		gr::RenderManager* renderMgr = gr::RenderManager::Get();
 
 		// Initialize everything with a default in case the input doesn't exist for some reason
 		for (auto const& input : dstGS->GetTextureInputs())
@@ -42,49 +41,49 @@ namespace
 			case gr::GraphicsSystem::TextureInputDefault::OpaqueWhite:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_opaqueWhiteDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::TransparentWhite:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_transparentWhiteDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::OpaqueBlack:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_opaqueBlackDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::TransparentBlack:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_transparentBlackDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueWhite:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueWhiteDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentWhite:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentWhiteDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::CubeMap_OpaqueBlack:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapOpaqueBlackDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::CubeMap_TransparentBlack:
 			{
 				texDependencies[input.first] =
-					&renderMgr->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
+					&gsm.GetContext()->GetDefaultTexture(en::DefaultResourceNames::k_cubeMapTransparentBlackDefaultTexName);
 			}
 			break;
 			case gr::GraphicsSystem::TextureInputDefault::None:
@@ -432,6 +431,7 @@ namespace gr
 		{
 			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
 		}
+		
 
 		m_initPipeline = [this, renderSysDesc](gr::RenderSystem* renderSystem)
 		{

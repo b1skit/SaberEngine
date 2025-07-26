@@ -5,16 +5,16 @@
 #include "ResourceSystem.h"
 
 
-namespace gr
+namespace re
 {
-	class RenderManager;
+	class Context;
 }
 namespace core
 {
 	class Inventory final
 	{
 	public:
-		using AccessKey = accesscontrol::AccessKey<gr::RenderManager>;
+		using AccessKey = accesscontrol::AccessKey<re::Context>;
 		static void OnEndOfFrame(AccessKey);
 		static void Destroy(AccessKey);
 

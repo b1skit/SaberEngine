@@ -102,6 +102,16 @@ namespace re
 		uint8_t GetFrameOffsetIdx() const noexcept; // Get an index in [0, NumFramesInFight)
 
 
+	private:
+		void CreateSamplerLibrary();
+
+		void CreateDefaultTextures();
+		std::unordered_map<util::HashKey, core::InvPtr<re::Texture>> m_defaultTextures;
+
+	public:
+		core::InvPtr<re::Texture> const& GetDefaultTexture(util::HashKey);
+
+
 	public:
 		// Deferred API-object creation queues. New resources can be constructed on other threads (e.g. loading
 		// data); We provide a thread-safe registration system that allows us to create the graphics API-side
@@ -253,5 +263,12 @@ namespace re
 	inline Context::RenderDocAPI* Context::GetRenderDocAPI() const
 	{
 		return m_renderDocApi;
+	}
+
+
+	inline core::InvPtr<re::Texture> const& Context::GetDefaultTexture(util::HashKey texName)
+	{
+		SEAssert(m_defaultTextures.contains(texName), "Default texture with the given name not found");
+		return m_defaultTextures.at(texName);
 	}
 }

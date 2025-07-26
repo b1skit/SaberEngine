@@ -101,16 +101,6 @@ namespace gr
 
 
 	private:
-		void CreateSamplerLibrary();
-		
-		void CreateDefaultTextures();
-		std::unordered_map<util::HashKey, core::InvPtr<re::Texture>> m_defaultTextures;
-
-	public:
-		core::InvPtr<re::Texture> const& GetDefaultTexture(util::HashKey);
-
-
-	private:
 		// IEngineComponent interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 		void Startup() override;
@@ -169,12 +159,5 @@ namespace gr
 	inline core::CommandManager* RenderManager::GetRenderCommandQueue() noexcept
 	{
 		return &m_renderCommandManager;
-	}
-
-
-	inline core::InvPtr<re::Texture> const& RenderManager::GetDefaultTexture(util::HashKey texName)
-	{
-		SEAssert(m_defaultTextures.contains(texName), "Default texture with the given name not found");
-		return m_defaultTextures.at(texName);
 	}
 }
