@@ -78,7 +78,7 @@ namespace gr
 		RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 
 		// Deferred lighting GS is (currently) tightly coupled to the GBuffer GS
-		for (uint8_t slot = 0; slot < GBufferGraphicsSystem::GBufferColorTex_Count; slot++)
+		for (uint8_t slot = 0; slot < GBufferGraphicsSystem::GBufferTexIdx_Count; slot++)
 		{
 			if (slot == GBufferGraphicsSystem::GBufferEmissive)
 			{
@@ -87,7 +87,6 @@ namespace gr
 
 			RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]);
 		}
-		RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]);
 	}
 
 
