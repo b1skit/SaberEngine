@@ -6,7 +6,6 @@
 #include "RenderDataManager.h"
 #include "RenderSystem.h"
 
-#include "Core/InvPtr.h"
 #include "Core/CommandQueue.h"
 
 #include "Core/Interfaces/IEngineComponent.h"

@@ -274,13 +274,7 @@ namespace gr
 		}
 		SEEndCPUEvent(); // "Execute update pipeline"
 
-		// Clear our cache of new objects, now that our anything that needs them has had a chance to access them.
-		m_context->ClearNewObjectCache();
-
-		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
-		m_context->CreateAPIResources();
-
-		// Update context objects (Buffers, BindlessResourceManager, etc)
+		// Update context objects:
 		m_context->Update();
 
 		// API-specific rendering loop virtual implementations:

@@ -188,6 +188,12 @@ namespace re
 	{
 		SEBeginCPUEvent("re::Context::Update");
 
+		// Clear our cache of new objects, now that our anything that needs them has had a chance to access them.
+		ClearNewObjectCache();
+
+		// Create any new resources that have been created by GS's during the ExecuteUpdatePipeline call:
+		CreateAPIResources();
+
 		// Ensure any new buffer objects have their platform-level resources created:
 		m_bufferAllocator->CreateBufferPlatformObjects();
 
