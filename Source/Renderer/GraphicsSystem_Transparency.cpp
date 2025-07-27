@@ -3,7 +3,6 @@
 #include "GraphicsSystem_Transparency.h"
 #include "GraphicsSystemManager.h"
 #include "LightParamsHelpers.h"
-#include "Sampler.h"
 
 #include "Core/Config.h"
 
