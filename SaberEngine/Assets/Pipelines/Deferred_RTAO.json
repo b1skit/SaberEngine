@@ -1,7 +1,7 @@
 {
-	"PipelineMetadata":
-	{
-		"Name": "Deferred Rasterization"
+	"PipelineMetadata": {
+		"Name": "Deferred Rasterization RTAO",
+		"ExcludedPlatforms": [ "OpenGL" ]
 	},
 	"Pipeline": [
 		{
