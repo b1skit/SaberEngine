@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "BatchHandle.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
 #include "LightRenderData.h"
@@ -66,18 +67,19 @@ namespace gr
 
 
 	private: // Punctual lights:
-		struct PunctualLightRenderData
+		struct PunctualLightData
 		{
 			gr::Light::Type m_type;
 			gr::BatchHandle m_batch;
 			bool m_hasShadow = false;
 			bool m_canContribute = true;
 		};
-		std::unordered_map<gr::RenderDataID, PunctualLightRenderData> m_punctualLightData;
+		std::unordered_map<gr::RenderDataID, PunctualLightData> m_punctualLightData;
 
 		std::shared_ptr<gr::Stage> m_directionalStage;
 		std::shared_ptr<gr::Stage> m_pointStage;
 		std::shared_ptr<gr::Stage> m_spotStage;
+
 
 	private: // Common:
 		std::shared_ptr<re::TextureTargetSet> m_lightingTargetSet;

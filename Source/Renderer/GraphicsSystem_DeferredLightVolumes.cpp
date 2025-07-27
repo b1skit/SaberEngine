@@ -321,7 +321,7 @@ namespace gr
 				}
 
 				// Create/update the punctual light data record:
-				m_punctualLightData[lightID] = PunctualLightRenderData{
+				m_punctualLightData[lightID] = PunctualLightData{
 					.m_type = gr::Light::Directional,
 					.m_batch = std::move(batchBuilder).Build(),
 					.m_hasShadow = directionalData.m_hasShadow
@@ -335,7 +335,7 @@ namespace gr
 			gr::Light::Type lightType,
 			void const* lightRenderData,
 			bool hasShadow,
-			std::unordered_map<gr::RenderDataID, PunctualLightRenderData>& punctualLightData)
+			std::unordered_map<gr::RenderDataID, PunctualLightData>& punctualLightData)
 			{
 				const gr::RenderDataID lightID = lightItr->GetRenderDataID();
 
@@ -371,7 +371,7 @@ namespace gr
 				}
 
 				// Create/update the punctual light data record:
-				punctualLightData[lightID] = PunctualLightRenderData{
+				punctualLightData[lightID] = PunctualLightData{
 					.m_type = lightType,
 					.m_batch = std::move(batchBuilder).Build(),
 					.m_hasShadow = hasShadow
@@ -471,42 +471,42 @@ namespace gr
 
 
 		// Update all of the punctual lights we're tracking:
-		for (auto& light : m_punctualLightData)
+		for (auto& lightData : m_punctualLightData)
 		{
-			const gr::RenderDataID lightID = light.first;
+			const gr::RenderDataID lightID = lightData.first;
 
 			// Update lighting buffers, if anything is dirty:
 			const bool lightRenderDataDirty = 
-				(light.second.m_type == gr::Light::Type::Directional &&
+				(lightData.second.m_type == gr::Light::Type::Directional &&
 					renderData.IsDirty<gr::Light::RenderDataDirectional>(lightID)) ||
-				(light.second.m_type == gr::Light::Type::Point &&
+				(lightData.second.m_type == gr::Light::Type::Point &&
 					renderData.IsDirty<gr::Light::RenderDataPoint>(lightID)) ||
-				(light.second.m_type == gr::Light::Type::Spot &&
+				(lightData.second.m_type == gr::Light::Type::Spot &&
 					renderData.IsDirty<gr::Light::RenderDataSpot>(lightID));
 
 			if (lightRenderDataDirty)
 			{
-				switch (light.second.m_type)
+				switch (lightData.second.m_type)
 				{
 				case gr::Light::Type::Directional:
 				{
 					gr::Light::RenderDataDirectional const& directionalData =
 						renderData.GetObjectData<gr::Light::RenderDataDirectional>(lightID);
-					light.second.m_canContribute = directionalData.m_canContribute;
+					lightData.second.m_canContribute = directionalData.m_canContribute;
 				}
 				break;
 				case gr::Light::Type::Point:
 				{
 					gr::Light::RenderDataPoint const& pointData = 
 						renderData.GetObjectData<gr::Light::RenderDataPoint>(lightID);
-					light.second.m_canContribute = pointData.m_canContribute;
+					lightData.second.m_canContribute = pointData.m_canContribute;
 				}
 				break;
 				case gr::Light::Type::Spot:
 				{
 					gr::Light::RenderDataSpot const& spotData =
 						renderData.GetObjectData<gr::Light::RenderDataSpot>(lightID);
-					light.second.m_canContribute = spotData.m_canContribute;
+					lightData.second.m_canContribute = spotData.m_canContribute;
 				}
 				break;
 				default: SEAssertF("Invalid light type");
@@ -515,16 +515,16 @@ namespace gr
 
 			
 			// Add punctual batches:
-			if (light.second.m_canContribute &&
-				(light.second.m_type == gr::Light::Type::Directional || 
+			if (lightData.second.m_canContribute &&
+				(lightData.second.m_type == gr::Light::Type::Directional || 
 					visibleLightIDs.contains(lightID)))
 			{
-				auto AddDuplicatedBatch = [&light, &lightID, &ibm, this](gr::Stage* stage)
+				auto AddBatch = [&lightData, &lightID, &ibm, this](gr::Stage* stage)
 					{
-						gr::StageBatchHandle& duplicatedBatch = *stage->AddBatch(light.second.m_batch);
+						gr::StageBatchHandle& duplicatedBatch = *stage->AddBatch(lightData.second.m_batch);
 
 						uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
-						if (light.second.m_hasShadow)
+						if (lightData.second.m_hasShadow)
 						{
 							SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 							gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
@@ -533,7 +533,7 @@ namespace gr
 						}
 
 						char const* lutShaderName = nullptr;
-						switch (light.second.m_type)
+						switch (lightData.second.m_type)
 						{
 						case gr::Light::Type::Directional:
 						{
@@ -574,7 +574,7 @@ namespace gr
 								0,					// Light buffer idx
 								INVALID_SHADOW_IDX, // Shadow buffer idx: Will be overwritten IFF a shadow exists
 								shadowTexArrayIdx,
-								light.second.m_type),
+								lightData.second.m_type),
 						};
 
 						duplicatedBatch.SetSingleFrameBuffer(ibm.GetLUTBufferInput<LightShadowLUTData>(
@@ -584,21 +584,21 @@ namespace gr
 					};
 
 				
-				switch (light.second.m_type)
+				switch (lightData.second.m_type)
 				{
 				case gr::Light::Type::Directional:
 				{
-					AddDuplicatedBatch(m_directionalStage.get());
+					AddBatch(m_directionalStage.get());
 				}
 				break;
 				case gr::Light::Type::Point:
 				{
-					AddDuplicatedBatch(m_pointStage.get());
+					AddBatch(m_pointStage.get());
 				}
 				break;
 				case gr::Light::Type::Spot:
 				{
-					AddDuplicatedBatch(m_spotStage.get());
+					AddBatch(m_spotStage.get());
 				}
 				break;
 				case gr::Light::Type::AmbientIBL:
