@@ -5,6 +5,7 @@
 #include "BufferView.h"
 #include "Effect.h"
 #include "MeshFactory.h"
+#include "RLibrary_Platform.h"
 #include "RootConstants.h"
 #include "SysInfo_Platform.h"
 #include "TextureView.h"
@@ -28,6 +29,7 @@ namespace re
 {
 	class Buffer;
 	class BufferInput;
+	class Context;
 	class Shader;
 	class Texture;
 }
@@ -83,12 +85,10 @@ namespace gr
 		{
 			Type m_stageType;
 
-			enum class LibraryType
-			{
-				ImGui,
-			} m_type;
+			platform::RLibrary::Type m_libraryType;
 
-			LibraryStageParams(Type stageType, LibraryType type) : m_stageType(stageType), m_type(type) {}
+			LibraryStageParams(Type stageType, platform::RLibrary::Type libraryType)
+				: m_stageType(stageType), m_libraryType(libraryType) {}
 
 			std::shared_ptr<void> m_payload; // Interpreted by the library wrapper
 
@@ -639,20 +639,14 @@ namespace gr
 	class LibraryStage final : public virtual Stage
 	{
 	public:
-		struct IPayload
-		{
-			virtual ~IPayload() = default;
-		};
-
-	public:
 		void Execute(re::Context*, void* platformObject); // e.g. platformObject == DX12 command list
 		
 		// The payload is an arbitrary data blob passed by a graphics system every frame for consumption by the backend
-		void SetPayload(std::unique_ptr<IPayload>&&);
-		std::unique_ptr<IPayload> TakePayload();
+		void SetPayload(std::unique_ptr<platform::RLibrary::IPayload>&&);
+		std::unique_ptr<platform::RLibrary::IPayload> TakePayload();
 
 	private:
-		std::unique_ptr<IPayload> m_payload;
+		std::unique_ptr<platform::RLibrary::IPayload> m_payload;
 
 	private:
 		LibraryStage(char const* name, std::unique_ptr<LibraryStageParams>&&, re::Lifetime);

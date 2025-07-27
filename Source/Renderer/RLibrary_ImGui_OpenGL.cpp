@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "RLibrary_ImGui_OpenGL.h"
-#include "Stage.h"
 
 #include "Core/Host/Window_Win32.h"
 
@@ -69,23 +68,21 @@ namespace opengl
 	}
 
 
-	void RLibraryImGui::Execute(gr::Stage* stage, void* /*unused*/)
+	void RLibraryImGui::Execute(std::unique_ptr<platform::RLibrary::IPayload>&& iPayload, void* /*unused*/)
 	{
 		SEBeginCPUEvent("RLibraryImGui::Execute");
 
 		SEBeginCPUEvent("RLibraryImGui::Execute: Setup");
-
-		gr::LibraryStage* imGuiStage = dynamic_cast<gr::LibraryStage*>(stage);
-
-		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
-		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
+		
+		std::unique_ptr<platform::RLibraryImGui::Payload> payload(
+			dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.release()));
 
 		SEAssert(g_context, "Context pointer is null");
 
 		RLibraryImGui* imGuiLibrary = dynamic_cast<RLibraryImGui*>(
 			g_context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
-		SEAssert(imGuiStage && payload && imGuiLibrary, "A critical resource is null");
+		SEAssert(payload && imGuiLibrary, "A critical resource is null");
 
 		SEEndCPUEvent(); // "RLibraryImGui::Execute: Setup"
 

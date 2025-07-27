@@ -2,11 +2,10 @@
 #pragma once
 
 
-namespace gr
+namespace re
 {
-	class Stage;
+	class Context;
 }
-
 namespace platform
 {
 	class RLibrary
@@ -25,9 +24,16 @@ namespace platform
 
 
 	public:
+		struct IPayload
+		{
+			virtual ~IPayload() = default;
+		};
+
+
+	public:
 		static std::unique_ptr<RLibrary> Create(Type);
 
-		static void Execute(re::Context* context, gr::Stage*, void* platformObject);
+		static void Execute(re::Context* context, Type, std::unique_ptr<IPayload>&&, void* platformObject);
 
 
 	public:

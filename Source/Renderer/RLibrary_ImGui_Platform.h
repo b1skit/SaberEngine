@@ -1,7 +1,6 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "RLibrary_Platform.h"
-#include "Stage.h"
 
 #include "Core/CommandQueue.h"
 #include "Core/Interfaces/IPlatformObject.h"
@@ -25,7 +24,7 @@ namespace platform
 
 
 	public:
-		struct Payload final : public virtual gr::LibraryStage::IPayload
+		struct Payload final : public virtual platform::RLibrary::IPayload
 		{
 			uint64_t m_currentFrameNum = std::numeric_limits<uint64_t>::max();
 			core::FrameIndexedCommandManager* m_perFrameCommands = nullptr;
@@ -41,7 +40,7 @@ namespace platform
 		static void ConfigureScaling(RLibraryImGui&);
 
 	public:
-		virtual void Execute(gr::Stage*, void* platformObject) = 0;
+		virtual void Execute(std::unique_ptr<platform::RLibrary::IPayload>&&, void* platformObject) = 0;
 		virtual void Destroy() = 0;
 
 

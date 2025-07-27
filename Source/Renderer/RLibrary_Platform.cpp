@@ -1,12 +1,10 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Core/Assert.h"
 #include "Context.h"
-#include "RenderManager.h"
 #include "RLibrary_Platform.h"
 #include "RLibrary_ImGui_DX12.h"
 #include "RLibrary_ImGui_OpenGL.h"
 #include "RLibrary_ImGui_Platform.h"
-#include "Stage.h"
 
 #include "Core/Config.h"
 #include "Core/Logger.h"
@@ -61,21 +59,17 @@ namespace platform
 	}
 
 
-	void RLibrary::Execute(re::Context* context, gr::Stage* stage, void* platformObject)
+	void RLibrary::Execute(
+		re::Context* context, Type libraryType, std::unique_ptr<IPayload>&& iPayload, void* platformObject)
 	{
-		SEAssert(stage->GetStageType() == gr::Stage::Type::LibraryRaster ||
-			stage->GetStageType() == gr::Stage::Type::LibraryCompute,
-			"Invalid stage type");
-
-		gr::Stage::LibraryStageParams const* libraryStageParams =
-			dynamic_cast<gr::Stage::LibraryStageParams const*>(stage->GetStageParams());
-
-		switch (libraryStageParams->m_type)
+		switch (libraryType)
 		{
-		case gr::Stage::LibraryStageParams::LibraryType::ImGui:
+		case platform::RLibrary::Type::ImGui:
 		{
 			dynamic_cast<platform::RLibraryImGui*>(
-				context->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(stage, platformObject);
+				context->GetOrCreateRenderLibrary(platform::RLibrary::Type::ImGui))->Execute(
+					std::forward<std::unique_ptr<IPayload>>(iPayload),
+					platformObject);
 		}
 		break;
 		default: SEAssertF("Invalid library type");

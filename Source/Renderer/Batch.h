@@ -4,7 +4,6 @@
 #include "BufferView.h"
 #include "Effect.h"
 #include "EnumTypes.h"
-#include "MeshPrimitive.h"
 #include "RootConstants.h"
 #include "Sampler.h"
 #include "TextureView.h"

@@ -2,7 +2,6 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "RLibrary_ImGui_DX12.h"
-#include "Stage.h"
 #include "SwapChain_DX12.h"
 #include "SysInfo_DX12.h"
 #include "Texture_DX12.h"
@@ -347,15 +346,14 @@ namespace dx12
 	}
 
 
-	void RLibraryImGui::Execute(gr::Stage* stage, void* platformObject)
+	void RLibraryImGui::Execute(std::unique_ptr<platform::RLibrary::IPayload>&& iPayload, void* platformObject)
 	{
 		SEBeginCPUEvent("RLibraryImGui::Execute");
 
 		SEBeginCPUEvent("RLibraryImGui::Execute: Setup");
-		gr::LibraryStage* imGuiStage = dynamic_cast<gr::LibraryStage*>(stage);
 
-		std::unique_ptr<gr::LibraryStage::IPayload> iPayload = imGuiStage->TakePayload();
-		platform::RLibraryImGui::Payload* payload = dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.get());
+		std::unique_ptr<platform::RLibraryImGui::Payload> payload(
+			dynamic_cast<platform::RLibraryImGui::Payload*>(iPayload.release()));
 
 		SEAssert(g_context, "Context pointer is null");
 		dx12::Context* context = g_context->As<dx12::Context*>();
@@ -363,7 +361,7 @@ namespace dx12
 		RLibraryImGui* dx12ImGuiLibrary = 
 			dynamic_cast<RLibraryImGui*>(context->GetOrCreateRenderLibrary(platform::RLibrary::ImGui));
 
-		SEAssert(imGuiStage && payload && dx12ImGuiLibrary, "A critical resource is null");
+		SEAssert(payload && dx12ImGuiLibrary, "A critical resource is null");
 
 		dx12::RLibraryImGui::PlatObj* platObj =
 			dx12ImGuiLibrary->GetPlatformObject()->As<dx12::RLibraryImGui::PlatObj*>();

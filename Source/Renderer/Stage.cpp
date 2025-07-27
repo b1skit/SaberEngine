@@ -3,13 +3,14 @@
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "BufferView.h"
+#include "Context.h"
 #include "EffectDB.h"
 #include "IndexedBuffer.h"
 #include "RenderManager.h"
 #include "RenderObjectIDs.h"
 #include "RLibrary_Platform.h"
-#include "Stage.h"
 #include "Sampler.h"
+#include "Stage.h"
 #include "SwapChain.h"
 #include "SwapChain_Platform.h"
 #include "Texture.h"
@@ -439,17 +440,23 @@ namespace gr
 
 	void LibraryStage::Execute(re::Context* context, void* platformObject)
 	{
-		platform::RLibrary::Execute(context, this, platformObject);
+		SEAssert(GetStageType() == gr::Stage::Type::LibraryRaster ||
+			GetStageType() == gr::Stage::Type::LibraryCompute,
+			"Invalid stage type");
+
+		LibraryStageParams const* libraryStageParams = dynamic_cast<LibraryStageParams const*>(m_stageParams.get());
+		SEAssert(libraryStageParams, "Failed to cast to LibraryStageParams");
+		platform::RLibrary::Execute(context, libraryStageParams->m_libraryType, TakePayload(), platformObject);
 	}
 
 
-	void LibraryStage::SetPayload(std::unique_ptr<IPayload>&& newPayload)
+	void LibraryStage::SetPayload(std::unique_ptr<platform::RLibrary::IPayload>&& newPayload)
 	{
 		m_payload = std::move(newPayload);
 	}
 
 
-	std::unique_ptr<LibraryStage::IPayload> LibraryStage::TakePayload()
+	std::unique_ptr<platform::RLibrary::IPayload> LibraryStage::TakePayload()
 	{
 		return std::move(m_payload);
 	}

@@ -12,10 +12,8 @@ namespace effect
 namespace gr
 {
 	class IndexedBufferManager;
-}
 
-namespace gr
-{
+
 	class StagePipeline final : public virtual core::INamedObject
 	{
 	public:

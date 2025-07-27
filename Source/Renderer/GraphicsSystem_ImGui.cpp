@@ -2,6 +2,7 @@
 #include "GraphicsSystem_ImGui.h"
 #include "GraphicsSystemManager.h"
 #include "RenderSystem.h"
+#include "RLibrary_Platform.h"
 
 
 namespace gr
@@ -20,7 +21,7 @@ namespace gr
 		// Create a library stage:
 		gr::Stage::LibraryStageParams imGuiLibraryParams(
 			gr::Stage::Type::LibraryRaster,
-			gr::Stage::LibraryStageParams::LibraryType::ImGui);
+			platform::RLibrary::Type::ImGui);
 		m_imguiLibraryStage = gr::Stage::CreateLibraryStage("ImGui stage", imGuiLibraryParams);
 
 		// Append the library stage

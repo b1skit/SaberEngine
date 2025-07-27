@@ -7,10 +7,6 @@
 
 struct ImGui_ImplDX12_InitInfo;
 
-namespace gr
-{
-	class Stage;
-}
 namespace re
 {
 	class Context;
@@ -79,7 +75,7 @@ namespace dx12
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(gr::Stage*, void* platformObject) override;
+		void Execute(std::unique_ptr<platform::RLibrary::IPayload>&&, void* platformObject) override;
 
 		void Destroy() override;
 

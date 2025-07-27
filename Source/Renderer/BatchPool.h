@@ -1,6 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
+#include "RenderObjectIDs.h"
 
 #include "Core/Util/HashKey.h"
 

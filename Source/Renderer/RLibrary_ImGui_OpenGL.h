@@ -3,11 +3,6 @@
 #include "RLibrary_ImGui_Platform.h"
 
 
-namespace gr
-{
-	class Stage;
-}
-
 namespace opengl
 {
 	class RLibraryImGui final : public virtual platform::RLibraryImGui
@@ -26,12 +21,8 @@ namespace opengl
 		RLibraryImGui() = default;
 		~RLibraryImGui() = default;
 
-		void Execute(gr::Stage*, void* platformObject) override;
+		void Execute(std::unique_ptr<platform::RLibrary::IPayload>&&, void* platformObject) override;
 
 		void Destroy() override;
-
-
-	private:
-
 	};
 }
