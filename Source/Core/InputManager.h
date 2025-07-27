@@ -11,10 +11,6 @@ namespace en
 	class InputManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		static InputManager* Get(); // Singleton functionality
-
-
-	public:
 		InputManager();
 
 		InputManager(InputManager&&) noexcept = default;
@@ -53,8 +49,8 @@ namespace en
 		bool m_mouseInputCaptured;
 
 
-	private:
-		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
+	private: // No copying allowed:
+		InputManager(InputManager const&) = delete;
 		void operator=(InputManager const&) = delete;
 	};
 }

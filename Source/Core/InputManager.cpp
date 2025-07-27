@@ -17,13 +17,6 @@ namespace en
 	float InputManager::m_mouseAxisStates[definitions::MouseInputAxis_Count];
 
 
-	InputManager* InputManager::Get()
-	{
-		static std::unique_ptr<en::InputManager> instance = std::make_unique<en::InputManager>();
-		return instance.get();
-	}
-
-
 	InputManager::InputManager()
 		: m_keyboardInputCaptured(false)
 		, m_mouseInputCaptured(false)

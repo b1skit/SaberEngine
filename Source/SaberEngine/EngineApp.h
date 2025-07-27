@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/InputManager.h"
+
 #include "Core/Host/Window.h"
 
 #include "Core/Interfaces/IEngineComponent.h"
@@ -56,6 +58,7 @@ namespace app
 	private: 
 		static EngineApp* m_engineApp;
 
+		std::unique_ptr<en::InputManager> m_inputManager;
 		std::unique_ptr<pr::SceneManager> m_sceneManager;
 		std::unique_ptr<pr::UIManager> m_uiManager;
 		std::unique_ptr<gr::RenderManager> m_renderManager;

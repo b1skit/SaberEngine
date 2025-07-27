@@ -116,6 +116,7 @@ namespace app
 		pr::EntityManager* entityMgr = pr::EntityManager::Get();
 		m_sceneManager = std::make_unique<pr::SceneManager>();
 		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), m_renderManager.get());
+		m_inputManager = std::make_unique<en::InputManager>();
 
 		// Dependency injection:
 		m_renderManager->SetWindow(m_window.get());
@@ -129,7 +130,7 @@ namespace app
 			});
 		m_renderManager->ThreadStartup(); // Initializes context
 		
-		en::InputManager::Get()->Startup(); // Now that the window is created
+		m_inputManager->Startup(); // Now that the window is created
 
 		m_sceneManager->Startup();
 
@@ -150,7 +151,6 @@ namespace app
 	{
 		LOG("\nEngineApp: Starting main game loop\n");
 
-		en::InputManager* inputManager = en::InputManager::Get();
 		pr::EntityManager* entityManager = pr::EntityManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
@@ -198,7 +198,7 @@ namespace app
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::InputManager::Update");
-				inputManager->Update(m_frameNum, k_fixedTimeStep);
+				m_inputManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::EntityManager::Update");
@@ -269,7 +269,7 @@ namespace app
 		m_renderManager->ThreadShutdown();
 		m_renderManager = nullptr;
 
-		en::InputManager::Get()->Shutdown();
+		m_inputManager->Shutdown();
 		core::EventManager::Shutdown();
 
 		core::Logger::Shutdown(); // Destroy last
