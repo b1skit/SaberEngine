@@ -1,12 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Context.h"
-#include "BatchHandle.h"
+#include "EnumTypes.h"
+#include "VertexStream.h"
 
-
-namespace gr
-{
-}
 
 namespace re
 {
@@ -45,7 +42,9 @@ namespace opengl
 	public: // OpenGL-specific interface:
 		void SetRasterizationState(re::RasterState const*);
 
-		GLuint GetCreateVAO(gr::StageBatchHandle const&, re::VertexBufferInput const& indexStream);
+		GLuint GetCreateVAO(
+			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const&,
+			re::VertexBufferInput const& indexStream);
 
 
 	protected:
@@ -59,8 +58,9 @@ namespace opengl
 		void SetBlendState(re::RasterState const*);
 
 		static uint64_t ComputeVAOHash(
-			gr::StageBatchHandle::ResolvedVertexBuffers const&,
+			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const&,
 			re::VertexBufferInput const& indexStream);
+
 
 	private:
 		void GetOpenGLExtensionProcessAddresses();

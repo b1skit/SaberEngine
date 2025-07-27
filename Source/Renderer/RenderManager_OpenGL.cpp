@@ -324,7 +324,7 @@ namespace opengl
 								// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
 								// batch
 								const GLuint vertexStreamVAO = context->GetCreateVAO(
-									batch,
+									batch.GetResolvedVertexBuffers(),
 									batch.GetIndexBuffer());
 								if (vertexStreamVAO != currentVAO)
 								{

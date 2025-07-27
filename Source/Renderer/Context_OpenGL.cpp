@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "BatchHandle.h"
 #include "BufferView.h"
 #include "Context_OpenGL.h"
 #include "EnumTypes_OpenGL.h"
@@ -874,7 +873,7 @@ namespace opengl
 
 
 	uint64_t Context::ComputeVAOHash(
-		gr::StageBatchHandle::ResolvedVertexBuffers const& vertexBuffers,
+		std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const& vertexBuffers,
 		re::VertexBufferInput const& indexBuffer)
 	{
 		uint64_t vaoHash = 0;
@@ -917,11 +916,9 @@ namespace opengl
 
 
 	GLuint Context::GetCreateVAO(
-		gr::StageBatchHandle const& batch,
+		std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const& vertexBuffers,
 		re::VertexBufferInput const& indexStream)
 	{
-		gr::StageBatchHandle::ResolvedVertexBuffers const& vertexBuffers = batch.GetResolvedVertexBuffers();
-
 		const uint64_t vaoHash = ComputeVAOHash(vertexBuffers, indexStream);
 
 		{
