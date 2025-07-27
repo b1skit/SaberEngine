@@ -1,18 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "EnumTypes.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
+#include "RasterState.h"
 #include "ResourceStateTracker_DX12.h"
 
 #if defined(DEBUG_CMD_LIST_LOG_STAGE_NAMES)
 #include "Core/Logger.h"
 #endif
 
-
-namespace gr
-{
-	class StageBatchHandle;
-}
 
 namespace re
 {
@@ -145,7 +142,12 @@ namespace dx12
 		void AttachBindlessResources(
 			re::ShaderBindingTable const&, re::BindlessResourceManager const&, uint64_t currentFrameNum);
 
-		void DrawBatchGeometry(gr::StageBatchHandle const&);
+		void DrawGeometry(
+			re::RasterState::PrimitiveTopology,
+			re::GeometryMode, 
+			std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const&,
+			re::VertexBufferInput const&,
+			uint32_t instanceCount);
 		void Dispatch(glm::uvec3 const& threadDimensions);
 		void DispatchRays(
 			re::ShaderBindingTable const&, 
@@ -188,7 +190,7 @@ namespace dx12
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
-		void SetVertexBuffers(gr::StageBatchHandle const&);
+		void SetVertexBuffers(std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const&);
 
 		void SetIndexBuffer(re::VertexBufferInput const&);
 

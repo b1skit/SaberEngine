@@ -530,7 +530,13 @@ namespace dx12
 									SEAssert(cmdList->GetCommandListType() == dx12::CommandListType::Direct,
 										"Incorrect command list type");
 
-									cmdList->DrawBatchGeometry(batches[batchIdx]);
+									gr::Batch::RasterParams const& rasterParams = (*batches[batchIdx])->GetRasterParams();
+
+									cmdList->DrawGeometry(rasterParams.m_primitiveTopology,
+										rasterParams.m_batchGeometryMode,
+										batches[batchIdx].GetResolvedVertexBuffers(),
+										batches[batchIdx].GetIndexBuffer(),
+										batches[batchIdx].GetInstanceCount());
 								}
 								break;
 								case gr::Stage::Type::Compute:

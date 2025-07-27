@@ -121,7 +121,7 @@ namespace gr
 
 
 	public:
-		RasterBatchBuilder&& SetGeometryMode(gr::Batch::GeometryMode)&& noexcept;
+		RasterBatchBuilder&& SetGeometryMode(re::GeometryMode)&& noexcept;
 		RasterBatchBuilder&& SetPrimitiveTopology(re::RasterState::PrimitiveTopology)&& noexcept;
 
 		RasterBatchBuilder&& SetVertexBuffer(uint8_t slotIdx, re::VertexBufferInput&&)&& noexcept;
@@ -337,9 +337,9 @@ namespace gr
 	}
 
 
-	inline RasterBatchBuilder&& RasterBatchBuilder::SetGeometryMode(gr::Batch::GeometryMode geoMode) && noexcept
+	inline RasterBatchBuilder&& RasterBatchBuilder::SetGeometryMode(re::GeometryMode geoMode) && noexcept
 	{
-		SEAssert(geoMode != gr::Batch::GeometryMode::Invalid, "Invalid geometry mode");
+		SEAssert(geoMode != re::GeometryMode::Invalid, "Invalid geometry mode");
 		m_batch.m_rasterParams.m_batchGeometryMode = geoMode;
 		return std::move(*this);
 	}

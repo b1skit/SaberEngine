@@ -49,15 +49,6 @@ namespace gr
 			Invalid,
 		};
 
-		enum class GeometryMode : uint8_t
-		{
-			// Note: All draws are instanced, even if an API supports non-instanced drawing
-			IndexedInstanced,
-			ArrayInstanced,
-
-			Invalid
-		};
-
 		using FilterBitmask = uint32_t;
 		enum Filter : FilterBitmask
 		{
@@ -98,7 +89,8 @@ namespace gr
 			// geometry and materials will sort together
 			UniqueID m_materialUniqueID = k_invalidUniqueID;
 
-			GeometryMode m_batchGeometryMode = GeometryMode::Invalid;
+			re::GeometryMode m_batchGeometryMode = re::GeometryMode::Invalid;
+
 			re::RasterState::PrimitiveTopology m_primitiveTopology =
 				re::RasterState::PrimitiveTopology::TriangleList;
 		};

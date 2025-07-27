@@ -70,4 +70,14 @@ namespace re
 		SRV,
 		UAV,
 	};
+
+
+	enum class GeometryMode : uint8_t
+	{
+		// Note: All draws are instanced, even if an API supports non-instanced drawing
+		IndexedInstanced,
+		ArrayInstanced,
+
+		Invalid
+	};
 }

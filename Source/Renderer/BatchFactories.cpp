@@ -21,7 +21,7 @@ namespace grutil
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 			renderData.GetObjectData<gr::MeshPrimitive::RenderData>(renderDataID);
 
-		std::move(batchBuilder).SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetGeometryMode(re::GeometryMode::IndexedInstanced);
 		std::move(batchBuilder).SetPrimitiveTopology(meshPrimRenderData.m_meshPrimitiveParams.m_primitiveTopology);
 
 		if (vertexStreamOverrides)
@@ -92,7 +92,7 @@ namespace grutil
 		SEAssert(meshPrim->GetIndexStream() != nullptr,
 			"This constructor is for IndexedInstanced geometry. The index buffer cannot be null");
 
-		std::move(batchBuilder).SetGeometryMode(gr::Batch::GeometryMode::IndexedInstanced);
+		std::move(batchBuilder).SetGeometryMode(re::GeometryMode::IndexedInstanced);
 		std::move(batchBuilder).SetPrimitiveTopology(meshPrim->GetMeshParams().m_primitiveTopology);
 		std::move(batchBuilder).SetEffectID(effectID);
 

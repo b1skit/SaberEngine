@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Material.h"
-#include "RenderManager.h"
+#include "Context.h"
+#include "RasterState.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
+#include "VertexStreamMap.h"
 
 #include "Core/Assert.h"
 #include "Core/Inventory.h"
@@ -10,7 +11,9 @@
 #include "Core/Logger.h"
 
 #include "Core/Interfaces/ILoadContext.h"
+#include <Core/Interfaces/INamedObject.h>
 
+#include <Core/Util/HashKey.h>
 #include "Core/Util/HashUtils.h"
 
 

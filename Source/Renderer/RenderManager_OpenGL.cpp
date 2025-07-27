@@ -363,7 +363,7 @@ namespace opengl
 								// Draw!
 								switch (rasterParams.m_batchGeometryMode)
 								{
-								case gr::Batch::GeometryMode::IndexedInstanced:
+								case re::GeometryMode::IndexedInstanced:
 								{
 									glDrawElementsInstanced(
 										PrimitiveTopologyToGLPrimitiveType(rasterParams.m_primitiveTopology),	// GLenum mode
@@ -373,7 +373,7 @@ namespace opengl
 										(GLsizei)batch.GetInstanceCount());	// Instance count
 								}
 								break;
-								case gr::Batch::GeometryMode::ArrayInstanced:
+								case re::GeometryMode::ArrayInstanced:
 								{
 									const GLsizei numElements = static_cast<GLsizei>(
 										batch.GetResolvedVertexBuffers()[0].first->m_view.m_streamView.m_numElements);

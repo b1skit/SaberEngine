@@ -1,7 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
-#include "Batch.h"
-#include "BatchHandle.h"
 #include "BindlessResourceManager_DX12.h"
 #include "Buffer.h"
 #include "BufferView.h"
@@ -9,7 +7,6 @@
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "MeshPrimitive.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RootConstants.h"
@@ -578,42 +575,44 @@ namespace dx12
 	}
 
 
-	void CommandList::DrawBatchGeometry(gr::StageBatchHandle const& batch)
+	void CommandList::DrawGeometry(
+		re::RasterState::PrimitiveTopology primitiveTopology,
+		re::GeometryMode geometryMode,
+		std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const& vertexBuffers,
+		re::VertexBufferInput const& indexBufferInput,
+		uint32_t instanceCount)
 	{
 		CommitGPUDescriptors();
 
 		// Set the geometry for the draw:		
-		gr::Batch::RasterParams const& rasterParams = (*batch)->GetRasterParams();
+		SetPrimitiveType(TranslateToD3DPrimitiveTopology(primitiveTopology));
 
-		SetPrimitiveType(TranslateToD3DPrimitiveTopology(rasterParams.m_primitiveTopology));
-
-		SetVertexBuffers(batch);
+		SetVertexBuffers(vertexBuffers);
 
 		// Record the draw:
-		switch (rasterParams.m_batchGeometryMode)
+		switch (geometryMode)
 		{
-		case gr::Batch::GeometryMode::IndexedInstanced:
+		case re::GeometryMode::IndexedInstanced:
 		{
-			SEAssert(batch.GetIndexBuffer().GetBuffer(), "Index stream cannot be null for indexed draws");
+			SEAssert(indexBufferInput.GetStream(), "Index stream cannot be null for indexed draws");
 
-			SetIndexBuffer(batch.GetIndexBuffer());
+			SetIndexBuffer(indexBufferInput);
 
 #if defined(USE_NSIGHT_AFTERMATH)
 			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "DrawIndexedInstanced", false);
 #endif
 
 			m_commandList->DrawIndexedInstanced(
-				batch.GetIndexBuffer().m_view.m_streamView.m_numElements,		// Index count, per instance
-				batch.GetInstanceCount(),										// Instance count
+				indexBufferInput.m_view.m_streamView.m_numElements,		// Index count, per instance
+				instanceCount,										// Instance count
 				0,																// Start index location
 				0,																// Base vertex location
 				0);																// Start instance location
 		}
 		break;
-		case gr::Batch::GeometryMode::ArrayInstanced:
+		case re::GeometryMode::ArrayInstanced:
 		{		
-			SEAssert(batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_type ==
-				re::VertexStream::Type::Position,
+			SEAssert(vertexBuffers[0].first->m_view.m_streamView.m_type == re::VertexStream::Type::Position,
 				"We're currently assuming the first stream contains the correct number of elements for the entire draw."
 				" If you hit this, validate this logic and delete this assert");
 
@@ -622,10 +621,10 @@ namespace dx12
 #endif
 
 			m_commandList->DrawInstanced(
-				batch.GetResolvedVertexBuffer(0).first->m_view.m_streamView.m_numElements,	// VertexCountPerInstance
-				batch.GetInstanceCount(),													// InstanceCount
-				0,																			// StartVertexLocation
-				0);																			// StartInstanceLocation
+				vertexBuffers[0].first->m_view.m_streamView.m_numElements,	// VertexCountPerInstance
+				instanceCount,												// InstanceCount
+				0,															// StartVertexLocation
+				0);															// StartInstanceLocation
 		}
 		break;
 		default: SEAssertF("Invalid batch geometry type");
@@ -633,11 +632,10 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(gr::StageBatchHandle const& batch)
+	void CommandList::SetVertexBuffers(
+		std::array<std::pair<re::VertexBufferInput const*, uint8_t>, re::VertexStream::k_maxVertexStreams> const& vertexBuffers)
 	{
 		SEAssert(m_type == dx12::CommandListType::Direct, "Unexpected command list type");
-
-		gr::StageBatchHandle::ResolvedVertexBuffers const& vertexBuffers = batch.GetResolvedVertexBuffers();
 
 		// Batch all of the resource transitions in advance:
 		std::vector<TransitionMetadata> resourceTransitions;
