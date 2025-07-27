@@ -24,7 +24,7 @@ namespace re
 namespace gr
 {
 	class RenderDataManager;
-	struct RenderSystemDescription;
+	struct RenderPipelineDescription;
 	class IndexedBufferManager;
 
 
@@ -44,7 +44,7 @@ namespace gr
 
 	public:
 		// Scriptable rendering pipeline:
-		void BuildPipeline(gr::RenderSystemDescription const&, gr::RenderDataManager const*); // Creates graphics systems + init/update pipelines
+		void BuildPipeline(gr::RenderPipelineDescription const&, gr::RenderDataManager const*); // Creates graphics systems + init/update pipelines
 
 	private:
 		void ExecuteInitializationPipeline();

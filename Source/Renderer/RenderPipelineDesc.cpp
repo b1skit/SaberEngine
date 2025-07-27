@@ -1,17 +1,17 @@
 #pragma once
 #include "EnumTypes.h"
-#include "RenderSystemDesc.h"
+#include "RenderPipelineDesc.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-using GSName = gr::RenderSystemDescription::GSName;
-using SrcDstNamePairs = gr::RenderSystemDescription::SrcDstNamePairs;
+using GSName = gr::RenderPipelineDescription::GSName;
+using SrcDstNamePairs = gr::RenderPipelineDescription::SrcDstNamePairs;
 
 
 namespace gr
 {
-	void from_json(nlohmann::json const& jsonDesc, RenderSystemDescription& renderSysDesc)
+	void from_json(nlohmann::json const& jsonDesc, RenderPipelineDescription& renderSysDesc)
 	{
 		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(
 			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
@@ -19,9 +19,9 @@ namespace gr
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformStr)](auto entry) -> bool
 			{
 				// "ExcludedPlatforms":
-				if (entry.contains(RenderSystemDescription::key_excludedPlatforms))
+				if (entry.contains(RenderPipelineDescription::key_excludedPlatforms))
 				{
-					for (auto const& excludedPlatform : entry[RenderSystemDescription::key_excludedPlatforms])
+					for (auto const& excludedPlatform : entry[RenderPipelineDescription::key_excludedPlatforms])
 					{
 						if (excludedPlatform.template get<std::string>() == currentPlatformVal)
 						{
@@ -37,10 +37,10 @@ namespace gr
 		try
 		{
 			// "PipelineMetadata":
-			if (jsonDesc.contains(RenderSystemDescription::key_pipelineMetadataBlock) &&
-				!jsonDesc[RenderSystemDescription::key_pipelineMetadataBlock].empty())
+			if (jsonDesc.contains(RenderPipelineDescription::key_pipelineMetadataBlock) &&
+				!jsonDesc[RenderPipelineDescription::key_pipelineMetadataBlock].empty())
 			{
-				auto const& pipelineMetadata = jsonDesc.at(RenderSystemDescription::key_pipelineMetadataBlock);
+				auto const& pipelineMetadata = jsonDesc.at(RenderPipelineDescription::key_pipelineMetadataBlock);
 
 				if (ExcludesPlatform(pipelineMetadata))
 				{
@@ -48,15 +48,15 @@ namespace gr
 				}
 
 				// "Name":
-				if (pipelineMetadata.contains(RenderSystemDescription::key_pipelineName))
+				if (pipelineMetadata.contains(RenderPipelineDescription::key_pipelineName))
 				{
 					renderSysDesc.m_name =
-						pipelineMetadata[RenderSystemDescription::key_pipelineName].template get<std::string>();
+						pipelineMetadata[RenderPipelineDescription::key_pipelineName].template get<std::string>();
 				}
 			}
 
 			// "Pipeline": 
-			auto const& pipelineBlock = jsonDesc[RenderSystemDescription::key_pipelineBlock];
+			auto const& pipelineBlock = jsonDesc[RenderPipelineDescription::key_pipelineBlock];
 			for (auto const& pipelineEntry : pipelineBlock)
 			{
 				if (ExcludesPlatform(pipelineEntry))
@@ -65,7 +65,7 @@ namespace gr
 				}
 
 				auto& newPipelineStep = renderSysDesc.m_pipelineOrder.emplace_back();
-				auto const& currentGSName = pipelineEntry[RenderSystemDescription::key_GSName].get_to(newPipelineStep);
+				auto const& currentGSName = pipelineEntry[RenderPipelineDescription::key_GSName].get_to(newPipelineStep);
 				renderSysDesc.m_graphicsSystemNames.emplace(currentGSName);
 
 
@@ -94,54 +94,69 @@ namespace gr
 							SrcDstNamePairs& srcDstNames = curDependencies.back().second;
 
 							srcDstNames.emplace_back(
-								dependencyEntry[RenderSystemDescription::key_srcName],
-								dependencyEntry[RenderSystemDescription::key_dstName]);
+								dependencyEntry[RenderPipelineDescription::key_srcName],
+								dependencyEntry[RenderPipelineDescription::key_dstName]);
 						}
 					};
 
 
 				// "Inputs":
-				if (pipelineEntry.contains(RenderSystemDescription::key_inputsList) &&
-					!pipelineEntry[RenderSystemDescription::key_inputsList].empty())
+				if (pipelineEntry.contains(RenderPipelineDescription::key_inputsList) &&
+					!pipelineEntry[RenderPipelineDescription::key_inputsList].empty())
 				{
-					auto const& inputsList = pipelineEntry[RenderSystemDescription::key_inputsList];
+					auto const& inputsList = pipelineEntry[RenderPipelineDescription::key_inputsList];
 					for (auto const& inputEntry : inputsList)
 					{
 						// "GS":
 						std::string const& dependencySourceGSName =
-							inputEntry[RenderSystemDescription::key_GSName].template get<std::string>();
+							inputEntry[RenderPipelineDescription::key_GSName].template get<std::string>();
 
 						SEAssert(dependencySourceGSName != currentGSName, "A GS has listed itself as an input source");
 
 						// "TextureDependencies":
-						if (inputEntry.contains(RenderSystemDescription::key_textureDependenciesList) &&
-							!inputEntry[RenderSystemDescription::key_textureDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDescription::key_textureDependenciesList) &&
+							!inputEntry[RenderPipelineDescription::key_textureDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderSystemDescription::key_textureDependenciesList],
+								inputEntry[RenderPipelineDescription::key_textureDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_textureInputs[currentGSName]);
 						}
 
 						// "BufferDependencies":
-						if (inputEntry.contains(RenderSystemDescription::key_bufferDependenciesList) &&
-							!inputEntry[RenderSystemDescription::key_bufferDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDescription::key_bufferDependenciesList) &&
+							!inputEntry[RenderPipelineDescription::key_bufferDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderSystemDescription::key_bufferDependenciesList],
+								inputEntry[RenderPipelineDescription::key_bufferDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_bufferInputs[currentGSName]);
 						}
 
 						// "DataDependencies":
-						if (inputEntry.contains(RenderSystemDescription::key_dataDependenciesList) &&
-							!inputEntry[RenderSystemDescription::key_dataDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDescription::key_dataDependenciesList) &&
+							!inputEntry[RenderPipelineDescription::key_dataDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderSystemDescription::key_dataDependenciesList],
+								inputEntry[RenderPipelineDescription::key_dataDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_dataInputs[currentGSName]);
 						}
+					}
+				}
+
+				// "Flags":
+				if (pipelineEntry.contains(RenderPipelineDescription::key_flagsList) &&
+					!pipelineEntry[RenderPipelineDescription::key_flagsList].empty())
+				{
+					std::vector<std::pair<std::string, std::string>>& gsFlags = renderSysDesc.m_flags[currentGSName];
+
+					auto const& flagsList = pipelineEntry[RenderPipelineDescription::key_flagsList];
+					for (auto const& flagEntry : flagsList)
+					{
+						gsFlags.emplace_back(
+							flagEntry[RenderPipelineDescription::key_flagName].template get<std::string>(),
+							flagEntry[RenderPipelineDescription::key_flagValue].template get<std::string>());
 					}
 				}
 			}
@@ -153,7 +168,7 @@ namespace gr
 	}
 
 
-	RenderSystemDescription LoadPipelineDescription(char const* filepath)
+	RenderPipelineDescription LoadPipelineDescription(char const* filepath)
 	{
 		SEAssert(filepath, "File path cannot be null");
 
@@ -165,7 +180,7 @@ namespace gr
 		const bool allowExceptions = core::Config::GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
 		const bool ignoreComments = core::Config::GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
-		RenderSystemDescription systemDesc;
+		RenderPipelineDescription systemDesc;
 		nlohmann::json pipelineDescJSON;
 		try
 		{
@@ -173,7 +188,7 @@ namespace gr
 			pipelineDescJSON =
 				nlohmann::json::parse(pipelineInputStream, parserCallback, allowExceptions, ignoreComments);
 
-			systemDesc = pipelineDescJSON.template get<RenderSystemDescription>();
+			systemDesc = pipelineDescJSON.template get<RenderPipelineDescription>();
 		}
 		catch (nlohmann::json::parse_error parseException)
 		{

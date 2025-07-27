@@ -185,6 +185,7 @@
     <ClInclude Include="RenderManager_OpenGL.h" />
     <ClInclude Include="RenderObjectIDs.h" />
     <ClInclude Include="RenderPipeline.h" />
+    <ClInclude Include="RenderPipelineDesc.h" />
     <ClInclude Include="RootConstants.h" />
     <ClInclude Include="ShaderBindingTable.h" />
     <ClInclude Include="ShaderBindingTable_DX12.h" />
@@ -192,7 +193,6 @@
     <ClInclude Include="Shaders\Common\RTAOParams.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="RenderSystem.h" />
-    <ClInclude Include="RenderSystemDesc.h" />
     <ClInclude Include="HeapManager_DX12.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
     <ClInclude Include="RLibrary_ImGui_DX12.h" />
@@ -337,13 +337,13 @@
     <ClCompile Include="RenderManager_DX12.cpp" />
     <ClCompile Include="RenderManager_OpenGL.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
+    <ClCompile Include="RenderPipelineDesc.cpp" />
     <ClCompile Include="RootConstants.cpp" />
     <ClCompile Include="ShaderBindingTable.cpp" />
     <ClCompile Include="ShaderBindingTable_DX12.cpp" />
     <ClCompile Include="ShaderBindingTable_Platform.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
-    <ClCompile Include="RenderSystemDesc.cpp" />
     <ClCompile Include="HeapManager_DX12.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="RLibrary_ImGui_DX12.cpp" />

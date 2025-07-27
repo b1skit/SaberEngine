@@ -37,7 +37,8 @@ namespace gr
 		void Create(gr::RenderDataManager const*);
 		void PreRender(uint64_t currentFrameNum);
 
-		void CreateAddGraphicsSystemByScriptName(std::string_view scriptName);
+		void CreateAddGraphicsSystemByScriptName(
+			std::string_view scriptName, std::vector<std::pair<std::string, std::string>> const& flags);
 
 		// NOTE: Accessing GraphicsSystems is generally NOT thread safe. These "GetGraphicsSystem" functions are
 		// provided as a convenience for initial setup only

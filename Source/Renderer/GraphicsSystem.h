@@ -32,8 +32,15 @@ namespace gr
 	public:
 		// Scriptable pipeline: Create a graphics system by the (case insensitive) name provided in a script.
 		// Returns null if no GS with that name exists
-		static std::unique_ptr<gr::GraphicsSystem> CreateByName(char const* scriptName, gr::GraphicsSystemManager*);
-		static std::unique_ptr<gr::GraphicsSystem> CreateByName(std::string const& scriptName, gr::GraphicsSystemManager*);
+		static std::unique_ptr<gr::GraphicsSystem> CreateByName(
+			char const* scriptName,
+			gr::GraphicsSystemManager*,
+			std::vector<std::pair<std::string, std::string>> const& flags);
+
+		static std::unique_ptr<gr::GraphicsSystem> CreateByName(
+			std::string const& scriptName,
+			gr::GraphicsSystemManager*,
+			std::vector<std::pair<std::string, std::string>> const& flags);
 
 		// GraphicsSystem interface:
 		// -------------------------
@@ -68,8 +75,17 @@ namespace gr
 		virtual RuntimeBindings GetRuntimeBindings() = 0;
 
 	public:
+		virtual void RegisterFlags() {}; // Must override this if you want to register flags via the pipeline script
 		virtual void RegisterInputs() = 0;
 		virtual void RegisterOutputs() = 0;
+
+
+		// Flags:
+	protected:
+		void RegisterFlag(util::CHashKey const&);
+
+		bool HasFlagValue(util::CHashKey const& flagName, util::CHashKey const& valueName) const;
+		util::CHashKey const& GetFlagValue(util::CHashKey const& flagName) const;
 
 
 		// Texture inputs/outputs:
@@ -112,6 +128,7 @@ namespace gr
 		// These must be populated during the call to RegisterInputs/Outputs()
 		std::map<util::CHashKey, TextureInputDefault> m_textureInputs;
 		std::map<util::CHashKey, core::InvPtr<re::Texture> const*> m_textureOutputs;
+		std::unordered_map<util::CHashKey, util::CHashKey> m_flags;
 
 
 		// Buffer inputs/outputs:
@@ -198,10 +215,12 @@ namespace gr
 	protected:
 		// Automatic factory registration mechanism:
 		template<typename T>
-		static std::unique_ptr<gr::GraphicsSystem> Create(gr::GraphicsSystemManager* gsm);
+		static std::unique_ptr<gr::GraphicsSystem> Create(
+			gr::GraphicsSystemManager* gsm, std::vector<std::pair<std::string, std::string>> const& flags);
 
 		
-		using CreateFn = std::unique_ptr<gr::GraphicsSystem>(*)(gr::GraphicsSystemManager*);
+		using CreateFn = std::unique_ptr<gr::GraphicsSystem>(*)(
+			gr::GraphicsSystemManager*, std::vector<std::pair<std::string, std::string>> const& flags);
 		static bool RegisterGS(char const* scriptName, CreateFn);
 
 
@@ -215,20 +234,50 @@ namespace gr
 		friend class IScriptableGraphicsSystem; // Required to access GraphicsSystem::Create()
 	};
 
-	// This is pure virtual, but we want to call this from the base class so we still need to provide an implementation
-	inline void GraphicsSystem::RegisterInputs() {}
-
 
 	template<typename T>
-	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::Create(gr::GraphicsSystemManager* gsm)
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::Create(
+		gr::GraphicsSystemManager* gsm,
+		std::vector<std::pair<std::string, std::string>> const& flags)
 	{
 		std::unique_ptr<gr::GraphicsSystem> newGS;
 		newGS.reset(new T(gsm));
+
+		// Process the flags:
+		newGS->RegisterFlags();
+
+		for (auto const& flag : flags)
+		{
+			SEAssert(newGS->m_flags.contains(util::CHashKey::Create(flag.first)), "Flag not registered");
+			newGS->m_flags.at(util::CHashKey::Create(flag.first)) = util::CHashKey::Create(flag.second);
+		}
 
 		// Register our inputs immediately. Outputs are registered once the initialization step(s) have run
 		newGS->RegisterInputs();
 
 		return newGS;
+	}
+
+
+	inline bool GraphicsSystem::HasFlagValue(util::CHashKey const& flagName, util::CHashKey const& valueName) const
+	{
+		SEAssert(m_flags.contains(flagName), "Flag with that name has not been registered");
+
+		return m_flags.at(flagName) == valueName;
+	}
+
+
+	inline util::CHashKey const& GraphicsSystem::GetFlagValue(util::CHashKey const& flagName) const
+	{
+		SEAssert(m_flags.contains(flagName), "Flag with that name has not been registered");
+
+		return m_flags.at(flagName);
+	}
+
+
+	inline void GraphicsSystem::RegisterFlag(util::CHashKey const& flagName)
+	{
+		m_flags.emplace(flagName, util::CHashKey("<Unset>"));
 	}
 
 
