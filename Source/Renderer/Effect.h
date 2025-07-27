@@ -1,7 +1,5 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
-#include "Technique.h"
-
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Util/CHashKey.h" // Required for DrawStyles.h

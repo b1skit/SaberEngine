@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "Effect.h"
+#include "Technique.h"
 
 
 namespace effect

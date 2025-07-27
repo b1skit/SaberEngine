@@ -1,6 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Effect.h"
 #include "EffectDB.h"
+#include "Technique.h"
 
 #include "Core/Assert.h"
 

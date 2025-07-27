@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// © 2025 Adam Badke. All rights reserved.
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
