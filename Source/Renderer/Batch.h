@@ -4,6 +4,7 @@
 #include "BufferView.h"
 #include "Effect.h"
 #include "EnumTypes.h"
+#include "RasterState.h"
 #include "RootConstants.h"
 #include "Sampler.h"
 #include "TextureView.h"
@@ -91,8 +92,7 @@ namespace gr
 
 			re::GeometryMode m_batchGeometryMode = re::GeometryMode::Invalid;
 
-			re::RasterState::PrimitiveTopology m_primitiveTopology =
-				re::RasterState::PrimitiveTopology::TriangleList;
+			re::RasterState::PrimitiveTopology m_primitiveTopology = re::RasterState::PrimitiveTopology::TriangleList;
 		};
 
 		struct ComputeParams final
