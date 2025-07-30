@@ -45,7 +45,7 @@ namespace core
 
 			for (size_t cmdIdx = 0; cmdIdx < m_commandMetadata.size(); cmdIdx++)
 			{
-				SEBeginCPUEvent(std::format("CommandBuffer::Execute command {}/{}", cmdIdx, m_commandMetadata.size()).c_str());
+				SEBeginCPUEvent("CommandBuffer::Execute command %llu/%llu", cmdIdx, m_commandMetadata.size());
 				m_commandMetadata[cmdIdx]->Execute(m_commandMetadata[cmdIdx]->m_commandData);
 				SEEndCPUEvent();
 			}			

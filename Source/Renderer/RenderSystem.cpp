@@ -528,14 +528,14 @@ namespace gr
 
 	void RenderSystem::ExecuteUpdatePipeline(uint64_t currentFrameNum)
 	{
-		SEBeginCPUEvent(std::format("RenderSystem::ExecuteUpdatePipeline: {}", GetName()).c_str());
+		SEBeginCPUEvent("RenderSystem::ExecuteUpdatePipeline: %s", GetName());
 
 		static const bool s_singleThreadGSExecution = DisableThreadedGraphicsSystemUpdates();
 
 
 		auto ExecuteUpdateStep = [this](UpdateStep const& currentStep)
 			{
-				SEBeginCPUEvent(std::format("Update GS: ", currentStep.m_gs->GetName()).c_str());
+				SEBeginCPUEvent("Update GS: %s", currentStep.m_gs->GetName());
 				try
 				{
 					currentStep.m_preRenderFunc();

@@ -496,7 +496,7 @@ namespace gr
 					[cameraID, camData, cameraIsDirty, camTransformData, numMeshPrimitives, activeCamRenderDataID,
 					this, &renderData]()
 					{
-						SEBeginCPUEvent(std::format("Culling camera {}", std::to_string(cameraID)).c_str());
+						SEBeginCPUEvent("Culling camera %d", cameraID);
 
 						// Create/update frustum planes for dirty cameras:
 						// A Camera will be dirty if it has just been created, or if it has just been modified

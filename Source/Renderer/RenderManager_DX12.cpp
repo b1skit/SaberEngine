@@ -297,7 +297,7 @@ namespace dx12
 					auto stageItr = workRangeItr->m_stageBeginItr;
 					while (stageItr != workRangeItr->m_stageEndItr)
 					{
-						SEBeginCPUEvent(std::format("Stage: {}", (*stageItr)->GetName()).c_str());
+						SEBeginCPUEvent("Stage: %s", (*stageItr)->GetName());
 
 						SEBeginGPUEvent( // Stage
 							cmdList->GetD3DCommandList().Get(),
@@ -781,8 +781,8 @@ namespace dx12
 			{
 				std::shared_ptr<dx12::CommandList> cmdList = job.get();
 
-				SEBeginCPUEvent(std::format("Submit {}", 
-					dx12::CommandList::GetCommandListTypeName(cmdList->GetCommandListType())).c_str());
+				SEBeginCPUEvent("Submit %s", 
+					dx12::CommandList::GetCommandListTypeName(cmdList->GetCommandListType()));
 
 				switch (cmdList->GetCommandListType())
 				{

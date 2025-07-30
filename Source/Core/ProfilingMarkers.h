@@ -35,8 +35,8 @@ namespace perfmarkers
 
 // CPU markers:
 //-------------
-#define SEBeginCPUEvent(eventNameCStr) \
-	PIXBeginEvent(PIX_COLOR_INDEX(perfmarkers::Type::CPUSection), eventNameCStr);
+#define SEBeginCPUEvent(...) \
+	PIXBeginEvent(PIX_COLOR_INDEX(perfmarkers::Type::CPUSection),  __VA_ARGS__);
 
 
 #define SEEndCPUEvent() \
@@ -45,11 +45,11 @@ namespace perfmarkers
 
 // DX12 GPU markers:
 //------------------
-#define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
+#define SEBeginGPUEvent(apiObjPtr, perfMarkerType, ...) \
 	PIXBeginEvent( \
 		apiObjPtr, \
 		PIX_COLOR_INDEX(perfMarkerType), \
-		eventNameCStr);
+		 __VA_ARGS__);
 
 
 #define SEEndGPUEvent(apiObjPtr) \
@@ -61,8 +61,8 @@ namespace perfmarkers
 // simpler than modern APIs. Markers are not tied to API objects, and can't be color-coded. However, we do use the
 // perfMarkerType enum as an ID to help identify marker sources
 //--------------------
-#define SEBeginOpenGLGPUEvent(perfMarkerType, eventNameCStr) \
-	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, perfMarkerType, -1, eventNameCStr);
+#define SEBeginOpenGLGPUEvent(perfMarkerType, ...) \
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, perfMarkerType, -1,  __VA_ARGS__);
 
 
 #define SEEndOpenGLGPUEvent() \
@@ -74,8 +74,8 @@ namespace perfmarkers
 
 // CPU markers:
 //-------------
-#define SEBeginCPUEvent(eventNameCStr) \
-	do { static_cast<void>(eventNameCStr); } while(0);
+#define SEBeginCPUEvent(...) \
+	do { static_cast<void>(0, ##__VA_ARGS__); } while(0);
 
 
 #define SEEndCPUEvent() \
@@ -84,16 +84,16 @@ namespace perfmarkers
 
 // GPU markers:
 //-------------
-#define SEBeginGPUEvent(apiObjPtr, perfMarkerType, eventNameCStr) \
-	do { static_cast<void>(apiObjPtr); static_cast<void>(perfMarkerType); static_cast<void>(eventNameCStr); } while(0);
+#define SEBeginGPUEvent(apiObjPtr, perfMarkerType, ...) \
+	do { static_cast<void>(apiObjPtr); static_cast<void>(perfMarkerType); static_cast<void>(0, ##__VA_ARGS__); } while(0);
 
 
 #define SEEndGPUEvent(apiObjPtr) \
 	do {} while(0);
 
 
-#define SEBeginOpenGLGPUEvent(perfMarkerType, eventNameCStr) \
-	do { static_cast<void>(perfMarkerType); static_cast<void>(eventNameCStr); } while(0);
+#define SEBeginOpenGLGPUEvent(perfMarkerType, ...) \
+	do { static_cast<void>(perfMarkerType); static_cast<void>(0, ##__VA_ARGS__); } while(0);
 
 
 #define SEEndOpenGLGPUEvent() \
@@ -112,7 +112,7 @@ namespace perfmarkers
 // DO NOT CHECK THIS IN: Convenience helper: Enable this if there is SEEndCPUEventAndVerify macros temporarily in use
 //#define TOLERATE_SE_END_EVENT_AND_VERIFY
 #if defined(TOLERATE_SE_END_EVENT_AND_VERIFY)
-#define SEEndCPUEventAndVerify(eventNameCStr) SEEndCPUEvent()
+#define SEEndCPUEventAndVerify(...) SEEndCPUEvent()
 #endif
 
 
@@ -126,14 +126,14 @@ namespace perfmarkers
 #undef SEBeginCPUEvent
 #undef SEEndCPUEvent
 
-#define SEBeginCPUEvent(eventNameCStr) \
-	debugperfmarkers::SEInternalBeginCPUEvent(eventNameCStr, __FILE__, __LINE__)
+#define SEBeginCPUEvent(...) \
+	debugperfmarkers::SEInternalBeginCPUEvent(__VA_ARGS__, __FILE__, __LINE__)
 
 #define SEEndCPUEvent() \
 	debugperfmarkers::SEInternalEndCPUEvent()
 
-#define SEEndCPUEventAndVerify(eventNameCStr) \
-	debugperfmarkers::SEInternalEndCPUEvent(eventNameCStr)
+#define SEEndCPUEventAndVerify(...) \
+	debugperfmarkers::SEInternalEndCPUEvent(__VA_ARGS__)
 
 
 // Debug marker tracking implementation:

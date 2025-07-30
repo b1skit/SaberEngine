@@ -2,6 +2,7 @@
 #pragma once
 #include "Assert.h"
 #include "Logger.h"
+
 #include "Definitions/ForwardDeclarations.h"
 
 #include "Util/CHashKey.h"
