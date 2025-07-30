@@ -1,15 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "Effect.h"
 #include "GraphicsEvent.h"
 #include "GraphicsSystem_DeferredLightVolumes.h"
-#include "GraphicsSystemCommon.h"
 #include "GraphicsSystem_GBuffer.h"
+#include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "LightRenderData.h"
+#include "RayTracingParamsHelpers.h"
 #include "RenderDataManager.h"
 #include "Sampler.h"
 #include "Stage.h"
@@ -21,9 +23,9 @@
 #include "Core/Util/CHashKey.h"
 #include "Core/Util/HashKey.h"
 
-
 #include "Renderer/Shaders/Common/InstancingParams.h"
 #include "Renderer/Shaders/Common/LightParams.h"
+#include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ShadowParams.h"
 #include "Renderer/Shaders/Common/TransformParams.h"
 
@@ -46,6 +48,30 @@ namespace
 			shadowArray,
 			{ re::TextureView::ViewFlags::ReadOnlyDepth });
 	}
+
+
+	void AttachGBufferInputs(
+		gr::GraphicsSystemManager* gsm, gr::TextureDependencies const& texDependencies, gr::Stage* stage)
+	{
+		core::InvPtr<re::Sampler> const& wrapMinMagLinearMipPoint = gsm->GetSampler("WrapMinMagLinearMipPoint");
+
+		for (uint8_t slot = 0; slot < gr::GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count; slot++)
+		{
+			if (slot == gr::GBufferGraphicsSystem::GBufferEmissive)
+			{
+				continue; // The emissive texture is not used
+			}
+			SEAssert(texDependencies.contains(gr::GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]),
+				"Texture dependency not found");
+
+			util::CHashKey const& texName = gr::GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
+			core::InvPtr<re::Texture> const& gbufferTex =
+				*gr::GetDependency<core::InvPtr<re::Texture>>(texName, texDependencies);
+
+			stage->AddPermanentTextureInput(
+				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
+		}
+	}
 }
 
 
@@ -54,6 +80,7 @@ namespace gr
 	DeferredLightVolumeGraphicsSystem::DeferredLightVolumeGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
+		, m_shadowMode(ShadowMode::Invalid)
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
 		, m_lightIDToShadowRecords(nullptr)
@@ -62,20 +89,24 @@ namespace gr
 		, m_directionalShadowTexArrayUpdated(false)
 		, m_pointShadowTexArrayUpdated(false)
 		, m_spotShadowTexArrayUpdated(false)
+		, m_sceneTLAS(nullptr)
+		, m_tMin(0.01f)
+		, m_rayLengthOffset(0.01f)
+		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
+	}
+
+
+	void DeferredLightVolumeGraphicsSystem::RegisterFlags()
+	{
+		RegisterFlag(k_shadowModeFlag);
 	}
 
 
 	void DeferredLightVolumeGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_lightingTargetTexInput);
-
-		RegisterDataInput(k_pointLightCullingDataInput);
-		RegisterDataInput(k_spotLightCullingDataInput);
-
-		RegisterDataInput(k_lightIDToShadowRecordInput);
-		RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 
 		// Deferred lighting GS is (currently) tightly coupled to the GBuffer GS
 		for (uint8_t slot = 0; slot < GBufferGraphicsSystem::GBufferTexIdx_Count; slot++)
@@ -87,6 +118,30 @@ namespace gr
 
 			RegisterTextureInput(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]);
 		}
+
+		RegisterDataInput(k_pointLightCullingDataInput);
+		RegisterDataInput(k_spotLightCullingDataInput);
+
+		// Shadow-related inputs:
+		switch (GetFlagValue(k_shadowModeFlag))
+		{
+		case k_shadowMode_ShadowMap:
+		{
+			m_shadowMode = ShadowMode::ShadowMap;
+
+			RegisterDataInput(k_lightIDToShadowRecordInput);
+			RegisterBufferInput(k_PCSSSampleParamsBufferInput);
+		}
+		break;
+		case k_shadowMode_RayTraced:
+		{
+			m_shadowMode = ShadowMode::RayTraced;
+
+			RegisterDataInput(k_sceneTLASInput);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode flag");
+		};
 	}
 
 
@@ -96,7 +151,7 @@ namespace gr
 	}
 
 
-	void DeferredLightVolumeGraphicsSystem::InitPipeline(
+	void DeferredLightVolumeGraphicsSystem::InitCommonPipeline(
 		gr::StagePipeline& pipeline,
 		TextureDependencies const& texDependencies,
 		BufferDependencies const& bufferDependencies,
@@ -105,47 +160,45 @@ namespace gr
 		SEAssert(texDependencies.contains(k_lightingTargetTexInput), "Missing a mandatory dependency");
 
 		// Cache our dependencies:
-		m_pointCullingResults = GetDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
-		m_spotCullingResults = GetDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+		m_lightingTargetTex = GetDependency<core::InvPtr<re::Texture>>(k_lightingTargetTexInput, texDependencies);
 
-		m_lightIDToShadowRecords = GetDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
-		m_PCSSSampleParamsBuffer = GetDependency<std::shared_ptr<re::Buffer>>(k_PCSSSampleParamsBufferInput, bufferDependencies);
+		switch (m_shadowMode)
+		{
+		case ShadowMode::ShadowMap:
+		{
+			m_lightIDToShadowRecords = GetDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
+			m_PCSSSampleParamsBuffer = GetDependency<std::shared_ptr<re::Buffer>>(k_PCSSSampleParamsBufferInput, bufferDependencies);
 
-		m_lightingTargetTex = GetDependency<core::InvPtr<re::Texture>>(k_lightingTargetTexInput, texDependencies);		
+			m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
+				re::Texture::TextureParams
+				{
+					.m_usage = re::Texture::Usage::ColorSrc,
+					.m_dimension = re::Texture::Dimension::Texture2D,
+					.m_format = re::Texture::Format::Depth32F,
+					.m_colorSpace = re::Texture::ColorSpace::Linear,
+					.m_mipMode = re::Texture::MipMode::None,
+				},
+				glm::vec4(1.f, 1.f, 1.f, 1.f));
 
-		m_missing2DShadowFallback = re::Texture::Create("Missing 2D shadow fallback",
-			re::Texture::TextureParams
-			{
-				.m_usage = re::Texture::Usage::ColorSrc,
-				.m_dimension = re::Texture::Dimension::Texture2D,
-				.m_format = re::Texture::Format::Depth32F,
-				.m_colorSpace = re::Texture::ColorSpace::Linear,
-				.m_mipMode = re::Texture::MipMode::None,
-			},
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback",
-			re::Texture::TextureParams
-			{
-				.m_usage = re::Texture::Usage::ColorSrc,
-				.m_dimension = re::Texture::Dimension::TextureCube,
-				.m_format = re::Texture::Format::Depth32F,
-				.m_colorSpace = re::Texture::ColorSpace::Linear,
-				.m_mipMode = re::Texture::MipMode::None,
-			},
-			glm::vec4(1.f, 1.f, 1.f, 1.f));
-
-		gr::Stage::GraphicsStageParams gfxStageParams{};
-
-		m_directionalStage = gr::Stage::CreateGraphicsStage("Directional light stage", gfxStageParams);
-		m_pointStage = gr::Stage::CreateGraphicsStage("Point light stage", gfxStageParams);
-		m_spotStage = gr::Stage::CreateGraphicsStage("Spot light stage", gfxStageParams);
-
-
-		// TODO: Enable instancing for deferred light mesh batches
-		m_directionalStage->SetInstancingEnabled(false);
-		m_pointStage->SetInstancingEnabled(false);
-		m_spotStage->SetInstancingEnabled(false);
+			m_missingCubeShadowFallback = re::Texture::Create("Missing cubemap shadow fallback",
+				re::Texture::TextureParams
+				{
+					.m_usage = re::Texture::Usage::ColorSrc,
+					.m_dimension = re::Texture::Dimension::TextureCube,
+					.m_format = re::Texture::Format::Depth32F,
+					.m_colorSpace = re::Texture::ColorSpace::Linear,
+					.m_mipMode = re::Texture::MipMode::None,
+				},
+				glm::vec4(1.f, 1.f, 1.f, 1.f));
+		}
+		break;
+		case ShadowMode::RayTraced:
+		{
+			m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode");
+		};
 
 		// Create the lighting target set:
 		m_lightingTargetSet->SetColorTarget(
@@ -161,77 +214,134 @@ namespace gr
 		m_lightingTargetSet->SetDepthStencilTarget(
 			*texDependencies.at(GBufferGraphicsSystem::GBufferTexNameHashKeys[GBufferGraphicsSystem::GBufferDepth]),
 			depthTargetParams);
+	}
 
+
+	void DeferredLightVolumeGraphicsSystem::InitDirectionalLightPipeline(
+		gr::StagePipeline& pipeline, TextureDependencies const& texDependencies, BufferDependencies const&, DataDependencies const&)
+	{
 		// Directional light stage:
 		//-------------------------
-		m_directionalStage->SetTextureTargetSet(m_lightingTargetSet);
+		m_directionalStage = gr::Stage::CreateGraphicsStage("Directional light stage", gr::Stage::GraphicsStageParams{});
+
+		m_directionalStage->SetInstancingEnabled(false); // TODO: Enable instancing for deferred light mesh batches
 		
+		m_directionalStage->SetTextureTargetSet(m_lightingTargetSet);
+
 		m_directionalStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredDirectional);
 
 		m_directionalStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_directionalStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 
-		pipeline.AppendStage(m_directionalStage);
-
-
-		// Point light stage:
-		//-------------------
-		m_pointStage->SetTextureTargetSet(m_lightingTargetSet);
-		m_pointStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
-
-		m_pointStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_pointStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
-
-		m_pointStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredPoint);
-
-		pipeline.AppendStage(m_pointStage);
-
-
-		// Spot light stage:
-		//------------------
-		m_spotStage->SetTextureTargetSet(m_lightingTargetSet);
-		m_spotStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
-
-		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
-		m_spotStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
-
-		m_spotStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredSpot);
-
-		pipeline.AppendStage(m_spotStage);
-
-
-		// Attach GBuffer inputs:
-		core::InvPtr<re::Sampler> const& wrapMinMagLinearMipPoint = m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint");
-
-		for (uint8_t slot = 0; slot < GBufferGraphicsSystem::GBufferTexIdx::GBufferTexIdx_Count; slot++)
+		switch (m_shadowMode)
 		{
-			if (slot == GBufferGraphicsSystem::GBufferEmissive)
-			{
-				continue; // The emissive texture is not used
-			}
-
-			SEAssert(texDependencies.contains(GBufferGraphicsSystem::GBufferTexNameHashKeys[slot]),
-				"Texture dependency not found");
-
-			util::CHashKey const& texName = GBufferGraphicsSystem::GBufferTexNameHashKeys[slot];
-			core::InvPtr<re::Texture> const& gbufferTex = 
-				*GetDependency<core::InvPtr<re::Texture>>(texName, texDependencies);
-			
-			m_directionalStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
-			m_pointStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
-			m_spotStage->AddPermanentTextureInput(
-				texName.GetKey(), gbufferTex, wrapMinMagLinearMipPoint, re::TextureView(gbufferTex));
+		case ShadowMode::ShadowMap:
+		{
+			m_directionalStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 		}
+		break;
+		case ShadowMode::RayTraced:
+		{
+			m_directionalStage->AddDrawStyleBits(effect::drawstyle::ShadowMode_RayTraced);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode");
+		};
+
+		AttachGBufferInputs(m_graphicsSystemManager, texDependencies, m_directionalStage.get());
+		
+		pipeline.AppendStage(m_directionalStage);
 
 		// Register for events:
 		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightVolumeGraphicsSystem>(
 			greventkey::GS_Shadows_DirectionalShadowArrayUpdated, this);
+	}
 
+
+	void DeferredLightVolumeGraphicsSystem::InitPointLightPipeline(
+		gr::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&, 
+		DataDependencies const& dataDependencies)
+	{
+		// Point light stage:
+		//-------------------
+		m_pointStage = gr::Stage::CreateGraphicsStage("Point light stage", gr::Stage::GraphicsStageParams{});
+
+		m_pointStage->SetInstancingEnabled(false); // TODO: Enable instancing for deferred light mesh batches
+
+		m_pointStage->SetTextureTargetSet(m_lightingTargetSet);
+		m_pointStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
+		m_pointStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+
+		m_pointStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredPoint);
+
+		switch (m_shadowMode)
+		{
+		case ShadowMode::ShadowMap:
+		{
+			m_pointCullingResults = GetDependency<PunctualLightCullingResults>(k_pointLightCullingDataInput, dataDependencies);
+			
+			m_pointStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
+		}
+		break;
+		case ShadowMode::RayTraced:
+		{
+			m_pointStage->AddDrawStyleBits(effect::drawstyle::ShadowMode_RayTraced);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode");
+		};
+
+		AttachGBufferInputs(m_graphicsSystemManager, texDependencies, m_pointStage.get());
+
+		pipeline.AppendStage(m_pointStage);
+
+		// Register for events:
 		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightVolumeGraphicsSystem>(
 			greventkey::GS_Shadows_PointShadowArrayUpdated, this);
+	}
 
+
+	void DeferredLightVolumeGraphicsSystem::InitSpotLightPipeline(
+		gr::StagePipeline& pipeline,
+		TextureDependencies const& texDependencies,
+		BufferDependencies const&,
+		DataDependencies const& dataDependencies)
+	{
+		// Spot light stage:
+		//------------------
+		m_spotStage = gr::Stage::CreateGraphicsStage("Spot light stage", gr::Stage::GraphicsStageParams{});
+
+		m_spotStage->SetInstancingEnabled(false); // TODO: Enable instancing for deferred light mesh batches
+		
+		m_spotStage->SetTextureTargetSet(m_lightingTargetSet);
+		m_spotStage->AddPermanentBuffer(m_lightingTargetSet->GetCreateTargetParamsBuffer());
+		m_spotStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
+
+		m_spotStage->AddDrawStyleBits(effect::drawstyle::DeferredLighting_DeferredSpot);
+
+		switch (m_shadowMode)
+		{
+		case ShadowMode::ShadowMap:
+		{
+			m_spotCullingResults = GetDependency<PunctualLightCullingResults>(k_spotLightCullingDataInput, dataDependencies);
+
+			m_spotStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
+		}
+		break;
+		case ShadowMode::RayTraced:
+		{
+			m_spotStage->AddDrawStyleBits(effect::drawstyle::ShadowMode_RayTraced);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode");
+		};
+
+		AttachGBufferInputs(m_graphicsSystemManager, texDependencies, m_spotStage.get());
+
+		pipeline.AppendStage(m_spotStage);
+
+		// Register for events:
 		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredLightVolumeGraphicsSystem>(
 			greventkey::GS_Shadows_SpotShadowArrayUpdated, this);
 	}
@@ -245,8 +355,9 @@ namespace gr
 		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
 
 		// Removed any deleted directional/point/spot lights:
-		auto DeleteLights = []<typename T>(
-			std::vector<gr::RenderDataID> const* deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
+		auto DeleteLights = [](
+			std::vector<gr::RenderDataID> const* deletedIDs,
+			std::unordered_map<gr::RenderDataID, PunctualLightData>& stageData)
 		{
 			if (!deletedIDs)
 			{
@@ -265,72 +376,7 @@ namespace gr
 
 		// If the shadow array texture was recreated, we need to recreate all light batches. Otherwise, we only need
 		// to create batches for any new lights
-		std::vector<gr::RenderDataID> const* dirlLightIDsForNewBatch = nullptr;
-		if (m_directionalShadowTexArrayUpdated)
-		{
-			dirlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
-		}
-		else
-		{
-			dirlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
-		}
-
-		std::vector<gr::RenderDataID> const* pointlLightIDsForNewBatch = nullptr;
-		if (m_pointShadowTexArrayUpdated)
-		{
-			pointlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
-		}
-		else
-		{
-			pointlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
-		}
-
-		std::vector<gr::RenderDataID> const* spotlLightIDsForNewBatch = nullptr;
-		if (m_spotShadowTexArrayUpdated)
-		{
-			spotlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
-		}
-		else
-		{
-			spotlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
-		}
-
-		// Register new directional lights:
-		if (dirlLightIDsForNewBatch && !dirlLightIDsForNewBatch->empty())
-		{
-			for (auto const& directionalItr : gr::IDAdapter(renderData, *dirlLightIDsForNewBatch))
-			{
-				gr::Light::RenderDataDirectional const& directionalData =
-					directionalItr->Get<gr::Light::RenderDataDirectional>();
-
-				const gr::RenderDataID lightID = directionalItr->GetRenderDataID();
-
-				gr::RasterBatchBuilder batchBuilder = gr::RasterBatchBuilder::CreateInstance(
-						lightID, renderData, grutil::BuildInstancedRasterBatch)
-					.SetEffectID(k_deferredLightingEffectID);
-
-				if (directionalData.m_hasShadow)
-				{
-					SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
-					gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
-
-					std::move(batchBuilder).SetTextureInput(k_directionalShadowShaderName,
-						*shadowRecord.m_shadowTex,
-						m_graphicsSystemManager->GetSampler(k_sampler2DShadowName),
-						CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
-				}
-
-				// Create/update the punctual light data record:
-				m_punctualLightData[lightID] = PunctualLightData{
-					.m_type = gr::Light::Directional,
-					.m_batch = std::move(batchBuilder).Build(),
-					.m_hasShadow = directionalData.m_hasShadow
-				};
-			}
-		}
-
-
-		auto RegisterNewDeferredMeshLight = [&](
+		auto RegisterNewLight = [&](
 			auto const& lightItr,
 			gr::Light::Type lightType,
 			void const* lightRenderData,
@@ -343,13 +389,24 @@ namespace gr
 					lightID, renderData, grutil::BuildInstancedRasterBatch)
 					.SetEffectID(k_deferredLightingEffectID);
 
-				if (hasShadow)
+				if (hasShadow && m_shadowMode == ShadowMode::ShadowMap)
 				{
 					SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 					gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
 
 					switch (lightType)
 					{
+					case gr::Light::Type::Directional:
+					{
+						SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
+						gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
+
+						std::move(batchBuilder).SetTextureInput(k_directionalShadowShaderName,
+							*shadowRecord.m_shadowTex,
+							m_graphicsSystemManager->GetSampler(k_sampler2DShadowName),
+							CreateShadowArrayReadView(*shadowRecord.m_shadowTex));
+					}
+					break;
 					case gr::Light::Type::Point:
 					{
 						std::move(batchBuilder).SetTextureInput(k_pointShadowShaderName,
@@ -378,6 +435,40 @@ namespace gr
 				};
 			};
 
+		// Directional:
+		std::vector<gr::RenderDataID> const* dirlLightIDsForNewBatch = nullptr;
+		if (m_directionalShadowTexArrayUpdated)
+		{
+			dirlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+		}
+		else
+		{
+			dirlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataDirectional>();
+		}
+		if (dirlLightIDsForNewBatch && !dirlLightIDsForNewBatch->empty())
+		{
+			for (auto const& directionalItr : gr::IDAdapter(renderData, *dirlLightIDsForNewBatch))
+			{
+				gr::Light::RenderDataDirectional const& directionalData =
+					directionalItr->Get<gr::Light::RenderDataDirectional>();
+
+				const bool hasShadow = directionalData.m_hasShadow;
+
+				RegisterNewLight(
+					directionalItr, gr::Light::Directional, &directionalData, hasShadow, m_punctualLightData);
+			}
+		}
+
+		// Point:
+		std::vector<gr::RenderDataID> const* pointlLightIDsForNewBatch = nullptr;
+		if (m_pointShadowTexArrayUpdated)
+		{
+			pointlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+		}
+		else
+		{
+			pointlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataPoint>();
+		}
 		if (pointlLightIDsForNewBatch && !pointlLightIDsForNewBatch->empty())
 		{
 			for (auto const& pointItr : gr::IDAdapter(renderData, *pointlLightIDsForNewBatch))
@@ -385,8 +476,19 @@ namespace gr
 				gr::Light::RenderDataPoint const& pointData = pointItr->Get<gr::Light::RenderDataPoint>();
 				const bool hasShadow = pointData.m_hasShadow;
 
-				RegisterNewDeferredMeshLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
+				RegisterNewLight(pointItr, gr::Light::Point, &pointData, hasShadow, m_punctualLightData);
 			}
+		}
+
+		// Spot:
+		std::vector<gr::RenderDataID> const* spotlLightIDsForNewBatch = nullptr;
+		if (m_spotShadowTexArrayUpdated)
+		{
+			spotlLightIDsForNewBatch = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>();
+		}
+		else
+		{
+			spotlLightIDsForNewBatch = renderData.GetIDsWithNewData<gr::Light::RenderDataSpot>();
 		}
 		if (spotlLightIDsForNewBatch && !spotlLightIDsForNewBatch->empty())
 		{
@@ -395,7 +497,7 @@ namespace gr
 				gr::Light::RenderDataSpot const& spotData = spotItr->Get<gr::Light::RenderDataSpot>();
 				const bool hasShadow = spotData.m_hasShadow;
 
-				RegisterNewDeferredMeshLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
+				RegisterNewLight(spotItr, gr::Light::Spot, &spotData, hasShadow, m_punctualLightData);
 			}
 		}
 
@@ -421,6 +523,32 @@ namespace gr
 		m_spotStage->AddSingleFrameBuffer(
 			ibm.GetIndexedBufferInput(ShadowData::s_shaderName, ShadowData::s_shaderName));
 
+		switch (m_shadowMode)
+		{
+		case ShadowMode::ShadowMap:
+		{
+			//
+		}
+		break;
+		case ShadowMode::RayTraced:
+		{
+			std::shared_ptr<re::Buffer> const& traceRayInlineParams = grutil::CreateTraceRayInlineParams(
+				m_geometryInstanceMask,
+				RayFlag::AcceptFirstHitAndEndSearch | RayFlag::SkipClosestHitShader | CullBackFacingTriangles,
+				m_tMin,
+				m_rayLengthOffset);
+
+			m_directionalStage->AddSingleFrameBuffer("TraceRayInlineParams", traceRayInlineParams);
+			m_pointStage->AddSingleFrameBuffer("TraceRayInlineParams", traceRayInlineParams);
+			m_spotStage->AddSingleFrameBuffer("TraceRayInlineParams", traceRayInlineParams);
+
+			m_directionalStage->AddSingleFrameTLAS(re::ASInput("SceneBVH", *m_sceneTLAS));
+			m_pointStage->AddSingleFrameTLAS(re::ASInput("SceneBVH", *m_sceneTLAS));
+			m_spotStage->AddSingleFrameTLAS(re::ASInput("SceneBVH", *m_sceneTLAS));
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode");
+		};
 
 		CreateBatches();
 	}
@@ -455,7 +583,7 @@ namespace gr
 		{
 			MarkIDsVisible(m_spotCullingResults);
 		}
-		else
+		else if (renderData.HasObjectData<gr::Light::RenderDataSpot>())
 		{
 			MarkAllIDsVisible(gr::IDAdapter(renderData, *renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataSpot>()));			
 		}
@@ -464,7 +592,7 @@ namespace gr
 		{
 			MarkIDsVisible(m_pointCullingResults);
 		}
-		else
+		else if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
 			MarkAllIDsVisible(gr::IDAdapter(renderData, *renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>()));
 		}
@@ -524,7 +652,7 @@ namespace gr
 						gr::StageBatchHandle& duplicatedBatch = *stage->AddBatch(lightData.second.m_batch);
 
 						uint32_t shadowTexArrayIdx = INVALID_SHADOW_IDX;
-						if (lightData.second.m_hasShadow)
+						if (lightData.second.m_hasShadow && m_shadowMode == ShadowMode::ShadowMap)
 						{
 							SEAssert(m_lightIDToShadowRecords->contains(lightID), "Failed to find a shadow record");
 							gr::ShadowRecord const& shadowRecord = m_lightIDToShadowRecords->at(lightID);
@@ -638,5 +766,15 @@ namespace gr
 			default: SEAssertF("Unexpected event key");
 			}
 		}
+	}
+
+
+	void DeferredLightVolumeGraphicsSystem::ShowImGuiWindow()
+	{
+		if (m_shadowMode == ShadowMode::RayTraced)
+		{
+			ImGui::SliderFloat("Shadow ray tMin", &m_tMin, 0.f, 1.f);
+			ImGui::SliderFloat("Shadow ray length offset", &m_rayLengthOffset, 0.f, 1.f);
+		}		
 	}
 }

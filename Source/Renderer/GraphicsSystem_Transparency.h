@@ -22,6 +22,19 @@ namespace gr
 			);
 		}
 
+		enum class ShadowMode
+		{
+			ShadowMap,
+			RayTraced,
+
+			Invalid
+		};
+
+		static constexpr util::CHashKey k_shadowModeFlag = "ShadowMode";
+		static constexpr util::CHashKey k_shadowMode_ShadowMap = "ShadowMap";
+		static constexpr util::CHashKey k_shadowMode_RayTraced = "RayTraced";
+		void RegisterFlags() override;
+
 		static constexpr util::CHashKey k_sceneDepthTexInput = "SceneDepth";
 		static constexpr util::CHashKey k_sceneLightingTexInput = "SceneLightingTarget";
 
@@ -44,6 +57,8 @@ namespace gr
 
 		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
 
+		static constexpr util::CHashKey k_sceneTLASInput = "SceneTLAS";
+
 		void RegisterInputs() override;
 
 		void RegisterOutputs() override;
@@ -57,6 +72,8 @@ namespace gr
 		void InitPipeline(gr::StagePipeline& pipeline, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
+
+		void ShowImGuiWindow() override;
 
 
 	private:
@@ -83,5 +100,14 @@ namespace gr
 		re::BufferInput m_lightMetadataBuffer;
 
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
+
+		ShadowMode m_shadowMode;
+
+
+	private: // RT Shadows:
+		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
+		uint8_t m_geometryInstanceMask;
+		float m_tMin;
+		float m_rayLengthOffset;
 	};
 }

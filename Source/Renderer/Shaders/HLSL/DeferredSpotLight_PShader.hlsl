@@ -21,6 +21,14 @@ StructuredBuffer<ShadowData> ShadowParams;
 
 Texture2DArray<float> SpotShadows;
 
+#if defined(SHADOWS_RAYTRACED)
+#include "RayTracingCommon.hlsli"
+#include "../Common/RayTracingParams.h"
+
+RaytracingAccelerationStructure SceneBVH;
+ConstantBuffer<TraceRayInlineData> TraceRayInlineParams;
+#endif
+
 
 float4 PShader(VertexOut In) : SV_Target
 {
@@ -71,6 +79,17 @@ float4 PShader(VertexOut In) : SV_Target
 		const bool shadowEnabled = shadowData.g_shadowParams.x;
 		if (shadowEnabled)
 		{
+#if defined(SHADOWS_RAYTRACED)
+			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
+			
+			shadowFactor = TraceShadowRay(
+				SceneBVH,
+				TraceRayInlineParams,
+				worldPos,
+				lightWorldDir,
+				TraceRayInlineParams.g_rayParams.x,
+				rayLength);
+#else
 			const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 			const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 			const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
@@ -88,6 +107,7 @@ float4 PShader(VertexOut In) : SV_Target
 				shadowData.g_shadowMapTexelSize,
 				SpotShadows,
 				shadowTexIdx);
+#endif
 		}
 	}
 	

@@ -6,6 +6,7 @@
 
 #include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
+#include "../Common/ShadowParams.h"
 #include "../Common/TargetParams.h"
 
 ConstantBuffer<CameraData> CameraParams : register(space1);
@@ -17,6 +18,15 @@ TextureCubeArray<float> PointShadows;
 
 StructuredBuffer<LightData> PointLightParams;
 StructuredBuffer<ShadowData> ShadowParams;
+
+
+#if defined(SHADOWS_RAYTRACED)
+#include "RayTracingCommon.hlsli"
+#include "../Common/RayTracingParams.h"
+
+RaytracingAccelerationStructure SceneBVH;
+ConstantBuffer<TraceRayInlineData> TraceRayInlineParams;
+#endif
 
 
 float4 PShader(VertexOut In) : SV_Target
@@ -57,6 +67,18 @@ float4 PShader(VertexOut In) : SV_Target
 		const bool shadowEnabled = shadowData.g_shadowParams.x > 0.f;
 		if (shadowEnabled)
 		{
+#if defined(SHADOWS_RAYTRACED)
+			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
+			
+			// Trace in reverse: Light -> world position, so we don't hit fake light source meshes
+			shadowFactor = TraceShadowRay(
+				SceneBVH,
+				TraceRayInlineParams,
+				lightWorldPos,
+				-lightWorldDir,
+				TraceRayInlineParams.g_rayParams.x,
+				rayLength);
+#else
 			const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 			const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 			const float cubeFaceDimension = shadowData.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
@@ -75,6 +97,7 @@ float4 PShader(VertexOut In) : SV_Target
 				cubeFaceDimension,
 				PointShadows,
 				shadowTexIdx);
+#endif
 		}
 	}
 	

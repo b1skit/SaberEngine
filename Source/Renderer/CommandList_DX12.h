@@ -137,6 +137,7 @@ namespace dx12
 
 		void SetRWTextures(std::vector<re::RWTextureInput> const&);
 
+		void SetTLAS(re::ASInput const&); // For inline ray tracing
 		void BuildRaytracingAccelerationStructure(re::AccelerationStructure&, bool doUpdate);
 
 		void AttachBindlessResources(

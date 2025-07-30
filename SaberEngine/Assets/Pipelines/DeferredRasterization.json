@@ -267,6 +267,12 @@
 						}
 					]
 				}
+			],
+			"Flags": [
+				{
+					"Flag": "ShadowMode",
+					"Value": "ShadowMap"
+				}
 			]
 		},
 		{
@@ -390,6 +396,12 @@
 							"DestinationName": "AmbientParamsBuffer"
 						}
 					]
+				}
+			],
+			"Flags": [
+				{
+					"Flag": "ShadowMode",
+					"Value": "ShadowMap"
 				}
 			]
 		},

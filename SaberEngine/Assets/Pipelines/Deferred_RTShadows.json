@@ -8,19 +8,8 @@
 			"GraphicsSystem": "Culling"
 		},
 		{
-			"GraphicsSystem": "VertexAnimation",
-			"Inputs": [
-				{
-					// We can use culling with RTAO as it's only in screen space
-					"GraphicsSystem": "Culling",
-					"DataDependencies": [
-						{
-							"SourceName": "ViewCullingResults",
-							"DestinationName": "ViewCullingResults"
-						}
-					]
-				}
-			]
+			"GraphicsSystem": "VertexAnimation"
+			// We can't use culling inputs as we're using RT shadows
 		},
 		{
 			"GraphicsSystem": "SceneAccelerationStructure",
@@ -100,37 +89,6 @@
 						{
 							"SourceName": "SceneTLAS",
 							"DestinationName": "SceneTLAS"
-						}
-					]
-				}
-			]
-		},
-		{
-			"GraphicsSystem": "Shadows",
-			"Inputs": [
-				{
-					"GraphicsSystem": "Culling",
-					"DataDependencies": [
-						{
-							"SourceName": "PointLightCullingResults",
-							"DestinationName": "PointLightCullingResults"
-						},
-						{
-							"SourceName": "SpotLightCullingResults",
-							"DestinationName": "SpotLightCullingResults"
-						}
-					]
-				},
-				{
-					"GraphicsSystem": "BatchManager",
-					"DataDependencies": [
-						{
-							"SourceName": "ViewBatches",
-							"DestinationName": "ViewBatches"
-						},
-						{
-							"SourceName": "AllBatches",
-							"DestinationName": "AllBatches"
 						}
 					]
 				}
@@ -239,21 +197,6 @@
 					]
 				},
 				{
-					"GraphicsSystem": "Shadows",
-					"BufferDependencies": [
-						{
-							"SourceName": "PCSSSampleParamsBuffer",
-							"DestinationName": "PCSSSampleParamsBuffer"
-						}
-					],
-					"DataDependencies": [
-						{
-							"SourceName": "LightIDToShadowRecordMap",
-							"DestinationName": "LightIDToShadowRecordMap"
-						}
-					]
-				},
-				{
 					"GraphicsSystem": "GBuffer",
 					"TextureDependencies": [
 						{
@@ -290,6 +233,21 @@
 							"DestinationName": "LightTargetTex"
 						}
 					]
+				},
+				{
+					"GraphicsSystem": "SceneAccelerationStructure",
+					"DataDependencies": [
+						{
+							"SourceName": "SceneTLAS",
+							"DestinationName": "SceneTLAS"
+						}
+					]
+				}
+			],
+			"Flags": [
+				{
+					"Flag": "ShadowMode",
+					"Value": "RayTraced"
 				}
 			]
 		},
@@ -346,35 +304,6 @@
 					]
 				},
 				{
-					"GraphicsSystem": "Shadows",
-					"BufferDependencies": [
-						{
-							"SourceName": "PCSSSampleParamsBuffer",
-							"DestinationName": "PCSSSampleParamsBuffer"
-						}
-					],
-					"DataDependencies": [
-						{
-							"SourceName": "LightIDToShadowRecordMap",
-							"DestinationName": "LightIDToShadowRecordMap"
-						}
-					],
-					"TextureDependencies": [
-						{
-							"SourceName": "DirectionalShadowArrayTex",
-							"DestinationName": "DirectionalShadowArrayTex"
-						},
-						{
-							"SourceName": "PointShadowArrayTex",
-							"DestinationName": "PointShadowArrayTex"
-						},
-						{
-							"SourceName": "SpotShadowArrayTex",
-							"DestinationName": "SpotShadowArrayTex"
-						}
-					]
-				},
-				{
 					"GraphicsSystem": "GBuffer",
 					"TextureDependencies": [
 						{
@@ -414,6 +343,21 @@
 							"DestinationName": "AmbientParamsBuffer"
 						}
 					]
+				},
+				{
+					"GraphicsSystem": "SceneAccelerationStructure",
+					"DataDependencies": [
+						{
+							"SourceName": "SceneTLAS",
+							"DestinationName": "SceneTLAS"
+						}
+					]
+				}
+			],
+			"Flags": [
+				{
+					"Flag": "ShadowMode",
+					"Value": "RayTraced"
 				}
 			]
 		},

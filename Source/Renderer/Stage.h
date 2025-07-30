@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "AccelerationStructure.h"
 #include "Batch.h"
 #include "BatchHandle.h"
 #include "BufferView.h"
@@ -8,8 +9,8 @@
 #include "RLibrary_Platform.h"
 #include "RootConstants.h"
 #include "SysInfo_Platform.h"
-#include "TextureView.h"
 #include "TextureTarget.h"
+#include "TextureView.h"
 
 #include "Core/InvPtr.h"
 
@@ -74,12 +75,11 @@ namespace gr
 		};
 		struct GraphicsStageParams final : public virtual IStageParams
 		{
-			// TODO: Populate this
-			// Assert values are set when they're received to catch any GS's that need to be updated
+			//
 		};
 		struct ComputeStageParams final : public virtual IStageParams
 		{
-			// TODO: Populate this
+			//
 		};
 		struct LibraryStageParams final : public virtual IStageParams
 		{
@@ -206,6 +206,9 @@ namespace gr
 		bool DepthTargetIsAlsoTextureInput() const;
 		int GetDepthTargetTextureInputIdx() const;
 
+		void AddSingleFrameTLAS(re::ASInput const&);
+		re::ASInput const& GetSingleFrameTLAS() const;
+
 		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&); // Infer a default BufferView
 		void AddPermanentBuffer(std::string const& shaderName, std::shared_ptr<re::Buffer> const&, re::BufferView const&);
 		void AddPermanentBuffer(re::BufferInput&&);
@@ -268,6 +271,8 @@ namespace gr
 		std::vector<re::BufferInput> m_permanentBuffers;
 
 		re::RootConstants m_stageRootConstants;
+
+		re::ASInput m_singleFrameTLAS; // TLAS: For inline ray tracing
 
 		std::vector<gr::StageBatchHandle> m_resolvedBatches;
 
@@ -740,6 +745,19 @@ namespace gr
 	inline int Stage::GetDepthTargetTextureInputIdx() const
 	{
 		return m_depthTextureInputIdx;
+	}
+
+
+	inline re::ASInput const& Stage::GetSingleFrameTLAS() const
+	{
+		SEAssert(m_type == gr::Stage::Type::Raster ||
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for getting a TLAS. This is intended for inline ray tracing");
+
+		return m_singleFrameTLAS;
 	}
 
 

@@ -36,11 +36,27 @@ namespace gr
 			(
 				INIT_PIPELINE
 				(
-					INIT_PIPELINE_FN(DeferredLightVolumeGraphicsSystem, InitPipeline)
+					INIT_PIPELINE_FN(DeferredLightVolumeGraphicsSystem, InitCommonPipeline),
+					INIT_PIPELINE_FN(DeferredLightVolumeGraphicsSystem, InitDirectionalLightPipeline),
+					INIT_PIPELINE_FN(DeferredLightVolumeGraphicsSystem, InitPointLightPipeline),
+					INIT_PIPELINE_FN(DeferredLightVolumeGraphicsSystem, InitSpotLightPipeline),
 				)
 				PRE_RENDER(PRE_RENDER_FN(DeferredLightVolumeGraphicsSystem, PreRender))
 			);
 		}
+
+		enum class ShadowMode
+		{
+			ShadowMap,
+			RayTraced,
+
+			Invalid
+		};
+
+		static constexpr util::CHashKey k_shadowModeFlag = "ShadowMode";
+		static constexpr util::CHashKey k_shadowMode_ShadowMap = "ShadowMap";
+		static constexpr util::CHashKey k_shadowMode_RayTraced = "RayTraced";
+		void RegisterFlags() override;
 
 		static constexpr util::CHashKey k_lightingTargetTexInput = "LightTargetTex";
 		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
@@ -48,6 +64,8 @@ namespace gr
 
 		static constexpr util::CHashKey k_lightIDToShadowRecordInput = "LightIDToShadowRecordMap";
 		static constexpr util::CHashKey k_PCSSSampleParamsBufferInput = "PCSSSampleParamsBuffer";
+
+		static constexpr util::CHashKey k_sceneTLASInput = "SceneTLAS";
 
 		// Note: The DeferredLightVolumeGraphicsSystem uses GBufferGraphicsSystem::GBufferTexNames for its remaining inputs
 		void RegisterInputs() override;
@@ -60,10 +78,21 @@ namespace gr
 
 		~DeferredLightVolumeGraphicsSystem() override = default;
 
-		void InitPipeline(
+		void InitCommonPipeline(
+			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+
+		void InitDirectionalLightPipeline(
+			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+
+		void InitPointLightPipeline(
+			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
+
+		void InitSpotLightPipeline(
 			gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 
 		void PreRender();
+
+		void ShowImGuiWindow() override;
 
 
 	private: // Punctual lights:
@@ -87,6 +116,8 @@ namespace gr
 		core::InvPtr<re::Texture> m_missing2DShadowFallback;
 		core::InvPtr<re::Texture> m_missingCubeShadowFallback;
 
+		ShadowMode m_shadowMode;
+
 
 	private: // Cached dependencies:
 		PunctualLightCullingResults const* m_pointCullingResults;
@@ -102,11 +133,18 @@ namespace gr
 		void CreateBatches();
 
 
-	private:
+	private: // Shadow maps:
 		void HandleEvents() override;
 
 		bool m_directionalShadowTexArrayUpdated;
 		bool m_pointShadowTexArrayUpdated;
 		bool m_spotShadowTexArrayUpdated;
+
+
+	private: // RT Shadows:
+		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
+		float m_tMin;
+		float m_rayLengthOffset;
+		uint8_t m_geometryInstanceMask;		
 	};
 }

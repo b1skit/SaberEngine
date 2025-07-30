@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "BatchBuilder.h"
 #include "BatchFactories.h"
 #include "Buffer.h"
@@ -1106,6 +1107,8 @@ namespace gr
 		m_singleFrameTextureSamplerInputs.clear();
 		m_singleFrameRWTextureInputs.clear();
 
+		m_singleFrameTLAS = {};
+
 		if (m_type != Stage::Type::FullscreenQuad) // FSQ stages keep the same batch created during construction
 		{
 			m_resolvedBatches.clear();
@@ -1214,6 +1217,21 @@ namespace gr
 		break;
 		default: SEAssertF("Invalid filter bit mode");
 		}
+	}
+
+
+	void Stage::AddSingleFrameTLAS(re::ASInput const& tlas)
+	{
+		SEAssert(m_type == gr::Stage::Type::Raster || 
+			m_type == gr::Stage::Type::FullscreenQuad ||
+			m_type == gr::Stage::Type::LibraryRaster ||
+			m_type == gr::Stage::Type::Compute ||
+			m_type == gr::Stage::Type::LibraryCompute,
+			"Unexpected stage type for setting a TLAS. This is intended for inline ray tracing");
+
+		SEAssert(tlas.HasValidShaderName(), "Invalid shader name");
+
+		m_singleFrameTLAS = tlas;
 	}
 
 

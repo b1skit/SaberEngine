@@ -46,6 +46,15 @@ StructuredBuffer<InstanceIndexData> InstanceIndexParams : register(t0, space1);
 StructuredBuffer<PBRMetallicRoughnessData> PBRMetallicRoughnessParams : register(t2, space1);
 
 
+#if defined(SHADOWS_RAYTRACED)
+#include "RayTracingCommon.hlsli"
+#include "../Common/RayTracingParams.h"
+
+RaytracingAccelerationStructure SceneBVH;
+ConstantBuffer<TraceRayInlineData> TraceRayInlineParams;
+#endif
+
+
 float4 PShader(VertexOut In) : SV_Target
 {
 	const uint materialIdx = InstanceIndexParams[In.InstanceID].g_indexes.y;
@@ -139,6 +148,15 @@ float4 PShader(VertexOut In) : SV_Target
 				const bool shadowEnabled = shadowData.g_shadowParams.x;	
 				if (shadowEnabled)
 				{
+#if defined(SHADOWS_RAYTRACED)
+				shadowFactor = TraceShadowRay(
+					SceneBVH,
+					TraceRayInlineParams,
+					worldPos,
+					lightData.g_lightWorldPosRadius.xyz,
+					TraceRayInlineParams.g_rayParams.x,
+					FLT_MAX);
+#else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 					const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
@@ -156,6 +174,7 @@ float4 PShader(VertexOut In) : SV_Target
 						shadowData.g_shadowMapTexelSize,
 						DirectionalShadows,
 						shadowTexIdx);
+#endif
 				}
 			}			
 		
@@ -220,6 +239,18 @@ float4 PShader(VertexOut In) : SV_Target
 				const bool shadowEnabled = shadowData.g_shadowParams.x > 0.f;
 				if (shadowEnabled)
 				{
+#if defined(SHADOWS_RAYTRACED)
+			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
+					
+			// Trace in reverse: Light -> world position, so we don't hit fake light source meshes
+			shadowFactor = TraceShadowRay(
+				SceneBVH,
+				TraceRayInlineParams,
+				lightWorldPos,
+				-lightWorldDir,
+				TraceRayInlineParams.g_rayParams.x,
+				rayLength);
+#else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 					const float cubeFaceDimension = shadowData.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
@@ -238,6 +269,7 @@ float4 PShader(VertexOut In) : SV_Target
 						cubeFaceDimension,
 						PointShadows,
 						shadowTexIdx);
+#endif
 				}
 			}			
 			
@@ -312,6 +344,17 @@ float4 PShader(VertexOut In) : SV_Target
 				const bool shadowEnabled = shadowData.g_shadowParams.x;
 				if (shadowEnabled)
 				{
+#if defined(SHADOWS_RAYTRACED)
+			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
+			
+			shadowFactor = TraceShadowRay(
+				SceneBVH,
+				TraceRayInlineParams,
+				worldPos,
+				lightWorldDir,
+				TraceRayInlineParams.g_rayParams.x,
+				rayLength);
+#else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 					const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
@@ -329,6 +372,7 @@ float4 PShader(VertexOut In) : SV_Target
 						shadowData.g_shadowMapTexelSize,
 						SpotShadows,
 						shadowTexIdx);
+#endif
 				}	
 			}
 	

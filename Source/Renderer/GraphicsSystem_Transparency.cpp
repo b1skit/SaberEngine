@@ -1,11 +1,15 @@
 // © 2024 Adam Badke. All rights reserved.
-#include "IndexedBuffer.h"
+#include "AccelerationStructure.h"
+#include "Batch.h"
 #include "GraphicsSystem_Transparency.h"
 #include "GraphicsSystemManager.h"
+#include "IndexedBuffer.h"
 #include "LightParamsHelpers.h"
+#include "RayTracingParamsHelpers.h"
 
 #include "Core/Config.h"
 
+#include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ShadowParams.h"
 
 
@@ -65,7 +69,17 @@ namespace gr
 		, m_pointCullingResults(nullptr)
 		, m_spotCullingResults(nullptr)
 		, m_PCSSSampleParamsBuffer(nullptr)
+		, m_sceneTLAS(nullptr)
+		, m_tMin(0.01f)
+		, m_rayLengthOffset(0.01f)
+		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
 	{
+	}
+
+
+	void TransparencyGraphicsSystem::RegisterFlags()
+	{
+		RegisterFlag(k_shadowModeFlag);
 	}
 
 
@@ -73,25 +87,42 @@ namespace gr
 	{
 		RegisterTextureInput(k_sceneDepthTexInput);
 		RegisterTextureInput(k_sceneLightingTexInput);
+
 		RegisterTextureInput(k_ambientIEMTexInput, TextureInputDefault::CubeMap_OpaqueBlack);
 		RegisterTextureInput(k_ambientPMREMTexInput, TextureInputDefault::CubeMap_OpaqueBlack);
 		RegisterTextureInput(k_ambientDFGTexInput);
-
 		RegisterBufferInput(k_ambientParamsBufferInput);
-
-		RegisterDataInput(k_pointLightCullingDataInput);
-		RegisterDataInput(k_spotLightCullingDataInput);
 
 		RegisterDataInput(k_viewBatchesDataInput);
 		RegisterDataInput(k_allBatchesDataInput);
 
-		RegisterTextureInput(k_directionalShadowArrayTexInput);
-		RegisterTextureInput(k_pointShadowArrayTexInput);
-		RegisterTextureInput(k_spotShadowArrayTexInput);
-		
-		RegisterDataInput(k_lightIDToShadowRecordInput);
+		RegisterDataInput(k_pointLightCullingDataInput);
+		RegisterDataInput(k_spotLightCullingDataInput);
 
-		RegisterBufferInput(k_PCSSSampleParamsBufferInput);
+		// Shadow-related inputs:
+		switch (GetFlagValue(k_shadowModeFlag))
+		{
+		case k_shadowMode_ShadowMap:
+		{
+			m_shadowMode = ShadowMode::ShadowMap;
+
+			RegisterDataInput(k_lightIDToShadowRecordInput);
+			RegisterBufferInput(k_PCSSSampleParamsBufferInput);
+
+			RegisterTextureInput(k_directionalShadowArrayTexInput);
+			RegisterTextureInput(k_pointShadowArrayTexInput);
+			RegisterTextureInput(k_spotShadowArrayTexInput);
+		}
+		break;
+		case k_shadowMode_RayTraced:
+		{
+			m_shadowMode = ShadowMode::RayTraced;
+
+			RegisterDataInput(k_sceneTLASInput);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode flag");
+		};
 	}
 
 
@@ -126,16 +157,7 @@ namespace gr
 		m_viewBatches = GetDependency<ViewBatches>(k_viewBatchesDataInput, dataDependencies, false);
 		m_allBatches = GetDependency<AllBatches>(k_allBatchesDataInput, dataDependencies, false);
 		SEAssert(m_viewBatches || m_allBatches, "Must have received some batches");
-
-		m_directionalShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_directionalShadowArrayTexInput, texDependencies);
-		m_pointShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_pointShadowArrayTexInput, texDependencies);
-		m_spotShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_spotShadowArrayTexInput, texDependencies);
 		
-		m_lightIDToShadowRecords = GetDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
-
-		m_PCSSSampleParamsBuffer = GetDependency<std::shared_ptr<re::Buffer>>(k_PCSSSampleParamsBufferInput, bufferDependencies);
-
-
 		// Stage setup:
 		m_transparencyStage = gr::Stage::CreateGraphicsStage("Transparency Stage", {});
 
@@ -162,8 +184,7 @@ namespace gr
 		// Buffers:		
 		m_transparencyStage->AddPermanentBuffer(m_graphicsSystemManager->GetActiveCameraParams());
 		m_transparencyStage->AddPermanentBuffer(transparencyTarget->GetCreateTargetParamsBuffer());
-		m_transparencyStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
-
+		
 		// Texture inputs:
 		core::InvPtr<re::Texture> const& ambientDFGTex =
 			*GetDependency<core::InvPtr<re::Texture>>(k_ambientDFGTexInput, texDependencies);
@@ -172,6 +193,34 @@ namespace gr
 			ambientDFGTex,
 			m_graphicsSystemManager->GetSampler("ClampMinMagMipPoint"),
 			re::TextureView(ambientDFGTex));
+
+
+		// Shadow inputs:
+		switch (GetFlagValue(k_shadowModeFlag))
+		{
+		case k_shadowMode_ShadowMap:
+		{
+			m_directionalShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_directionalShadowArrayTexInput, texDependencies);
+			m_pointShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_pointShadowArrayTexInput, texDependencies);
+			m_spotShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_spotShadowArrayTexInput, texDependencies);
+
+			m_lightIDToShadowRecords = GetDependency<LightIDToShadowRecordMap>(k_lightIDToShadowRecordInput, dataDependencies);
+
+			m_PCSSSampleParamsBuffer =GetDependency<std::shared_ptr<re::Buffer>>(k_PCSSSampleParamsBufferInput, bufferDependencies);
+
+			m_transparencyStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
+		}
+		break;
+		case k_shadowMode_RayTraced:
+		{
+			m_transparencyStage->AddDrawStyleBits(effect::drawstyle::ShadowMode_RayTraced);
+
+			m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode flag");
+		};
+
 
 		pipeline.AppendStage(m_transparencyStage);
 	}
@@ -233,25 +282,45 @@ namespace gr
 					}));
 		}
 
-		// Shadow texture arrays:
-		m_transparencyStage->AddSingleFrameTextureInput(
-			"DirectionalShadows",
-			*m_directionalShadowArrayTex,
-			m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
-			re::TextureView(*m_directionalShadowArrayTex, {re::TextureView::ViewFlags::ReadOnlyDepth}));
+		switch (GetFlagValue(k_shadowModeFlag))
+		{
+		case k_shadowMode_ShadowMap:
+		{
+			// Shadow texture arrays:
+			m_transparencyStage->AddSingleFrameTextureInput(
+				"DirectionalShadows",
+				*m_directionalShadowArrayTex,
+				m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
+				re::TextureView(*m_directionalShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-		m_transparencyStage->AddSingleFrameTextureInput(
-			"PointShadows",
-			*m_pointShadowArrayTex,
-			m_graphicsSystemManager->GetSampler("WrapCmpMinMagLinearMipPoint"),
-			re::TextureView(*m_pointShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+			m_transparencyStage->AddSingleFrameTextureInput(
+				"PointShadows",
+				*m_pointShadowArrayTex,
+				m_graphicsSystemManager->GetSampler("WrapCmpMinMagLinearMipPoint"),
+				re::TextureView(*m_pointShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 
-		m_transparencyStage->AddSingleFrameTextureInput(
-			"SpotShadows",
-			*m_spotShadowArrayTex,
-			m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
-			re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+			m_transparencyStage->AddSingleFrameTextureInput(
+				"SpotShadows",
+				*m_spotShadowArrayTex,
+				m_graphicsSystemManager->GetSampler("BorderCmpMinMagLinearMipPoint"),
+				re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
+		}
+		break;
+		case k_shadowMode_RayTraced:
+		{
+			std::shared_ptr<re::Buffer> const& traceRayInlineParams = grutil::CreateTraceRayInlineParams(
+				m_geometryInstanceMask,
+				RayFlag::AcceptFirstHitAndEndSearch | RayFlag::SkipClosestHitShader | CullBackFacingTriangles,
+				m_tMin,
+				m_rayLengthOffset);
 
+			m_transparencyStage->AddSingleFrameBuffer("TraceRayInlineParams", traceRayInlineParams);
+
+			m_transparencyStage->AddSingleFrameTLAS(re::ASInput("SceneBVH", *m_sceneTLAS));
+		}
+		break;
+		default: SEAssertF("Invalid shadow mode flag");
+		};
 
 		// Indexed light data buffers:
 		auto PrePopulateLightShadowLUTData = [this](
@@ -337,6 +406,16 @@ namespace gr
 		{
 			SEAssert(m_allBatches, "Must have all batches if view batches is null");
 			m_transparencyStage->AddBatches(*m_allBatches);
+		}
+	}
+
+
+	void TransparencyGraphicsSystem::ShowImGuiWindow()
+	{
+		if (m_shadowMode == ShadowMode::RayTraced)
+		{
+			ImGui::SliderFloat("Shadow ray tMin", &m_tMin, 0.f, 1.f);
+			ImGui::SliderFloat("Shadow ray length offset", &m_rayLengthOffset, 0.f, 1.f);
 		}
 	}
 }

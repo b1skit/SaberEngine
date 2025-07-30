@@ -25,6 +25,14 @@ namespace grutil
 		re::Buffer::StagingPool = re::Buffer::StagingPool::Temporary,
 		re::Buffer::MemoryPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap);
 
+	std::shared_ptr<re::Buffer> CreateTraceRayInlineParams(
+		uint8_t instanceInclusionMask,
+		RayFlag rayFlags,
+		float tMin,
+		float rayLengthOffset,
+		re::Buffer::StagingPool = re::Buffer::StagingPool::Temporary,
+		re::Buffer::MemoryPoolPreference = re::Buffer::MemoryPoolPreference::UploadHeap);
+
 	std::shared_ptr<re::Buffer> CreateDescriptorIndexesBuffer(
 		ResourceHandle vertexStreamLUTsDescriptorIdx,
 		ResourceHandle instancedBufferLUTsDescriptorIdx,

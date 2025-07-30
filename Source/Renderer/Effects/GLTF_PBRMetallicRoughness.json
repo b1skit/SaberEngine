@@ -50,9 +50,27 @@
 				"Conditions": [
 					{ "Rule": "RenderPath", "Mode": "Forward" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
+				],
+				"Technique": "AlphaBlend_SingleSided_RTShadows"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Forward" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "AlphaBlend_DoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "RenderPath", "Mode": "Forward" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" },
+					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
+				],
+				"Technique": "AlphaBlend_DoubleSided_RTShadows"
 			},
 
 			// 2D Shadows:
@@ -197,6 +215,17 @@
 				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
+				"Name": "AlphaBlend_SingleSided_RTShadows",
+				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderEntryPoint": "VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS", "SHADOWS_RAYTRACED"],
+				"PShaderEntryPoint": "PShader",
+				"RasterState": "SingleSided_AlphaBlend",
+				"VertexStream": "PosNmlTanUvCol"				
+			},
+			{
 				"Name": "AlphaBlend_DoubleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
@@ -204,6 +233,17 @@
 				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
 				"PShaderEntryPoint": "PShader",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"RasterState": "DoubleSided_AlphaBlend",
+				"VertexStream": "PosNmlTanUvCol"
+			},
+			{
+				"Name": "AlphaBlend_DoubleSided_RTShadows",
+				"VShader": "GLTF_PBRMetallicRoughness_VShader",
+				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
+				"VShaderEntryPoint": "VShader",
+				"PShader": "GLTF_PBRMetallicRoughness_Transparency_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS", "SHADOWS_RAYTRACED"],
 				"RasterState": "DoubleSided_AlphaBlend",
 				"VertexStream": "PosNmlTanUvCol"
 			},

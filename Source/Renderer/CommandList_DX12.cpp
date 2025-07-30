@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
+#include "AccelerationStructure.h"
 #include "BindlessResourceManager_DX12.h"
 #include "Buffer.h"
-#include "BufferView.h"
 #include "Buffer_DX12.h"
+#include "BufferView.h"
 #include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -1145,6 +1146,51 @@ namespace dx12
 
 		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
 		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
+	}
+
+
+	void CommandList::SetTLAS(re::ASInput const& tlas)
+	{
+		SEAssert(tlas.m_accelerationStructure->GetType() == re::AccelerationStructure::Type::TLAS,
+			"Invalid AccelerationStructure type");
+
+		RootSignature::RootParameter const* rootParam =
+			m_currentRootSignature->GetRootSignatureEntry(tlas.m_shaderName);
+		SEAssert(rootParam ||
+			core::Config::KeyExists(core::configkeys::k_strictShaderBindingCmdLineArg) == false,
+			"Invalid root signature entry");
+
+		if (rootParam)
+		{
+			dx12::AccelerationStructure::PlatObj const* platObj =
+				tlas.m_accelerationStructure->GetPlatformObject()->As<dx12::AccelerationStructure::PlatObj const*>();
+
+			switch (rootParam->m_type)
+			{
+			case RootSignature::RootParameter::Type::SRV:
+			{
+				m_gpuCbvSrvUavDescriptorHeap->SetInlineSRV(
+					rootParam->m_index, 
+					platObj->m_ASBuffer->GetGPUVirtualAddress());
+			}
+			break;
+			case RootSignature::RootParameter::Type::DescriptorTable:
+			{
+				SEAssert(rootParam->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::SRV,
+					"Unexpected descriptor table entry type for an AccelerationStructure");
+				
+				m_gpuCbvSrvUavDescriptorHeap->SetDescriptorTableEntry(
+					rootParam->m_index, 
+					platObj->m_tlasSRV.GetBaseDescriptor(),
+					rootParam->m_tableEntry.m_offset,
+					1);
+			}
+			break;
+			default: SEAssertF("Invalid root parameter type for a AccelerationStructure");
+			}
+
+			// Note: We don't ever need to transition AccelerationStructure states
+		}
 	}
 
 

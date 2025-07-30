@@ -35,15 +35,36 @@
 			},
 			{
 				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredDirectional" },
+					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
+				],
+				"Technique": "DeferredDirectional_RTShadows"
+			},
+			{
+				"Conditions": [
 					{ "Rule": "DeferredLighting", "Mode": "DeferredPoint" }
 				],
 				"Technique": "DeferredPoint"
 			},
 			{
 				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredPoint" },
+					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
+				],
+				"Technique": "DeferredPoint_RTShadows"
+			},
+			{
+				"Conditions": [
 					{ "Rule": "DeferredLighting", "Mode": "DeferredSpot" }
 				],
 				"Technique": "DeferredSpot"
+			},
+			{
+				"Conditions": [
+					{ "Rule": "DeferredLighting", "Mode": "DeferredSpot" },
+					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
+				],
+				"Technique": "DeferredSpot_RTShadows"
 			},
 			{
 				"Conditions": [
@@ -57,7 +78,7 @@
 			{
 				"Name": "BRDFIntegration",
 				"CShader": "GenerateBRDFIntegrationMap_CShader",
-				"CShaderEntryPoint" :  "CShader"
+				"CShaderEntryPoint": "CShader"
 			},
 			{
 				"Name": "IEMGeneration",
@@ -96,11 +117,31 @@
 				"VertexStream": "PositionUV"
 			},
 			{
+				"Name": "DeferredDirectional_RTShadows",
+				"VShader": "FullscreenQuad_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "DeferredDirectionalLight_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PShaderDefines": [ "SHADOWS_RAYTRACED" ],
+				"RasterState": "DeferredFullscreenQuad",
+				"VertexStream": "PositionUV"
+			},
+			{
 				"Name": "DeferredPoint",
 				"VShader": "DeferredPointSpot_VShader",
 				"VShaderEntryPoint": "VShader",
 				"PShader": "DeferredPointLight_PShader",
 				"PShaderEntryPoint": "PShader",
+				"RasterState": "DeferredMesh",
+				"VertexStream": "PositionOnly"
+			},
+			{
+				"Name": "DeferredPoint_RTShadows",
+				"VShader": "DeferredPointSpot_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "DeferredPointLight_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PShaderDefines": [ "SHADOWS_RAYTRACED" ],
 				"RasterState": "DeferredMesh",
 				"VertexStream": "PositionOnly"
 			},
@@ -114,9 +155,19 @@
 				"VertexStream": "PositionOnly"
 			},
 			{
+				"Name": "DeferredSpot_RTShadows",
+				"VShader": "DeferredPointSpot_VShader",
+				"VShaderEntryPoint": "VShader",
+				"PShader": "DeferredSpotLight_PShader",
+				"PShaderEntryPoint": "PShader",
+				"PShaderDefines": [ "SHADOWS_RAYTRACED" ],
+				"RasterState": "DeferredMesh",
+				"VertexStream": "PositionOnly"
+			},
+			{
 				"Name": "Deferred_Fullscreen",
 				"CShader": "Deferred_Fullscreen_CShader",
-				"CShaderEntryPoint" :  "CShader"
+				"CShaderEntryPoint": "CShader"
 			}
 		]
 	},

@@ -52,6 +52,47 @@ namespace grutil
 	}
 
 
+	std::shared_ptr<re::Buffer> CreateTraceRayInlineParams(
+		uint8_t instanceInclusionMask,
+		RayFlag rayFlags,
+		float tMin,
+		float rayLengthOffset,
+		re::Buffer::StagingPool stagingPool /*= re::Buffer::StagingPool::Temporary*/,
+		re::Buffer::MemoryPoolPreference memPoolPref /*= re::Buffer::MemoryPoolPreference::UploadHeap*/)
+	{
+		SEAssert(instanceInclusionMask <= 0xFF, "Instance inclusion mask has maximum 8 bits");
+
+		const TraceRayInlineData traceRayInlineData{
+			.g_traceRayInlineParams = glm::uvec4(
+				static_cast<uint32_t>(instanceInclusionMask),	// InstanceInclusionMask
+				rayFlags,										
+				0,
+				0),
+			.g_rayParams = glm::vec4(
+				tMin,
+				rayLengthOffset,
+				0.f,
+				0.f),
+		};
+
+		re::Buffer::Access accessMask = re::Buffer::Access::GPURead;
+		if (memPoolPref == re::Buffer::MemoryPoolPreference::UploadHeap)
+		{
+			accessMask |= re::Buffer::Access::CPUWrite;
+		}
+
+		const re::Buffer::BufferParams traceRayInlineBufferParams{
+			.m_lifetime = re::Lifetime::SingleFrame,
+			.m_stagingPool = stagingPool,
+			.m_memPoolPreference = memPoolPref,
+			.m_accessMask = accessMask,
+			.m_usageMask = re::Buffer::Usage::Constant,
+		};
+
+		return re::Buffer::Create("Trace Ray Inline Params", traceRayInlineData, traceRayInlineBufferParams);
+	}
+
+
 	std::shared_ptr<re::Buffer> CreateDescriptorIndexesBuffer(
 		ResourceHandle vertexStreamLUTsDescriptorIdx,
 		ResourceHandle instancedBufferLUTsDescriptorIdx,

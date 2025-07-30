@@ -1,18 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
-#include "AccelerationStructure_Platform.h"
+#include "AccelerationStructure.h"
 #include "Batch.h"
 #include "Context_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
-#include "Sampler_DX12.h"
 #include "Shader_DX12.h"
-#include "ShaderBindingTable_DX12.h"
 #include "Stage.h"
-#include "SysInfo_DX12.h"
 #include "SwapChain_DX12.h"
-#include "TextureTarget_DX12.h"
-#include "Texture_Platform.h"
+#include "SysInfo_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
@@ -171,6 +167,13 @@ namespace dx12
 						}
 						break;
 						default: SEAssertF("Unexpected render stage type");
+						}
+
+						// Set the TLAS for inline ray tracing:
+						re::ASInput const& stageTLAS = stage->GetSingleFrameTLAS();
+						if (stageTLAS.m_accelerationStructure)
+						{
+							commandList->SetTLAS(stageTLAS);
 						}
 
 						// Set buffers (Must happen after the root signature is set):

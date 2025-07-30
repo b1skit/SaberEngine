@@ -141,4 +141,19 @@ struct TraceRayData
 };
 
 
+struct TraceRayInlineData
+{
+	// .x = InstanceInclusionMask. Default = 0xFF (No geometry will be masked). 
+	// .y = RayFlags. The intention is to logically OR these with the shader's compile-time RayQuery's RAY_FLAGs
+	// .zw = unused
+	uint4 g_traceRayInlineParams;
+	float4 g_rayParams; // .x = tMin, .y = length offset, .zw = unused
+
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "TraceRayInlineParams";
+#endif
+};
+
+
 #endif // SE_RAYTRACING_COMMON

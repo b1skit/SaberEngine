@@ -31,7 +31,7 @@ namespace re
 		{}
 
 		ASInput(std::shared_ptr<re::AccelerationStructure> const& as) // TLAS/BLAS Updates
-			: ASInput("<Unnamed ASInput>", as)
+			: ASInput(k_updateShaderName, as)
 		{}
 
 		ASInput() = default;
@@ -45,6 +45,14 @@ namespace re
 	public:
 		std::string m_shaderName;
 		std::shared_ptr<re::AccelerationStructure> m_accelerationStructure;
+
+		bool HasValidShaderName() const
+		{
+			return !m_shaderName.empty() && m_shaderName != k_updateShaderName;
+		}
+
+	private:
+		static constexpr char const* k_updateShaderName = "<Invalid ASInput>";
 	};
 
 

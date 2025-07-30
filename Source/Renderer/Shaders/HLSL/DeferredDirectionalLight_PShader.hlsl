@@ -9,6 +9,7 @@
 
 #include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
+#include "../Common/ShadowParams.h"
 
 ConstantBuffer<CameraData> CameraParams : register(space1);
 
@@ -18,6 +19,13 @@ StructuredBuffer<ShadowData> ShadowParams;
 
 Texture2DArray<float> DirectionalShadows;
 
+#if defined(SHADOWS_RAYTRACED)
+#include "RayTracingCommon.hlsli"
+#include "../Common/RayTracingParams.h"
+
+RaytracingAccelerationStructure SceneBVH;
+ConstantBuffer<TraceRayInlineData> TraceRayInlineParams;
+#endif
 
 float4 PShader(VertexOut In) : SV_Target
 {
@@ -46,6 +54,15 @@ float4 PShader(VertexOut In) : SV_Target
 		const bool shadowEnabled = shadowData.g_shadowParams.x;
 		if (shadowEnabled)
 		{
+#if defined(SHADOWS_RAYTRACED)
+			shadowFactor = TraceShadowRay(
+				SceneBVH,
+				TraceRayInlineParams,
+				worldPos,
+				lightData.g_lightWorldPosRadius.xyz,
+				TraceRayInlineParams.g_rayParams.x,
+				FLT_MAX);
+#else
 			const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 			const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
 			const float2 lightUVRadiusSize = shadowData.g_shadowParams.zw;
@@ -63,6 +80,7 @@ float4 PShader(VertexOut In) : SV_Target
 				shadowData.g_shadowMapTexelSize,
 				DirectionalShadows,
 				shadowTexIdx);
+#endif
 		}
 	}
 	
