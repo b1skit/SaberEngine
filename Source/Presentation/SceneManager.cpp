@@ -25,6 +25,12 @@
 
 namespace pr
 {
+	SceneManager::SceneManager(pr::EntityManager* entityMgr)
+		: m_entityManager(entityMgr)
+	{
+	}
+
+
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
@@ -51,38 +57,37 @@ namespace pr
 		LOG("SceneManager: Resetting scene");
 
 		// Schedule initial scene setup:
-		pr::EntityManager* em = pr::EntityManager::Get();
-		em->EnqueueEntityCommand([em]()
+		m_entityManager->EnqueueEntityCommand([this]()
 			{
 				// Create a scene bounds entity:
-				pr::BoundsComponent::CreateSceneBoundsConcept(*em);
+				pr::BoundsComponent::CreateSceneBoundsConcept(*m_entityManager);
 				LOG("Created scene BoundsComponent");
 
 				// Add an unbound camera controller to the scene:
-				pr::CameraControlComponent::CreateCameraControlConcept(*em, entt::null);
+				pr::CameraControlComponent::CreateCameraControlConcept(*m_entityManager, entt::null);
 				LOG("Created unbound CameraControlComponent");
 			});
 
 		// Schedule creation of a default camera. Note: The ordering is important here, we schedule this 1st which
 		// ensures if we import a camera after this point it will be activated
-		pr::EntityManager::Get()->EnqueueEntityCommand<pr::SetMainCameraCommand>(
-			load::CreateDefaultCamera(pr::EntityManager::Get()).m_owningEntity);
+		m_entityManager->EnqueueEntityCommand<pr::SetMainCameraCommand>(
+			load::CreateDefaultCamera(m_entityManager).m_owningEntity);
 
 		core::InvPtr<re::Texture> defaultIBL =
 			core::Inventory::Get<re::Texture>(core::configkeys::k_defaultEngineIBLFilePath);
 
-		em->EnqueueEntityCommand([em, defaultIBL]()
+		m_entityManager->EnqueueEntityCommand([this, defaultIBL]()
 			{
 				// Create an Ambient LightComponent, and make it active if requested:
-				const bool ambientExists = em->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
+				const bool ambientExists = m_entityManager->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
 				if (!ambientExists)
 				{
 					const entt::entity ambientLight = pr::LightComponent::CreateDeferredAmbientLightConcept(
-						*em,
+						*m_entityManager,
 						defaultIBL->GetName().c_str(),
 						defaultIBL);
 
-					em->EnqueueEntityCommand<pr::SetActiveAmbientLightCommand>(ambientLight);
+					m_entityManager->EnqueueEntityCommand<pr::SetActiveAmbientLightCommand>(ambientLight);
 				}
 			});
 	}

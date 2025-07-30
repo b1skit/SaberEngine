@@ -25,7 +25,7 @@ namespace pr
 
 		static TransformComponent& AttachTransformComponent(pr::EntityManager&, entt::entity);
 
-		static gr::Transform::RenderData CreateRenderData(pr::TransformComponent&);
+		static gr::Transform::RenderData CreateRenderData(pr::EntityManager&, pr::TransformComponent&);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity, uint64_t uniqueID);
 
@@ -77,7 +77,7 @@ namespace pr
 	class UpdateTransformDataRenderCommand final : public virtual gr::RenderCommand
 	{
 	public:
-		UpdateTransformDataRenderCommand(pr::TransformComponent&);
+		UpdateTransformDataRenderCommand(pr::EntityManager&, pr::TransformComponent&);
 
 		static void Execute(void*);
 

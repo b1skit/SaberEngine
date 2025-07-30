@@ -18,6 +18,7 @@ namespace pr
 		static entt::entity CreateCameraControlConcept(EntityManager&, entt::entity cameraConcept);
 
 		static void SetCamera(
+			pr::EntityManager&,
 			entt::entity camControlCmptOwner,
 			entt::entity currentCamCmptOwner,
 			entt::entity newCamCmptOwner);

@@ -4,7 +4,18 @@
 
 namespace pr
 {
-	class SetMainCameraCommand final
+	class EntityManager;
+
+
+	class IEntityCommand
+	{
+	protected:
+		friend class pr::EntityManager;
+		static pr::EntityManager* s_entityManager;
+	};
+
+
+	class SetMainCameraCommand final : public virtual IEntityCommand
 	{
 	public:
 		SetMainCameraCommand(entt::entity);
@@ -16,7 +27,7 @@ namespace pr
 	};
 
 
-	class SetActiveAmbientLightCommand final
+	class SetActiveAmbientLightCommand final : public virtual IEntityCommand
 	{
 	public:
 		SetActiveAmbientLightCommand(entt::entity);

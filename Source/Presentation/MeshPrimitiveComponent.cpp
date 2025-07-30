@@ -140,24 +140,23 @@ namespace pr
 
 
 	gr::MeshPrimitive::RenderData MeshPrimitiveComponent::CreateRenderData(
-		entt::entity entity, MeshPrimitiveComponent const& meshPrimitiveComponent)
+		pr::EntityManager& em, entt::entity entity, MeshPrimitiveComponent const& meshPrimitiveComponent)
 	{
 		// Get the RenderDataID of the MeshConcept that owns the MeshPrimitive
 		gr::RenderDataID owningMeshRenderDataID = gr::k_invalidRenderDataID;
 
-		pr::EntityManager const* em = pr::EntityManager::Get();
-		pr::Relationship const& meshPrimRelationship = em->GetComponent<pr::Relationship>(entity);
+		pr::Relationship const& meshPrimRelationship = em.GetComponent<pr::Relationship>(entity);
 		entt::entity meshConceptEntity = meshPrimRelationship.GetParent();
 		bool meshHasSkinning = false;
 		if (meshConceptEntity != entt::null) // null if the MeshPrimitive isn't owned by a MeshConcept
 		{
 			pr::RenderDataComponent const& meshConceptRenderComponent =
-				em->GetComponent<pr::RenderDataComponent>(meshConceptEntity);
+				em.GetComponent<pr::RenderDataComponent>(meshConceptEntity);
 
 			owningMeshRenderDataID = meshConceptRenderComponent.GetRenderDataID();
 			SEAssert(owningMeshRenderDataID != gr::k_invalidRenderDataID, "Invalid render data ID received from Mesh");
 
-			pr::SkinningComponent const* skinningCmpt = em->TryGetComponent<pr::SkinningComponent>(meshConceptEntity);
+			pr::SkinningComponent const* skinningCmpt = em.TryGetComponent<pr::SkinningComponent>(meshConceptEntity);
 			if (skinningCmpt)
 			{
 				meshHasSkinning = true;

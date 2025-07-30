@@ -111,7 +111,7 @@ namespace pr
 
 		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt, encapsulatingBounds);
 
-		MarkDirty(entity);
+		MarkDirty(em, entity);
 
 		return *boundsCmpt;
 	}
@@ -135,7 +135,7 @@ namespace pr
 
 		boundsCmpt->ExpandEncapsulatingBounds(em, *boundsCmpt, entity);
 
-		MarkDirty(entity);
+		MarkDirty(em, entity);
 
 		return *boundsCmpt;
 	}
@@ -151,7 +151,7 @@ namespace pr
 		{
 			if (transformCmpt->GetTransform().HasChanged())
 			{
-				boundsCmpt.MarkDirty(boundsEntity);
+				boundsCmpt.MarkDirty(em, boundsEntity);
 			}
 		}
 
@@ -163,18 +163,18 @@ namespace pr
 			if (childBounds.GetEncapsulatingBoundsEntity() == boundsEntity)
 			{
 				// Internally calls MarkDirty()
-				boundsCmpt.ExpandBoundsInternal(childBounds.m_localMinXYZ, childBounds.m_localMaxXYZ, boundsEntity);
+				boundsCmpt.ExpandBoundsInternal(em, childBounds.m_localMinXYZ, childBounds.m_localMaxXYZ, boundsEntity);
 			}
 		}
 	}
 
 
 	gr::Bounds::RenderData BoundsComponent::CreateRenderData(
-		entt::entity owningEntity, pr::BoundsComponent const& bounds)
+		pr::EntityManager& em, entt::entity owningEntity, pr::BoundsComponent const& bounds)
 	{
 		glm::vec3 worldMinXYZ;
 		glm::vec3 worldMaxXYZ;
-		ComputeWorldMinMax(*pr::EntityManager::Get(), owningEntity, bounds, worldMinXYZ, worldMaxXYZ);
+		ComputeWorldMinMax(em, owningEntity, bounds, worldMinXYZ, worldMaxXYZ);
 		
 		return gr::Bounds::RenderData
 		{
@@ -268,40 +268,40 @@ namespace pr
 	}
 
 
-	void BoundsComponent::MarkDirty(entt::entity boundsEntity)
+	void BoundsComponent::MarkDirty(pr::EntityManager& em, entt::entity boundsEntity)
 	{
-		pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::BoundsComponent>>(boundsEntity);
+		em.TryEmplaceComponent<DirtyMarker<pr::BoundsComponent>>(boundsEntity);
 	}
 
 
-	void BoundsComponent::SetLocalMinXYZ(glm::vec3 const& newLocalMinXYZ, entt::entity boundsEntity)
+	void BoundsComponent::SetLocalMinXYZ(pr::EntityManager& em, glm::vec3 const& newLocalMinXYZ, entt::entity boundsEntity)
 	{
-		SetLocalMinMaxXYZ(newLocalMinXYZ, m_localMaxXYZ, boundsEntity);
+		SetLocalMinMaxXYZ(em, newLocalMinXYZ, m_localMaxXYZ, boundsEntity);
 	}
 
 
-	void BoundsComponent::SetLocalMaxXYZ(glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
+	void BoundsComponent::SetLocalMaxXYZ(pr::EntityManager& em, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
 	{
-		SetLocalMinMaxXYZ(m_localMinXYZ, newLocalMaxXYZ, boundsEntity);
+		SetLocalMinMaxXYZ(em, m_localMinXYZ, newLocalMaxXYZ, boundsEntity);
 	}
 
 
 	void BoundsComponent::SetLocalMinMaxXYZ(
-		glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
+		pr::EntityManager& em, glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity)
 	{
-		ExpandBounds(newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
+		ExpandBounds(em, newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
 	}
 
 
-	void BoundsComponent::ExpandBounds(BoundsComponent const& newContents, entt::entity boundsEntity)
+	void BoundsComponent::ExpandBounds(pr::EntityManager& em, BoundsComponent const& newContents, entt::entity boundsEntity)
 	{
-		ExpandBounds(newContents.m_localMinXYZ, newContents.m_localMaxXYZ, boundsEntity);
+		ExpandBounds(em, newContents.m_localMinXYZ, newContents.m_localMaxXYZ, boundsEntity);
 	}
 
 
-	void BoundsComponent::ExpandBounds(glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
+	void BoundsComponent::ExpandBounds(pr::EntityManager& em, glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
 	{
-		ExpandBoundsInternal(newMinXYZ, newMaxXYZ, boundsEntity);
+		ExpandBoundsInternal(em, newMinXYZ, newMaxXYZ, boundsEntity);
 	}
 
 
@@ -321,13 +321,13 @@ namespace pr
 		if (m_encapsulatingBoundsEntity != entt::null)
 		{
 			pr::BoundsComponent& encapsulatingBounds = em.GetComponent<pr::BoundsComponent>(m_encapsulatingBoundsEntity);
-			encapsulatingBounds.ExpandBounds(newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
+			encapsulatingBounds.ExpandBounds(em, newLocalMinXYZ, newLocalMaxXYZ, boundsEntity);
 		}
 	}
 
 
 	bool BoundsComponent::ExpandBoundsInternal(
-		glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
+		pr::EntityManager& em, glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity)
 	{
 		bool isDirty = false;
 
@@ -379,7 +379,7 @@ namespace pr
 
 		if (isDirty)
 		{
-			MarkDirty(boundsEntity);
+			MarkDirty(em, boundsEntity);
 		}
 
 		ValidateMinMaxBounds(m_localMinXYZ, m_localMaxXYZ); // _DEBUG only
@@ -439,7 +439,7 @@ namespace pr
 
 			glm::vec3 worldMinXYZ;
 			glm::vec3 worldMaxXYZ;
-			ComputeWorldMinMax(*pr::EntityManager::Get(), owningEntity, boundsCmpt, worldMinXYZ, worldMaxXYZ);
+			ComputeWorldMinMax(em, owningEntity, boundsCmpt, worldMinXYZ, worldMaxXYZ);
 
 			ImGui::Text("World min XYZ = %s", glm::to_string(worldMinXYZ).c_str());
 			ImGui::Text("World max XYZ = %s", glm::to_string(worldMaxXYZ).c_str());

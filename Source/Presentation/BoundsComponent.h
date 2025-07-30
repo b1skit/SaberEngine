@@ -44,7 +44,7 @@ namespace pr
 
 
 	public:
-		static gr::Bounds::RenderData CreateRenderData(entt::entity, pr::BoundsComponent const&);
+		static gr::Bounds::RenderData CreateRenderData(pr::EntityManager&, entt::entity, pr::BoundsComponent const&);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity, bool startOpen = false);
 
@@ -53,14 +53,14 @@ namespace pr
 		static BoundsComponent Zero() { return BoundsComponent(PrivateCTORTag{}, glm::vec3(0.f), glm::vec3(0.f), entt::null); }
 		static BoundsComponent Invalid() { return BoundsComponent(PrivateCTORTag{}); }
 
-		static void MarkDirty(entt::entity boundsEntity);
+		static void MarkDirty(pr::EntityManager&, entt::entity boundsEntity);
 
 		// Returns a new AABB BoundsConcept, transformed from local -> global space using the given matrix
 		BoundsComponent GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
 
 		// Expands a Bounds to contain another Bounds
-		void ExpandBounds(BoundsComponent const& newContents, entt::entity boundsEntity);
-		void ExpandBounds(glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity);
+		void ExpandBounds(pr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
+		void ExpandBounds(pr::EntityManager&, glm::vec3 const& newLocalMinXYZ, glm::vec3 const& newLocalMaxXYZ, entt::entity boundsEntity);
 
 		float xMin() const;		
 		float xMax() const;
@@ -75,9 +75,9 @@ namespace pr
 		glm::vec3 const& GetLocalMinXYZ() const;
 		glm::vec3 const& GetLocalMaxXYZ() const;
 
-		void SetLocalMinXYZ(glm::vec3 const&, entt::entity boundsEntity);
-		void SetLocalMaxXYZ(glm::vec3 const&, entt::entity boundsEntity);
-		void SetLocalMinMaxXYZ(glm::vec3 const&, glm::vec3 const&, entt::entity boundsEntity);
+		void SetLocalMinXYZ(pr::EntityManager& em, glm::vec3 const&, entt::entity boundsEntity);
+		void SetLocalMaxXYZ(pr::EntityManager& em, glm::vec3 const&, entt::entity boundsEntity);
+		void SetLocalMinMaxXYZ(pr::EntityManager& em, glm::vec3 const&, glm::vec3 const&, entt::entity boundsEntity);
 
 		void SetEncapsulatingBounds(entt::entity, gr::RenderDataID);
 		entt::entity GetEncapsulatingBoundsEntity() const;
@@ -92,7 +92,7 @@ namespace pr
 
 		// Returns true if the bounds was modified, false otherwise
 		bool ExpandBoundsInternal(
-			glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity);
+			pr::EntityManager&, glm::vec3 const& newMinXYZ, glm::vec3 const& newMaxXYZ, entt::entity boundsEntity);
 
 
 	private: // Use the static creation factories

@@ -300,10 +300,9 @@ namespace pr
 
 
 	gr::ShadowMap::RenderData ShadowMapComponent::CreateRenderData(
-		entt::entity entity, pr::ShadowMapComponent const& shadowMapCmpt)
+		pr::EntityManager& em, entt::entity entity, pr::ShadowMapComponent const& shadowMapCmpt)
 	{
-		pr::EntityManager const* em = pr::EntityManager::Get();
-		pr::NameComponent const& nameCmpt = em->GetComponent<pr::NameComponent>(entity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(entity);
 
 		pr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
 

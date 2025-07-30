@@ -13,6 +13,7 @@ namespace pr
 	{
 	public:
 		static SkinningComponent& AttachSkinningComponent(
+			pr::EntityManager&,
 			entt::entity owningEntity,
 			std::vector<gr::TransformID>&& jointTranformIDs,
 			std::vector<entt::entity>&& jointEntities,
@@ -25,7 +26,7 @@ namespace pr
 		static void UpdateSkinMatrices(pr::EntityManager&, entt::entity owningEntity, SkinningComponent&, float deltaTime);
 
 		static gr::MeshPrimitive::SkinningRenderData CreateRenderData(
-			entt::entity skinnedMeshPrimitive, SkinningComponent const&);
+			pr::EntityManager&, entt::entity skinnedMeshPrimitive, SkinningComponent const&);
 
 
 	public:
@@ -35,11 +36,12 @@ namespace pr
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 		SkinningComponent() 
-			: SkinningComponent(PrivateCTORTag{}, {}, {}, {}, entt::null, gr::k_invalidTransformID, 0.f, {}) {}
+			: SkinningComponent(PrivateCTORTag{}, nullptr, {}, {}, {}, entt::null, gr::k_invalidTransformID, 0.f, {}) {}
 
 
 	public:
-		SkinningComponent(PrivateCTORTag, 
+		SkinningComponent(PrivateCTORTag,
+			pr::EntityManager*,
 			std::vector<gr::TransformID>&& jointTranformIDs,
 			std::vector<entt::entity>&& jointEntities,
 			std::vector<glm::mat4>&& inverseBindMatrices,

@@ -33,7 +33,7 @@ namespace pr
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);
 
-		static gr::Camera::RenderData CreateRenderData(entt::entity, CameraComponent const&);
+		static gr::Camera::RenderData CreateRenderData(pr::EntityManager&, entt::entity, CameraComponent const&);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity camEntity);
 

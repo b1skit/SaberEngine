@@ -5,6 +5,9 @@
 
 namespace pr
 {
+	pr::EntityManager* IEntityCommand::s_entityManager = nullptr;
+
+
 	SetMainCameraCommand::SetMainCameraCommand(entt::entity newMainCam)
 		: m_newMainCamera(newMainCam)
 	{
@@ -13,7 +16,7 @@ namespace pr
 	void SetMainCameraCommand::Execute(void* cmdData)
 	{
 		SetMainCameraCommand* cmdPtr = reinterpret_cast<SetMainCameraCommand*>(cmdData);
-		pr::EntityManager::Get()->SetMainCamera(cmdPtr->m_newMainCamera);
+		s_entityManager->SetMainCamera(cmdPtr->m_newMainCamera);
 	}
 
 
@@ -25,6 +28,6 @@ namespace pr
 	void SetActiveAmbientLightCommand::Execute(void* cmdData)
 	{
 		SetActiveAmbientLightCommand* cmdPtr = reinterpret_cast<SetActiveAmbientLightCommand*>(cmdData);
-		pr::EntityManager::Get()->SetActiveAmbientLight(cmdPtr->m_newActiveAmbientLight);
+		s_entityManager->SetActiveAmbientLight(cmdPtr->m_newActiveAmbientLight);
 	}
 }

@@ -151,7 +151,7 @@ namespace
 
 namespace pr
 {
-	UIManager::UIManager(pr::SceneManager* sceneMgr, gr::RenderManager* renderMgr)
+	UIManager::UIManager(pr::SceneManager* sceneMgr, pr::EntityManager* entityMgr, gr::RenderManager* renderMgr)
 		: m_debugUIRenderSystemCreated(false)
 		, m_debugUICommandMgr(nullptr)
 		, m_imguiGlobalMutex(nullptr)
@@ -164,6 +164,7 @@ namespace pr
 		, m_show{0}
 		, m_window(nullptr)
 		, m_sceneManager(sceneMgr)
+		, m_entityManager(entityMgr)
 		, m_renderManager(renderMgr)
 		, m_vsyncState(false) // Will be updated by the initial state broadcast event
 	{
@@ -637,9 +638,9 @@ namespace pr
 		// Entity manager debug:
 		auto ShowEntityMgrDebug = [&]()
 			{
-				pr::EntityManager::Get()->ShowSceneObjectsImGuiWindow(&m_show[Show::EntityMgrDbg]);
-				pr::EntityManager::Get()->ShowSceneTransformImGuiWindow(&m_show[Show::TransformationHierarchyDbg]);
-				pr::EntityManager::Get()->ShowImGuiEntityComponentDebug(&m_show[Show::EntityComponentDbg]);
+				m_entityManager->ShowSceneObjectsImGuiWindow(&m_show[Show::EntityMgrDbg]);
+				m_entityManager->ShowSceneTransformImGuiWindow(&m_show[Show::TransformationHierarchyDbg]);
+				m_entityManager->ShowImGuiEntityComponentDebug(&m_show[Show::EntityComponentDbg]);
 			};
 		if (m_show[Show::EntityMgrDbg] || m_show[Show::TransformationHierarchyDbg] || m_show[Show::EntityComponentDbg])
 		{

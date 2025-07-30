@@ -4,7 +4,6 @@
 #include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MeshConcept.h"
-#include "MeshPrimitiveComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "SkinningComponent.h"
@@ -16,6 +15,7 @@
 namespace pr
 {
 	SkinningComponent& SkinningComponent::AttachSkinningComponent(
+		pr::EntityManager& em,
 		entt::entity owningEntity,
 		std::vector<gr::TransformID>&& jointTranformIDs,
 		std::vector<entt::entity>&& jointEntities,
@@ -25,8 +25,6 @@ namespace pr
 		float longestAnimationTimeSec,
 		std::vector<entt::entity>&& boundsEntities)
 	{
-		pr::EntityManager& em = *pr::EntityManager::Get();
-
 		SEAssert(em.HasComponent<pr::RenderDataComponent>(owningEntity),
 			"A SkinningComponent's owningEntity requires a RenderDataComponent");
 
@@ -36,7 +34,8 @@ namespace pr
 		SkinningComponent* newSkinningCmpt = 
 			em.EmplaceComponent<pr::SkinningComponent>(
 				owningEntity, 
-				PrivateCTORTag{}, 
+				PrivateCTORTag{},
+				&em,
 				std::move(jointTranformIDs),
 				std::move(jointEntities),
 				std::move(inverseBindMatrices),
@@ -52,6 +51,7 @@ namespace pr
 
 
 	SkinningComponent::SkinningComponent(PrivateCTORTag,
+		pr::EntityManager* em,
 		std::vector<gr::TransformID>&& jointTranformIDs,
 		std::vector<entt::entity>&& jointEntities,
 		std::vector<glm::mat4>&& inverseBindMatrices,
@@ -72,8 +72,6 @@ namespace pr
 		m_jointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 		m_transposeInvJointTransforms.resize(m_jointEntities.size(), glm::mat4(1.f));
 
-		pr::EntityManager& em = *pr::EntityManager::Get();
-
 		// Find the first entity with a Transform component in the hierarchy above, that is NOT part of the skeletal
 		// hierarchy:
 		std::unordered_set<entt::entity> jointEntitiesSet;
@@ -91,11 +89,11 @@ namespace pr
 		// hierarchy from within the transformation hierarchy
 		for (entt::entity entity : jointEntitiesSet)
 		{
-			pr::Relationship const& entityRelationship = em.GetComponent<pr::Relationship>(entity);
+			pr::Relationship const& entityRelationship = em->GetComponent<pr::Relationship>(entity);
 			const entt::entity entityParent = entityRelationship.GetParent();
 			if (entityParent != entt::null && !jointEntitiesSet.contains(entityParent))
 			{
-				pr::Relationship const& parentRelationship = em.GetComponent<pr::Relationship>(entityParent);
+				pr::Relationship const& parentRelationship = em->GetComponent<pr::Relationship>(entityParent);
 
 				entt::entity transformEntity = entt::null;
 				if (pr::TransformComponent const* transformCmpt = 
@@ -107,14 +105,14 @@ namespace pr
 					// If there is an AnimationComponent AT OR ABOVE the m_parentOfCommonRootEntity, we don't want to
 					// cancel out its recursive contribution
 					entt::entity recursiveRoot = m_parentOfCommonRootEntity;
-					pr::Relationship const& curParentRelationship = em.GetComponent<pr::Relationship>(recursiveRoot);
+					pr::Relationship const& curParentRelationship = em->GetComponent<pr::Relationship>(recursiveRoot);
 					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<pr::AnimationComponent>(recursiveRoot))
 					{
-						pr::Relationship const& recursiveRootRelationship = em.GetComponent<pr::Relationship>(recursiveRoot);
+						pr::Relationship const& recursiveRootRelationship = em->GetComponent<pr::Relationship>(recursiveRoot);
 						if (recursiveRootRelationship.HasParent())
 						{
 							pr::Relationship const& nextParentRelationship =
-								em.GetComponent<pr::Relationship>(recursiveRootRelationship.GetParent());
+								em->GetComponent<pr::Relationship>(recursiveRootRelationship.GetParent());
 
 							entt::entity parentTransformEntity = entt::null;
 							pr::TransformComponent const* parentTransform =
@@ -218,6 +216,7 @@ namespace pr
 					pr::BoundsComponent& bounds = em.GetComponent<pr::BoundsComponent>(boundsEntity);
 
 					bounds.ExpandBounds(
+						em,
 						(skinningCmpt.m_jointTransforms[jointIdx] * glm::vec4(bounds.GetOriginalMinXYZ(), 1.f)).xyz,
 						(skinningCmpt.m_jointTransforms[jointIdx] * glm::vec4(bounds.GetOriginalMaxXYZ(), 1.f)).xyz,
 						boundsEntity);
@@ -228,7 +227,7 @@ namespace pr
 
 
 	gr::MeshPrimitive::SkinningRenderData SkinningComponent::CreateRenderData(
-		entt::entity skinnedMeshPrimitive, SkinningComponent const& skinningCmpt)
+		pr::EntityManager& em, entt::entity skinnedMeshPrimitive, SkinningComponent const& skinningCmpt)
 	{
 		return gr::MeshPrimitive::SkinningRenderData{
 			.m_jointTransforms = skinningCmpt.m_jointTransforms,

@@ -111,7 +111,7 @@ namespace pr
 
 
 	gr::MeshPrimitive::MeshMorphRenderData MeshMorphComponent::CreateRenderData(
-		entt::entity entity, MeshMorphComponent const& meshAnimCmpt)
+		pr::EntityManager& em, entt::entity entity, MeshMorphComponent const& meshAnimCmpt)
 	{
 		gr::MeshPrimitive::MeshMorphRenderData meshRenderData{};
 

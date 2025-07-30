@@ -60,10 +60,10 @@ namespace pr
 	}
 
 
-	gr::Camera::RenderData CameraComponent::CreateRenderData(entt::entity entity, CameraComponent const& cameraComponent)
+	gr::Camera::RenderData CameraComponent::CreateRenderData(
+		pr::EntityManager& em, entt::entity entity, CameraComponent const& cameraComponent)
 	{
-		pr::EntityManager const* em = pr::EntityManager::Get();
-		pr::NameComponent const& nameCmpt = em->GetComponent<pr::NameComponent>(entity);
+		pr::NameComponent const& nameCmpt = em.GetComponent<pr::NameComponent>(entity);
 
 		gr::Camera::RenderData renderData = gr::Camera::RenderData{
 			.m_cameraParams = pr::Camera::BuildCameraData(cameraComponent.GetCamera()),

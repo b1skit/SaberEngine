@@ -34,7 +34,7 @@ namespace pr
 			pr::CameraComponent const* activeSceneCam);
 
 	public:
-		static gr::ShadowMap::RenderData CreateRenderData(entt::entity, pr::ShadowMapComponent const&);
+		static gr::ShadowMap::RenderData CreateRenderData(pr::EntityManager&, entt::entity, pr::ShadowMapComponent const&);
 
 
 		static void Update(

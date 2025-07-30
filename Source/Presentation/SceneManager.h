@@ -6,10 +6,14 @@
 
 namespace pr
 {
+	class EntityManager;
+
+
 	class SceneManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		SceneManager() = default;
+		SceneManager(pr::EntityManager*);
+
 		SceneManager(SceneManager&&) noexcept = default;
 		SceneManager& operator=(SceneManager&&) noexcept = default;
 		~SceneManager() = default;
@@ -33,6 +37,9 @@ namespace pr
 		void CreateDefaultSceneResources();
 
 		void ImportFile(std::string const& filePath); // Filename and path, relative to the ..\Scenes\ dir
+
+	private:
+		pr::EntityManager* m_entityManager;
 
 
 	private:

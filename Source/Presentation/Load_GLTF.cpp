@@ -2460,6 +2460,7 @@ namespace
 				}
 
 				pr::SkinningComponent::AttachSkinningComponent(
+					*em,
 					curSceneNodeEntity,
 					std::move(jointToTransformIDs),
 					std::move(jointEntities),

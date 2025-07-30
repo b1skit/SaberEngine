@@ -114,8 +114,8 @@ namespace app
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
 		pr::EntityManager* entityMgr = pr::EntityManager::Get();
-		m_sceneManager = std::make_unique<pr::SceneManager>();
-		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), m_renderManager.get());
+		m_sceneManager = std::make_unique<pr::SceneManager>(entityMgr);
+		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), entityMgr, m_renderManager.get());
 		m_inputManager = std::make_unique<en::InputManager>();
 
 		// Dependency injection:

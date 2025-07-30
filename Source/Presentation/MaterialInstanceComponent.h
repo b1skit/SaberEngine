@@ -21,7 +21,8 @@ namespace pr
 			pr::EntityManager&, entt::entity meshPrimitiveConcept, core::InvPtr<gr::Material> const&);
 
 	public:
-		static gr::Material::MaterialInstanceRenderData CreateRenderData(entt::entity, MaterialInstanceComponent const&);
+		static gr::Material::MaterialInstanceRenderData CreateRenderData(
+			pr::EntityManager&, entt::entity, MaterialInstanceComponent const&);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity owningEntity);
 

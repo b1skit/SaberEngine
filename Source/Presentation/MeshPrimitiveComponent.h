@@ -38,7 +38,8 @@ namespace pr
 
 
 	public:
-		static gr::MeshPrimitive::RenderData CreateRenderData(entt::entity, MeshPrimitiveComponent const&);
+		static gr::MeshPrimitive::RenderData CreateRenderData(
+			pr::EntityManager&, entt::entity, MeshPrimitiveComponent const&);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity lightEntity);
 

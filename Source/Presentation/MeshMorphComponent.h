@@ -17,7 +17,8 @@ namespace pr
 
 		static void ApplyAnimation(entt::entity meshConcept, pr::AnimationComponent const&, pr::MeshMorphComponent&);
 
-		static gr::MeshPrimitive::MeshMorphRenderData CreateRenderData(entt::entity, MeshMorphComponent const&);
+		static gr::MeshPrimitive::MeshMorphRenderData CreateRenderData(
+			pr::EntityManager&, entt::entity, MeshMorphComponent const&);
 
 
 	private: // Use the static creation factories

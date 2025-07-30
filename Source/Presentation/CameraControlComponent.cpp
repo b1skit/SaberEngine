@@ -35,7 +35,7 @@ namespace pr
 		// Attach the camera to the camera controller:
 		if (camEntity != entt::null)
 		{
-			SetCamera(camControlNode, entt::null, camEntity);
+			SetCamera(em, camControlNode, entt::null, camEntity);
 		}
 
 		return camControlNode;
@@ -43,12 +43,11 @@ namespace pr
 
 
 	void CameraControlComponent::SetCamera(
+		pr::EntityManager& em,
 		entt::entity camControlCmptEntity,
 		entt::entity currentCamCmptEntity,
 		entt::entity newCamCmptEntity)
 	{	
-		pr::EntityManager& em = *pr::EntityManager::Get();
-
 		// The CameraControlComponent gimbal requires 2 Transforms (for pitch/yaw), animations target a single Transform
 		SEAssert(!em.HasComponent<pr::AnimationComponent>(newCamCmptEntity),
 			"The target camera has an AnimationComponent, it cannot be controlled by a camera controller as well");

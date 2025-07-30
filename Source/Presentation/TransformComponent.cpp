@@ -37,7 +37,8 @@ namespace pr
 	}
 
 
-	gr::Transform::RenderData TransformComponent::CreateRenderData(pr::TransformComponent& transformComponent)
+	gr::Transform::RenderData TransformComponent::CreateRenderData(
+		pr::EntityManager& em, pr::TransformComponent& transformComponent)
 	{
 		pr::Transform& transform = transformComponent.GetTransform();
 
@@ -129,9 +130,10 @@ namespace pr
 	// ---
 
 
-	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(pr::TransformComponent& transformComponent)
+	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(
+		pr::EntityManager& em, pr::TransformComponent& transformComponent)
 		: m_transformID(transformComponent.GetTransformID())
-		, m_data(pr::TransformComponent::CreateRenderData(transformComponent))
+		, m_data(pr::TransformComponent::CreateRenderData(em, transformComponent))
 	{
 	}
 

@@ -4,6 +4,7 @@
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
 #include "EntityManager.h"
+#include "EntityCommands.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
@@ -52,6 +53,9 @@ namespace pr
 	{
 		LOG("EntityManager starting...");
 
+		// Dependency injection:
+		IEntityCommand::s_entityManager = this;
+
 		// Event subscriptions:
 		core::EventManager::Subscribe(eventkey::SceneResetRequest, this);
 
@@ -85,6 +89,8 @@ namespace pr
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 			m_registry.clear();
 		}
+
+		IEntityCommand::s_entityManager = nullptr;
 	}
 
 
@@ -135,7 +141,7 @@ namespace pr
 
 			gr::RenderCommand::Enqueue<pr::UpdateRenderData<RenderDataType>>(
 				renderDataComponent.GetRenderDataID(),
-				CmptType::CreateRenderData(entity, component));
+				CmptType::CreateRenderData(*this, entity, component));
 
 			m_registry.erase<DirtyMarker<CmptType>>(entity);
 		}
@@ -171,7 +177,7 @@ namespace pr
 				pr::TransformComponent& transformComponent =
 					newTransformComponentsView.get<pr::TransformComponent>(entity);
 
-				gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(transformComponent);
+				gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(*this, transformComponent);
 
 				m_registry.erase<pr::TransformComponent::NewIDMarker>(entity);
 			}
@@ -198,7 +204,7 @@ namespace pr
 
 				if (transformComponent.GetTransform().HasChanged())
 				{
-					gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(transformComponent);
+					gr::RenderCommand::Enqueue<pr::UpdateTransformDataRenderCommand>(*this, transformComponent);
 					transformComponent.GetTransform().ClearHasChangedFlag();
 				}
 			}
@@ -323,7 +329,7 @@ namespace pr
 				{
 					camControllerTarget = newMainCamera;
 				}
-				pr::CameraControlComponent::SetCamera(camController, currentMainCamera, camControllerTarget);
+				pr::CameraControlComponent::SetCamera(*this, camController, currentMainCamera, camControllerTarget);
 			}
 		}
 	}
@@ -744,6 +750,7 @@ namespace pr
 										"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
 
 									sceneBoundsComponent.ExpandBounds(
+										*this,
 										boundsComponent.GetTransformedAABBBounds(
 											transformCmpt->GetTransform().GetGlobalMatrix()),
 										sceneBoundsEntity);
@@ -757,7 +764,7 @@ namespace pr
 							if (!foundOtherBounds)
 							{
 								sceneBoundsComponent = pr::BoundsComponent::Zero();
-								pr::BoundsComponent::MarkDirty(sceneBoundsEntity);
+								pr::BoundsComponent::MarkDirty(*this, sceneBoundsEntity);
 							}
 						});
 				}				

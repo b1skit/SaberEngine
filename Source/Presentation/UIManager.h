@@ -17,13 +17,14 @@ namespace host
 }
 namespace pr
 {
+	class EntityManager;
 	class SceneManager;
 
 
 	class UIManager : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		UIManager(pr::SceneManager*, gr::RenderManager*);
+		UIManager(pr::SceneManager*, pr::EntityManager*, gr::RenderManager*);
 		~UIManager() = default;
 
 
@@ -81,6 +82,7 @@ namespace pr
 	private:
 		host::Window* m_window;
 		pr::SceneManager* m_sceneManager;
+		pr::EntityManager* m_entityManager;
 		gr::RenderManager* m_renderManager;
 
 
