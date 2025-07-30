@@ -38,6 +38,7 @@ namespace pr
 
 
 		static void Update(
+			pr::EntityManager&,
 			entt::entity,
 			pr::ShadowMapComponent&,
 			pr::TransformComponent& lightTransformCmpt,

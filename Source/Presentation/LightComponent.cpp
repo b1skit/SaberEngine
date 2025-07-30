@@ -384,7 +384,11 @@ namespace pr
 
 
 	void LightComponent::Update(
-		entt::entity entity, pr::LightComponent& lightComponent, pr::Transform* lightTransform, pr::Camera* shadowCam)
+		pr::EntityManager& em,
+		entt::entity entity,
+		pr::LightComponent& lightComponent,
+		pr::Transform* lightTransform,
+		pr::Camera* shadowCam)
 	{
 		pr::Light& light = lightComponent.GetLight();
 
@@ -437,7 +441,7 @@ namespace pr
 
 		if (didModify)
 		{
-			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::LightComponent>>(entity);
+			em.TryEmplaceComponent<DirtyMarker<pr::LightComponent>>(entity);
 		}
 	}
 

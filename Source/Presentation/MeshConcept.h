@@ -14,7 +14,7 @@ namespace pr
 		struct MeshConceptMarker final {};
 
 	public:
-		static void AttachMeshConceptMarker(entt::entity, char const* name);
+		static void AttachMeshConceptMarker(pr::EntityManager&, entt::entity, char const* name);
 
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity meshConcept);

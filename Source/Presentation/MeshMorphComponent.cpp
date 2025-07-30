@@ -40,6 +40,7 @@ namespace pr
 
 
 	void MeshMorphComponent::ApplyAnimation(
+		pr::EntityManager& em,
 		entt::entity meshConcept,
 		pr::AnimationComponent const& animCmpt,
 		pr::MeshMorphComponent& meshAnimCmpt)
@@ -105,7 +106,7 @@ namespace pr
 
 		if (didAnimate)
 		{
-			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::MeshMorphComponent>>(meshConcept);
+			em.TryEmplaceComponent<DirtyMarker<pr::MeshMorphComponent>>(meshConcept);
 		}
 	}
 

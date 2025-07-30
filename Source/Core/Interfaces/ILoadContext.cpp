@@ -5,4 +5,5 @@
 namespace core
 {
 	re::Context* ILoadContextBase::s_context = nullptr;
+	pr::EntityManager* ILoadContextBase::s_entityManager = nullptr;
 }

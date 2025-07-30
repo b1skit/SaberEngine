@@ -328,6 +328,7 @@ namespace pr
 
 
 	void ShadowMapComponent::Update(
+		pr::EntityManager& em,
 		entt::entity entity,
 		pr::ShadowMapComponent& shadowMapCmpt,
 		pr::TransformComponent& lightTransformCmpt,
@@ -371,7 +372,7 @@ namespace pr
 
 		if (didModify)
 		{
-			pr::EntityManager::Get()->TryEmplaceComponent<DirtyMarker<pr::ShadowMapComponent>>(entity);
+			em.TryEmplaceComponent<DirtyMarker<pr::ShadowMapComponent>>(entity);
 		}
 	}
 

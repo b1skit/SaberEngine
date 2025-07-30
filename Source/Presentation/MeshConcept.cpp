@@ -22,10 +22,8 @@
 
 namespace pr
 {
-	void Mesh::AttachMeshConceptMarker(entt::entity owningEntity, char const* name)
-	{
-		pr::EntityManager& em = *pr::EntityManager::Get();
-		
+	void Mesh::AttachMeshConceptMarker(pr::EntityManager& em, entt::entity owningEntity, char const* name)
+	{	
 		em.EmplaceComponent<pr::Mesh::MeshConceptMarker>(owningEntity);
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
@@ -356,7 +354,7 @@ namespace pr
 			case SourceType::MeshFactory:
 			{
 				const entt::entity sceneNode = pr::SceneNode::Create(*em, s_nameInputBuffer, entt::null);
-				pr::Mesh::AttachMeshConceptMarker(sceneNode, s_nameInputBuffer);
+				pr::Mesh::AttachMeshConceptMarker(*em, sceneNode, s_nameInputBuffer);
 
 				glm::vec3 minXYZ = glm::vec3(0.f);
 				glm::vec3 maxXYZ = glm::vec3(0.f);

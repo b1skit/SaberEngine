@@ -57,7 +57,7 @@ namespace pr
 		static gr::Light::RenderDataSpot CreateRenderDataSpot_Deferred(
 			pr::NameComponent const&, pr::LightComponent const&);
 
-		static void Update(entt::entity, pr::LightComponent&, pr::Transform* lightTransform, pr::Camera* shadowCam);
+		static void Update(pr::EntityManager&, entt::entity, pr::LightComponent&, pr::Transform* lightTransform, pr::Camera* shadowCam);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity lightEntity);
 		static void ShowImGuiSpawnWindow();

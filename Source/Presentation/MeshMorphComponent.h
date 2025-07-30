@@ -15,7 +15,8 @@ namespace pr
 		static MeshMorphComponent* AttachMeshMorphComponent(
 			pr::EntityManager&, entt::entity, float const* defaultWeights, uint32_t count);
 
-		static void ApplyAnimation(entt::entity meshConcept, pr::AnimationComponent const&, pr::MeshMorphComponent&);
+		static void ApplyAnimation(
+			pr::EntityManager&, entt::entity meshConcept, pr::AnimationComponent const&, pr::MeshMorphComponent&);
 
 		static gr::MeshPrimitive::MeshMorphRenderData CreateRenderData(
 			pr::EntityManager&, entt::entity, MeshMorphComponent const&);

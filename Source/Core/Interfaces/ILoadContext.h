@@ -3,6 +3,10 @@
 #include "../Util/HashKey.h"
 
 
+namespace pr
+{
+	class EntityManager;
+}
 namespace re
 {
 	class Context;
@@ -41,6 +45,9 @@ namespace core
 		void Initialize(util::HashKey objectID);
 		void Finalize();
 
+
+	protected:
+		pr::EntityManager* GetEntityManager() const { return s_entityManager; }
 		re::Context* GetContext() const { return s_context; }
 
 
@@ -57,6 +64,9 @@ namespace core
 
 
 	private:
+		friend class pr::EntityManager;
+		static pr::EntityManager* s_entityManager;
+
 		friend class re::Context;
 		static re::Context* s_context;
 	};

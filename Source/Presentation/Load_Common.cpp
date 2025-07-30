@@ -468,7 +468,7 @@ namespace load
 
 	void IBLTextureFromFilePath::OnLoadComplete(core::InvPtr<re::Texture>& newIBL)
 	{
-		pr::EntityManager* em = pr::EntityManager::Get();
+		pr::EntityManager* em = GetEntityManager();
 
 		em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
 			{

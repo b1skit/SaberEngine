@@ -2182,7 +2182,7 @@ namespace
 		std::vector<entt::entity> meshAndMeshPrimitiveEntities;
 		meshAndMeshPrimitiveEntities.reserve(current->mesh->primitives_count + 1);
 
-		pr::Mesh::AttachMeshConceptMarker(sceneNodeEntity, meshName.c_str());
+		pr::Mesh::AttachMeshConceptMarker(*em, sceneNodeEntity, meshName.c_str());
 		meshAndMeshPrimitiveEntities.emplace_back(sceneNodeEntity);
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
@@ -2682,29 +2682,28 @@ namespace
 		{
 			SEAssert(m_sceneMetadata, "Scene metadata should not be null here");
 
-			pr::EntityManager* em = pr::EntityManager::Get();
 			std::shared_ptr<FileMetadata> fileMetadata = m_sceneMetadata;
 			std::shared_ptr<cgltf_data> sceneData = m_sceneData;
-			em->EnqueueEntityCommand(
-				[em, sceneData, fileMetadata]() mutable
+			GetEntityManager()->EnqueueEntityCommand(
+				[this, sceneData, fileMetadata]() mutable
 				{
 					// Create scene node entities:
-					CreateGLTFSceneNodeEntities(em, sceneData, fileMetadata);
+					CreateGLTFSceneNodeEntities(GetEntityManager(), sceneData, fileMetadata);
 
 					// Attach the components to the entities, now that they exist:
-					AttachGLTFNodeComponents(em, sceneData, fileMetadata);
+					AttachGLTFNodeComponents(GetEntityManager(), sceneData, fileMetadata);
 
 					// Animation components:
 					if (sceneData->animations_count > 0)
 					{
-						AttachGLTFMeshAnimationComponents(em, sceneData, fileMetadata);
+						AttachGLTFMeshAnimationComponents(GetEntityManager(), sceneData, fileMetadata);
 					}
 				});
 
 
 			// Add a camera::
-			em->EnqueueEntityCommand(
-				[em, fileMetadata]() mutable
+			GetEntityManager()->EnqueueEntityCommand(
+				[this, fileMetadata]() mutable
 				{
 					// Set the main camera:
 					entt::entity mainCameraEntity = entt::null;
@@ -2729,7 +2728,7 @@ namespace
 					// TODO: It would be nice to not need to double-enqueue this
 					if (mainCameraEntity != entt::null)
 					{
-						em->EnqueueEntityCommand<pr::SetMainCameraCommand>(mainCameraEntity);
+						GetEntityManager()->EnqueueEntityCommand<pr::SetMainCameraCommand>(mainCameraEntity);
 					}
 				});
 		}

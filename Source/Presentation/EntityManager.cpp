@@ -24,6 +24,8 @@
 #include "Core/Definitions/ConfigKeys.h"
 #include "Core/Definitions/EventKeys.h"
 
+#include "Core/Interfaces/ILoadContext.h"
+
 #include "Renderer/RenderCommand.h"
 
 
@@ -55,6 +57,7 @@ namespace pr
 
 		// Dependency injection:
 		IEntityCommand::s_entityManager = this;
+		core::ILoadContextBase::s_entityManager = this;
 
 		// Event subscriptions:
 		core::EventManager::Subscribe(eventkey::SceneResetRequest, this);
@@ -91,6 +94,7 @@ namespace pr
 		}
 
 		IEntityCommand::s_entityManager = nullptr;
+		core::ILoadContextBase::s_entityManager = nullptr;
 	}
 
 
@@ -816,7 +820,7 @@ namespace pr
 				pr::AnimationComponent const& animCmpt = morphMeshesView.get<pr::AnimationComponent>(entity);
 				pr::MeshMorphComponent& meshAnimCmpt = morphMeshesView.get<pr::MeshMorphComponent>(entity);
 
-				pr::MeshMorphComponent::ApplyAnimation(entity, animCmpt, meshAnimCmpt);
+				pr::MeshMorphComponent::ApplyAnimation(*this, entity, animCmpt, meshAnimCmpt);
 			}
 
 			// Skin animations:
@@ -915,7 +919,7 @@ namespace pr
 			{
 				pr::LightComponent& lightComponent = ambientView.get<pr::LightComponent>(entity);
 
-				pr::LightComponent::Update(entity, lightComponent, nullptr, nullptr);
+				pr::LightComponent::Update(*this, entity, lightComponent, nullptr, nullptr);
 			}
 
 			// Punctual lights with (optional) shadows have the same update flow
@@ -940,7 +944,7 @@ namespace pr
 							shadowCam = &shadowCamCmpt->GetCameraForModification();
 						}
 
-						pr::LightComponent::Update(entity, lightComponent, &transformCmpt.GetTransform(), shadowCam);
+						pr::LightComponent::Update(*this, entity, lightComponent, &transformCmpt.GetTransform(), shadowCam);
 					}
 				};
 
@@ -976,7 +980,7 @@ namespace pr
 
 				// Update: Attach a dirty marker if anything changed
 				pr::ShadowMapComponent::Update(
-					entity, shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force);
+					*this, entity, shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, activeSceneCam, force);
 			}
 		}
 
