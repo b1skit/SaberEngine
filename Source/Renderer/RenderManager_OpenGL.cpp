@@ -8,13 +8,11 @@
 #include "RootConstants.h"
 #include "Stage.h"
 #include "RenderSystem.h"
-#include "Sampler_OpenGL.h"
 #include "Shader.h"
 #include "Shader_OpenGL.h"
 #include "SwapChain_OpenGL.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
-#include "Texture_Platform.h"
 
 #include "Core/ProfilingMarkers.h"
 
