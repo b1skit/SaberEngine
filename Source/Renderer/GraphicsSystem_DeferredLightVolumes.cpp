@@ -19,6 +19,7 @@
 #include "TextureView.h"
 
 #include "Core/Assert.h"
+#include "Core/Config.h"
 
 #include "Core/Util/CHashKey.h"
 #include "Core/Util/HashKey.h"
@@ -98,12 +99,6 @@ namespace gr
 	}
 
 
-	void DeferredLightVolumeGraphicsSystem::RegisterFlags()
-	{
-		RegisterFlag(k_shadowModeFlag);
-	}
-
-
 	void DeferredLightVolumeGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_lightingTargetTexInput);
@@ -123,20 +118,18 @@ namespace gr
 		RegisterDataInput(k_spotLightCullingDataInput);
 
 		// Shadow-related inputs:
-		switch (GetFlagValue(k_shadowModeFlag))
+		m_shadowMode = core::Config::KeyExists(util::CHashKey("RayTracing")) ?
+			ShadowMode::RayTraced : ShadowMode::ShadowMap;
+		switch (m_shadowMode)
 		{
-		case k_shadowMode_ShadowMap:
+		case ShadowMode::ShadowMap:
 		{
-			m_shadowMode = ShadowMode::ShadowMap;
-
 			RegisterDataInput(k_lightIDToShadowRecordInput);
 			RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 		}
 		break;
-		case k_shadowMode_RayTraced:
+		case ShadowMode::RayTraced:
 		{
-			m_shadowMode = ShadowMode::RayTraced;
-
 			RegisterDataInput(k_sceneTLASInput);
 		}
 		break;

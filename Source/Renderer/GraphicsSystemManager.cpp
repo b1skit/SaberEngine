@@ -86,9 +86,7 @@ namespace gr
 	}
 
 
-	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(
-		std::string_view scriptName,
-		std::vector<std::pair<std::string, std::string>> const& flags)
+	void GraphicsSystemManager::CreateAddGraphicsSystemByScriptName(std::string_view scriptName)
 	{
 		SEAssert(m_isCreated == true, "GSM has not been created. This is unexpected");
 		SEAssert(scriptName.data()[scriptName.size()] == '\0', "std::string_view must be null-terminated for GraphicsSystemManager usage");
@@ -97,7 +95,7 @@ namespace gr
 
 		SEAssert(!m_scriptNameToIndex.contains(lowercaseScriptName), "Graphics system has already been added");
 
-		std::unique_ptr<gr::GraphicsSystem> newGS = gr::GraphicsSystem::CreateByName(lowercaseScriptName, this, flags);
+		std::unique_ptr<gr::GraphicsSystem> newGS = gr::GraphicsSystem::CreateByName(lowercaseScriptName, this);
 		SEAssert(newGS, "Failed to create a valid graphics system");
 
 		const size_t insertIdx = m_graphicsSystems.size();

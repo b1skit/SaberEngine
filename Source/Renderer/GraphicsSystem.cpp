@@ -59,10 +59,7 @@ namespace gr
 	}
 
 
-	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(
-		char const* scriptName,
-		gr::GraphicsSystemManager* gsm,
-		std::vector<std::pair<std::string, std::string>> const& flags)
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(char const* scriptName, gr::GraphicsSystemManager* gsm)
 	{
 		std::string const& lowercaseScriptName(util::ToLower(scriptName));
 
@@ -82,19 +79,16 @@ namespace gr
 
 		if (gsCreateFunction)
 		{
-			return gsCreateFunction(gsm, flags);
+			return gsCreateFunction(gsm);
 		}		
 
 		return nullptr;
 	}
 
 
-	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(
-		std::string const& scriptName,
-		gr::GraphicsSystemManager* gsm,
-		std::vector<std::pair<std::string, std::string>> const& flags)
+	std::unique_ptr<gr::GraphicsSystem> GraphicsSystem::CreateByName(std::string const& scriptName, gr::GraphicsSystemManager* gsm)
 	{
-		return CreateByName(scriptName.c_str(), gsm, flags);
+		return CreateByName(scriptName.c_str(), gsm);
 	}
 
 

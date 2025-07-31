@@ -22,19 +22,6 @@ namespace gr
 			);
 		}
 
-		enum class ShadowMode
-		{
-			ShadowMap,
-			RayTraced,
-
-			Invalid
-		};
-
-		static constexpr util::CHashKey k_shadowModeFlag = "ShadowMode";
-		static constexpr util::CHashKey k_shadowMode_ShadowMap = "ShadowMap";
-		static constexpr util::CHashKey k_shadowMode_RayTraced = "RayTraced";
-		void RegisterFlags() override;
-
 		static constexpr util::CHashKey k_sceneDepthTexInput = "SceneDepth";
 		static constexpr util::CHashKey k_sceneLightingTexInput = "SceneLightingTarget";
 
@@ -101,6 +88,12 @@ namespace gr
 
 		std::shared_ptr<re::Buffer> const* m_PCSSSampleParamsBuffer;
 
+		enum class ShadowMode
+		{
+			ShadowMap,
+			RayTraced,
+			Invalid
+		};
 		ShadowMode m_shadowMode;
 
 

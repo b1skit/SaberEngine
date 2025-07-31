@@ -9,6 +9,8 @@
 
 #include "Core/Config.h"
 
+#include "Core/Util/CHashKey.h"
+
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ShadowParams.h"
 
@@ -77,12 +79,6 @@ namespace gr
 	}
 
 
-	void TransparencyGraphicsSystem::RegisterFlags()
-	{
-		RegisterFlag(k_shadowModeFlag);
-	}
-
-
 	void TransparencyGraphicsSystem::RegisterInputs()
 	{
 		RegisterTextureInput(k_sceneDepthTexInput);
@@ -100,12 +96,12 @@ namespace gr
 		RegisterDataInput(k_spotLightCullingDataInput);
 
 		// Shadow-related inputs:
-		switch (GetFlagValue(k_shadowModeFlag))
+		m_shadowMode = core::Config::KeyExists(util::CHashKey("RayTracing")) ? 
+			ShadowMode::RayTraced : ShadowMode::ShadowMap;
+		switch (m_shadowMode)
 		{
-		case k_shadowMode_ShadowMap:
+		case ShadowMode::ShadowMap:
 		{
-			m_shadowMode = ShadowMode::ShadowMap;
-
 			RegisterDataInput(k_lightIDToShadowRecordInput);
 			RegisterBufferInput(k_PCSSSampleParamsBufferInput);
 
@@ -114,10 +110,8 @@ namespace gr
 			RegisterTextureInput(k_spotShadowArrayTexInput);
 		}
 		break;
-		case k_shadowMode_RayTraced:
+		case ShadowMode::RayTraced:
 		{
-			m_shadowMode = ShadowMode::RayTraced;
-
 			RegisterDataInput(k_sceneTLASInput);
 		}
 		break;
@@ -196,9 +190,9 @@ namespace gr
 
 
 		// Shadow inputs:
-		switch (GetFlagValue(k_shadowModeFlag))
+		switch (m_shadowMode)
 		{
-		case k_shadowMode_ShadowMap:
+		case ShadowMode::ShadowMap:
 		{
 			m_directionalShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_directionalShadowArrayTexInput, texDependencies);
 			m_pointShadowArrayTex = GetDependency<core::InvPtr<re::Texture>>(k_pointShadowArrayTexInput, texDependencies);
@@ -211,7 +205,7 @@ namespace gr
 			m_transparencyStage->AddPermanentBuffer(PoissonSampleParamsData::s_shaderName, *m_PCSSSampleParamsBuffer);
 		}
 		break;
-		case k_shadowMode_RayTraced:
+		case ShadowMode::RayTraced:
 		{
 			m_transparencyStage->AddDrawStyleBits(effect::drawstyle::ShadowMode_RayTraced);
 
@@ -282,9 +276,9 @@ namespace gr
 					}));
 		}
 
-		switch (GetFlagValue(k_shadowModeFlag))
+		switch (m_shadowMode)
 		{
-		case k_shadowMode_ShadowMap:
+		case ShadowMode::ShadowMap:
 		{
 			// Shadow texture arrays:
 			m_transparencyStage->AddSingleFrameTextureInput(
@@ -306,7 +300,7 @@ namespace gr
 				re::TextureView(*m_spotShadowArrayTex, { re::TextureView::ViewFlags::ReadOnlyDepth }));
 		}
 		break;
-		case k_shadowMode_RayTraced:
+		case ShadowMode::RayTraced:
 		{
 			std::shared_ptr<re::Buffer> const& traceRayInlineParams = grutil::CreateTraceRayInlineParams(
 				m_geometryInstanceMask,

@@ -51,6 +51,8 @@ namespace core
 		template<typename T>
 		static bool TrySetValue(util::CHashKey const&, T const& value, SettingType = SettingType::Serialized);
 
+		static void ClearValue(util::CHashKey const&);
+
 
 	private:
 		static void InitializeOSValues(); // Values loaded from the OS. Not saved to disk.
@@ -59,7 +61,7 @@ namespace core
 		
 
 	private:
-		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string, platform::RenderingAPI>;
+		using ConfigValue = std::variant<bool, int, float, char, char const*, std::string, platform::RenderingAPI, util::CHashKey>;
 		static std::unordered_map<util::CHashKey, std::pair<ConfigValue, SettingType>> s_configValues;
 		static std::shared_mutex s_configValuesMutex;
 		static bool s_isDirty; // Marks whether we need to save the config file or not
@@ -180,6 +182,21 @@ namespace core
 		
 		SetValue(key, value, settingType);
 		return true;
+	}
+
+
+	inline void Config::ClearValue(util::CHashKey const& key)
+	{
+		{
+			std::unique_lock<std::shared_mutex> writeLock(s_configValuesMutex);
+			
+			SEAssert(s_configValues.contains(key), "Trying to clear a key that is not found");
+
+			// Only mark as dirty if we're deleting a serialized value
+			s_isDirty = s_configValues.at(key).second == SettingType::Serialized;
+
+			s_configValues.erase(key);
+		}
 	}
 
 

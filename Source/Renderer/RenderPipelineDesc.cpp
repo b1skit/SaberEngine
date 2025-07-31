@@ -5,13 +5,13 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-using GSName = gr::RenderPipelineDescription::GSName;
-using SrcDstNamePairs = gr::RenderPipelineDescription::SrcDstNamePairs;
+using GSName = gr::RenderPipelineDesc::GSName;
+using SrcDstNamePairs = gr::RenderPipelineDesc::SrcDstNamePairs;
 
 
 namespace gr
 {
-	void from_json(nlohmann::json const& jsonDesc, RenderPipelineDescription& renderSysDesc)
+	void from_json(nlohmann::json const& jsonDesc, RenderPipelineDesc& renderSysDesc)
 	{
 		std::string const& currentPlatformStr = platform::RenderingAPIToCStr(
 			core::Config::GetValue<platform::RenderingAPI>(core::configkeys::k_renderingAPIKey));
@@ -19,9 +19,9 @@ namespace gr
 		auto ExcludesPlatform = [&currentPlatformVal = std::as_const(currentPlatformStr)](auto entry) -> bool
 			{
 				// "ExcludedPlatforms":
-				if (entry.contains(RenderPipelineDescription::key_excludedPlatforms))
+				if (entry.contains(RenderPipelineDesc::key_excludedPlatforms))
 				{
-					for (auto const& excludedPlatform : entry[RenderPipelineDescription::key_excludedPlatforms])
+					for (auto const& excludedPlatform : entry[RenderPipelineDesc::key_excludedPlatforms])
 					{
 						if (excludedPlatform.template get<std::string>() == currentPlatformVal)
 						{
@@ -37,10 +37,10 @@ namespace gr
 		try
 		{
 			// "PipelineMetadata":
-			if (jsonDesc.contains(RenderPipelineDescription::key_pipelineMetadataBlock) &&
-				!jsonDesc[RenderPipelineDescription::key_pipelineMetadataBlock].empty())
+			if (jsonDesc.contains(RenderPipelineDesc::key_pipelineMetadataBlock) &&
+				!jsonDesc[RenderPipelineDesc::key_pipelineMetadataBlock].empty())
 			{
-				auto const& pipelineMetadata = jsonDesc.at(RenderPipelineDescription::key_pipelineMetadataBlock);
+				auto const& pipelineMetadata = jsonDesc.at(RenderPipelineDesc::key_pipelineMetadataBlock);
 
 				if (ExcludesPlatform(pipelineMetadata))
 				{
@@ -48,15 +48,41 @@ namespace gr
 				}
 
 				// "Name":
-				if (pipelineMetadata.contains(RenderPipelineDescription::key_pipelineName))
+				if (pipelineMetadata.contains(RenderPipelineDesc::key_pipelineName))
 				{
 					renderSysDesc.m_name =
-						pipelineMetadata[RenderPipelineDescription::key_pipelineName].template get<std::string>();
+						pipelineMetadata[RenderPipelineDesc::key_pipelineName].template get<std::string>();
+				}
+
+				// "RuntimeSettings":
+				if (pipelineMetadata.contains(RenderPipelineDesc::key_runtimeSettingsList) &&
+					!pipelineMetadata[RenderPipelineDesc::key_runtimeSettingsList].empty())
+				{
+					std::vector<std::pair<std::string, std::string>>& runtimeSettings =
+						renderSysDesc.m_configRuntimeSettings;
+
+					auto const& settingsList = pipelineMetadata[RenderPipelineDesc::key_runtimeSettingsList];
+					for (auto const& settingEntry : settingsList)
+					{
+						SEAssert(settingEntry.contains(RenderPipelineDesc::key_settingName),
+							"RuntimeSettings must contain a \"Settings\" entry");
+
+						std::string settingName = settingEntry[RenderPipelineDesc::key_settingName].template get<std::string>();
+
+						// It's valid for a setting to not have a value: We'll set it as a boolean true if so
+						std::string settingValue;
+						if (settingEntry.contains(RenderPipelineDesc::key_settingValue))
+						{
+							settingValue = settingEntry[RenderPipelineDesc::key_settingValue].template get<std::string>();
+						}
+
+						runtimeSettings.emplace_back(settingName, settingValue);
+					}
 				}
 			}
 
 			// "Pipeline": 
-			auto const& pipelineBlock = jsonDesc[RenderPipelineDescription::key_pipelineBlock];
+			auto const& pipelineBlock = jsonDesc[RenderPipelineDesc::key_pipelineBlock];
 			for (auto const& pipelineEntry : pipelineBlock)
 			{
 				if (ExcludesPlatform(pipelineEntry))
@@ -65,7 +91,7 @@ namespace gr
 				}
 
 				auto& newPipelineStep = renderSysDesc.m_pipelineOrder.emplace_back();
-				auto const& currentGSName = pipelineEntry[RenderPipelineDescription::key_GSName].get_to(newPipelineStep);
+				auto const& currentGSName = pipelineEntry[RenderPipelineDesc::key_GSName].get_to(newPipelineStep);
 				renderSysDesc.m_graphicsSystemNames.emplace(currentGSName);
 
 
@@ -94,69 +120,54 @@ namespace gr
 							SrcDstNamePairs& srcDstNames = curDependencies.back().second;
 
 							srcDstNames.emplace_back(
-								dependencyEntry[RenderPipelineDescription::key_srcName],
-								dependencyEntry[RenderPipelineDescription::key_dstName]);
+								dependencyEntry[RenderPipelineDesc::key_srcName],
+								dependencyEntry[RenderPipelineDesc::key_dstName]);
 						}
 					};
 
 
 				// "Inputs":
-				if (pipelineEntry.contains(RenderPipelineDescription::key_inputsList) &&
-					!pipelineEntry[RenderPipelineDescription::key_inputsList].empty())
+				if (pipelineEntry.contains(RenderPipelineDesc::key_inputsList) &&
+					!pipelineEntry[RenderPipelineDesc::key_inputsList].empty())
 				{
-					auto const& inputsList = pipelineEntry[RenderPipelineDescription::key_inputsList];
+					auto const& inputsList = pipelineEntry[RenderPipelineDesc::key_inputsList];
 					for (auto const& inputEntry : inputsList)
 					{
 						// "GS":
 						std::string const& dependencySourceGSName =
-							inputEntry[RenderPipelineDescription::key_GSName].template get<std::string>();
+							inputEntry[RenderPipelineDesc::key_GSName].template get<std::string>();
 
 						SEAssert(dependencySourceGSName != currentGSName, "A GS has listed itself as an input source");
 
 						// "TextureDependencies":
-						if (inputEntry.contains(RenderPipelineDescription::key_textureDependenciesList) &&
-							!inputEntry[RenderPipelineDescription::key_textureDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDesc::key_textureDependenciesList) &&
+							!inputEntry[RenderPipelineDesc::key_textureDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderPipelineDescription::key_textureDependenciesList],
+								inputEntry[RenderPipelineDesc::key_textureDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_textureInputs[currentGSName]);
 						}
 
 						// "BufferDependencies":
-						if (inputEntry.contains(RenderPipelineDescription::key_bufferDependenciesList) &&
-							!inputEntry[RenderPipelineDescription::key_bufferDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDesc::key_bufferDependenciesList) &&
+							!inputEntry[RenderPipelineDesc::key_bufferDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderPipelineDescription::key_bufferDependenciesList],
+								inputEntry[RenderPipelineDesc::key_bufferDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_bufferInputs[currentGSName]);
 						}
 
 						// "DataDependencies":
-						if (inputEntry.contains(RenderPipelineDescription::key_dataDependenciesList) &&
-							!inputEntry[RenderPipelineDescription::key_dataDependenciesList].empty())
+						if (inputEntry.contains(RenderPipelineDesc::key_dataDependenciesList) &&
+							!inputEntry[RenderPipelineDesc::key_dataDependenciesList].empty())
 						{
 							ParseDependencyList(
-								inputEntry[RenderPipelineDescription::key_dataDependenciesList],
+								inputEntry[RenderPipelineDesc::key_dataDependenciesList],
 								dependencySourceGSName,
 								renderSysDesc.m_dataInputs[currentGSName]);
 						}
-					}
-				}
-
-				// "Flags":
-				if (pipelineEntry.contains(RenderPipelineDescription::key_flagsList) &&
-					!pipelineEntry[RenderPipelineDescription::key_flagsList].empty())
-				{
-					std::vector<std::pair<std::string, std::string>>& gsFlags = renderSysDesc.m_flags[currentGSName];
-
-					auto const& flagsList = pipelineEntry[RenderPipelineDescription::key_flagsList];
-					for (auto const& flagEntry : flagsList)
-					{
-						gsFlags.emplace_back(
-							flagEntry[RenderPipelineDescription::key_flagName].template get<std::string>(),
-							flagEntry[RenderPipelineDescription::key_flagValue].template get<std::string>());
 					}
 				}
 			}
@@ -168,7 +179,7 @@ namespace gr
 	}
 
 
-	RenderPipelineDescription LoadPipelineDescription(char const* filepath)
+	RenderPipelineDesc LoadPipelineDescription(char const* filepath)
 	{
 		SEAssert(filepath, "File path cannot be null");
 
@@ -180,7 +191,7 @@ namespace gr
 		const bool allowExceptions = core::Config::GetValue<bool>(core::configkeys::k_jsonAllowExceptionsKey);
 		const bool ignoreComments = core::Config::GetValue<bool>(core::configkeys::k_jsonIgnoreCommentsKey);
 
-		RenderPipelineDescription systemDesc;
+		RenderPipelineDesc systemDesc;
 		nlohmann::json pipelineDescJSON;
 		try
 		{
@@ -188,7 +199,7 @@ namespace gr
 			pipelineDescJSON =
 				nlohmann::json::parse(pipelineInputStream, parserCallback, allowExceptions, ignoreComments);
 
-			systemDesc = pipelineDescJSON.template get<RenderPipelineDescription>();
+			systemDesc = pipelineDescJSON.template get<RenderPipelineDesc>();
 		}
 		catch (nlohmann::json::parse_error parseException)
 		{

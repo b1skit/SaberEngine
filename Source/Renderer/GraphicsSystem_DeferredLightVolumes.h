@@ -45,19 +45,6 @@ namespace gr
 			);
 		}
 
-		enum class ShadowMode
-		{
-			ShadowMap,
-			RayTraced,
-
-			Invalid
-		};
-
-		static constexpr util::CHashKey k_shadowModeFlag = "ShadowMode";
-		static constexpr util::CHashKey k_shadowMode_ShadowMap = "ShadowMap";
-		static constexpr util::CHashKey k_shadowMode_RayTraced = "RayTraced";
-		void RegisterFlags() override;
-
 		static constexpr util::CHashKey k_lightingTargetTexInput = "LightTargetTex";
 		static constexpr util::CHashKey k_pointLightCullingDataInput = "PointLightCullingResults";
 		static constexpr util::CHashKey k_spotLightCullingDataInput = "SpotLightCullingResults";
@@ -116,6 +103,12 @@ namespace gr
 		core::InvPtr<re::Texture> m_missing2DShadowFallback;
 		core::InvPtr<re::Texture> m_missingCubeShadowFallback;
 
+		enum class ShadowMode
+		{
+			ShadowMap,
+			RayTraced,
+			Invalid
+		};
 		ShadowMode m_shadowMode;
 
 

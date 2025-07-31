@@ -1,7 +1,13 @@
 {
 	"PipelineMetadata": {
 		"Name": "Deferred Rasterization RTAO",
-		"ExcludedPlatforms": [ "OpenGL" ]
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"RuntimeSettings": [
+			{
+				"Setting" : "RayTracing",
+				"Value" : "Enabled"
+			}
+		]
 	},
 	"Pipeline": [
 		{
@@ -243,12 +249,6 @@
 						}
 					]
 				}
-			],
-			"Flags": [
-				{
-					"Flag": "ShadowMode",
-					"Value": "RayTraced"
-				}
 			]
 		},
 		{
@@ -352,12 +352,6 @@
 							"DestinationName": "SceneTLAS"
 						}
 					]
-				}
-			],
-			"Flags": [
-				{
-					"Flag": "ShadowMode",
-					"Value": "RayTraced"
 				}
 			]
 		},

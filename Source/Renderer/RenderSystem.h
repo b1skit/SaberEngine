@@ -1,12 +1,14 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
+#include "GraphicsSystemManager.h"
 #include "RenderCommand.h"
 #include "RenderPipeline.h"
 
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
+
+#include "Core/Util/CHashKey.h"
 
 
 namespace core
@@ -24,8 +26,9 @@ namespace re
 namespace gr
 {
 	class RenderDataManager;
-	struct RenderPipelineDescription;
 	class IndexedBufferManager;
+
+	struct RenderPipelineDesc;
 
 
 	class RenderSystem : public virtual core::INamedObject, public virtual core::IUniqueID
@@ -36,17 +39,16 @@ namespace gr
 		
 		void Destroy();
 
-		~RenderSystem() { Destroy(); };
+		~RenderSystem() = default;
 
 		RenderSystem(RenderSystem&&) noexcept = default;
 		RenderSystem& operator=(RenderSystem&&) noexcept = default;
 
 
-	public:
-		// Scriptable rendering pipeline:
-		void BuildPipeline(gr::RenderPipelineDescription const&, gr::RenderDataManager const*); // Creates graphics systems + init/update pipelines
-
 	private:
+		// Scriptable rendering pipeline:
+		void BuildPipeline(gr::RenderPipelineDesc const&, gr::RenderDataManager const*); // Creates graphics systems + init/update pipelines
+
 		void ExecuteInitializationPipeline();
 
 	public:
@@ -64,6 +66,8 @@ namespace gr
 
 		gr::RenderPipeline& GetRenderPipeline();
 
+
+	public:
 		void ShowImGuiWindow();
 
 
@@ -86,9 +90,14 @@ namespace gr
 
 		std::vector<std::vector<UpdateStep>> m_updatePipeline;
 
+		// Cache our config settings so we can clear them when the render system is destroyed. We keep the strings around
+		// for debugging, but they're stored in the config as CHashKeys
+		std::vector<std::pair<std::string, std::string>> m_configSettings;
+
 
 	private: // Use the Create() factory
-		RenderSystem(std::string const& name, re::Context*);
+		RenderSystem(
+			std::string const& name, std::vector<std::pair<std::string, std::string>> const& configSettings, re::Context*);
 		RenderSystem() = delete; 
 
 

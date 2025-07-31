@@ -5,8 +5,8 @@
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "RenderDataManager.h"
-#include "RenderSystem.h"
 #include "RenderPipelineDesc.h"
+#include "RenderSystem.h"
 
 #include "Core/Config.h"
 #include "Core/Logger.h"
@@ -15,16 +15,18 @@
 
 #include "Core/Definitions/ConfigKeys.h"
 
+#include "Core/Interfaces/INamedObject.h"
 
-using GSName = gr::RenderPipelineDescription::GSName;
-using SrcDstNamePairs = gr::RenderPipelineDescription::SrcDstNamePairs;
+
+using GSName = gr::RenderPipelineDesc::GSName;
+using SrcDstNamePairs = gr::RenderPipelineDesc::SrcDstNamePairs;
 
 
 namespace
 {
 	gr::TextureDependencies ResolveTextureDependencies(
 		std::string const& dstGSScriptName,
-		gr::RenderPipelineDescription const& renderSysDesc,
+		gr::RenderPipelineDesc const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::TextureDependencies texDependencies;
@@ -128,7 +130,7 @@ namespace
 
 	gr::BufferDependencies ResolveBufferDependencies(
 		std::string const& dstGSScriptName,
-		gr::RenderPipelineDescription const& renderSysDesc,
+		gr::RenderPipelineDesc const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::BufferDependencies bufferDependencies;
@@ -172,7 +174,7 @@ namespace
 
 	gr::DataDependencies ResolveDataDependencies(
 		std::string const& dstGSScriptName,
-		gr::RenderPipelineDescription const& renderSysDesc,
+		gr::RenderPipelineDesc const& renderSysDesc,
 		gr::GraphicsSystemManager const& gsm)
 	{
 		gr::DataDependencies resolvedDependencies;
@@ -215,7 +217,7 @@ namespace
 	
 	
 	void ComputeExecutionGroups(
-		gr::RenderPipelineDescription const& renderSysDesc,
+		gr::RenderPipelineDesc const& renderSysDesc,
 		std::vector<std::vector<std::string>>& updateExecutionGroups,
 		bool singleThreadGSExecution)
 	{
@@ -367,14 +369,14 @@ namespace gr
 		// Load the render system description:
 		std::string const& scriptPath = std::format("{}{}", core::configkeys::k_pipelineDirName, pipelineFileName);
 
-		gr::RenderPipelineDescription const& renderSystemDesc = gr::LoadPipelineDescription(scriptPath.c_str());
+		gr::RenderPipelineDesc const& renderSystemDesc = gr::LoadPipelineDescription(scriptPath.c_str());
 
 		LOG("Render pipeline description \"%s\" loaded!", pipelineFileName.c_str());
 
 		// Create the render system, and build its various pipeline stages:
 		std::unique_ptr<RenderSystem> newRenderSystem = nullptr;
 
-		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, context));
+		newRenderSystem.reset(new RenderSystem(renderSystemDesc.m_name, renderSystemDesc.m_configRuntimeSettings, context));
 
 		newRenderSystem->BuildPipeline(renderSystemDesc, renderData); // Builds initialization/update functions
 
@@ -385,12 +387,34 @@ namespace gr
 	}
 
 
-	RenderSystem::RenderSystem(std::string const& name, re::Context* context)
+	RenderSystem::RenderSystem(
+		std::string const& name,
+		std::vector<std::pair<std::string, std::string>> const& configSettings,
+		re::Context* context)
 		: INamedObject(name)
 		, m_graphicsSystemManager(context)
 		, m_renderPipeline(name)
 		, m_initPipeline(nullptr)
+		, m_configSettings(configSettings)
 	{
+		// Set any config settings required by the pipeline:
+		for (auto const& configSetting : m_configSettings)
+		{
+			if (configSetting.second.empty())
+			{
+				core::Config::SetValue(
+					util::CHashKey::Create(configSetting.first),
+					true, // Empty string: Just set the value to true
+					core::Config::SettingType::Runtime);
+			}
+			else
+			{
+				core::Config::SetValue(
+					util::CHashKey::Create(configSetting.first),
+					util::CHashKey::Create(configSetting.second),
+					core::Config::SettingType::Runtime);
+			}			
+		}
 	}
 
 
@@ -400,6 +424,12 @@ namespace gr
 		m_renderPipeline.Destroy();
 		m_initPipeline = nullptr;
 		m_updatePipeline.clear();
+
+		// Clear config settings:
+		for (auto const& configSetting : m_configSettings)
+		{
+			core::Config::ClearValue(util::CHashKey::Create(configSetting.first));
+		}
 	}
 
 
@@ -421,7 +451,7 @@ namespace gr
 
 
 	void RenderSystem::BuildPipeline(
-		gr::RenderPipelineDescription const& renderSysDesc, gr::RenderDataManager const* renderData)
+		gr::RenderPipelineDesc const& renderSysDesc, gr::RenderDataManager const* renderData)
 	{
 		SEBeginCPUEvent(GetName().c_str());
 		// Create our GraphicsSystems:
@@ -429,12 +459,7 @@ namespace gr
 
 		for (std::string const& gsName : renderSysDesc.m_pipelineOrder)
 		{
-			auto flagsItr = renderSysDesc.m_flags.find(gsName);
-
-			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(
-				gsName,
-				(flagsItr != renderSysDesc.m_flags.end() ? 
-					flagsItr->second : std::vector<std::pair<std::string, std::string>>{}));
+			m_graphicsSystemManager.CreateAddGraphicsSystemByScriptName(gsName);
 		}
 		
 
