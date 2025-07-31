@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
-#include "Core/Config.h"
-#include "Core/Util/ImGuiUtils.h"
 #include "ShadowMap.h"
+
+#include "Core/Config.h"
+
+#include "Core/Util/ImGuiUtils.h"
 
 
 namespace
@@ -93,6 +95,10 @@ namespace pr
 	{
 		m_isDirty |= ImGui::Checkbox(std::format("Shadow enabled?##{}", uniqueID).c_str(), &m_isEnabled);
 
+		const bool rayTracingEnabled = core::Config::KeyExists(core::configkeys::k_raytracingKey);
+
+		ImGui::BeginDisabled(rayTracingEnabled);
+		
 		constexpr char const* k_qualityNames[] = { "PCS", "PCSS Low", "PCSS High" };
 
 		int currentQuality = static_cast<int>(m_typeProperties.m_shadowQuality);
@@ -157,6 +163,8 @@ namespace pr
 		break;
 		default: SEAssertF("Invalid shadow type");
 		}
+
+		ImGui::EndDisabled();
 	}
 }
 

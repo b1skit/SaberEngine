@@ -100,6 +100,9 @@ namespace core::configkeys
 	constexpr util::CHashKey k_defaultSpotLightMaxShadowBiasKey			= "defaultSpotLightMaxShadowBias";
 	constexpr util::CHashKey k_defaultSpotLightShadowSoftnessKey		= "defaultSpotLightMaxShadowSoftness";
 
+	// Runtime settings:
+	constexpr util::CHashKey k_raytracingKey = "RayTracing";
+
 	// Camera:
 	constexpr util::CHashKey k_defaultFOVKey		= "defaultyCameraFOV";
 	constexpr util::CHashKey k_defaultNearKey		= "defaultCameraNear";
