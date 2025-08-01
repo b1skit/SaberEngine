@@ -57,7 +57,7 @@ And much more!
 Initial setup:
 --------------
 * Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
-* Run the `.\InitialSetup.bat` script
+* Run the `.\InitialSetup.bat` script (requires git is installed on the system)  
   * This will initialize & update the git submodule dependencies, & configure vcpkg  
 * Set your working directory for all build configurations:
   * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine  
