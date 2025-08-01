@@ -32,11 +32,12 @@ Saber Engine is continuously evolving. Its current features include:
     - Directional lights
     - Point lights
     - Spot lights
+  - Supports the `KHR_materials_emissive_strength` extension, allowing configurable emissive intensity  
+  - Supports `KHR_materials_unlit` extension for unlit shading
 - **Advanced rendering features**:
   - **Animation**: Skinning, morph targets, and keyframe node/transform animations
   - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
     - Image-based indirect lighting
-    - Directional, point, and spot lights
   - **Soft shadows**: PCF & PCSS
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
   - **ACES filmic response** tone mapping
