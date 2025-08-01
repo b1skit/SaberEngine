@@ -47,6 +47,7 @@ Saber Engine is continuously evolving. Its current features include:
   - **GPU instancing**:
     - Automatically detects and combines instanceable batches into single draw calls
     - Supports GLTF’s **EXT_mesh_gpu_instancing** extension
+- **Batch pool** minimizes draw-call setup costs by reusing draw-call resources
 - **Interactive UI** (ImGui):
   - Supports drag-and-drop loading of `.gltf` and `.hdr` files
 - **Comprehensive debugging tools**:
