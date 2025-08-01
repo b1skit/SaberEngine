@@ -27,8 +27,9 @@ Saber Engine is continuously evolving. Its current features include:
   - Effects/Techniques/DrawStyles are described via `.json` for dynamic runtime shader resolution
 - Supports both **bindless** and **slot-based** resource binding models
 - **Entity Component System** (EnTT)
- - **GLTF 2.0** format support (cgltf):
-   - Supports `KHR_materials_unlit` extension for unlit shading
+- **GLTF 2.0** format support (cgltf)
+  - Supports `KHR_materials_unlit` extension for unlit shading
+  - Supports the `KHR_materials_emissive_strength` extension, allowing configurable emissive intensity  
 - **Advanced rendering features**:
   - **Animation**: Skinning, morph targets, and keyframe node/transform animations
   - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
