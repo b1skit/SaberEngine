@@ -26,7 +26,7 @@ struct GBuffer
 {
 	vec3 LinearAlbedo;
 	vec3 WorldNormal;
-	vec3 VertexNormal;
+	vec3 WorldVertexNormal;
 
 	float LinearRoughness;
 	float LinearMetalness;
@@ -70,7 +70,7 @@ GBuffer UnpackGBuffer(vec2 pixelCoords)
 
 	// Unpack the vertex normal:
 	const vec2 packedVertexNormal = vec2(RMAOVn.w, matProp0Vn.w);
-	gbuffer.VertexNormal = DecodeOctohedralNormal(packedVertexNormal);
+	gbuffer.WorldVertexNormal = DecodeOctohedralNormal(packedVertexNormal);
 
 	gbuffer.MaterialID = uint(texelFetch(GBufferMaterialID, loadCoords, 0).r);
 

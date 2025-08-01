@@ -91,7 +91,7 @@ namespace gr
 		, m_pointShadowTexArrayUpdated(false)
 		, m_spotShadowTexArrayUpdated(false)
 		, m_sceneTLAS(nullptr)
-		, m_tMin(0.01f)
+		, m_tMin(0.f) // Note: This is in addition to the offset along geometry normals applied in the shader
 		, m_rayLengthOffset(0.01f)
 		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
 	{

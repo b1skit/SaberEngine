@@ -96,11 +96,11 @@ GBuffer UnpackBindlessGBuffer(
 	// Unpck the vertex normal if we can:
 	if (hasPackedVertexNormal)
 	{
-		gbuffer.VertexNormal = DecodeOctohedralNormal(packedVertexNormal);
+		gbuffer.WorldVertexNormal = DecodeOctohedralNormal(packedVertexNormal);
 	}
 	else
 	{
-		gbuffer.VertexNormal = float3(0.f, 0.f, 0.f);
+		gbuffer.WorldVertexNormal = float3(0.f, 0.f, 0.f);
 	}
 	
 	if (materialIDResourceIdx != INVALID_RESOURCE_IDX)

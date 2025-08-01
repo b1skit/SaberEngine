@@ -60,7 +60,7 @@ GBufferOut PShader(VertexOut In)
 	output.Albedo = matAlbedo * In.Color * baseColorFactor;
 
 	// Vertex normal:
-	const float3 vertexNormal = float3(In.TBN[0].z, In.TBN[1].z, In.TBN[2].z);
+	const float3 vertexNormal = float3(In.TBN[0].z, In.TBN[1].z, In.TBN[2].z); // worldFaceNormal
 	const float2 encodedVertexNormal = EncodeOctohedralNormal(vertexNormal);
 	
 	// World-space normal:

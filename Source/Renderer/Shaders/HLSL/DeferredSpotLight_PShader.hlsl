@@ -87,6 +87,7 @@ float4 PShader(VertexOut In) : SV_Target
 				TraceRayInlineParams,
 				worldPos,
 				lightWorldDir,
+				gbuffer.WorldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
 				rayLength);
 #else

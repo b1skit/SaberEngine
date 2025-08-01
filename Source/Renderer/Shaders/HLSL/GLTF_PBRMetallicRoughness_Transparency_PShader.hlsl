@@ -126,7 +126,10 @@ float4 PShader(VertexOut In) : SV_Target
 		totalContribution += ComputeAmbientLighting(ambientLightParams);
 	}
 	
-
+#if defined(SHADOWS_RAYTRACED)
+	const float3 worldVertexNormal = float3(In.TBN[0].z, In.TBN[1].z, In.TBN[2].z); // worldFaceNormal
+#endif
+	
 	// Directional:
 	{
 		const uint numDirectionalLights = LightCounts.g_numLights.x;
@@ -154,6 +157,7 @@ float4 PShader(VertexOut In) : SV_Target
 					TraceRayInlineParams,
 					worldPos,
 					lightData.g_lightWorldPosRadius.xyz,
+					worldVertexNormal,
 					TraceRayInlineParams.g_rayParams.x,
 					FLT_MAX);
 #else
@@ -248,6 +252,7 @@ float4 PShader(VertexOut In) : SV_Target
 				TraceRayInlineParams,
 				lightWorldPos,
 				-lightWorldDir,
+				worldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
 				rayLength);
 #else
@@ -352,6 +357,7 @@ float4 PShader(VertexOut In) : SV_Target
 				TraceRayInlineParams,
 				worldPos,
 				lightWorldDir,
+				worldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
 				rayLength);
 #else

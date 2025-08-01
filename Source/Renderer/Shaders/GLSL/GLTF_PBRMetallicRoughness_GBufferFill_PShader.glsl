@@ -61,7 +61,7 @@ void PShader()
 	Albedo = matAlbedo * In.Color * baseColorFactor;
 
 	// Vertex normal:
-	const vec3 vertexNormal = In.TBN[2];
+	const vec3 vertexNormal = In.TBN[2]; // worldFaceNormal
 	const vec2 encodedVertexNormal = EncodeOctohedralNormal(vertexNormal);
 
 	// World-space normal:
