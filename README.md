@@ -3,7 +3,7 @@
 "Ideally, a Jedi took many months to construct a single perfect weapon that he or she would keep and use for a lifetime. Once you build it, the lightsaber will become your constant companion, your tool, and a ready means of defense." - Luke Skywalker
 
 ## Project Overview
-Saber Engine is a multi-API, multi-threaded, real-time rendering research and development framework with the architecture of a game engine. © 2022 Adam Badke. All rights reserved.
+Saber Engine is a multi-API, multi-threaded, real-time rendering research & development framework with the architecture of a game engine. © 2022 Adam Badke. All rights reserved.
 
 
 ## Features
@@ -17,12 +17,12 @@ Saber Engine is continuously evolving. Its current features include the followin
 - **GPU-accelerated ray tracing** (DXR)
 - **Asynchronous** copy/graphics/compute pipelines
 - **Scriptable rendering pipeline**:
-  - Graphics systems are implemented using a high-level, API-agnostic abstraction layer and combined through input/output dependencies defined in `.json`
+  - Graphics systems are implemented using a high-level, API-agnostic abstraction layer & combined through input/output dependencies defined in `.json`
   - Dynamically generates an optimized, thread-safe render graph at runtime
-- **Droid**: A custom offline shader compiler and C++ code generation tool
+- **Droid**: A custom offline shader compiler & C++ code generation tool
   - Effects/Techniques/DrawStyles are described via `.json` for dynamic runtime shader resolution
-- Supports both **bindless** and **slot-based** resource binding models
-- **Indexed buffer system** for automatic instancing and buffer indirection
+- Supports both **bindless** & **slot-based** resource binding models
+- **Indexed buffer system** for automatic instancing & buffer indirection
 - **Entity Component System** (EnTT)
 - **GLTF 2.0** format support (cgltf):
   - Supports the `KHR_lights_punctual` extension with:
@@ -32,26 +32,26 @@ Saber Engine is continuously evolving. Its current features include the followin
   - Supports the `KHR_materials_emissive_strength` extension, allowing configurable emissive intensity
   - Supports `KHR_materials_unlit` extension for unlit shading
 - **Advanced rendering features**:
-  - **Animation**: Skinning, morph targets, and keyframe node/transform animations
+  - **Animation**: Skinning, morph targets, & keyframe node/transform animations
   - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
     - Image-based indirect lighting
-  - **Soft shadows**: PCF and PCSS
+  - **Soft shadows**: PCF & PCSS
   - **Inline ray tracing** shadows
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
   - **Ray traced ambient occlusion** (RTAO) on ray tracing-capable APIs/GPUs
   - **ACES filmic response** tone mapping
-  - Physically-based **camera** and exposure settings
-  - Physically-based **emissive** lighting and bloom
+  - Physically-based **camera** & exposure settings
+  - Physically-based **emissive** lighting & bloom
   - **Camera frustum culling**
   - **GPU instancing**:
-    - Automatically detects and combines instanceable batches into single draw calls
+    - Automatically detects & combines instanceable batches into single draw calls
     - Supports GLTF’s **EXT_mesh_gpu_instancing** extension
 - **Batch pool** minimizes draw-call setup costs by reusing draw-call resources
 - **Interactive UI** (ImGui):
-  - Supports drag-and-drop loading of `.gltf` and `.hdr` files
+  - Supports drag-&-drop loading of `.gltf` & `.hdr` files
 - **Comprehensive debugging tools**:
   - Real-time CPU/GPU frame timers
-  - Support for **RenderDoc** and **PIX** programmatic capture APIs
+  - Support for **RenderDoc** & **PIX** programmatic capture APIs
 - **Asynchronous, reference-counted resource loading** system:
   - Supports work stealing
 
@@ -61,19 +61,17 @@ Additional features are in development.
 ## Initial setup
 * Clone the repository: `git clone https://github.com/b1skit/SaberEngine.git`
 * Run the `.\InitialSetup.bat` script (requires git to be installed on the system)
-  * This initializes and updates the git submodule dependencies and configures vcpkg
+  * This initializes & updates the git submodule dependencies & configures vcpkg
 * Set your working directory for all build configurations:
   * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory -> $(SolutionDir)SaberEngine
 * Build the project
-  * Building the Release configuration first is recommended because it copies all files required for distribution to the `.\SaberEngine\` output/working directory
-
 
 ## Command line arguments
 Most of the keys described in `ConfigKeys.h` can be set or overridden via key/value command line arguments using a `-keyname value` pattern. If `value` is omitted, it will be stored as a Boolean true value. The most important command line arguments are described here:
 
 File loading: `-import Directory\Path\filename.extension`
 * Supports GLTF 2.0 files
-* Alternatively supports drag-and-drop loading of GLTF files
+* Alternatively supports drag-&-drop loading of GLTF files
 
 Display log messages in a system console window: `-console`
 
@@ -88,7 +86,7 @@ Select a rendering pipeline: `-renderpipeline pipelineName.json`
 Enable strict shader binding checks: `-strictshaderbinding`
 * Enables helpful (but overly strict) asserts if runtime parameters don't match exactly with reflected shader metadata
 
-Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity and API-specific validation
+Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity & API-specific validation
 * 0: Default (disabled)
 * 1: Basic debug output (OpenGL, DX12)
 * 2: Level 1 + GPU-based validation (DX12 only)
@@ -100,11 +98,11 @@ Enable NVIDIA Aftermath support for debugging GPU crashes or hangs: `-aftermath`
 * Requires the NVIDIA Aftermath SDK to be installed with the Aftermath Crash Monitor running on the local system
 
 Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepixcpucapture`
-* This is required only for programmatic captures and is not needed for PIX markers
+* This is required only for programmatic captures & is not needed for PIX markers
 * Captures can be triggered via the render debug menu or by attaching PIX to the SaberEngine process
 * More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/
 
-Enable RenderDoc captures: `-renderdoc`.
+Enable RenderDoc captures: `-renderdoc`
 
 Enable CPU-side normalization of vertex streams when requested: `-cpunormalizevertexstreams`
 * This option is provided for strict GLTF 2.0 compatibility but is rarely required. It is useful when a vertex stream requires normalization yet is received in a format incompatible with GPU normalization.
@@ -122,8 +120,9 @@ Default controls:
 * Toggle VSync: v
 
 
-## Menu and logs
-Press the ` (tilde/grave) key to show/hide the ImGui overlay
+## Menu & logs
+* Press the ` (tilde/grave) key to switch between camera movement or UI interactions
+* Press the F11 key to show/hide the ImGui overlay
 * Logs are also output to the `.\Logs\` directory
 
 
@@ -131,36 +130,24 @@ Press the ` (tilde/grave) key to show/hide the ImGui overlay
 * A default HDR is included for IBL at `<project root>\Assets\DefaultIBL\default.hdr`
   * GLTF files can override this default by placing a `default.hdr` file in an `IBL` folder alongside the GLTF file
     * E.g. When loading `Some\Folder\Example.gltf`, a HDR at `Some\Folder\IBL\default.hdr` will be loaded at the same time as the GLTF file
-  * Additional HDRs can also be imported from any location at runtime via the ImGui menus or by drag-and-drop loading of .hdr files
+  * Additional HDRs can also be imported from any location at runtime via the ImGui menus or by drag-&-drop loading of .hdr files
 
 
 ## Shaders, Effects, Techniques, Draw Styles
-Shaders are dynamically resolved at runtime by matching draw style flags set via materials and render stages to sets of draw style rules defined by Effects that map to Techniques. See the JSON Effect definition files located in the `Assets\Effects` directory for example usage.
+Shaders are dynamically resolved at runtime by matching draw style flags set via materials & render stages to sets of draw style rules defined by Effects that map to Techniques. See the JSON Effect definition files located in the `Assets\Effects` directory for example usage.
 
-For simplicity, shader names are expected to be identical between all APIs, with the exception of their file extensions
-- OpenGL: Shaders have .vert/.geom/.frag/.tesc/.tese/.mesh/.task/.comp extensions. These files are loaded/processed at runtime
+For simplicity shader names are expected to be identical between all APIs, with the exception of their file extensions
+- OpenGL: Shaders have .glsl/.glsli extensions. These files are loaded/processed at runtime
 - DX12: Shaders are compiled with the application from source .hlsli/.hlsl files. The resulting Compiled Shader Objects (.cso) with the same (extensionless) filename are loaded at runtime
 
 
-## Droid shader compilation and code generation
-Droid is automatically compiled and executed as part of the SaberEngine solution build process. By default, it parses the contents of the `<project root>\SaberEngine\Assets\Effects\` directory and converts Effect definitions into compilable C++/HLSL/GLSL code.
+## Droid shader compilation & code generation
+Droid is automatically compiled & executed as part of the SaberEngine solution build process. By default, it parses the contents of the `<project root>\SaberEngine\Assets\Effects\` directory & converts Effect definitions into compilable C++/HLSL/GLSL code.
 
 Its execution can be optionally modified via command line arguments:
 
 Clean output directories: `-clean`
-* Erases all generated C++ and shader code, and shader compilation artifacts.
-
-
-## PIX Configuration
-Microsoft PIX requires the `[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]` key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator privileges:
-```reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx```
-
-
-## DX12 Shader PDBs
-Shader PDBs are generated when SaberEngine's Debug build configuration is compiled. PDBs are output to `.\Build\x64\Debug\`.
-
-* __PIX configuration__: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu
-* __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu
+* Erases all generated C++ & shader code, & shader compilation artifacts.
 
 
 ## Conventions
@@ -173,19 +160,19 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 
 
 ## Dependencies
-* SaberEngine uses vcpkg, NuGet, and Git subtrees to manage dependencies. Source details are included for each dependency below.
-* Git subtree dependencies are preconfigured. Installation and configuration details are included below for completeness.
+* SaberEngine uses vcpkg, NuGet, & Git subtrees to manage dependencies. Source details are included for each dependency below.
+* Git subtree dependencies are preconfigured. Installation & configuration details are included below for completeness.
 
 
 ### [CGLTF](https://github.com/jkuhlmann/cgltf)
 
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info
 - Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models
 
 
 ### [EnTT](https://github.com/skypjack/entt)
 
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info
 
 
 ### [Glew](https://github.com/nigels-com/glew/releases)
@@ -199,7 +186,7 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 
 ### [GLM](https://github.com/g-truc/glm/releases)
 
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info
 
 
 ### [Imgui](https://github.com/ocornut/imgui/)
@@ -207,8 +194,8 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 - Included as a git submodule: `<project root>\Source\Dependencies\imgui\`
 - Current version: v1.91.5 (Docking branch)
 - Compiled as a static library project: `<project root>\Source\ImGui\`
-- The ImGui static library includes all core ImGui files and backend implementations for DX12, OpenGL3, and Win32
-- Projects that use ImGui link against the ImGui static library and include imgui headers via `$(SolutionDir)Source\Dependencies\imgui\` in their include directories
+- The ImGui static library includes all core ImGui files & backend implementations for DX12, OpenGL3, & Win32
+- Projects that use ImGui link against the ImGui static library & include imgui headers via `$(SolutionDir)Source\Dependencies\imgui\` in their include directories
 
 
 ### [Intel XeGTAO](https://github.com/GameTechDev/XeGTAO)
@@ -246,7 +233,7 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 
 ### [JSON for Modern C++](https://github.com/nlohmann/json)
 
-- Included as a dependency via `vcpkg`. See the `Initial setup` section and `.\vcpkg.json` for more info
+- Included as a dependency via `vcpkg`. See the `Initial setup` section & `.\vcpkg.json` for more info
 
 
 ### [stb (stb_image.h)](https://github.com/nothings/stb/blob/master/)
@@ -261,12 +248,12 @@ Shader PDBs are generated when SaberEngine's Debug build configuration is compil
 - Included via a NuGet package
 
 
-## Recommended Visual Studio extensions and Software
+## Recommended Visual Studio extensions & Software
 - Smart Command Line Arguments
 - Editor Guidelines
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL
 - HLSL Tools for Visual Studio: https://github.com/tgjones/HlslTools
-  - Configuration guide (shadertoolsconfig.json): https://github.com/tgjones/HlslTools#custom-preprocessor-definitions-and-additional-include-directories
+  - Configuration guide (shadertoolsconfig.json): https://github.com/tgjones/HlslTools#custom-preprocessor-definitions-&-additional-include-directories
 - License Header Manager
 - Beyond Compare
 
