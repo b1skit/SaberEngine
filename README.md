@@ -22,6 +22,7 @@ Saber Engine is continuously evolving. Its current features include:
 - **Droid**: A custom offline shader compiler and C++ code generation tool
   - Effects/Techniques/DrawStyles are described via `.json` for dynamic runtime shader resolution
 - Supports both **bindless** and **slot-based** resource binding models
+- **Indexed buffer system** for automatic instancing and buffer indirection
 - **Entity Component System** (EnTT)
 - **GLTF 2.0** format support (cgltf):
   - Supports the `KHR_lights_punctual` extension with:
