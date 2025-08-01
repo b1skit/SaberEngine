@@ -68,39 +68,43 @@ And much more!
   * It's recommended you build the Release configuration first, as this will copy all files required for distribution to the `.\SaberEngine\` output/working directory  
 
 
-## SaberEngine: Command line arguments
+## Command line arguments
 Most of the keys described in `ConfigKeys.h` can be set/overridden via key/value command line arguments using a `-keyname value` pattern.  If `value` is omitted, it will be stored as a boolean true value.  The most important command line arguments are described here:
 
 File loading: `-import Directory\Path\filename.extension`  
 * Supports GLTF 2.0 files
+* Alternatively supports drag-and-drop loading of GLTF files
 
 Display log messages in a system console window: `-console`  
 
-Select the backend rendering API: `-platform API`. If no API is specified, DirectX 12 is used. Supported API values are:
+Select the backend rendering API: `-platform API`. If no API is specified, DirectX 12 is used. Currently supported API values:
 * dx12
 * opengl
 
 Select a rendering pipeline: `-renderpipeline pipelineName.json`
-* Rendering pipelines are described by json files located in the `<project root>\Config\Pipelines\` directory  
-* If no rendering pipeline file is specified, the `engineDefault.json` is used
+* Rendering pipelines are described by json files located in the `<project root>\Assets\Pipelines\` directory  
+* If no rendering pipeline file is specified, the `DeferredRasterization.json` is used
 
 Enable strict shader binding checks: `-strictshaderbinding`  
-* Enables helpful (but occasionally annoying) asserts if parameters aren't found when parsing reflected shader metadata  
+* Enables helpful (but overly strict) asserts if runtime parameters don't match exactly with reflected shader metadata  
 
-Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity, & API-specific validation  
+Enable graphics API debugging: `-debuglevel [0, 2]`. Each level increases log verbosity & API-specific validation  
 * 0: Default (disabled)  
 * 1: Basic debug output (OpenGL, DX12)  
 * 2: Level 1 + GPU-based validation (DX12 only)  
 
 Enable DRED debugging: `-enabledred` (DX12 only)  
 
+Enable NVidia Aftermath support for for debugging GPU crashes or hangs:  `-aftermath`
+* As recommended by NVidia, Aftermath is only enabled if the binary is compiled with `#define USE_NSIGHT_AFTERMATH` uncommented in Debug_DX12.h  
+* Requires the NVidia Aftermath SDK to be installed with the Aftermath Crash Monitor running on the local system  
+
 Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepixcpucapture`  
 * This is only required for programmatic captures. It is not required for PIX markers  
-* Captures can be triggered via the render debug menu  
+* Captures can be triggered via the render debug menu, or by attaching PIX to the SaberEngine process  
 * More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
 
-Enable RenderDoc programmatic capture: `-renderdoc`  
-* This is only required for programmatic captures. RenderDoc can still launch/capture without this  
+Enable RenderDoc captures: `-renderdoc`  
 
 Enable CPU-side normalization of vertex streams when requested: `-cpunormalizevertexstreams`  
 * This is provided for strict GLTF 2.0 compatibility but only rarely required if a vertex stream requires normalization, but is not received in a format compatible with GPU normalization  
@@ -127,7 +131,7 @@ Press the ` (tilde/grave) key to show/hide the ImGui overlay
 * A default HDR is included for IBL at `<project root>\Assets\DefaultIBL\default.hdr`  
   * GLTF files can override this default by placing a `default.hdr` file in an `IBL` folder alongside theGLTF file  
     * E.g. When loading `Some\Folder\Example.gltf`, a HDR at `Some\Folder\IBL\default.hdr` will be loaded at the same time as the GLTF file  
-  * Additional HDRs can also be imported from any location at runtime via the ImGui menus  
+  * Additional HDRs can also be imported from any location at runtime via the ImGui menus, or by drag-n-drop loading of .hdr files  
 
 
 ## Shaders, Effects, Techniques, Draw Styles
