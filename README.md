@@ -55,7 +55,7 @@ Saber Engine is continuously evolving. Its current features include:
 - **Asynchronous, reference-counted resource loading** system:
   - Supports work stealing
 
-And much more!
+Additional features are in development.
 
 
 ## Initial setup
