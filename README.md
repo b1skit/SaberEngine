@@ -37,6 +37,7 @@ Saber Engine is continuously evolving. Its current features include:
     - Image-based indirect lighting
   - **Soft shadows**: PCF & PCSS
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
+  - **Ray traced ambient occlusion** (RTAO) on ray tracing-capable APIs/GPUs
   - **ACES filmic response** tone mapping
   - Physically-based **camera** & exposure settings
   - Physically-based **emissive** lighting & bloom
