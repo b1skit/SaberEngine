@@ -33,7 +33,8 @@ Saber Engine is continuously evolving. Its current features include:
   - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
     - Image-based indirect lighting
     - Directional, point, and spot lights
-  - **Soft shadows**: PCF & PCSS
+  - **Soft shadows**: PCF & PCSS (raster-based)
+  - **Inline ray tracing** for shadows and transparency
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
   - **ACES filmic response** tone mapping
   - Physically-based **camera** & exposure settings
