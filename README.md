@@ -9,21 +9,13 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, 
 ## Features
 Saber Engine is continuously evolving. Its current features include:
 
+### Core Architecture
 - **Multi-threaded architecture** implemented in C++20
-- **Rendering API-agnostic**: Supports:
-  - **DirectX 12** (Agility SDK 1.611.2) *(default)*
-  - **OpenGL 4.6**
-  - *Upcoming Vulkan support*
-- **GPU-accelerated ray tracing** (DXR)
-- **Asynchronous** copy/graphics/compute pipelines
 - **Scriptable rendering pipeline**:
   - Graphics systems are implemented using a high-level, API-agnostic abstraction layer and combined through input/output dependencies defined in `.json`
   - Dynamically generates an optimized, thread-safe render graph at runtime
 - **Droid**: A custom offline shader compiler and C++ code generation tool
   - Effects/Techniques/DrawStyles are described via `.json` for dynamic runtime shader resolution
-- Supports both **bindless** and **slot-based** resource binding models
-- **Indexed buffer system** for automatic instancing and buffer indirection
-- **Entity Component System** (EnTT)
 - **GLTF 2.0** format support (cgltf):
   - Supports the `KHR_lights_punctual` extension with:
     - Directional lights
@@ -31,6 +23,16 @@ Saber Engine is continuously evolving. Its current features include:
     - Spot lights
   - Supports the `KHR_materials_emissive_strength` extension, allowing configurable emissive intensity  
   - Supports `KHR_materials_unlit` extension for unlit shading
+  - Supports `EXT_mesh_gpu_instancing` extension for GPU instancing
+
+### Rendering APIs
+- **Rendering API-agnostic**: Supports:
+  - **DirectX 12** (Agility SDK 1.611.2) *(default)*
+  - **OpenGL 4.6**
+  - *Upcoming Vulkan support*
+- **GPU-accelerated ray tracing** (DXR)
+- **Asynchronous** copy/graphics/compute pipelines
+- Supports both **bindless** and **slot-based** resource binding models
 - **Advanced rendering features**:
   - **Animation**: Skinning, morph targets, and keyframe node/transform animations
   - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
@@ -39,21 +41,26 @@ Saber Engine is continuously evolving. Its current features include:
   - **Inline ray tracing** shadows
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
   - **Ray traced ambient occlusion** (RTAO) on ray tracing-capable APIs/GPUs
-  - **ACES filmic response** tone mapping
+  - **ACES filmic response** and Reinhard tone mapping
   - Physically-based **camera** & exposure settings
   - Physically-based **emissive** lighting & bloom
   - **Camera frustum culling**
   - **GPU instancing**:
     - Automatically detects and combines instanceable batches into single draw calls
-    - Supports GLTF’s **EXT_mesh_gpu_instancing** extension
+
+### Resource Management
+- **Asynchronous, reference-counted resource loading** system:
+  - Supports work stealing
+- **Indexed buffer management system** for automatic instancing and buffer indirection LUT generation
 - **Batch pool** minimizes draw-call setup costs by reusing draw-call resources
+
+### Additional Features
+- **Entity Component System** (EnTT)
 - **Interactive UI** (ImGui):
   - Supports drag-and-drop loading of `.gltf` and `.hdr` files
 - **Comprehensive debugging tools**:
   - Real-time CPU/GPU frame timers
   - Support for **RenderDoc** and **PIX** programmatic capture APIs
-- **Asynchronous, reference-counted resource loading** system:
-  - Supports work stealing
 
 Additional features are in development.
 
