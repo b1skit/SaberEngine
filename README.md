@@ -7,9 +7,7 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering research & deve
 
 
 ## Features
-Saber Engine is continuously evolving. Its current features include:
-
-### Core Architecture
+#### Core Architecture:
 - **Multi-threaded architecture** implemented in C++20
 - **Scriptable rendering pipeline**:
   - Graphics systems are implemented using a high-level, API-agnostic abstraction layer & combined through input/output dependencies defined in `.json`
@@ -25,7 +23,7 @@ Saber Engine is continuously evolving. Its current features include:
   - Supports `KHR_materials_unlit` extension for unlit shading
   - Supports `EXT_mesh_gpu_instancing` extension for GPU instancing
 
-### Rendering APIs
+#### Rendering Functionality:
 - **Rendering API-agnostic**: Supports:
   - **DirectX 12** (Agility SDK 1.611.2) *(default)*
   - **OpenGL 4.6**
@@ -33,28 +31,28 @@ Saber Engine is continuously evolving. Its current features include:
 - **GPU-accelerated ray tracing** (DXR)
 - **Asynchronous** copy/graphics/compute pipelines
 - Supports both **bindless** and **slot-based** resource binding models
-- **Advanced rendering features**:
+- **Advanced graphics features**:
   - **Animation**: Skinning, morph targets, & keyframe node/transform animations
-  - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.):
+  - **HDR Physically-Based Lighting Model** (based on EA's Frostbite, Lagarde et al.)
     - Image-based indirect lighting
   - **Soft shadows**: PCF & PCSS
-  - **Inline ray tracing** shadows
+  - **Inline ray traced** shadows
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
-  - **Ray traced ambient occlusion** (RTAO) on ray tracing-capable APIs/GPUs
+  - **Ray traced ambient occlusion** (RTAO)
   - **ACES filmic response** and Reinhard tone mapping
   - Physically-based **camera** & exposure settings
   - Physically-based **emissive** lighting & bloom
   - **Camera frustum culling**
-  - **GPU instancing**:
+  - **GPU instancing**
     - Automatically detects & combines instanceable batches into single draw calls
 
-### Resource Management
+#### Resource Management:
 - **Asynchronous, reference-counted resource loading** system:
   - Supports work stealing
 - **Indexed buffer management system** for automatic instancing and buffer indirection LUT generation
 - **Batch pool** minimizes draw-call setup costs by reusing draw-call resources
 
-### Additional Features
+#### Additional Features:
 - **Entity Component System** (EnTT)
 - **Interactive UI** (ImGui):
   - Supports drag-&-drop loading of `.gltf` & `.hdr` files
@@ -62,7 +60,7 @@ Saber Engine is continuously evolving. Its current features include:
   - Real-time CPU/GPU frame timers
   - Support for **RenderDoc** & **PIX** programmatic capture APIs
 
-Additional features are in development.
+Saber Engine is continuously evolving. Additional features are always in development.
 
 
 ## Initial setup
