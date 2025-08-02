@@ -92,6 +92,7 @@ namespace pr
 	Camera::Camera(gr::Camera::Config const& camConfig, pr::Transform const* transform)
 		: m_transform(transform)
 		, m_cameraConfig(camConfig)
+		, m_initialCameraConfig(camConfig) // Store the original settings so we can reset to them
 		, m_isActive(false) // Cameras must be activated before rendering anything
 		, m_isDirty(true)
 	{
@@ -222,6 +223,12 @@ namespace pr
 			ImGui::SetItemTooltip("Independently expose the lens bloom contribution");
 
 			m_isDirty |= ImGui::Checkbox(std::format("Enable bloom deflicker##{}", uniqueID).c_str(), &m_cameraConfig.m_deflickerEnabled);
+
+			if (ImGui::Button("Reset"))
+			{
+				m_cameraConfig = m_initialCameraConfig;
+				m_isDirty = true;
+			}
 
 			ImGui::Unindent();
 		}

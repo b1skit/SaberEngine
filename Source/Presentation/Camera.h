@@ -59,6 +59,7 @@ namespace pr
 		pr::Transform const* m_transform; // We cache this for convenience due to a Camera's dependence on its Transform
 
 		gr::Camera::Config m_cameraConfig;
+		const gr::Camera::Config m_initialCameraConfig; // Store the original settings so we can reset to them
 		
 		bool m_isActive; // Is this camera actively used to render things? If not, we'll skip culling for it
 
