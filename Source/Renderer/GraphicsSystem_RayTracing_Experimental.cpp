@@ -2,15 +2,19 @@
 #include "Batch.h"
 #include "BatchBuilder.h"
 #include "GraphicsSystem_RayTracing_Experimental.h"
+#include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "Material.h"
 #include "RayTracingParamsHelpers.h"
 #include "RenderObjectIDs.h"
 #include "ShaderBindingTable.h"
+#include "TextureView.h"
 
+#include "Core/Assert.h"
 #include "Core/Config.h"
 
+#include "Core/Util/CastUtils.h"
 #include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/Shaders/Common/RayTracingParams.h"
@@ -141,6 +145,12 @@ namespace gr
 
 	void RayTracing_ExperimentalGraphicsSystem::ShowImGuiWindow()
 	{
+		if (!m_sceneTLAS || !*m_sceneTLAS)
+		{
+			ImGui::Text("No scene TLAS available");
+			return;
+		}
+
 		re::AccelerationStructure::TLASParams const* tlasParams =
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
@@ -235,9 +245,6 @@ namespace gr
 		if (ImGui::CollapsingHeader("Instanced Buffer LUT debugging"))
 		{
 			ImGui::Indent();
-
-			re::AccelerationStructure::TLASParams const* tlasParams =
-				dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 
 			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryOwnerIDs();
 
