@@ -13,11 +13,8 @@ ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
 
 
 [shader("closesthit")]
-void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
+void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-//#define TEST_VERTEX_STREAMS
-#define TEST_MATERIALS
-	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
@@ -33,9 +30,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	
 	float3 colorOut = float3(0, 0, 0);
-	
-#if defined(TEST_MATERIALS)
-	
+		
 	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
 	const StructuredBuffer<InstancedBufferLUTData> instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx];
 	
@@ -115,38 +110,12 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	// Combine:
 	colorOut = gbuffer.LinearAlbedo * vertexColor * baseColorFactor;
 	
-	
-#elif defined(TEST_VERTEX_STREAMS)
-	const uint colorStreamIdx = vertexStreamLUT[geoIdx].g_UV1ColorIndex.y;
-	const StructuredBuffer<float4> colorStream = VertexStreams_Float4[colorStreamIdx];
-
-	
-#if defined(OPAQUE_SINGLE_SIDED)
-	// Interpolate the vertex color:
-	colorOut = 
-		colorStream[vertexIndexes.x].rgb * barycentrics.x +
-		colorStream[vertexIndexes.y].rgb * barycentrics.y +
-		colorStream[vertexIndexes.z].rgb * barycentrics.z;
-#elif defined(CLIP_SINGLE_SIDED)
-	colorOut = float3(1,0,0);
-#elif defined(OPAQUE_DOUBLE_SIDED)
-	colorOut = float3(0,1,1);
-#elif defined(CLIP_DOUBLE_SIDED)
-	colorOut = float3(1,0,1);
-#elif defined(BLEND_SINGLE_SIDED)
-	colorOut = float3(1,1,0);
-#elif defined(BLEND_DOUBLE_SIDED)
-	colorOut = float3(1,1,1);
-#endif // OPAQUE_SINGLE_SIDED
-
-#endif // TEST_VERTEX_STREAMS
-	
 	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
 }
 
 
 [shader("anyhit")]
-void AnyHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
+void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
 {
 	////float3 barycentrics =
 	////  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
@@ -171,10 +140,10 @@ void AnyHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleInte
 
 
 [shader("raygeneration")]
-void RayGeneration_Experimental()
+void RayGeneration()
 {
 	// Initialize the ray payload
-	HitInfo_Experimental payload;
+	PathTracer_HitInfo payload;
 	payload.g_colorAndDistance = float4(0, 0, 0, 0);
 
 	// Get the location within the dispatched 2D grid of work items
@@ -267,38 +236,17 @@ void RayGeneration_Experimental()
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
-#if defined(RAY_GEN_A)
 	outputTex[launchIndex] = payload.g_colorAndDistance;
-#endif
-	
-#if defined(RAY_GEN_B)
-	const float scaleFactor = 0.5f;
-	outputTex[launchIndex]  = payload.g_colorAndDistance * float4(scaleFactor, scaleFactor, scaleFactor, 1.f);
-#endif
 }
 
 
 [shader("miss")]
-void Miss_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
+void Miss(inout PathTracer_HitInfo payload : SV_RayPayload)
 {
 	uint2 launchIndex = DispatchRaysIndex().xy;
 	float2 dims = float2(DispatchRaysDimensions().xy);
 
 	float ramp = launchIndex.y / dims.y;
 	
-#if defined(MISS_A)
 	payload.g_colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
-#elif defined(MISS_B)
-	payload.g_colorAndDistance = float4(1.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
-#else
-	// Default case if neither MISS_A nor MISS_B is defined
-	payload.g_colorAndDistance = float4(0.0f, 0.0f, 0.0f, -1.0f); // Default to black
-#endif
-}
-
-
-[shader("callable")]
-void Callable_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
-{
-	//
 }

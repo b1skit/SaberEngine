@@ -147,6 +147,7 @@
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="GraphicsSystemCommon.h" />
     <ClInclude Include="GraphicsSystem_DeferredIBL.h" />
+    <ClInclude Include="GraphicsSystem_ReferencePathTracer.h" />
     <ClInclude Include="GraphicsSystem_RTAO.h" />
     <ClInclude Include="GraphicsSystem_SceneAccelerationStructure.h" />
     <ClInclude Include="GraphicsSystem_BatchManager.h" />
@@ -296,6 +297,7 @@
     <ClCompile Include="GraphicsSystemCommon.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredIBL.cpp" />
+    <ClCompile Include="GraphicsSystem_ReferencePathTracer.cpp" />
     <ClCompile Include="GraphicsSystem_RTAO.cpp" />
     <ClCompile Include="GraphicsSystem_SceneAccelerationStructure.cpp" />
     <ClCompile Include="GraphicsSystem_BatchManager.cpp" />

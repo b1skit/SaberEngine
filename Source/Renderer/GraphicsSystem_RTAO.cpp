@@ -20,6 +20,8 @@
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/RTAOParams.h"
 
+#include <_generated/DrawStyles.h>
+
 
 namespace
 {
@@ -144,6 +146,19 @@ namespace gr
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
+			if (!(*m_sceneTLAS)->HasShaderBindingTable(m_RTAOEffectID))
+			{
+				(*m_sceneTLAS)->AddShaderBindingTable(
+					m_RTAOEffectID,
+					re::ShaderBindingTable::SBTParams{
+						.m_rayGenStyles = { effect::drawstyle::RayGen_Default, },
+						.m_missStyles = { effect::drawstyle::Miss_Default, },
+						.m_hitgroupStyles = effect::drawstyle::HitGroup_AO,
+						.m_effectID = m_RTAOEffectID,
+						.m_maxPayloadByteSize = sizeof(RTAO_HitInfo),
+						.m_maxRecursionDepth = 1, });
+			}
+
 			re::BufferInput const& indexedBufferLUT = grutil::GetInstancedBufferLUTBufferInput(
 				(*m_sceneTLAS).get(),
 				m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager());

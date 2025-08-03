@@ -575,6 +575,9 @@
     <ClInclude Include="RenderPipelineDesc.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_ReferencePathTracer.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -959,6 +962,9 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="RenderPipelineDesc.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystem_ReferencePathTracer.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>

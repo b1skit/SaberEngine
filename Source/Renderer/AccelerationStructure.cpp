@@ -265,9 +265,7 @@ namespace re
 
 
 	std::shared_ptr<AccelerationStructure> AccelerationStructure::CreateTLAS(
-		char const* name,
-		std::unique_ptr<TLASParams>&& tlasParams,
-		std::map<EffectID, re::ShaderBindingTable::SBTParams>&& sbtParams)
+		char const* name, std::unique_ptr<TLASParams>&& tlasParams)
 	{
 		SEAssert(tlasParams, "Invalid TLASParams");
 
@@ -288,15 +286,6 @@ namespace re
 		// Create the bindless LUT buffer:
 		newTLASParams->m_bindlessResourceLUT =
 			CreateBindlessLUT(newTLASParams->m_blasInstances, newTLASParams->m_blasGeoOwnerIDs);
-
-		// Create the ShaderBindingTable:
-		for (auto const& entry : sbtParams)
-		{
-			newTLASParams->m_SBTs.emplace(
-				entry.first,
-				re::ShaderBindingTable::Create(
-					entry.first.GetEffect()->GetName().c_str(), entry.second, newAccelerationStructure));
-		}
 		
 		// Register for API creation:
 		newAccelerationStructure->m_platObj->GetContext()->RegisterForCreate(newAccelerationStructure);
@@ -342,11 +331,15 @@ namespace re
 
 			brm->UnregisterResource(tlasParams->m_srvTLASResourceHandle);
 
-			for (auto& sbt : tlasParams->m_SBTs)
 			{
-				sbt.second->Destroy();
+				std::unique_lock<std::shared_mutex> lock(tlasParams->m_SBTsMutex);
+
+				for (auto& sbt : tlasParams->m_SBTs)
+				{
+					sbt.second->Destroy();
+				}
+				tlasParams->m_SBTs.clear();
 			}
-			tlasParams->m_SBTs.clear();
 		}
 	}
 
@@ -357,5 +350,27 @@ namespace re
 		, m_asParams(std::move(createParams))
 		, m_type(type)
 	{
+	}
+
+
+	void AccelerationStructure::AddShaderBindingTable(
+		EffectID effectID, re::ShaderBindingTable::SBTParams const& sbtParams)
+	{
+		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Can only add a SBT to a TLAS");
+
+		re::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+
+		{
+			std::unique_lock<std::shared_mutex> lock(tlasParams->m_SBTsMutex);
+
+			SEAssert(tlasParams->m_SBTs.contains(effectID) == false,
+				"Shader binding table for the given EffectID has already been registered");
+
+			// Note: The SBT self-registers for API creation, so we don't need to do that here
+			tlasParams->m_SBTs.emplace(
+				effectID,
+				re::ShaderBindingTable::Create(effectID.GetEffect()->GetName().c_str(), sbtParams, this));
+		}		
 	}
 }

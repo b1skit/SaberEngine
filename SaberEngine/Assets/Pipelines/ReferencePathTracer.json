@@ -1,0 +1,95 @@
+{
+	"PipelineMetadata":
+	{
+		"Name": "Reference Path Tracer",
+		"ExcludedPlatforms": [ "OpenGL" ]
+	},
+	"Pipeline": [
+		{
+			"GraphicsSystem": "Culling"
+		},
+		{
+			"GraphicsSystem": "VertexAnimation"
+			// No culling inputs: We must animate everything when ray tracing
+		},
+		{
+			"GraphicsSystem": "SceneAccelerationStructure",
+			"Inputs": [
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "BatchManager",
+			"Inputs": [
+				{
+					"GraphicsSystem": "Culling",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewCullingResults",
+							"DestinationName": "ViewCullingResults"
+						}
+					]
+				},
+				{
+					"GraphicsSystem": "VertexAnimation",
+					"DataDependencies": [
+						{
+							"SourceName": "AnimatedVertexStreams",
+							"DestinationName": "AnimatedVertexStreams"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "ReferencePathTracer",
+			"Inputs": [
+				{
+					"GraphicsSystem": "SceneAccelerationStructure",
+					"DataDependencies": [
+						{
+							"SourceName": "SceneTLAS",
+							"DestinationName": "SceneTLAS"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Tonemapping",
+			"Inputs": [
+				{
+					"GraphicsSystem": "ReferencePathTracer",
+					"TextureDependencies": [
+						{
+							"SourceName": "LightAccumulation",
+							"DestinationName": "TonemappingTarget"
+						}
+					]
+				}
+			]
+		},
+		{
+			"GraphicsSystem": "Debug",
+			"Inputs": [
+				{
+					"GraphicsSystem": "BatchManager",
+					"DataDependencies": [
+						{
+							"SourceName": "ViewBatches",
+							"DestinationName": "ViewBatches"
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -4,8 +4,8 @@
 #include "BatchBuilder.h"
 #include "Buffer.h"
 #include "EnumTypes.h"
-#include "GraphicsSystem_SceneAccelerationStructure.h"
 #include "GraphicsSystem.h"
+#include "GraphicsSystem_SceneAccelerationStructure.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "Material.h"
@@ -13,6 +13,7 @@
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "RenderPipeline.h"
+#include "ShaderBindingTable.h"
 #include "Stage.h"
 #include "TransformRenderData.h"
 #include "VertexStream.h"
@@ -22,8 +23,8 @@
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Util/CastUtils.h"
-#include "Core/Util/HashUtils.h"
 #include "Core/Util/HashKey.h"
+#include "Core/Util/HashUtils.h"
 
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 
@@ -469,42 +470,8 @@ namespace gr
 
 				if (tlasParams->GetBLASCount() > 0)
 				{
-					// Configure the shader binding table:	
-					// TODO: This should be automatically populated
-
-					std::map<EffectID, re::ShaderBindingTable::SBTParams> sbtParams;
-					
-					const EffectID rtEffectID = effect::Effect::ComputeEffectID("RayTracing_Experimental");
-					sbtParams.emplace(
-						rtEffectID,
-						re::ShaderBindingTable::SBTParams{
-							.m_rayGenStyles = {
-								effect::drawstyle::RT_Experimental_RayGen_A,
-								effect::drawstyle::RT_Experimental_RayGen_B,
-							},
-							.m_missStyles = {
-								effect::drawstyle::RT_Experimental_Miss_Blue,
-								effect::drawstyle::RT_Experimental_Miss_Red,
-							},
-							.m_hitgroupStyles = effect::drawstyle::RT_Experimental_HitGroup,
-							.m_effectID = rtEffectID,
-							.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
-							.m_maxRecursionDepth = 2, });
-
-					const EffectID rtAOEffectID = effect::Effect::ComputeEffectID("RTAO");
-					sbtParams.emplace(
-						rtAOEffectID,
-						re::ShaderBindingTable::SBTParams{
-							.m_rayGenStyles = { effect::drawstyle::RTAO_RayGen, },
-							.m_missStyles = { effect::drawstyle::RTAO_Miss, },
-							.m_hitgroupStyles = effect::drawstyle::RTAO_HitGroup,
-							.m_effectID = rtAOEffectID,
-							.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
-							.m_maxRecursionDepth = 1, });
-
 					// Create a new AccelerationStructure:
-					m_sceneTLAS = re::AccelerationStructure::CreateTLAS(
-						"Scene TLAS", std::move(tlasParams), std::move(sbtParams));
+					m_sceneTLAS = re::AccelerationStructure::CreateTLAS("Scene TLAS", std::move(tlasParams));
 				}
 				else
 				{

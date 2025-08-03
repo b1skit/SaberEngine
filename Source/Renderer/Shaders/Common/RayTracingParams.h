@@ -113,13 +113,19 @@ struct DescriptorIndexData
 
 struct raypayload HitInfo_Experimental
 {
-	float4 colorAndDistance read(caller) write(caller, anyhit, closesthit, miss);
+	float4 g_colorAndDistance read(caller) write(caller, anyhit, closesthit, miss);
 };
 
 
 struct raypayload RTAO_HitInfo
 {
 	float g_visibility read(caller) write(caller, miss, anyhit);
+};
+
+
+struct raypayload PathTracer_HitInfo
+{
+	float4 g_colorAndDistance read(caller) write(caller, anyhit, closesthit, miss);
 };
 
 

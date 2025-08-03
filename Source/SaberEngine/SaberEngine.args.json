@@ -145,6 +145,10 @@
         {
           "Id": "84306581-d976-4879-8c44-018b3d4130ac",
           "Command": "-scenepipeline RayTracing_Experimental.json"
+        },
+        {
+          "Id": "ae97e238-34be-4560-ba6c-5bf435ca7526",
+          "Command": "-scenepipeline ReferencePathTracer.json"
         }
       ]
     },

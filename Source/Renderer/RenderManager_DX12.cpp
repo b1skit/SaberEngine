@@ -434,7 +434,7 @@ namespace dx12
 									SEAssert(!batchRTParams.m_ASInput.m_shaderName.empty(),
 										"Acceleration structure input shader name is empty");
 
-									std::shared_ptr<re::ShaderBindingTable> const& sbt = 
+									std::shared_ptr<re::ShaderBindingTable const> const& sbt = 
 										batchRTParams.m_ASInput.m_accelerationStructure->GetShaderBindingTable(
 											(*batch)->GetEffectID());
 

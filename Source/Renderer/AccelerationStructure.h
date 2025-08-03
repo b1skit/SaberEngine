@@ -201,7 +201,7 @@ namespace re
 
 			std::vector<uint32_t> const& GetBLASGeometryOwnerIDs() const;
 
-			std::shared_ptr<re::ShaderBindingTable> const& GetShaderBindingTable(EffectID) const;
+			std::shared_ptr<re::ShaderBindingTable const> GetShaderBindingTable(EffectID) const;
 
 
 		private: // Populated internally:
@@ -212,6 +212,7 @@ namespace re
 			std::vector<uint32_t> m_blasGeoOwnerIDs; // Flattened list of all BLAS geometry elements
 
 			std::map<EffectID, std::shared_ptr<re::ShaderBindingTable>> m_SBTs;
+			mutable std::shared_mutex m_SBTsMutex;
 
 			ResourceHandle m_srvTLASResourceHandle = INVALID_RESOURCE_IDX;
 		};
@@ -229,11 +230,7 @@ namespace re
 	public:
 		static std::shared_ptr<AccelerationStructure> CreateBLAS(char const* name, std::unique_ptr<BLASParams>&&);
 		
-
-		static std::shared_ptr<AccelerationStructure> CreateTLAS(
-			char const* name, 
-			std::unique_ptr<TLASParams>&&, 
-			std::map<EffectID, re::ShaderBindingTable::SBTParams>&&);
+		static std::shared_ptr<AccelerationStructure> CreateTLAS(char const* name, std::unique_ptr<TLASParams>&&);
 
 
 	public:
@@ -259,7 +256,10 @@ namespace re
 		ResourceHandle GetResourceHandle() const;
 		re::BufferInput const& GetBindlessVertexStreamLUT() const;
 
-		std::shared_ptr<re::ShaderBindingTable> GetShaderBindingTable(EffectID) const;
+		std::shared_ptr<re::ShaderBindingTable const> GetShaderBindingTable(EffectID) const;
+
+		bool HasShaderBindingTable(EffectID effectID) const;
+		void AddShaderBindingTable(EffectID, re::ShaderBindingTable::SBTParams const&);
 
 
 	private:
@@ -269,7 +269,8 @@ namespace re
 	private:
 		std::unique_ptr<PlatObj> m_platObj;
 		std::unique_ptr<IASParams> m_asParams;
-		Type m_type;
+
+		Type m_type;		
 
 
 	private: // No copies allowed
@@ -331,7 +332,7 @@ namespace re
 	}
 
 
-	inline std::shared_ptr<re::ShaderBindingTable> AccelerationStructure::GetShaderBindingTable(EffectID effectID) const
+	inline std::shared_ptr<re::ShaderBindingTable const> AccelerationStructure::GetShaderBindingTable(EffectID effectID) const
 	{
 		re::AccelerationStructure::TLASParams* tlasParams =
 			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
@@ -341,6 +342,21 @@ namespace re
 		SEAssert(tlasParams->m_SBTs.contains(effectID), "No SBT associated with this EffectID");
 
 		return tlasParams->GetShaderBindingTable(effectID);
+	}
+
+
+	inline bool AccelerationStructure::HasShaderBindingTable(EffectID effectID) const
+	{
+		SEAssert(m_type == re::AccelerationStructure::Type::TLAS, "Only a TLAS has SBTs");
+
+		re::AccelerationStructure::TLASParams* tlasParams =
+			dynamic_cast<re::AccelerationStructure::TLASParams*>(m_asParams.get());
+
+		{
+			std::shared_lock<std::shared_mutex> lock(tlasParams->m_SBTsMutex);
+
+			return tlasParams->m_SBTs.contains(effectID);
+		}
 	}
 
 
@@ -454,7 +470,7 @@ namespace re
 	}
 
 
-	inline std::shared_ptr<re::ShaderBindingTable> const& re::AccelerationStructure::TLASParams::GetShaderBindingTable(
+	inline std::shared_ptr<re::ShaderBindingTable const> re::AccelerationStructure::TLASParams::GetShaderBindingTable(
 		EffectID effectID) const
 	{
 		SEAssert(m_SBTs.contains(effectID), "No SBT associated with this EffectID");

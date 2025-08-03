@@ -19,7 +19,7 @@
 namespace re
 {
 	std::shared_ptr<re::ShaderBindingTable> ShaderBindingTable::Create(
-		char const* name, SBTParams const& sbtParams, std::shared_ptr<re::AccelerationStructure> const& tlas)
+		char const* name, SBTParams const& sbtParams, re::AccelerationStructure const* tlas)
 	{
 		std::shared_ptr<re::ShaderBindingTable> newSBT;
 		newSBT.reset(new ShaderBindingTable(name, sbtParams));
@@ -65,7 +65,7 @@ namespace re
 	}
 
 
-	void ShaderBindingTable::Initialize(std::shared_ptr<re::AccelerationStructure> const& tlas)
+	void ShaderBindingTable::Initialize(re::AccelerationStructure const* tlas)
 	{
 		SEAssert(tlas, "Invalid TLAS");
 

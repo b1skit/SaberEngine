@@ -46,7 +46,7 @@ namespace re
 			bool m_useLocalRootSignatures = false;
 		};
 		static std::shared_ptr<re::ShaderBindingTable> Create(
-			char const* name, SBTParams const&, std::shared_ptr<re::AccelerationStructure> const&);
+			char const* name, SBTParams const&, re::AccelerationStructure const*);
 
 		ShaderBindingTable(ShaderBindingTable&&) noexcept = default;
 		ShaderBindingTable& operator=(ShaderBindingTable&&) noexcept = default;
@@ -63,7 +63,7 @@ namespace re
 
 
 	private:
-		void Initialize(std::shared_ptr<re::AccelerationStructure> const&);
+		void Initialize(re::AccelerationStructure const*);
 
 
 	private:

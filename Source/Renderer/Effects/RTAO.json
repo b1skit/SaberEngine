@@ -7,7 +7,7 @@
 			// Hit groups:
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -15,7 +15,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -23,7 +23,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -31,7 +31,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -39,7 +39,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -47,7 +47,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "AO" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -57,17 +57,17 @@
 			// Ray gen:
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "RayGen" }
+					{ "Rule" : "RayGen", "Mode" : "Default" }
 				],
-				"Technique": "RTAO_RayGen"
+				"Technique": "RTAO_RayGen_Default"
 			},
 
 			// Miss:
 			{
 				"Conditions": [
-					{ "Rule" : "RTAO", "Mode" : "Miss" }
+					{ "Rule" : "Miss", "Mode" : "Default" }
 				],
-				"Technique": "RTAO_Miss"
+				"Technique": "RTAO_Miss_Default"
 			}
 
 		],
@@ -97,7 +97,7 @@
 				"AnyHitShader": "RTAO",
 				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
 				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
-			},
+		  	},
 			{
 				"Name": "RTAO_HitGroup_BlendSingleSided",
 				"AnyHitShader": "RTAO",
@@ -113,14 +113,14 @@
 
 			// Ray gen:
 			{
-				"Name": "RTAO_RayGen",
+				"Name": "RTAO_RayGen_Default",
 				"RayGenerationShader": "RTAO",
 				"RayGenerationShaderEntryPoint": "RTAO_RayGeneration"
 			},
 
 			// Miss:
 			{
-				"Name": "RTAO_Miss",
+				"Name": "RTAO_Miss_Default",
 				"MissShader": "RTAO",
 				"MissShaderEntryPoint": "RTAO_Miss"
 			}

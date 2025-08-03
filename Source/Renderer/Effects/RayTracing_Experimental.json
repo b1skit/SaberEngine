@@ -4,18 +4,19 @@
 		"ExcludedPlatforms": [ "OpenGL" ],
 		"Parents" : [],
 		"DrawStyles" :  [
-			// Hit groups:
+			// Hit groups: Provide an "Experimental" hitgroup for Effects that inherit from this
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
 				"Technique": "RT_Experimental_HitGroup_OpaqueSingleSided"
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -23,7 +24,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -31,7 +32,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -39,7 +40,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
@@ -47,7 +48,7 @@
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "HitGroup" },
+					{ "Rule" : "HitGroup", "Mode" : "Experimental" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
@@ -57,29 +58,29 @@
 			// Ray gen:
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RayGen_A" }
+					{ "Rule" : "RayGen", "Mode" : "Default" }
 				],
-				"Technique": "RayGen_A"
+				"Technique": "RT_Experimental_Default"
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "RayGen_B" }
+					{ "Rule" : "RayGen", "Mode" : "Alt0" }
 				],
-				"Technique": "RayGen_B"
+				"Technique": "RT_Experimental_RayGen_Alt0"
 			},
 
 			// Miss:
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "Miss_Blue" }
+					{ "Rule" : "Miss", "Mode" : "Default" }
 				],
-				"Technique": "Miss_Blue"
+				"Technique": "RT_Experimental_Miss_Default"
 			},
 			{
 				"Conditions": [
-					{ "Rule" : "RT_Experimental", "Mode" : "Miss_Red" }
+					{ "Rule" : "Miss", "Mode" : "Alt0" }
 				],
-				"Technique": "Miss_Red"
+				"Technique": "RT_Experimental_Miss_Alt0"
 			}
 
 			// Callable:
@@ -151,13 +152,13 @@
 
 			// Ray gen:
 			{
-				"Name": "RayGen_A",
+				"Name": "RT_Experimental_Default",
 				"RayGenerationShader": "RayTracing_Experimental",
 				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
 				"RayGenerationShaderDefines": ["RAY_GEN_A"]
 			},
 			{
-				"Name": "RayGen_B",
+				"Name": "RT_Experimental_RayGen_Alt0",
 				"RayGenerationShader": "RayTracing_Experimental",
 				"RayGenerationShaderEntryPoint": "RayGeneration_Experimental",
 				"RayGenerationShaderDefines": ["RAY_GEN_B"]
@@ -165,21 +166,21 @@
 
 			// Miss:
 			{
-				"Name": "Miss_Blue",
+				"Name": "RT_Experimental_Miss_Default",
 				"MissShader": "RayTracing_Experimental",
 				"MissShaderEntryPoint": "Miss_Experimental",
-				"MissShaderDefines": ["MISS_BLUE"]
+				"MissShaderDefines": ["MISS_A"]
 			},
 			{
-				"Name": "Miss_Red",
+				"Name": "RT_Experimental_Miss_Alt0",
 				"MissShader": "RayTracing_Experimental",
 				"MissShaderEntryPoint": "Miss_Experimental",
-				"MissShaderDefines": ["MISS_RED"]
+				"MissShaderDefines": ["MISS_B"]
 			},
 
 			// Callable:
 			{
-				"Name": "RT_Experimental_Callable",
+				"Name": "RT_Experimental_Callable_Default",
 				"CallableShader": "RayTracing_Experimental",
 				"CallableShaderEntryPoint": "Callable_Experimental",
 				"CallableShaderDefines": []

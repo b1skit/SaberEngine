@@ -1,9 +1,7 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "BatchBuilder.h"
-#include "BatchHandle.h"
-#include "BufferView.h"
-#include "GraphicsSystem_RayTracing_Experimental.h"
+#include "GraphicsSystem_ReferencePathTracer.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
@@ -27,33 +25,33 @@
 
 namespace gr
 {
-	RayTracing_ExperimentalGraphicsSystem::RayTracing_ExperimentalGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+	ReferencePathTracerGraphicsSystem::ReferencePathTracerGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
-		, m_rtEffectID(effect::Effect::ComputeEffectID("RayTracing_Experimental"))
+		, m_refPathTracerEffectID(effect::Effect::ComputeEffectID("ReferencePathTracer"))
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
 		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
-	{		
+	{
 	}
 
 
-	void RayTracing_ExperimentalGraphicsSystem::RegisterInputs()
+	void ReferencePathTracerGraphicsSystem::RegisterInputs()
 	{
 		RegisterDataInput(k_sceneTLASInput);
 	}
 
 
-	void RayTracing_ExperimentalGraphicsSystem::RegisterOutputs()
+	void ReferencePathTracerGraphicsSystem::RegisterOutputs()
 	{
-		RegisterTextureOutput("RayTracingTarget", &m_rtTarget);
+		RegisterTextureOutput("LightAccumulation", &m_rtTarget);
 	}
 
 
-	void RayTracing_ExperimentalGraphicsSystem::InitPipeline(
+	void ReferencePathTracerGraphicsSystem::InitPipeline(
 		gr::StagePipeline& pipeline,
-		TextureDependencies const&, 
-		BufferDependencies const&, 
+		TextureDependencies const&,
+		BufferDependencies const&,
 		DataDependencies const& dataDependencies)
 	{
 		m_stagePipeline = &pipeline;
@@ -61,10 +59,10 @@ namespace gr
 		m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 
 		// Ray tracing stage:
-		m_rtStage = gr::Stage::CreateRayTracingStage("RayTracing_Experimental", gr::Stage::RayTracingStageParams{});
-		
+		m_rtStage = gr::Stage::CreateRayTracingStage("ReferencePathTracer", gr::Stage::RayTracingStageParams{});
+
 		// Create a UAV target (Note: We access this bindlessly):
-		m_rtTarget = re::Texture::Create("RayTracing_Experimental_Target",
+		m_rtTarget = re::Texture::Create("Light Accumulation",
 			re::Texture::TextureParams{
 				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
 				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
@@ -80,28 +78,22 @@ namespace gr
 	}
 
 
-	void RayTracing_ExperimentalGraphicsSystem::PreRender()
+	void ReferencePathTracerGraphicsSystem::PreRender()
 	{
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
-			if (!(*m_sceneTLAS)->HasShaderBindingTable(m_rtEffectID))
+			if (!(*m_sceneTLAS)->HasShaderBindingTable(m_refPathTracerEffectID))
 			{
 				(*m_sceneTLAS)->AddShaderBindingTable(
-					m_rtEffectID,
+					m_refPathTracerEffectID,
 					re::ShaderBindingTable::SBTParams{
-						.m_rayGenStyles = {
-							effect::drawstyle::RayGen_Default,
-							effect::drawstyle::RayGen_Alt0,
-						},
-						.m_missStyles = {
-							effect::drawstyle::Miss_Default,
-							effect::drawstyle::Miss_Alt0,
-						},
-						.m_hitgroupStyles = effect::drawstyle::HitGroup_Experimental,
-						.m_effectID = m_rtEffectID,
-						.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
-						.m_maxRecursionDepth = 2, });
+						.m_rayGenStyles = { effect::drawstyle::RayGen_Default, },
+						.m_missStyles = { effect::drawstyle::Miss_Default, },
+						.m_hitgroupStyles = effect::drawstyle::HitGroup_Reference,
+						.m_effectID = m_refPathTracerEffectID,
+						.m_maxPayloadByteSize = sizeof(PathTracer_HitInfo),
+						.m_maxRecursionDepth = 1, });
 			}
 
 			re::BufferInput const& indexedBufferLUT = grutil::GetInstancedBufferLUTBufferInput(
@@ -115,7 +107,7 @@ namespace gr
 					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
 					static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
 					1u))
-				.SetEffectID(m_rtEffectID)
+				.SetEffectID(m_refPathTracerEffectID)
 				.SetRayGenShaderIdx(m_rayGenIdx)
 				.Build());
 
@@ -135,7 +127,7 @@ namespace gr
 			// Note: We set our Buffers on the Batch to maintain their lifetime; RT uses bindless resources so the
 			// buffer is not directly bound
 			rtBatch.SetSingleFrameBuffer(indexedBufferLUT);
-			rtBatch.SetSingleFrameBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);			
+			rtBatch.SetSingleFrameBuffer(DescriptorIndexData::s_shaderName, descriptorIndexes);
 			rtBatch.SetSingleFrameBuffer(TraceRayData::s_shaderName, traceRayParams);
 
 			SEAssert((*m_sceneTLAS)->GetResourceHandle() != INVALID_RESOURCE_IDX &&
@@ -145,17 +137,17 @@ namespace gr
 
 			// Set root constants for the frame:
 			const glm::uvec4 rootConstants(
-				(*m_sceneTLAS)->GetResourceHandle(),								// SceneBVH[]
+				(*m_sceneTLAS)->GetResourceHandle(),						// SceneBVH[]
 				traceRayParams->GetResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
 				descriptorIndexes->GetResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
-				0);																	// unused
-			
+				0);															// unused
+
 			m_rtStage->SetRootConstant("RootConstants0", &rootConstants, re::DataType::UInt4);
 		}
 		else
 		{
 			std::shared_ptr<gr::ClearRWTexturesStage> clearStage =
-				gr::Stage::CreateSingleFrameRWTextureClearStage("RayTracing_Experimental Target clear stage");
+				gr::Stage::CreateSingleFrameRWTextureClearStage("Reference Path Tracer Target clear stage");
 
 			clearStage->AddSingleFrameRWTextureInput(m_rtTarget, re::TextureView(m_rtTarget));
 			clearStage->SetClearValue(glm::vec4(0.f));
@@ -165,7 +157,7 @@ namespace gr
 	}
 
 
-	void RayTracing_ExperimentalGraphicsSystem::ShowImGuiWindow()
+	void ReferencePathTracerGraphicsSystem::ShowImGuiWindow()
 	{
 		if (!m_sceneTLAS || !*m_sceneTLAS)
 		{
@@ -177,7 +169,8 @@ namespace gr
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
 
-		std::shared_ptr<re::ShaderBindingTable const> const& sbt = tlasParams->GetShaderBindingTable(m_rtEffectID);
+		std::shared_ptr<re::ShaderBindingTable const> const& sbt = 
+			tlasParams->GetShaderBindingTable(m_refPathTracerEffectID);
 
 		ImGui::Text("Effect Shader Binding Table: \"%s\"", sbt->GetName().c_str());
 

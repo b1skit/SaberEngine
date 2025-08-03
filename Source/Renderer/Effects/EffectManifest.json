@@ -9,6 +9,7 @@
 		"GLTF_Unlit",
 		"MipGeneration",
 		"RayTracing_Experimental",
+		"ReferencePathTracer",
 		"RTAO",
 		"Skybox",
 		"Tonemapping",

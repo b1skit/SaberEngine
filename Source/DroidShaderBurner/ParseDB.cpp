@@ -119,7 +119,7 @@ namespace
 				newTechnique.InheritFrom(parent);
 			}
 
-			// If an Effect contains an "ExcludedPlatforms" entry, we propagate it to all of its effects
+			// If an Effect contains an "ExcludedPlatforms" entry, we propagate it to all of its Techniques
 			for (auto const& effectExcludedPlatform : effectExcludedPlatforms)
 			{
 				newTechnique.ExcludedPlatforms.emplace(std::move(effectExcludedPlatform));

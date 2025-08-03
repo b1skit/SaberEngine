@@ -10,7 +10,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "FillGBuffer_SingleSidedOpaque"
+				"Technique": "GLTF_PBRMR_FillGBuffer_SingleSidedOpaque"
 			},
 			{
 				"Conditions": [
@@ -18,7 +18,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "FillGBuffer_SingleSidedAlphaClip"
+				"Technique": "GLTF_PBRMR_FillGBuffer_SingleSidedAlphaClip"
 			},
 			{
 				"Conditions": [
@@ -26,7 +26,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "FillGBuffer_DoubleSidedOpaque"
+				"Technique": "GLTF_PBRMR_FillGBuffer_DoubleSidedOpaque"
 			},
 			{
 				"Conditions": [
@@ -34,7 +34,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "FillGBuffer_DoubleSidedAlphaClip"
+				"Technique": "GLTF_PBRMR_FillGBuffer_DoubleSidedAlphaClip"
 			},
 
 			// Transparency:
@@ -44,7 +44,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "AlphaBlend_SingleSided"
+				"Technique": "GLTF_PBRMR_AlphaBlend_SingleSided"
 			},
 			{
 				"Conditions": [
@@ -53,7 +53,7 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
 				],
-				"Technique": "AlphaBlend_SingleSided_RTShadows"
+				"Technique": "GLTF_PBRMR_AlphaBlend_SingleSided_RTShadows"
 			},
 			{
 				"Conditions": [
@@ -61,7 +61,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "AlphaBlend_DoubleSided"
+				"Technique": "GLTF_PBRMR_AlphaBlend_DoubleSided"
 			},
 			{
 				"Conditions": [
@@ -70,7 +70,7 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Double" },
 					{ "Rule": "ShadowMode", "Mode": "RayTraced" }
 				],
-				"Technique": "AlphaBlend_DoubleSided_RTShadows"
+				"Technique": "GLTF_PBRMR_AlphaBlend_DoubleSided_RTShadows"
 			},
 
 			// 2D Shadows:
@@ -80,7 +80,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_2D_SingleSided_Opaque"
+				"Technique": "GLTF_PBRMR_Shadow_2D_SingleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -88,7 +88,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_2D_SingleSided_AlphaMask"
+				"Technique": "GLTF_PBRMR_Shadow_2D_SingleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -96,7 +96,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_2D_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+				"Technique": "GLTF_PBRMR_Shadow_2D_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
 			},
 			{
 				"Conditions": [
@@ -104,7 +104,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_2D_DoubleSided_Opaque"
+				"Technique": "GLTF_PBRMR_Shadow_2D_DoubleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -112,7 +112,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_2D_DoubleSided_AlphaMask"
+				"Technique": "GLTF_PBRMR_Shadow_2D_DoubleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -120,7 +120,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_2D_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+				"Technique": "GLTF_PBRMR_Shadow_2D_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
 			},
 
 			// Cubemap shadows:
@@ -130,7 +130,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_Cube_SingleSided_Opaque"
+				"Technique": "GLTF_PBRMR_Shadow_Cube_SingleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -138,7 +138,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_Cube_SingleSided_AlphaMask"
+				"Technique": "GLTF_PBRMR_Shadow_Cube_SingleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -146,7 +146,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "Shadow_Cube_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+				"Technique": "GLTF_PBRMR_Shadow_Cube_SingleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
 			},
 			{
 				"Conditions": [
@@ -154,7 +154,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_Cube_DoubleSided_Opaque"
+				"Technique": "GLTF_PBRMR_Shadow_Cube_DoubleSided_Opaque"
 			},
 			{
 				"Conditions": [
@@ -162,7 +162,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_Cube_DoubleSided_AlphaMask"
+				"Technique": "GLTF_PBRMR_Shadow_Cube_DoubleSided_AlphaMask"
 			},
 			{
 				"Conditions": [
@@ -170,7 +170,58 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "Shadow_Cube_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+				"Technique": "GLTF_PBRMR_Shadow_Cube_DoubleSided_AlphaMask" // Use the alpha clip variant for alpha-blended shadows
+			},
+
+			// RT Hit groups:
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_OpaqueSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_ClipSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_OpaqueDoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_ClipDoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_BlendSingleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
+					{ "Rule": "MaterialSidedness", "Mode": "Double" }
+				],
+				"Technique": "GLTF_PBRMR_HitGroup_BlendDoubleSided"
 			}
 		],
 
@@ -178,7 +229,7 @@
 
 		"Techniques": [
 			{
-				"Name": "FillGBuffer_SingleSidedOpaque",
+				"Name": "GLTF_PBRMR_FillGBuffer_SingleSidedOpaque",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1"],
 				"VShaderEntryPoint": "VShader",
@@ -189,22 +240,22 @@
 				"VertexStream": "PosNmlTanUvCol"
 			},
 			{
-				"Name": "FillGBuffer_SingleSidedAlphaClip",
-				"Parent" :  "FillGBuffer_SingleSidedOpaque",
+				"Name": "GLTF_PBRMR_FillGBuffer_SingleSidedAlphaClip",
+				"Parent" :  "GLTF_PBRMR_FillGBuffer_SingleSidedOpaque",
 				"PShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "DO_ALPHA_CLIP"]
 			},
 			{
-				"Name": "FillGBuffer_DoubleSidedOpaque",
-				"Parent" :  "FillGBuffer_SingleSidedOpaque",
+				"Name": "GLTF_PBRMR_FillGBuffer_DoubleSidedOpaque",
+				"Parent" :  "GLTF_PBRMR_FillGBuffer_SingleSidedOpaque",
 				"RasterState": "DoubleSided"
 			},
 			{
-				"Name": "FillGBuffer_DoubleSidedAlphaClip",
-				"Parent" :  "FillGBuffer_SingleSidedAlphaClip",
+				"Name": "GLTF_PBRMR_FillGBuffer_DoubleSidedAlphaClip",
+				"Parent" :  "GLTF_PBRMR_FillGBuffer_SingleSidedAlphaClip",
 				"RasterState": "DoubleSided"
 			},
 			{
-				"Name": "AlphaBlend_SingleSided",
+				"Name": "GLTF_PBRMR_AlphaBlend_SingleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
@@ -215,7 +266,7 @@
 				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
-				"Name": "AlphaBlend_SingleSided_RTShadows",
+				"Name": "GLTF_PBRMR_AlphaBlend_SingleSided_RTShadows",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
@@ -226,7 +277,7 @@
 				"VertexStream": "PosNmlTanUvCol"				
 			},
 			{
-				"Name": "AlphaBlend_DoubleSided",
+				"Name": "GLTF_PBRMR_AlphaBlend_DoubleSided",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"VShaderEntryPoint": "VShader",
@@ -237,7 +288,7 @@
 				"VertexStream": "PosNmlTanUvCol"
 			},
 			{
-				"Name": "AlphaBlend_DoubleSided_RTShadows",
+				"Name": "GLTF_PBRMR_AlphaBlend_DoubleSided_RTShadows",
 				"VShader": "GLTF_PBRMetallicRoughness_VShader",
 				"VShaderDefines":  ["MAX_UV_CHANNEL_IDX 1", "VOUT_WORLD_POS"],
 				"VShaderEntryPoint": "VShader",
@@ -252,14 +303,14 @@
 			// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 			// In future, we need to support tagging assets to not cast shadows at load time
 			{
-				"Name": "Shadow_2D_SingleSided_Opaque",
+				"Name": "GLTF_PBRMR_Shadow_2D_SingleSided_Opaque",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"RasterState": "SingleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_2D_SingleSided_AlphaMask",
+				"Name": "GLTF_PBRMR_Shadow_2D_SingleSided_AlphaMask",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
@@ -270,14 +321,14 @@
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_2D_DoubleSided_Opaque",
+				"Name": "GLTF_PBRMR_Shadow_2D_DoubleSided_Opaque",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_2D_DoubleSided_AlphaMask",
+				"Name": "GLTF_PBRMR_Shadow_2D_DoubleSided_AlphaMask",
 				"VShader": "Depth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
@@ -288,7 +339,7 @@
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_Cube_SingleSided_Opaque",
+				"Name": "GLTF_PBRMR_Shadow_Cube_SingleSided_Opaque",
 				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"GShader": "CubeDepth_GShader",
@@ -297,7 +348,7 @@
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_Cube_SingleSided_AlphaMask",
+				"Name": "GLTF_PBRMR_Shadow_Cube_SingleSided_AlphaMask",
 				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
@@ -311,7 +362,7 @@
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_Cube_DoubleSided_Opaque",
+				"Name": "GLTF_PBRMR_Shadow_Cube_DoubleSided_Opaque",
 				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"GShader": "CubeDepth_GShader",
@@ -320,7 +371,7 @@
 				"VertexStream": "PositionUV"
 			},
 			{
-				"Name": "Shadow_Cube_DoubleSided_AlphaMask",
+				"Name": "GLTF_PBRMR_Shadow_Cube_DoubleSided_AlphaMask",
 				"VShader": "CubeDepth_VShader",
 				"VShaderEntryPoint": "VShader",
 				"VShaderDefines":  ["SABER_INSTANCING", "VOUT_UV0"],
@@ -333,6 +384,71 @@
 				"RasterState": "DoubleSided",
 				"VertexStream": "PositionUV",
 				"Defines": ["SABER_INSTANCING", "VOUT_UV0"]
+			},
+			// Hit groups (Note: Technique name == hit group name)
+			{
+				"Name": "GLTF_PBRMR_HitGroup_OpaqueSingleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
+			},
+			{
+				"Name": "GLTF_PBRMR_HitGroup_ClipSingleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+			},
+			{
+				"Name": "GLTF_PBRMR_HitGroup_OpaqueDoubleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "GLTF_PBRMR_HitGroup_ClipDoubleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "GLTF_PBRMR_HitGroup_BlendSingleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
+			},
+			{
+				"Name": "GLTF_PBRMR_HitGroup_BlendDoubleSided",
+				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"AnyHitShader": "RayTracing_Experimental",
+				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "RayTracing_Experimental",
+				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
 			}
 		]
 	},

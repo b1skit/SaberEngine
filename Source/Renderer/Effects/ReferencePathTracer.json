@@ -1,0 +1,104 @@
+{
+	"Effect" : {
+		"Name" :  "ReferencePathTracer",
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"Parents" : [],
+		"DrawStyles" :  [
+			// Ray gen:
+			{
+				"Conditions": [
+					{ "Rule" : "RayGen", "Mode" : "Default" }
+				],
+				"Technique": "PathTracer_Default"
+			},
+
+			// Miss:
+			{
+				"Conditions": [
+					{ "Rule" : "Miss", "Mode" : "Default" }
+				],
+				"Technique": "PathTracer_Miss_Default"
+			}
+
+		],
+		"Techniques" :  [
+			// Hit groups:
+			// Note: For hit groups, we use the Technique name as the hit group name
+			{
+				"Name": "PathTracer_HitGroup_OpaqueSingleSided",
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
+			},
+			{
+				"Name": "PathTracer_HitGroup_ClipSingleSided",
+
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
+				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+			},
+			{
+				"Name": "PathTracer_HitGroup_OpaqueDoubleSided",
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "PathTracer_HitGroup_ClipDoubleSided",
+
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
+				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
+			},
+			{
+				"Name": "PathTracer_HitGroup_BlendSingleSided",
+
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
+				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
+			},
+			{
+				"Name": "PathTracer_HitGroup_BlendDoubleSided",
+
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
+				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
+
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
+				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
+			},
+
+
+			// Ray gen:
+			{
+				"Name": "PathTracer_Default",
+				"RayGenerationShader": "ReferencePathTracer",
+				"RayGenerationShaderEntryPoint": "RayGeneration",
+				"RayGenerationShaderDefines": ["RAY_GEN_A"]
+			},
+
+			// Miss:
+			{
+				"Name": "PathTracer_Miss_Default",
+				"MissShader": "ReferencePathTracer",
+				"MissShaderEntryPoint": "Miss",
+				"MissShaderDefines": ["MISS_A"]
+			}
+		]
+	}
+}
