@@ -59,6 +59,7 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering research & deve
 - **Comprehensive debugging tools**:
   - Real-time CPU/GPU frame timers
   - Support for **RenderDoc** & **PIX** programmatic capture APIs
+  - **NVIDIA Aftermath** integration for automatic GPU crash dump generation
 
 Saber Engine is continuously evolving. Additional features are always in development.
 
