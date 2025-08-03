@@ -202,7 +202,7 @@
     },
     {
       "Id": "7f680b5a-83de-4e3e-a8b5-1009b6fe4856",
-      "Command": "Scenes",
+      "Command": "Favorite scenes",
       "Items": [
         {
           "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
@@ -211,6 +211,54 @@
         {
           "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
           "Command": "-import Scenes\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
+        },
+        {
+          "Id": "2e3a8341-adea-4d6f-9c5e-407d4c36b09e",
+          "Command": "-import Scenes\\EnvironmentTest\\glTF-IBL\\EnvironmentTest.gltf"
+        },
+        {
+          "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
+          "Command": "-import Scenes\\EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
+        },
+        {
+          "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
+          "Command": "-import Scenes\\NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
+        },
+        {
+          "Id": "05b3455c-11e5-4f24-9357-810a270059db",
+          "Command": "-import Scenes\\NormalTangentTest\\NormalTangentTest.gltf"
+        },
+        {
+          "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
+          "Command": "-import Scenes\\OrientationTest\\OrientationTest.gltf"
+        },
+        {
+          "Id": "e71cae4e-1903-46e0-8510-c5d9f95e2410",
+          "Command": "-import Scenes\\TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
+        },
+        {
+          "Id": "d5dec2bd-cd8a-4e56-86be-c43ecdccc751",
+          "Command": "-import Scenes\\MultiUVTest\\glTF\\MultiUVTest.gltf"
+        },
+        {
+          "Id": "cdc4a0a1-fb6e-4fb7-9c07-c82be9efb60a",
+          "Command": "-import Scenes\\UnlitTest\\glTF-Binary\\UnlitTest.glb"
+        },
+        {
+          "Id": "8330c8c6-bf7f-4849-bbc2-752ac4a7f7cd",
+          "Command": "-import Scenes\\CompareAmbientOcclusion\\glTF\\CompareAmbientOcclusion.gltf"
+        },
+        {
+          "Id": "3c213f63-7a7c-4da0-bc65-f82842525ce2",
+          "Command": "-import Scenes\\Avocado\\glTF\\Avocado.gltf"
+        },
+        {
+          "Id": "2615295d-5b62-446d-8c16-46e7b2d80c44",
+          "Command": "-import Scenes\\UnlitTest\\BarramundiFish\\glTF\\BarramundiFish.gltf"
+        },
+        {
+          "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
+          "Command": "-import Scenes\\Box\\glTF-Embedded\\Box.gltf"
         },
         {
           "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
@@ -233,18 +281,6 @@
           "Command": "-import Scenes\\Duck\\glTF-Binary\\Duck.glb"
         },
         {
-          "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
-          "Command": "-import Scenes\\EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
-        },
-        {
-          "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
-          "Command": "-import Scenes\\NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
-        },
-        {
-          "Id": "05b3455c-11e5-4f24-9357-810a270059db",
-          "Command": "-import Scenes\\NormalTangentTest\\NormalTangentTest.gltf"
-        },
-        {
           "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
           "Command": "-import Scenes\\LightsPunctualLamp\\LightsPunctualLamp.gltf"
         },
@@ -257,12 +293,16 @@
           "Command": "-import Scenes\\WaterBottle\\WaterBottle.gltf"
         },
         {
-          "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
-          "Command": "-import Scenes\\OrientationTest\\OrientationTest.gltf"
-        },
-        {
           "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
           "Command": "-import Scenes\\Sponza\\Sponza.gltf"
+        },
+        {
+          "Id": "f2e65df7-fcb4-4bb4-a069-58bba68169c0",
+          "Command": "-import Scenes\\CompareEmissiveStrength\\glTF\\CompareEmissiveStrength.gltf"
+        },
+        {
+          "Id": "d5dc0042-13ea-4dd1-a607-07a51d0d9cdd",
+          "Command": "-import Scenes\\CompareMetallic\\glTF\\CompareMetallic.gltf"
         },
         {
           "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
@@ -275,10 +315,6 @@
         {
           "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
           "Command": "-import Scenes\\BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
-        },
-        {
-          "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
-          "Command": "-import Scenes\\Box\\glTF-Embedded\\Box.gltf"
         },
         {
           "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
@@ -309,20 +345,18 @@
           "Command": "-import Scenes\\VC\\glTF\\VC.gltf"
         },
         {
-          "Id": "e71cae4e-1903-46e0-8510-c5d9f95e2410",
-          "Command": "-import Scenes\\TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
-        },
-        {
-          "Id": "42a5dff5-b2c6-44e2-8462-7ac0ac0dbf0c",
-          "Command": "-import Scenes\\AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
-        },
-        {
-          "Id": "d5dec2bd-cd8a-4e56-86be-c43ecdccc751",
-          "Command": "-import Scenes\\MultiUVTest\\glTF\\MultiUVTest.gltf"
-        },
-        {
-          "Id": "cdc4a0a1-fb6e-4fb7-9c07-c82be9efb60a",
-          "Command": "-import Scenes\\UnlitTest\\glTF-Binary\\UnlitTest.glb"
+          "Id": "80558398-dd57-4667-995e-caa8d019fe3d",
+          "Command": "Alpha coverage",
+          "Items": [
+            {
+              "Id": "42a5dff5-b2c6-44e2-8462-7ac0ac0dbf0c",
+              "Command": "-import Scenes\\AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
+            },
+            {
+              "Id": "ab8722cf-2d0c-414d-a9db-d5a1d666085c",
+              "Command": "-import Scenes\\CompareAlphaCoverage\\glTF\\CompareAlphaCoverage.gltf"
+            }
+          ]
         },
         {
           "Id": "3dcb8108-054d-490a-90fa-9618e5101ff2",
@@ -371,6 +405,10 @@
             {
               "Id": "208224d3-766f-4d77-91c4-140c3e5ca5ef",
               "Command": "-import Scenes\\InterpolationTest\\glTF\\InterpolationTest.gltf"
+            },
+            {
+              "Id": "e5351f53-2840-41e9-9041-0932644d9632",
+              "Command": "-import Scenes\\CesiumMilkTruck\\glTF\\CesiumMilkTruck.gltf"
             }
           ]
         },
@@ -429,6 +467,1226 @@
               "Command": "-import Scenes\\Fox\\glTF\\Fox.gltf"
             }
           ]
+        }
+      ]
+    },
+    {
+      "Id": "659de59c-a9bb-46b5-a9fb-912f897cc902",
+      "Command": ".gltf",
+      "Items": [
+        {
+          "Id": "03646380-9f7f-4779-8004-851447caad09",
+          "Command": "-import Scenes\\abandoned_warehouse\\scene.gltf"
+        },
+        {
+          "Id": "46358b34-becb-486a-84d7-b8b1932e64e7",
+          "Command": "-import Scenes\\ABeautifulGame\\glTF\\ABeautifulGame.gltf"
+        },
+        {
+          "Id": "50ff9d4b-373e-4306-b982-303a2ed3d789",
+          "Command": "-import Scenes\\AlphaBlendModeTest\\glTF\\AlphaBlendModeTest.gltf"
+        },
+        {
+          "Id": "e009c2bc-b712-4bc7-9f7e-ee7cf038eec3",
+          "Command": "-import Scenes\\AlphaBlendModeTest\\glTF-Embedded\\AlphaBlendModeTest.gltf"
+        },
+        {
+          "Id": "255e1ab1-6b2c-490f-a086-cd4d1b676066",
+          "Command": "-import Scenes\\AnimatedCube\\glTF\\AnimatedCube.gltf"
+        },
+        {
+          "Id": "3f57d299-404b-4934-9235-9c42296f0234",
+          "Command": "-import Scenes\\AnimatedMorphCube\\glTF\\AnimatedMorphCube.gltf"
+        },
+        {
+          "Id": "95b1a2a2-5e31-4dde-97c0-76fc1f832d46",
+          "Command": "-import Scenes\\AnimatedMorphCube\\glTF-Quantized\\AnimatedMorphCube.gltf"
+        },
+        {
+          "Id": "92b3c79f-6ea9-4cd9-9ab6-15f937ad567d",
+          "Command": "-import Scenes\\AnimatedTriangle\\glTF\\AnimatedTriangle.gltf"
+        },
+        {
+          "Id": "424d3cfe-7dd3-4c98-a133-daff1dab2e2c",
+          "Command": "-import Scenes\\AnimatedTriangle\\glTF-Embedded\\AnimatedTriangle.gltf"
+        },
+        {
+          "Id": "390ded79-7f48-4d38-bbd3-ffcdeee2ae3c",
+          "Command": "-import Scenes\\AnisotropyBarnLamp\\glTF\\AnisotropyBarnLamp.gltf"
+        },
+        {
+          "Id": "bc0fbb86-0848-43fa-9fba-51514f4a4175",
+          "Command": "-import Scenes\\AnisotropyBarnLamp\\glTF-KTX-BasisU\\AnisotropyBarnLamp.gltf"
+        },
+        {
+          "Id": "731f3af9-140a-4443-9d83-2cc59881f2ee",
+          "Command": "-import Scenes\\AnisotropyDiscTest\\glTF\\AnisotropyDiscTest.gltf"
+        },
+        {
+          "Id": "273e024b-7681-472c-8de7-ce932881806c",
+          "Command": "-import Scenes\\AnisotropyRotationTest\\glTF\\AnisotropyRotationTest.gltf"
+        },
+        {
+          "Id": "35fb6dfa-7252-4b8c-a73e-2efe625ba8e4",
+          "Command": "-import Scenes\\AnisotropyStrengthTest\\glTF\\AnisotropyStrengthTest.gltf"
+        },
+        {
+          "Id": "8d20bdef-998c-41fa-b5f4-17eb818d6b65",
+          "Command": "-import Scenes\\AntiqueCamera\\AntiqueCamera.gltf"
+        },
+        {
+          "Id": "cac24e9b-303e-46f8-98ea-a9d5f81a4a55",
+          "Command": "-import Scenes\\AttenuationTest\\glTF\\AttenuationTest.gltf"
+        },
+        {
+          "Id": "30b64767-e37a-4ee1-b4f0-e132d31317ef",
+          "Command": "-import Scenes\\Avocado\\glTF\\Avocado.gltf"
+        },
+        {
+          "Id": "e2629d40-89a0-42b9-ac21-2f6b7cd2aea5",
+          "Command": "-import Scenes\\Avocado\\glTF-Draco\\Avocado.gltf"
+        },
+        {
+          "Id": "df730b8a-54b7-42b2-b240-7b54de71682c",
+          "Command": "-import Scenes\\Avocado\\glTF-Quantized\\Avocado.gltf"
+        },
+        {
+          "Id": "1d2b7d87-a833-4f68-9bee-33f52eb58d88",
+          "Command": "-import Scenes\\BarramundiFish\\glTF\\BarramundiFish.gltf"
+        },
+        {
+          "Id": "f6b34aca-b814-4011-8c81-683ac3c7cf90",
+          "Command": "-import Scenes\\BarramundiFish\\glTF-Draco\\BarramundiFish.gltf"
+        },
+        {
+          "Id": "2876ba1a-2667-4ef2-beb8-5ba0893629f3",
+          "Command": "-import Scenes\\BoomBox\\glTF\\BoomBox.gltf"
+        },
+        {
+          "Id": "469087f3-4bf0-4c8e-8c6e-58a36b1dc9e4",
+          "Command": "-import Scenes\\BoomBox\\glTF-Draco\\BoomBox.gltf"
+        },
+        {
+          "Id": "46aa8969-0f9a-4d18-95e8-d22622506ab6",
+          "Command": "-import Scenes\\BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
+        },
+        {
+          "Id": "f6869160-87b2-4bd2-9e71-2c05f753888e",
+          "Command": "-import Scenes\\Box\\glTF\\Box.gltf"
+        },
+        {
+          "Id": "23ed8676-6d1f-4688-8a6e-9feaaee82833",
+          "Command": "-import Scenes\\Box\\glTF-Draco\\Box.gltf"
+        },
+        {
+          "Id": "3483d247-d84a-4051-beb4-a483bcdbee35",
+          "Command": "-import Scenes\\Box\\glTF-Embedded\\Box.gltf"
+        },
+        {
+          "Id": "506ae5b7-eaf8-4e2b-885d-388871155579",
+          "Command": "-import Scenes\\Box With Spaces\\glTF\\Box With Spaces.gltf"
+        },
+        {
+          "Id": "d722fd41-764d-47a3-8b38-1266df587c57",
+          "Command": "-import Scenes\\BoxAnimated\\glTF\\BoxAnimated.gltf"
+        },
+        {
+          "Id": "ec478a42-ce0a-471c-8dcb-cd504bee9246",
+          "Command": "-import Scenes\\BoxAnimated\\glTF-Embedded\\BoxAnimated.gltf"
+        },
+        {
+          "Id": "f13faf55-9cba-4852-bfc7-d7e2269a75af",
+          "Command": "-import Scenes\\BoxInterleaved\\glTF\\BoxInterleaved.gltf"
+        },
+        {
+          "Id": "e3970c5f-88f6-44b5-b68d-1d4722393ae1",
+          "Command": "-import Scenes\\BoxInterleaved\\glTF-Embedded\\BoxInterleaved.gltf"
+        },
+        {
+          "Id": "7f63e5c9-7b31-4c4e-a05e-a8c0725f5646",
+          "Command": "-import Scenes\\BoxTextured\\glTF\\BoxTextured.gltf"
+        },
+        {
+          "Id": "63b5929c-0fe9-4b57-976f-5836f3e6010d",
+          "Command": "-import Scenes\\BoxTextured\\glTF-Embedded\\BoxTextured.gltf"
+        },
+        {
+          "Id": "b94f60bf-63fa-4761-a7d4-53d85e2ad542",
+          "Command": "-import Scenes\\BoxTexturedNonPowerOfTwo\\glTF\\BoxTexturedNonPowerOfTwo.gltf"
+        },
+        {
+          "Id": "9c539592-5622-437d-bf23-15139fea04ae",
+          "Command": "-import Scenes\\BoxTexturedNonPowerOfTwo\\glTF-Embedded\\BoxTexturedNonPowerOfTwo.gltf"
+        },
+        {
+          "Id": "49c6e106-d3aa-4fb5-8d41-c1917db59ecd",
+          "Command": "-import Scenes\\BoxVertexColors\\glTF\\BoxVertexColors.gltf"
+        },
+        {
+          "Id": "a04ed9eb-0356-4cd1-81a1-79aab931571c",
+          "Command": "-import Scenes\\BoxVertexColors\\glTF-Embedded\\BoxVertexColors.gltf"
+        },
+        {
+          "Id": "46bdd3c7-d82b-4042-a3b9-9d0a5ecf2779",
+          "Command": "-import Scenes\\BrainStem\\glTF\\BrainStem.gltf"
+        },
+        {
+          "Id": "fb5b4c1f-123b-4b8d-b471-2be7e6abbe5a",
+          "Command": "-import Scenes\\BrainStem\\glTF-Draco\\BrainStem.gltf"
+        },
+        {
+          "Id": "b461d687-b5e5-416e-8908-ecd553cb71ac",
+          "Command": "-import Scenes\\BrainStem\\glTF-Embedded\\BrainStem.gltf"
+        },
+        {
+          "Id": "fea6e45b-b8b3-4399-af23-7a45a6729920",
+          "Command": "-import Scenes\\BrainStem\\glTF-Meshopt\\BrainStem.gltf"
+        },
+        {
+          "Id": "50b6833f-d369-4bae-b6a0-7456c5ddb609",
+          "Command": "-import Scenes\\Cameras\\Cameras.gltf"
+        },
+        {
+          "Id": "991a3fa5-09f2-4f50-91a7-85d2ca66538b",
+          "Command": "-import Scenes\\CarbonFibre\\glTF\\CarbonFibre.gltf"
+        },
+        {
+          "Id": "d2bc54e2-3b90-40c2-bd91-87f1bae75987",
+          "Command": "-import Scenes\\CesiumMan\\glTF\\CesiumMan.gltf"
+        },
+        {
+          "Id": "880d3096-5aba-4cf2-bdc6-b10a51839e3c",
+          "Command": "-import Scenes\\CesiumMan\\glTF-Draco\\CesiumMan.gltf"
+        },
+        {
+          "Id": "0471204e-03c6-4fab-8a43-59d72923ec29",
+          "Command": "-import Scenes\\CesiumMan\\glTF-Embedded\\CesiumMan.gltf"
+        },
+        {
+          "Id": "ff2a371f-3b8a-4843-bea6-fcb0c4b179c4",
+          "Command": "-import Scenes\\CesiumMilkTruck\\glTF\\CesiumMilkTruck.gltf"
+        },
+        {
+          "Id": "69008173-4dae-4f96-8fcd-7a5a6786f68d",
+          "Command": "-import Scenes\\CesiumMilkTruck\\glTF-Draco\\CesiumMilkTruck.gltf"
+        },
+        {
+          "Id": "5f46f6f1-1c0c-4246-bebd-4159bc1f2b90",
+          "Command": "-import Scenes\\CesiumMilkTruck\\glTF-Embedded\\CesiumMilkTruck.gltf"
+        },
+        {
+          "Id": "b5959ea7-378f-421c-b7e2-efb316da0ae1",
+          "Command": "-import Scenes\\ChairDamaskPurplegold\\glTF\\ChairDamaskPurplegold.gltf"
+        },
+        {
+          "Id": "9f89ef35-2206-4572-a831-1a0b84f73de8",
+          "Command": "-import Scenes\\ClearCoatCarPaint\\glTF\\ClearCoatCarPaint.gltf"
+        },
+        {
+          "Id": "11844698-e3cc-4b44-9162-051ea506943e",
+          "Command": "-import Scenes\\ClearCoatTest\\glTF\\ClearCoatTest.gltf"
+        },
+        {
+          "Id": "ddee5ec9-d6f3-4dab-a818-a12527db3f41",
+          "Command": "-import Scenes\\ClearcoatWicker\\glTF\\ClearcoatWicker.gltf"
+        },
+        {
+          "Id": "cc233359-06b9-4151-af77-4ffee8cfc6e8",
+          "Command": "-import Scenes\\CompareAlphaCoverage\\glTF\\CompareAlphaCoverage.gltf"
+        },
+        {
+          "Id": "3e156595-3532-4576-998c-aebc3e33c811",
+          "Command": "-import Scenes\\CompareAmbientOcclusion\\glTF\\CompareAmbientOcclusion.gltf"
+        },
+        {
+          "Id": "ccf82e97-606c-4705-a002-bee29f8cf3c2",
+          "Command": "-import Scenes\\CompareAnisotropy\\glTF\\CompareAnisotropy.gltf"
+        },
+        {
+          "Id": "6927ae28-f5ba-4f98-9a45-c791326e991b",
+          "Command": "-import Scenes\\CompareBaseColor\\glTF\\CompareBasecolor.gltf"
+        },
+        {
+          "Id": "d0100091-2a05-423d-86c7-8c8739bd9359",
+          "Command": "-import Scenes\\CompareClearcoat\\glTF\\CompareClearcoat.gltf"
+        },
+        {
+          "Id": "8f16095f-6d2f-41ba-a097-f23e8db80da4",
+          "Command": "-import Scenes\\CompareDispersion\\glTF\\CompareDispersion.gltf"
+        },
+        {
+          "Id": "bb957ed2-cd2d-4314-8557-c59011928c23",
+          "Command": "-import Scenes\\CompareEmissiveStrength\\glTF\\CompareEmissiveStrength.gltf"
+        },
+        {
+          "Id": "e9bc41b1-70bc-4f23-927c-e3edda8fd2f8",
+          "Command": "-import Scenes\\CompareIor\\glTF\\CompareIor.gltf"
+        },
+        {
+          "Id": "d8560454-22fd-479b-9bd7-a6c7b5f97b39",
+          "Command": "-import Scenes\\CompareIridescence\\glTF\\CompareIridescence.gltf"
+        },
+        {
+          "Id": "882d0388-6156-4736-9797-3bbb1b7ec83b",
+          "Command": "-import Scenes\\CompareMetallic\\glTF\\CompareMetallic.gltf"
+        },
+        {
+          "Id": "c5a6e869-1c6f-45d6-bdf4-c7eab3c951fe",
+          "Command": "-import Scenes\\CompareNormal\\glTF\\CompareNormal.gltf"
+        },
+        {
+          "Id": "e3028bbf-89d0-4ad8-9462-8ec607d5fb1d",
+          "Command": "-import Scenes\\CompareRoughness\\glTF\\CompareRoughness.gltf"
+        },
+        {
+          "Id": "23dd619f-d022-4978-b67b-2e0aca7f3686",
+          "Command": "-import Scenes\\CompareSheen\\glTF\\CompareSheen.gltf"
+        },
+        {
+          "Id": "e2a57c6f-5a0f-4c5c-98e2-ffd5d4b5561b",
+          "Command": "-import Scenes\\CompareSpecular\\glTF\\CompareSpecular.gltf"
+        },
+        {
+          "Id": "e00e7e70-dfd7-43da-b9d1-1a18dd71addf",
+          "Command": "-import Scenes\\CompareTransmission\\glTF\\CompareTransmission.gltf"
+        },
+        {
+          "Id": "a0f0fea7-c5ae-4ad7-a638-241b053b5b46",
+          "Command": "-import Scenes\\CompareVolume\\glTF\\CompareVolume.gltf"
+        },
+        {
+          "Id": "cf79b7cc-62d9-4587-8600-15c117cc6fe7",
+          "Command": "-import Scenes\\Corset\\glTF\\Corset.gltf"
+        },
+        {
+          "Id": "a9f7697e-7148-4078-b9bd-039d5eae1cbc",
+          "Command": "-import Scenes\\Corset\\glTF-Draco\\Corset.gltf"
+        },
+        {
+          "Id": "1226d29e-da57-470c-8c27-ae4083965395",
+          "Command": "-import Scenes\\Cube\\glTF\\Cube.gltf"
+        },
+        {
+          "Id": "38fb4b69-21c8-4bb5-9abe-0cbe6b31c9f2",
+          "Command": "-import Scenes\\DamagedHelmet\\glTF\\DamagedHelmet.gltf"
+        },
+        {
+          "Id": "46057a12-831f-4309-a09e-cec981df50c3",
+          "Command": "-import Scenes\\DamagedHelmet\\glTF-Embedded\\DamagedHelmet.gltf"
+        },
+        {
+          "Id": "474a1557-0b42-45d9-bcf7-41259595b5dc",
+          "Command": "-import Scenes\\DiffuseTransmissionPlant\\glTF\\DiffuseTransmissionPlant.gltf"
+        },
+        {
+          "Id": "d2cc67cb-0e9e-49db-af6a-f8c5b274ff51",
+          "Command": "-import Scenes\\DiffuseTransmissionTeacup\\glTF\\DiffuseTransmissionTeacup.gltf"
+        },
+        {
+          "Id": "5a7f7d33-f21c-4c37-af02-8d1108c95467",
+          "Command": "-import Scenes\\DirectionalLight\\glTF\\DirectionalLight.gltf"
+        },
+        {
+          "Id": "b6d77d54-792c-4b29-bfa2-a29f6b8e047b",
+          "Command": "-import Scenes\\DispersionTest\\glTF\\DispersionTest.gltf"
+        },
+        {
+          "Id": "d4775538-eb3b-4dd2-977f-61fa25f96d29",
+          "Command": "-import Scenes\\DragonAttenuation\\glTF\\DragonAttenuation.gltf"
+        },
+        {
+          "Id": "6a257393-f2bf-4ffc-ba24-a5ea0a254e14",
+          "Command": "-import Scenes\\DragonAttenuation\\glTF-Meshopt\\DragonAttenuation.gltf"
+        },
+        {
+          "Id": "46a11bc7-22e3-4d27-8a63-340b30d5b145",
+          "Command": "-import Scenes\\DragonDispersion\\glTF\\DragonDispersion.gltf"
+        },
+        {
+          "Id": "e5efc2f7-c45b-462b-9389-d648f28a7da6",
+          "Command": "-import Scenes\\Duck\\glTF\\Duck.gltf"
+        },
+        {
+          "Id": "4785859f-f390-41b1-843f-2495759d0b3a",
+          "Command": "-import Scenes\\Duck\\glTF-Draco\\Duck.gltf"
+        },
+        {
+          "Id": "08bd5392-990f-49fc-a5a0-03d9d91ee5d6",
+          "Command": "-import Scenes\\Duck\\glTF-Embedded\\Duck.gltf"
+        },
+        {
+          "Id": "48ba8319-f673-434b-bfa9-d6a513dc8053",
+          "Command": "-import Scenes\\Duck\\glTF-Quantized\\Duck.gltf"
+        },
+        {
+          "Id": "efec2e8b-401c-475f-bdfe-d50f49196ad4",
+          "Command": "-import Scenes\\EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
+        },
+        {
+          "Id": "54d7697a-8d92-4c9d-b615-939fa08190e3",
+          "Command": "-import Scenes\\EnvironmentTest\\glTF\\EnvironmentTest.gltf"
+        },
+        {
+          "Id": "29a09d23-560a-4721-952b-52343182240b",
+          "Command": "-import Scenes\\EnvironmentTest\\glTF-IBL\\EnvironmentTest.gltf"
+        },
+        {
+          "Id": "40b6cbdd-8dea-4d5f-b19f-b0c5185660dc",
+          "Command": "-import Scenes\\FlightHelmet\\glTF\\FlightHelmet.gltf"
+        },
+        {
+          "Id": "0423363a-f21e-43f6-a454-c13546418221",
+          "Command": "-import Scenes\\FlightHelmet\\glTF-KTX-BasisU\\FlightHelmet.gltf"
+        },
+        {
+          "Id": "f7c15947-b09d-479e-b835-ad8a3a1caa21",
+          "Command": "-import Scenes\\Fox\\glTF\\Fox.gltf"
+        },
+        {
+          "Id": "8c63da87-b510-49cc-aa50-aea24f00d657",
+          "Command": "-import Scenes\\GlamVelvetSofa\\glTF\\GlamVelvetSofa.gltf"
+        },
+        {
+          "Id": "78123f5e-2a85-4552-9a8d-18fec6ff5bd2",
+          "Command": "-import Scenes\\GlassBrokenWindow\\glTF\\GlassBrokenWindow.gltf"
+        },
+        {
+          "Id": "e1a2e309-4b35-4639-8831-d270676add5d",
+          "Command": "-import Scenes\\GlassHurricaneCandleHolder\\glTF\\GlassHurricaneCandleHolder.gltf"
+        },
+        {
+          "Id": "2ce662c2-fecc-4d45-8881-6d32ed917b18",
+          "Command": "-import Scenes\\GlassVaseFlowers\\glTF\\GlassVaseFlowers.gltf"
+        },
+        {
+          "Id": "53464e0d-062f-4b59-b400-10895ccf7124",
+          "Command": "-import Scenes\\InterpolationTest\\glTF\\InterpolationTest.gltf"
+        },
+        {
+          "Id": "c586d327-290b-4505-b47d-6fed9f54bf3a",
+          "Command": "-import Scenes\\IORTestGrid\\glTF\\IORTestGrid.gltf"
+        },
+        {
+          "Id": "bcb871c3-0623-4c05-bcfd-0484bc450e3a",
+          "Command": "-import Scenes\\IridescenceAbalone\\glTF\\IridescenceAbalone.gltf"
+        },
+        {
+          "Id": "dda8d492-7038-425c-84d1-f8b755ee2ed2",
+          "Command": "-import Scenes\\IridescenceDielectricSpheres\\glTF\\IridescenceDielectricSpheres.gltf"
+        },
+        {
+          "Id": "8536446d-d2e7-4cd1-b543-7f3f54e52e67",
+          "Command": "-import Scenes\\IridescenceLamp\\glTF\\IridescenceLamp.gltf"
+        },
+        {
+          "Id": "7de5cca9-0277-4a55-8dfe-5809d3a0e0ae",
+          "Command": "-import Scenes\\IridescenceMetallicSpheres\\glTF\\IridescenceMetallicSpheres.gltf"
+        },
+        {
+          "Id": "d4985cb6-312e-47c0-bc99-6aad3ca9770d",
+          "Command": "-import Scenes\\IridescenceSuzanne\\glTF\\IridescenceSuzanne.gltf"
+        },
+        {
+          "Id": "91fef497-9eed-4863-85fe-ca44dff5f5ed",
+          "Command": "-import Scenes\\IridescentDishWithOlives\\glTF\\IridescentDishWithOlives.gltf"
+        },
+        {
+          "Id": "82f84d2a-80ea-4854-b375-ba4fc0141812",
+          "Command": "-import Scenes\\Lantern\\glTF\\Lantern.gltf"
+        },
+        {
+          "Id": "e39fc064-025e-4bdd-826d-a678495d189a",
+          "Command": "-import Scenes\\Lantern\\glTF-Draco\\Lantern.gltf"
+        },
+        {
+          "Id": "9f7ad50c-3f5c-4491-8dad-eb12d0434690",
+          "Command": "-import Scenes\\Lantern\\glTF-Quantized\\Lantern.gltf"
+        },
+        {
+          "Id": "c4132038-cbaf-4c1e-8881-9c2dc868f084",
+          "Command": "-import Scenes\\LightsPunctualLamp\\LightsPunctualLamp.gltf"
+        },
+        {
+          "Id": "1de8329f-9a97-46f6-a602-3346e42319af",
+          "Command": "-import Scenes\\MandarinOrange\\glTF\\MandarinOrange.gltf"
+        },
+        {
+          "Id": "85f2e4d4-7ce6-4e48-81cf-ebf1273de627",
+          "Command": "-import Scenes\\MaterialsVariantsShoe\\glTF\\MaterialsVariantsShoe.gltf"
+        },
+        {
+          "Id": "30a62839-b354-405e-b0b6-f3c5b5067ebc",
+          "Command": "-import Scenes\\MeshPrimitiveModes\\glTF\\MeshPrimitiveModes.gltf"
+        },
+        {
+          "Id": "a2162c50-b22c-453d-9c46-48b1e45838db",
+          "Command": "-import Scenes\\MeshPrimitiveModes\\glTF-Embedded\\MeshPrimitiveModes.gltf"
+        },
+        {
+          "Id": "b95008ba-f39e-485f-b97d-ac933e3b4925",
+          "Command": "-import Scenes\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
+        },
+        {
+          "Id": "3b13789b-9c0a-445f-b7fc-c3c8493a06aa",
+          "Command": "-import Scenes\\MetalRoughSpheres\\glTF-Embedded\\MetalRoughSpheres.gltf"
+        },
+        {
+          "Id": "5f0bd188-4201-4ba8-88f8-34aa43a2277a",
+          "Command": "-import Scenes\\MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
+        },
+        {
+          "Id": "bd9a86d7-9719-4d7e-be01-9147448107ca",
+          "Command": "-import Scenes\\MorphPrimitivesTest\\glTF\\MorphPrimitivesTest.gltf"
+        },
+        {
+          "Id": "8a50f4e7-6c76-4187-9ff0-cf847c3b6b86",
+          "Command": "-import Scenes\\MorphPrimitivesTest\\glTF-Draco\\MorphPrimitivesTest.gltf"
+        },
+        {
+          "Id": "8771a906-882d-49d9-afb2-e7f3a34c0ea9",
+          "Command": "-import Scenes\\MorphStressTest\\glTF\\MorphStressTest.gltf"
+        },
+        {
+          "Id": "2f4c9359-5665-482b-b4a3-2c31d977c200",
+          "Command": "-import Scenes\\MosquitoInAmber\\glTF\\MosquitoInAmber.gltf"
+        },
+        {
+          "Id": "ed97d091-d4c1-4304-bfc6-e6e2e32a5d13",
+          "Command": "-import Scenes\\MultipleScenes\\glTF\\MultipleScenes.gltf"
+        },
+        {
+          "Id": "10c9c362-d3b6-4ca3-971b-1c30537d25b5",
+          "Command": "-import Scenes\\MultipleScenes\\glTF-Embedded\\MultipleScenes.gltf"
+        },
+        {
+          "Id": "1538eb24-6389-4125-a4ea-c9218fb50b63",
+          "Command": "-import Scenes\\MultiUVTest\\glTF\\MultiUVTest.gltf"
+        },
+        {
+          "Id": "d18a8cf1-625c-46ac-94f8-1ab0a757218c",
+          "Command": "-import Scenes\\MultiUVTest\\glTF-Embedded\\MultiUVTest.gltf"
+        },
+        {
+          "Id": "d9e5c24b-fbb5-47e0-81f0-1be5c4724f2c",
+          "Command": "-import Scenes\\MyInstanceTest\\InstanceTest.gltf"
+        },
+        {
+          "Id": "e32748e0-d063-42fd-ba66-88eb26ef1f33",
+          "Command": "-import Scenes\\NegativeScaleTest\\glTF\\NegativeScaleTest.gltf"
+        },
+        {
+          "Id": "8d4bc414-65a9-4daf-9d76-30856cc6f539",
+          "Command": "-import Scenes\\NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
+        },
+        {
+          "Id": "9036a574-3bf0-4335-9fc8-f9a79b0ef46d",
+          "Command": "-import Scenes\\NormalTangentMirrorTest\\glTF\\NormalTangentMirrorTest.gltf"
+        },
+        {
+          "Id": "5444ff14-dd2b-4c46-8da1-d2bd9e5c25f0",
+          "Command": "-import Scenes\\NormalTangentTest\\NormalTangentTest.gltf"
+        },
+        {
+          "Id": "cecb30a1-9748-45ce-a674-20d95e9438b2",
+          "Command": "-import Scenes\\NormalTangentTest\\glTF\\NormalTangentTest.gltf"
+        },
+        {
+          "Id": "1b8a9704-da98-426c-9183-b9116d9d35a3",
+          "Command": "-import Scenes\\OrientationTest\\OrientationTest.gltf"
+        },
+        {
+          "Id": "708a5dc6-8d83-4d42-b03b-b4c8709d6338",
+          "Command": "-import Scenes\\OrientationTest\\glTF\\OrientationTest.gltf"
+        },
+        {
+          "Id": "e2f23b3b-f601-4deb-9db4-d8bbafc20c33",
+          "Command": "-import Scenes\\OrientationTest\\glTF-Embedded\\OrientationTest.gltf"
+        },
+        {
+          "Id": "3a662c75-684e-4892-a9db-3adfce35e4df",
+          "Command": "-import Scenes\\PotOfCoals\\glTF\\PotOfCoals.gltf"
+        },
+        {
+          "Id": "89731970-11ab-4d5f-bb6e-6c5a80c74a5a",
+          "Command": "-import Scenes\\PrimitiveModeNormalsTest\\glTF\\PrimitiveModeNormalsTest.gltf"
+        },
+        {
+          "Id": "a5f59a10-8bc2-4bdb-819f-85a9c202d5be",
+          "Command": "-import Scenes\\RecursiveSkeletons\\glTF\\RecursiveSkeletons.gltf"
+        },
+        {
+          "Id": "0793d55f-43bf-4fa3-bfe7-f65f97ba883b",
+          "Command": "-import Scenes\\RiggedFigure\\glTF\\RiggedFigure.gltf"
+        },
+        {
+          "Id": "35ad8c29-81ee-483d-ae9b-ba31af2900cb",
+          "Command": "-import Scenes\\RiggedFigure\\glTF-Draco\\RiggedFigure.gltf"
+        },
+        {
+          "Id": "afbedd43-3596-4fa2-af6b-34ffc458a786",
+          "Command": "-import Scenes\\RiggedFigure\\glTF-Embedded\\RiggedFigure.gltf"
+        },
+        {
+          "Id": "7600429a-7a85-4b8b-9c6f-78a33856c92b",
+          "Command": "-import Scenes\\RiggedSimple\\glTF\\RiggedSimple.gltf"
+        },
+        {
+          "Id": "e49930aa-3c0d-4606-946b-35b39f096d3e",
+          "Command": "-import Scenes\\RiggedSimple\\glTF-Draco\\RiggedSimple.gltf"
+        },
+        {
+          "Id": "a3809d4e-6f10-475f-a5fa-e3d0eb91c9da",
+          "Command": "-import Scenes\\RiggedSimple\\glTF-Embedded\\RiggedSimple.gltf"
+        },
+        {
+          "Id": "14251e9b-1591-42c4-842b-c945724eca19",
+          "Command": "-import Scenes\\SciFiHelmet\\glTF\\SciFiHelmet.gltf"
+        },
+        {
+          "Id": "642ed089-2924-4b1e-a5b5-38a845ad4466",
+          "Command": "-import Scenes\\SheenChair\\glTF\\SheenChair.gltf"
+        },
+        {
+          "Id": "d171214b-520a-4de8-b8fb-eb6b480d8ba7",
+          "Command": "-import Scenes\\SheenCloth\\glTF\\SheenCloth.gltf"
+        },
+        {
+          "Id": "a37deadd-0f49-4565-9380-04f348eeb036",
+          "Command": "-import Scenes\\SheenTestGrid\\glTF\\SheenTestGrid.gltf"
+        },
+        {
+          "Id": "b0874941-edee-4bd1-b3b4-8b2b260b011f",
+          "Command": "-import Scenes\\SheenWoodLeatherSofa\\glTF\\SheenWoodLeatherSofa.gltf"
+        },
+        {
+          "Id": "8d0621e4-0a03-4e25-8d37-9600ab8e4078",
+          "Command": "-import Scenes\\SimpleInstancing\\glTF\\SimpleInstancing.gltf"
+        },
+        {
+          "Id": "95b79a6d-df3a-4921-bcd4-95bdff475bf5",
+          "Command": "-import Scenes\\SimpleMaterial\\glTF\\SimpleMaterial.gltf"
+        },
+        {
+          "Id": "6bec22fb-dcf0-4146-8419-3dbfdebba6ce",
+          "Command": "-import Scenes\\SimpleMaterial\\glTF-Embedded\\SimpleMaterial.gltf"
+        },
+        {
+          "Id": "338989b8-e30f-41b1-8726-62754c589beb",
+          "Command": "-import Scenes\\SimpleMeshes\\glTF\\SimpleMeshes.gltf"
+        },
+        {
+          "Id": "ccb1529c-6d30-4b71-8d6f-f483a659c71c",
+          "Command": "-import Scenes\\SimpleMeshes\\glTF-Embedded\\SimpleMeshes.gltf"
+        },
+        {
+          "Id": "c6cdca25-0164-4030-9ff9-5bdf211a3bca",
+          "Command": "-import Scenes\\SimpleMorph\\glTF\\SimpleMorph.gltf"
+        },
+        {
+          "Id": "8a56ed0e-9501-4b31-958f-8b8619354cca",
+          "Command": "-import Scenes\\SimpleMorph\\glTF-Embedded\\SimpleMorph.gltf"
+        },
+        {
+          "Id": "d115fe4b-08a4-4bad-847c-857d4e3dea16",
+          "Command": "-import Scenes\\SimpleSkin\\SimpleSkin.gltf"
+        },
+        {
+          "Id": "3e158c68-0378-4b1b-844a-1ae50bca6c1f",
+          "Command": "-import Scenes\\SimpleSkin\\glTF\\SimpleSkin.gltf"
+        },
+        {
+          "Id": "4ddafbf2-65e3-410b-b019-a2dd98d4352d",
+          "Command": "-import Scenes\\SimpleSkin\\glTF-Embedded\\SimpleSkin.gltf"
+        },
+        {
+          "Id": "ba44a402-cadd-44f5-9c1f-524ab9211208",
+          "Command": "-import Scenes\\SimpleSparseAccessor\\glTF\\SimpleSparseAccessor.gltf"
+        },
+        {
+          "Id": "5506e85f-8f96-44ea-af87-a66a6c22b85c",
+          "Command": "-import Scenes\\SimpleSparseAccessor\\glTF-Embedded\\SimpleSparseAccessor.gltf"
+        },
+        {
+          "Id": "e192bf65-25d1-4410-a672-eff96e9300a6",
+          "Command": "-import Scenes\\SimpleTexture\\glTF\\SimpleTexture.gltf"
+        },
+        {
+          "Id": "2bdc5dca-c8c0-4a73-96a7-7fb62da8de10",
+          "Command": "-import Scenes\\SimpleTexture\\glTF-Embedded\\SimpleTexture.gltf"
+        },
+        {
+          "Id": "85047058-54ee-497a-990e-1782f28adf64",
+          "Command": "-import Scenes\\SpecGlossVsMetalRough\\glTF\\SpecGlossVsMetalRough.gltf"
+        },
+        {
+          "Id": "58317402-de1e-4d72-a726-f8f7456d9a63",
+          "Command": "-import Scenes\\SpecularSilkPouf\\glTF\\SpecularSilkPouf.gltf"
+        },
+        {
+          "Id": "f60fa01a-07a2-40f5-96b5-cce89fe15618",
+          "Command": "-import Scenes\\SpecularTest\\glTF\\SpecularTest.gltf"
+        },
+        {
+          "Id": "bae408a9-7406-4033-acb6-281645854042",
+          "Command": "-import Scenes\\Sponza\\Sponza.gltf"
+        },
+        {
+          "Id": "2e3080d1-1421-478b-b1dc-d345bf5bb23a",
+          "Command": "-import Scenes\\Sponza_Intel\\NewSponza_Main_glTF_003.gltf"
+        },
+        {
+          "Id": "36f6b18a-b4c5-454a-806d-b70fd5c60b21",
+          "Command": "-import Scenes\\StainedGlassLamp\\glTF\\StainedGlassLamp.gltf"
+        },
+        {
+          "Id": "ee28dd7d-3681-4f66-ae5b-c6a14a927d3f",
+          "Command": "-import Scenes\\StainedGlassLamp\\glTF-JPG-PNG\\StainedGlassLamp.gltf"
+        },
+        {
+          "Id": "804980cd-4c3e-4814-8949-7f136739b441",
+          "Command": "-import Scenes\\StainedGlassLamp\\glTF-KTX-BasisU\\StainedGlassLamp.gltf"
+        },
+        {
+          "Id": "36ee7b53-7c0b-4e22-9987-90206ba09f81",
+          "Command": "-import Scenes\\SunTemple\\suntemple.gltf"
+        },
+        {
+          "Id": "df68453a-d894-47bb-a04b-5446772dadce",
+          "Command": "-import Scenes\\Suzanne\\glTF\\Suzanne.gltf"
+        },
+        {
+          "Id": "30de109a-52ad-4e81-87ce-3116f26302cc",
+          "Command": "-import Scenes\\TextureCoordinateTest\\glTF\\TextureCoordinateTest.gltf"
+        },
+        {
+          "Id": "69486799-db58-4240-bbe0-e0d8883f4467",
+          "Command": "-import Scenes\\TextureCoordinateTest\\glTF-Embedded\\TextureCoordinateTest.gltf"
+        },
+        {
+          "Id": "a7b54e04-7645-415c-b1f2-5059d53ff0ba",
+          "Command": "-import Scenes\\TextureEncodingTest\\glTF\\TextureEncodingTest.gltf"
+        },
+        {
+          "Id": "0a443d24-daf1-4084-bec8-53095d368ba9",
+          "Command": "-import Scenes\\TextureLinearInterpolationTest\\glTF\\TextureLinearInterpolationTest.gltf"
+        },
+        {
+          "Id": "8a9e329b-9ba9-48b4-92ea-5ce6c126b391",
+          "Command": "-import Scenes\\TextureSettingsTest\\glTF\\TextureSettingsTest.gltf"
+        },
+        {
+          "Id": "9d677267-9956-49a8-81ef-e42b000eae4b",
+          "Command": "-import Scenes\\TextureSettingsTest\\glTF-Embedded\\TextureSettingsTest.gltf"
+        },
+        {
+          "Id": "36503b7a-5a91-4e05-8307-1f74c8ef234c",
+          "Command": "-import Scenes\\TextureTransformMultiTest\\glTF\\TextureTransformMultiTest.gltf"
+        },
+        {
+          "Id": "089d9dbb-55ca-4a35-ab7f-0eed10aeb735",
+          "Command": "-import Scenes\\TextureTransformTest\\glTF\\TextureTransformTest.gltf"
+        },
+        {
+          "Id": "efc0d441-d8a3-484c-92c1-34236bb93821",
+          "Command": "-import Scenes\\ToyCar\\glTF\\ToyCar.gltf"
+        },
+        {
+          "Id": "3b3246d4-ef46-4ee5-8533-db5f81077a31",
+          "Command": "-import Scenes\\TransmissionRoughnessTest\\glTF\\TransmissionRoughnessTest.gltf"
+        },
+        {
+          "Id": "899bbb9e-0379-4825-b16f-307ee3d461b1",
+          "Command": "-import Scenes\\TransmissionTest\\glTF\\TransmissionTest.gltf"
+        },
+        {
+          "Id": "253cfd24-2106-44d5-9f81-29979f51b53a",
+          "Command": "-import Scenes\\TransmissionThinwallTestGrid\\glTF\\TransmissionThinwallTestGrid.gltf"
+        },
+        {
+          "Id": "2c83069d-402e-47ba-823c-0f7aade449bf",
+          "Command": "-import Scenes\\Triangle\\glTF\\Triangle.gltf"
+        },
+        {
+          "Id": "dff127c9-19bb-4caf-a806-f6437caee73f",
+          "Command": "-import Scenes\\Triangle\\glTF-Embedded\\Triangle.gltf"
+        },
+        {
+          "Id": "35ff269f-dfcf-44d6-8504-a4480a01bfdd",
+          "Command": "-import Scenes\\TriangleWithoutIndices\\glTF\\TriangleWithoutIndices.gltf"
+        },
+        {
+          "Id": "6d2bc9c0-6b69-4b4d-a209-e08d8604d2ae",
+          "Command": "-import Scenes\\TriangleWithoutIndices\\glTF-Embedded\\TriangleWithoutIndices.gltf"
+        },
+        {
+          "Id": "df9982a2-8cd6-43a6-bd6b-109b4da7787d",
+          "Command": "-import Scenes\\TwoSidedPlane\\glTF\\TwoSidedPlane.gltf"
+        },
+        {
+          "Id": "3557b228-58cc-4fa5-9f61-7c49cee0c55b",
+          "Command": "-import Scenes\\Unicode❤♻Test\\glTF\\Unicode❤♻Test.gltf"
+        },
+        {
+          "Id": "f8c8e08f-43d1-457b-a380-3f1e789a74e3",
+          "Command": "-import Scenes\\UnlitTest\\glTF\\UnlitTest.gltf"
+        },
+        {
+          "Id": "8eca4a5a-b0bd-4e11-84c6-d90792d3a47b",
+          "Command": "-import Scenes\\VC\\glTF\\VC.gltf"
+        },
+        {
+          "Id": "86d7ebfa-fc4b-4c09-9cb6-f0a0ab1434b6",
+          "Command": "-import Scenes\\VC\\glTF-Draco\\VC.gltf"
+        },
+        {
+          "Id": "21413902-5b16-4409-be6f-fe5e54f591b5",
+          "Command": "-import Scenes\\VC\\glTF-Embedded\\VC.gltf"
+        },
+        {
+          "Id": "17caff8e-461f-4b07-9592-a5bb8e397f23",
+          "Command": "-import Scenes\\VertexColor\\VertexColorTest.gltf"
+        },
+        {
+          "Id": "eb3a5948-8230-43ad-afb2-92250c3c194f",
+          "Command": "-import Scenes\\VertexColorTest\\glTF\\VertexColorTest.gltf"
+        },
+        {
+          "Id": "ebec9d8a-656a-4b6d-8b8f-bd440982bc08",
+          "Command": "-import Scenes\\VertexColorTest\\glTF-Embedded\\VertexColorTest.gltf"
+        },
+        {
+          "Id": "0ce76454-1947-4f2d-8396-00e8faf138cf",
+          "Command": "-import Scenes\\VirtualCity\\glTF\\VirtualCity.gltf"
+        },
+        {
+          "Id": "0a42271d-f09b-426e-a029-9edebbaa63ac",
+          "Command": "-import Scenes\\VirtualCity\\glTF-Draco\\VirtualCity.gltf"
+        },
+        {
+          "Id": "cbce070c-2cc9-45c7-a6f1-a5fa3cd76b6f",
+          "Command": "-import Scenes\\VirtualCity\\glTF-Embedded\\VirtualCity.gltf"
+        },
+        {
+          "Id": "32b3e222-c40a-4e06-a69b-72c83107723b",
+          "Command": "-import Scenes\\WaterBottle\\WaterBottle.gltf"
+        },
+        {
+          "Id": "ac2dcc69-43e0-4b95-9c68-23259e837ae2",
+          "Command": "-import Scenes\\WaterBottle\\glTF\\WaterBottle.gltf"
+        },
+        {
+          "Id": "d9be2321-938e-4c86-91a4-9c44323804ee",
+          "Command": "-import Scenes\\WaterBottle\\glTF-Draco\\WaterBottle.gltf"
+        }
+      ]
+    },
+    {
+      "Id": "17f61149-5004-48cd-b8af-1f8a1ab219c5",
+      "Command": ".glb",
+      "Items": [
+        {
+          "Id": "26b7c613-b7b3-4d9f-ab9d-5cf8036de6da",
+          "Command": "-import Scenes\\AlphaBlendModeTest\\glTF-Binary\\AlphaBlendModeTest.glb"
+        },
+        {
+          "Id": "f147d2a2-08df-4463-86d4-caeeed767485",
+          "Command": "-import Scenes\\AnimatedMorphCube\\glTF-Binary\\AnimatedMorphCube.glb"
+        },
+        {
+          "Id": "16e6e4c5-bf7f-4ad2-a35d-c8f63b749b86",
+          "Command": "-import Scenes\\AnisotropyBarnLamp\\glTF-Binary\\AnisotropyBarnLamp.glb"
+        },
+        {
+          "Id": "0608e0bd-e0b5-435a-89fe-8d719b5257f5",
+          "Command": "-import Scenes\\AnisotropyDiscTest\\glTF-Binary\\AnisotropyDiscTest.glb"
+        },
+        {
+          "Id": "13d8836d-892f-4b49-80c1-5a66be380660",
+          "Command": "-import Scenes\\AnisotropyRotationTest\\glTF-Binary\\AnisotropyRotationTest.glb"
+        },
+        {
+          "Id": "07b9c9e5-9d60-4684-881b-cb73b0db1d12",
+          "Command": "-import Scenes\\AnisotropyStrengthTest\\glTF-Binary\\AnisotropyStrengthTest.glb"
+        },
+        {
+          "Id": "2600a160-5ec0-4874-bc9f-613e0c7fbcd5",
+          "Command": "-import Scenes\\AttenuationTest\\glTF-Binary\\AttenuationTest.glb"
+        },
+        {
+          "Id": "5eee15b8-b792-43bf-8b19-cc8a91cbe411",
+          "Command": "-import Scenes\\Avocado\\glTF-Binary\\Avocado.glb"
+        },
+        {
+          "Id": "4b8ae470-d0b2-41df-ac47-675f4c8efd74",
+          "Command": "-import Scenes\\BarramundiFish\\glTF-Binary\\BarramundiFish.glb"
+        },
+        {
+          "Id": "70228d5c-6e28-4ab2-b708-ebadc2da50c9",
+          "Command": "-import Scenes\\BoomBox\\glTF-Binary\\BoomBox.glb"
+        },
+        {
+          "Id": "70ba3a61-d946-438c-aac1-21579d631e45",
+          "Command": "-import Scenes\\Box\\glTF-Binary\\Box.glb"
+        },
+        {
+          "Id": "15ff459d-4005-4697-b5c1-f00d03d1317e",
+          "Command": "-import Scenes\\BoxAnimated\\glTF-Binary\\BoxAnimated.glb"
+        },
+        {
+          "Id": "e1408250-4e84-4519-a0b1-fcec52591bb3",
+          "Command": "-import Scenes\\BoxInterleaved\\glTF-Binary\\BoxInterleaved.glb"
+        },
+        {
+          "Id": "8ce015aa-74d7-4bbc-8c04-742984db79c8",
+          "Command": "-import Scenes\\BoxTextured\\glTF-Binary\\BoxTextured.glb"
+        },
+        {
+          "Id": "29214fe5-7844-4f37-bdac-99b578450a24",
+          "Command": "-import Scenes\\BoxTexturedNonPowerOfTwo\\glTF-Binary\\BoxTexturedNonPowerOfTwo.glb"
+        },
+        {
+          "Id": "f70c6ace-3562-436a-89d1-e7cfbde4619c",
+          "Command": "-import Scenes\\BoxVertexColors\\glTF-Binary\\BoxVertexColors.glb"
+        },
+        {
+          "Id": "f8290aa5-ed46-45de-8c7e-cebe164446fc",
+          "Command": "-import Scenes\\BrainStem\\glTF-Binary\\BrainStem.glb"
+        },
+        {
+          "Id": "43aacdae-3bb4-45a1-8b64-034223e32b8a",
+          "Command": "-import Scenes\\CarbonFibre\\glTF-Binary\\CarbonFibre.glb"
+        },
+        {
+          "Id": "ea82355f-924e-4a20-b993-bca037ce6ab9",
+          "Command": "-import Scenes\\CesiumMan\\glTF-Binary\\CesiumMan.glb"
+        },
+        {
+          "Id": "a782c200-d4e3-4f78-9cdb-1ea5ab61345a",
+          "Command": "-import Scenes\\CesiumMilkTruck\\glTF-Binary\\CesiumMilkTruck.glb"
+        },
+        {
+          "Id": "5d4a8cfd-5a0b-4678-8427-bae6c8e3f49e",
+          "Command": "-import Scenes\\ChairDamaskPurplegold\\glTF-Binary\\ChairDamaskPurplegold.glb"
+        },
+        {
+          "Id": "5b9b4dc4-5c6f-47fa-914e-50ad3fa5e35f",
+          "Command": "-import Scenes\\ClearCoatCarPaint\\glTF-Binary\\ClearCoatCarPaint.glb"
+        },
+        {
+          "Id": "48905983-3027-43ce-b0f6-2f688dd98903",
+          "Command": "-import Scenes\\ClearCoatTest\\glTF-Binary\\ClearCoatTest.glb"
+        },
+        {
+          "Id": "11c12cb6-0d30-4171-907a-d98168d86089",
+          "Command": "-import Scenes\\ClearcoatWicker\\glTF-Binary\\ClearcoatWicker.glb"
+        },
+        {
+          "Id": "761a9744-7bd9-4ef3-8aa0-8657d38d1502",
+          "Command": "-import Scenes\\CompareAlphaCoverage\\glTF-Binary\\CompareAlphaCoverage.glb"
+        },
+        {
+          "Id": "471618e4-b3c3-45d5-9819-f49b068ebc5e",
+          "Command": "-import Scenes\\CompareAmbientOcclusion\\glTF-Binary\\CompareAmbientOcclusion.glb"
+        },
+        {
+          "Id": "0bf93649-24cc-45b9-a47c-289b51bd63ec",
+          "Command": "-import Scenes\\CompareAnisotropy\\glTF-Binary\\CompareAnisotropy.glb"
+        },
+        {
+          "Id": "0631062b-50f6-449b-a55c-6eb130154c31",
+          "Command": "-import Scenes\\CompareBaseColor\\glTF-Binary\\CompareBasecolor.glb"
+        },
+        {
+          "Id": "128969c0-63e8-4530-b1e0-0ad9ff9f3afb",
+          "Command": "-import Scenes\\CompareClearcoat\\glTF-Binary\\CompareClearcoat.glb"
+        },
+        {
+          "Id": "5ed65220-c459-4d39-99ea-e6a4d287454e",
+          "Command": "-import Scenes\\CompareDispersion\\glTF-Binary\\CompareDispersion.glb"
+        },
+        {
+          "Id": "08031308-11d4-40ba-8ee8-2a7d093ace26",
+          "Command": "-import Scenes\\CompareEmissiveStrength\\glTF-Binary\\CompareEmissiveStrength.glb"
+        },
+        {
+          "Id": "61d9f82f-cb33-42e8-b39c-e7ace37054d0",
+          "Command": "-import Scenes\\CompareIor\\glTF-Binary\\CompareIor.glb"
+        },
+        {
+          "Id": "a1d49f35-60c4-4788-a10f-72b686d9ddb7",
+          "Command": "-import Scenes\\CompareIridescence\\glTF-Binary\\CompareIridescence.glb"
+        },
+        {
+          "Id": "33f6193a-4abf-4769-9c94-475295494e22",
+          "Command": "-import Scenes\\CompareMetallic\\glTF-Binary\\CompareMetallic.glb"
+        },
+        {
+          "Id": "15e76a0d-e6f0-4067-9f67-1368435222ff",
+          "Command": "-import Scenes\\CompareNormal\\glTF-Binary\\CompareNormal.glb"
+        },
+        {
+          "Id": "0551aff5-f00f-4d85-983d-614bd3ec877f",
+          "Command": "-import Scenes\\CompareRoughness\\glTF-Binary\\CompareRoughness.glb"
+        },
+        {
+          "Id": "34d7457a-a8c7-4a28-83df-da1ffeea9104",
+          "Command": "-import Scenes\\CompareSheen\\glTF-Binary\\CompareSheen.glb"
+        },
+        {
+          "Id": "3b033b68-7168-40c8-a1bd-001ae461e5da",
+          "Command": "-import Scenes\\CompareSpecular\\glTF-Binary\\CompareSpecular.glb"
+        },
+        {
+          "Id": "f0aace7f-21eb-4665-9944-2bb5203e14dd",
+          "Command": "-import Scenes\\CompareTransmission\\glTF-Binary\\CompareTransmission.glb"
+        },
+        {
+          "Id": "a07b6a56-4ddf-440a-b02e-8a39e06fb9ba",
+          "Command": "-import Scenes\\CompareVolume\\glTF-Binary\\CompareVolume.glb"
+        },
+        {
+          "Id": "556ca2dd-4361-49fd-ae0e-e92e4496053a",
+          "Command": "-import Scenes\\Corset\\glTF-Binary\\Corset.glb"
+        },
+        {
+          "Id": "f4f8604b-a373-4a2c-bb06-2951c9d5e498",
+          "Command": "-import Scenes\\DamagedHelmet\\glTF-Binary\\DamagedHelmet.glb"
+        },
+        {
+          "Id": "19b95537-8171-4465-bd6e-55a6b983c8ff",
+          "Command": "-import Scenes\\DiffuseTransmissionPlant\\glTF-Binary\\DiffuseTransmissionPlant.glb"
+        },
+        {
+          "Id": "9949d1f0-8bba-4df7-8c01-b57ebb86d20f",
+          "Command": "-import Scenes\\DiffuseTransmissionTeacup\\glTF-Binary\\DiffuseTransmissionTeacup.glb"
+        },
+        {
+          "Id": "9371ae75-2dbf-4d91-9147-4a340b1bd61d",
+          "Command": "-import Scenes\\DirectionalLight\\glTF-Binary\\DirectionalLight.glb"
+        },
+        {
+          "Id": "d17a884b-1d59-4247-b426-f109fa230d0c",
+          "Command": "-import Scenes\\DispersionTest\\glTF-Binary\\DispersionTest.glb"
+        },
+        {
+          "Id": "2bca8aa4-3981-4fff-af77-07592ace2516",
+          "Command": "-import Scenes\\DragonAttenuation\\glTF-Binary\\DragonAttenuation.glb"
+        },
+        {
+          "Id": "daec7b8b-29a9-426a-9382-a7161b68cc45",
+          "Command": "-import Scenes\\DragonDispersion\\glTF-Binary\\DragonDispersion.glb"
+        },
+        {
+          "Id": "50e82617-56cc-4e22-8be6-9f901ad18a19",
+          "Command": "-import Scenes\\Duck\\glTF-Binary\\Duck.glb"
+        },
+        {
+          "Id": "c4d4c6f5-f6df-48f4-acdb-1512e5d1ef4d",
+          "Command": "-import Scenes\\EmissiveStrengthTest\\glTF-Binary\\EmissiveStrengthTest.glb"
+        },
+        {
+          "Id": "a533cf3a-c3df-41f0-a2fb-28d142e00546",
+          "Command": "-import Scenes\\Fox\\glTF-Binary\\Fox.glb"
+        },
+        {
+          "Id": "dbf88759-fd43-41bb-a297-ade69e1f885c",
+          "Command": "-import Scenes\\GlamVelvetSofa\\glTF-Binary\\GlamVelvetSofa.glb"
+        },
+        {
+          "Id": "87e1f607-b9e8-409b-90b3-b2e3ff46f3e2",
+          "Command": "-import Scenes\\GlassBrokenWindow\\glTF-Binary\\GlassBrokenWindow.glb"
+        },
+        {
+          "Id": "935d27a1-b3b0-412b-b124-2ce6cdd4b6d6",
+          "Command": "-import Scenes\\GlassHurricaneCandleHolder\\glTF-Binary\\GlassHurricaneCandleHolder.glb"
+        },
+        {
+          "Id": "40a39252-7536-401a-8439-35b7f92ebb0d",
+          "Command": "-import Scenes\\GlassVaseFlowers\\glTF-Binary\\GlassVaseFlowers.glb"
+        },
+        {
+          "Id": "0dde351b-dd63-4976-9042-fe2a53d8869c",
+          "Command": "-import Scenes\\InterpolationTest\\glTF-Binary\\InterpolationTest.glb"
+        },
+        {
+          "Id": "ba52964d-a6a6-4e7e-a340-a9ab9329f8ac",
+          "Command": "-import Scenes\\IORTestGrid\\glTF-Binary\\IORTestGrid.glb"
+        },
+        {
+          "Id": "6fe64ff7-8460-459e-a484-b4775a560009",
+          "Command": "-import Scenes\\IridescenceAbalone\\glTF-Binary\\IridescenceAbalone.glb"
+        },
+        {
+          "Id": "9ee8eff4-1957-41cb-adc4-b108e7c94bef",
+          "Command": "-import Scenes\\IridescenceLamp\\glTF-Binary\\IridescenceLamp.glb"
+        },
+        {
+          "Id": "b0c6e8e4-f291-4f67-b395-8a6922fe4a88",
+          "Command": "-import Scenes\\IridescenceSuzanne\\glTF-Binary\\IridescenceSuzanne.glb"
+        },
+        {
+          "Id": "be4e764c-e759-461f-b739-939d708b1e20",
+          "Command": "-import Scenes\\IridescentDishWithOlives\\glTF-Binary\\IridescentDishWithOlives.glb"
+        },
+        {
+          "Id": "9d579a8f-62c7-4ae0-a55c-3cccc527be3a",
+          "Command": "-import Scenes\\Lantern\\glTF-Binary\\Lantern.glb"
+        },
+        {
+          "Id": "4bf899ce-ac68-4847-bbe7-890962f4fbdc",
+          "Command": "-import Scenes\\MaterialsVariantsShoe\\glTF-Binary\\MaterialsVariantsShoe.glb"
+        },
+        {
+          "Id": "d17917f3-5c65-4473-9b23-93c3cffff038",
+          "Command": "-import Scenes\\MetalRoughSpheres\\glTF-Binary\\MetalRoughSpheres.glb"
+        },
+        {
+          "Id": "41e4261f-ad5a-4a92-995e-5eb2b811ad24",
+          "Command": "-import Scenes\\MetalRoughSpheresNoTextures\\glTF-Binary\\MetalRoughSpheresNoTextures.glb"
+        },
+        {
+          "Id": "b4a41d8d-66ff-4961-8845-45a01f0702ee",
+          "Command": "-import Scenes\\MorphPrimitivesTest\\glTF-Binary\\MorphPrimitivesTest.glb"
+        },
+        {
+          "Id": "04040285-3e80-4618-9288-894a0e88c49f",
+          "Command": "-import Scenes\\MorphStressTest\\glTF-Binary\\MorphStressTest.glb"
+        },
+        {
+          "Id": "e9b2382a-c617-447d-a106-1790c4da9512",
+          "Command": "-import Scenes\\MosquitoInAmber\\glTF-Binary\\MosquitoInAmber.glb"
+        },
+        {
+          "Id": "ef8f9aca-a474-4707-9184-047d6ef6d632",
+          "Command": "-import Scenes\\MultiUVTest\\glTF-Binary\\MultiUVTest.glb"
+        },
+        {
+          "Id": "402e5b27-a98f-437e-b3fc-82f437aef2f0",
+          "Command": "-import Scenes\\NegativeScaleTest\\glTF-Binary\\NegativeScaleTest.glb"
+        },
+        {
+          "Id": "18ddaac4-fe04-4e7c-9795-9fa43022124c",
+          "Command": "-import Scenes\\NodePerformanceTest\\glTF-Binary\\NodePerformanceTest.glb"
+        },
+        {
+          "Id": "53ba0799-6a2d-4509-aea0-fd06c7cc07e3",
+          "Command": "-import Scenes\\NormalTangentMirrorTest\\glTF-Binary\\NormalTangentMirrorTest.glb"
+        },
+        {
+          "Id": "1c1bddd7-543f-4ecb-9e64-a881eff8adcb",
+          "Command": "-import Scenes\\NormalTangentTest\\glTF-Binary\\NormalTangentTest.glb"
+        },
+        {
+          "Id": "4aefdde2-2da8-4a54-97b2-8f108452e575",
+          "Command": "-import Scenes\\OrientationTest\\glTF-Binary\\OrientationTest.glb"
+        },
+        {
+          "Id": "dbab544f-b010-46d1-ada2-77d1ae992aa7",
+          "Command": "-import Scenes\\PlaysetLightTest\\glTF-Binary\\PlaysetLightTest.glb"
+        },
+        {
+          "Id": "1aa911ee-28f2-4a39-a655-b466e557986a",
+          "Command": "-import Scenes\\PotOfCoals\\glTF-Binary\\PotOfCoals.glb"
+        },
+        {
+          "Id": "7b2000fb-d9d1-4f72-866f-ccfbf29f03b5",
+          "Command": "-import Scenes\\RecursiveSkeletons\\glTF-Binary\\RecursiveSkeletons.glb"
+        },
+        {
+          "Id": "7027f1c9-d505-432a-b111-139e75489466",
+          "Command": "-import Scenes\\RiggedFigure\\glTF-Binary\\RiggedFigure.glb"
+        },
+        {
+          "Id": "f7b2351f-68db-4c60-9fc4-8be3606c33fa",
+          "Command": "-import Scenes\\RiggedSimple\\glTF-Binary\\RiggedSimple.glb"
+        },
+        {
+          "Id": "d9bdf0b1-52d5-4d77-9ae9-a18264807add",
+          "Command": "-import Scenes\\SheenChair\\glTF-Binary\\SheenChair.glb"
+        },
+        {
+          "Id": "f4664318-9d08-42cc-8624-0bbb5b210436",
+          "Command": "-import Scenes\\SheenTestGrid\\glTF-Binary\\SheenTestGrid.glb"
+        },
+        {
+          "Id": "efdd1e4c-27c7-4905-87f1-347beeb190d2",
+          "Command": "-import Scenes\\SheenWoodLeatherSofa\\glTF-Binary\\SheenWoodLeatherSofa.glb"
+        },
+        {
+          "Id": "b012ce7b-2c0d-478f-8315-2b29c5acfe47",
+          "Command": "-import Scenes\\SimpleInstancing\\glTF-Binary\\SimpleInstancing.glb"
+        },
+        {
+          "Id": "1d53568a-fcff-4fe1-aae4-b860b0b90498",
+          "Command": "-import Scenes\\SpecGlossVsMetalRough\\glTF-Binary\\SpecGlossVsMetalRough.glb"
+        },
+        {
+          "Id": "b3db20a1-5749-47f0-b765-917ff3634116",
+          "Command": "-import Scenes\\SpecularSilkPouf\\glTF-Binary\\SpecularSilkPouf.glb"
+        },
+        {
+          "Id": "72ba27f5-f884-491e-9c82-611f89e22cfc",
+          "Command": "-import Scenes\\SpecularTest\\glTF-Binary\\SpecularTest.glb"
+        },
+        {
+          "Id": "6a2d548c-051d-4b42-9500-23a612e41ba5",
+          "Command": "-import Scenes\\TextureCoordinateTest\\glTF-Binary\\TextureCoordinateTest.glb"
+        },
+        {
+          "Id": "b1b8a877-1914-4882-920b-034e3fd66183",
+          "Command": "-import Scenes\\TextureEncodingTest\\glTF-Binary\\TextureEncodingTest.glb"
+        },
+        {
+          "Id": "73dc2e22-2fe6-4b6d-bcc4-9017251600ac",
+          "Command": "-import Scenes\\TextureLinearInterpolationTest\\glTF-Binary\\TextureLinearInterpolationTest.glb"
+        },
+        {
+          "Id": "bdc85346-63f4-4f41-a3a8-3502debfbed4",
+          "Command": "-import Scenes\\TextureSettingsTest\\glTF-Binary\\TextureSettingsTest.glb"
+        },
+        {
+          "Id": "48d1c44b-a1ec-4822-83a6-937826e2742c",
+          "Command": "-import Scenes\\TextureTransformMultiTest\\glTF-Binary\\TextureTransformMultiTest.glb"
+        },
+        {
+          "Id": "47e54c2d-d304-4f78-9ac8-a9c0ee2cab14",
+          "Command": "-import Scenes\\ToyCar\\glTF-Binary\\ToyCar.glb"
+        },
+        {
+          "Id": "276a4aef-9a1d-4d38-a752-a72edd2b8b4a",
+          "Command": "-import Scenes\\TransmissionRoughnessTest\\glTF-Binary\\TransmissionRoughnessTest.glb"
+        },
+        {
+          "Id": "ad07803a-b72f-4342-b6f1-b1644c473b2f",
+          "Command": "-import Scenes\\TransmissionTest\\glTF-Binary\\TransmissionTest.glb"
+        },
+        {
+          "Id": "8e826495-c7de-40d7-9daf-d6bbfc25ae62",
+          "Command": "-import Scenes\\TransmissionThinwallTestGrid\\glTF-Binary\\TransmissionThinwallTestGrid.glb"
+        },
+        {
+          "Id": "97c54873-67f4-4641-9e1b-ca2b70b6bfe3",
+          "Command": "-import Scenes\\Unicode❤♻Test\\glTF-Binary\\Unicode❤♻Test.glb"
+        },
+        {
+          "Id": "7f91f4e9-8661-4c3b-9c86-b8c6dbfbb11b",
+          "Command": "-import Scenes\\UnlitTest\\glTF-Binary\\UnlitTest.glb"
+        },
+        {
+          "Id": "4d3bdc3d-27ab-46a6-af84-e7c0e57aade8",
+          "Command": "-import Scenes\\VC\\glTF-Binary\\VC.glb"
+        },
+        {
+          "Id": "ba49f957-509b-4a95-8efd-0c2211c021cb",
+          "Command": "-import Scenes\\VertexColorTest\\glTF-Binary\\VertexColorTest.glb"
+        },
+        {
+          "Id": "a365df1d-28dd-4014-8ba4-c4d76ddd1ee9",
+          "Command": "-import Scenes\\VirtualCity\\glTF-Binary\\VirtualCity.glb"
+        },
+        {
+          "Id": "f14a09b5-a0fc-4a36-8e5e-5fd1d4a6194f",
+          "Command": "-import Scenes\\WaterBottle\\glTF-Binary\\WaterBottle.glb"
         }
       ]
     }
