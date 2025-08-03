@@ -80,7 +80,14 @@ namespace assertinternal
 #define SEAssert(condition, errorMsg, ...) \
 	if(!(condition)) \
 	{ \
-		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+		std::string const& errorStr = std::format( \
+			"\n\n================ ASSERTION FAILED =================\n" \
+			"Condition: {} == {}\n" \
+			"Message: \"{}\"\n" \
+			"File: {}\n" \
+			"Line: {}\n" \
+			"Function: {}\n" \
+			"===================================================\n\n", \
 			#condition, \
 			(condition ? "true" : "false"), \
 			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
@@ -98,7 +105,14 @@ namespace assertinternal
 #define SEAssert(condition, errorMsg, ...)	\
 		if (!(condition)) \
 		{ \
-			std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+		std::string const& errorStr = std::format( \
+			"\n\n================ ASSERTION FAILED =================\n" \
+			"Condition: {} == {}\n" \
+			"Message: \"{}\"\n" \
+			"File: {}\n" \
+			"Line: {}\n" \
+			"Function: {}\n" \
+			"===================================================\n\n", \
 				#condition, \
 				(condition ? "true" : "false"), \
 				assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
@@ -121,7 +135,13 @@ namespace assertinternal
 
 #define SEAssertF(errorMsg, ...) \
 	{ \
-		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed:\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+		std::string const& errorStr = std::format( \
+			"\n\n==================== ASSERTION ====================\n" \
+			"Message: \"{}\"\n" \
+			"File: {}\n" \
+			"Line: {}\n" \
+			"Function: {}\n" \
+			"===================================================\n\n", \
 			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
 			__FILE__, \
 			__LINE__, \
@@ -134,7 +154,18 @@ namespace assertinternal
 #else
 
 #define SEAssertF(errorMsg, ...) \
-		std::string const& errorStr = assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__); \
+		std::string const& errorStr = std::format( \
+			"\n\n==================== ASSERTION ====================\n" \
+			"Message: \"{}\"\n" \
+			"File: {}\n" \
+			"Line: {}\n" \
+			"Function: {}\n" \
+			"===================================================\n\n", \
+			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
+			__FILE__, \
+			__LINE__, \
+			__func__ \
+		); \
 		assertinternal::LogAssertAsError(errorStr.c_str());
 
 #endif
@@ -144,7 +175,14 @@ namespace assertinternal
 #define SEFatalAssert(condition, errorMsg, ...)	\
 	if(!(condition)) \
 	{ \
-		std::string const& errorStr = std::format("\n\n\n\n\nAssertion failed: {} == {}\n\"{}\"\nFile: {}\nLine: {}\nFunction: {}\n\n\n", \
+		std::string const& errorStr = std::format( \
+			"\n\n================== FATAL ASSERT ===================\n" \
+			"Condition: {} == {}\n" \
+			"Message: \"{}\"\n" \
+			"File: {}\n" \
+			"Line: {}\n" \
+			"Function: {}\n" \
+			"===================================================\n\n", \
 			#condition, \
 			(condition ? "true" : "false"), \
 			assertinternal::StringFromVariadicArgs(errorMsg, __VA_ARGS__), \
