@@ -4,6 +4,17 @@
 #include "Technique.h"
 
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
+namespace re
+{
+	class RasterState;
+	class VertexStreamMap;
+	class Shader;
+}
 namespace effect
 {
 	class EffectDB

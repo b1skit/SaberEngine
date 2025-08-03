@@ -2,6 +2,9 @@
 #include "EffectDB.h"
 #include "EffectKeys.h"
 #include "EnumTypes.h"
+#include "RasterState.h"
+#include "Shader.h"
+#include "VertexStreamMap.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"

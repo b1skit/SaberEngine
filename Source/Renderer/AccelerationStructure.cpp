@@ -292,7 +292,6 @@ namespace re
 		// Create the ShaderBindingTable:
 		for (auto const& entry : sbtParams)
 		{
-			
 			newTLASParams->m_SBTs.emplace(
 				entry.first,
 				re::ShaderBindingTable::Create(

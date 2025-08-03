@@ -1,7 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
 #include "Effect.h"
-#include "EffectDB.h"
 #include "RenderManager.h"
 #include "Shader.h"
 #include "ShaderBindingTable_Platform.h"
