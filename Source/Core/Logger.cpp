@@ -255,10 +255,14 @@ namespace core
 	{
 		SEAssert(!s_isRunning, "Flushing messages while running. This is unexpected");
 
-		while (!s_messages.empty())
 		{
-			PrintMessage(s_messages.front().data());
-			s_messages.pop();
+			std::unique_lock<std::mutex> modifyLock(s_messagesMutex);
+
+			while (!s_messages.empty())
+			{
+				PrintMessage(s_messages.front().data());
+				s_messages.pop();
+			}
 		}
 	}
 
@@ -272,6 +276,8 @@ namespace core
 			std::ios::out);
 		SEAssert(s_logOutputStream.good(), "Error creating log output stream");
 
+		std::array<char, Logger::k_internalStagingBufferSize> messageBuffer{ '\0' };
+
 		while (s_isRunning)
 		{
 			std::unique_lock<std::mutex> waitingLock(s_messagesMutex);
@@ -282,17 +288,13 @@ namespace core
 				return;
 			}
 
-			// Get a pointer to the front message, then release the lock to allow more messages to be added
-			char const* topMsg = s_messages.front().data();
+			// Copy the front message into the intermediate buffer, then release the lock so more messages can be added
+			strcpy(messageBuffer.data(), s_messages.back().data());
+			s_messages.pop();
+
 			waitingLock.unlock();
 
-			PrintMessage(topMsg);
-			
-			{
-				// Finally, pop the message
-				std::unique_lock<std::mutex> modifyLock(s_messagesMutex);
-				s_messages.pop();
-			}
+			PrintMessage(messageBuffer.data());
 		}
 	}
 
