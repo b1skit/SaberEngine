@@ -25,8 +25,10 @@
 #include "Core/Util/FileIOUtils.h"
 
 #include "Renderer/Context.h"
+#include "Renderer/EnumTypes.h"
 #include "Renderer/Material_GLTF_PBRMetallicRoughness.h"
 #include "Renderer/Material_GLTF_Unlit.h"
+#include "Renderer/VertexStream.h"
 #include "Renderer/VertexStreamBuilder.h"
 
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)

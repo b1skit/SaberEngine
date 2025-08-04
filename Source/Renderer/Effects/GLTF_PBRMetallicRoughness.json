@@ -181,7 +181,7 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_OpaqueSingleSided"
+				"Technique": "HitGroup_Reference_OpaqueSingleSided"
 			},
 			{
 				"Conditions": [
@@ -189,7 +189,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_ClipSingleSided"
+				"Technique": "HitGroup_Reference_ClipSingleSided"
 			},
 			{
 				"Conditions": [
@@ -197,7 +197,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_OpaqueDoubleSided"
+				"Technique": "HitGroup_Reference_OpaqueDoubleSided"
 			},
 			{
 				"Conditions": [
@@ -205,7 +205,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_ClipDoubleSided"
+				"Technique": "HitGroup_Reference_ClipDoubleSided"
 			},
 			{
 				"Conditions": [
@@ -213,7 +213,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_BlendSingleSided"
+				"Technique": "HitGroup_Reference_BlendSingleSided"
 			},
 			{
 				"Conditions": [
@@ -221,7 +221,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "GLTF_PBRMR_HitGroup_BlendDoubleSided"
+				"Technique": "HitGroup_Reference_BlendDoubleSided"
 			}
 		],
 
@@ -387,67 +387,67 @@
 			},
 			// Hit groups (Note: Technique name == hit group name)
 			{
-				"Name": "GLTF_PBRMR_HitGroup_OpaqueSingleSided",
+				"Name": "HitGroup_Reference_OpaqueSingleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
 			},
 			{
-				"Name": "GLTF_PBRMR_HitGroup_ClipSingleSided",
+				"Name": "HitGroup_Reference_ClipSingleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"AnyHitShader": "RayTracing_Experimental",
-				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
 				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
 			},
 			{
-				"Name": "GLTF_PBRMR_HitGroup_OpaqueDoubleSided",
+				"Name": "HitGroup_Reference_OpaqueDoubleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
 			},
 			{
-				"Name": "GLTF_PBRMR_HitGroup_ClipDoubleSided",
+				"Name": "HitGroup_Reference_ClipDoubleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"AnyHitShader": "RayTracing_Experimental",
-				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
 				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
 			},
 			{
-				"Name": "GLTF_PBRMR_HitGroup_BlendSingleSided",
+				"Name": "HitGroup_Reference_BlendSingleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"AnyHitShader": "RayTracing_Experimental",
-				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
 				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
 			},
 			{
-				"Name": "GLTF_PBRMR_HitGroup_BlendDoubleSided",
+				"Name": "HitGroup_Reference_BlendDoubleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
-				"AnyHitShader": "RayTracing_Experimental",
-				"AnyHitShaderEntryPoint" : "AnyHit_Experimental",
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
 				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
 
-				"ClosestHitShader": "RayTracing_Experimental",
-				"ClosestHitShaderEntryPoint" : "ClosestHit_Experimental",
+				"ClosestHitShader": "ReferencePathTracer",
+				"ClosestHitShaderEntryPoint" : "ClosestHit",
 				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
 			}
 		]

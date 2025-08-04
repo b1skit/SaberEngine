@@ -26,11 +26,7 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 	
 	// Compute our geometry index for buffer arrays aligned with AS geometry:
 	const uint geoIdx = InstanceID() + GeometryIndex();
-		
-	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	
-	float3 colorOut = float3(0, 0, 0);
-		
 	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
 	const StructuredBuffer<InstancedBufferLUTData> instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx];
 	
@@ -38,77 +34,15 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 	const uint materialBufferIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.y;
 	const uint materialType = instancedBuffersLUT[geoIdx].g_materialIndexes.z;
 	
-	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
-	uint baseColorUVStreamResourceIdx = INVALID_RESOURCE_IDX;
-	
-	uint baseColorUVChannel = 0;
-	float4 baseColorFactor = float4(1.f, 1.f, 1.f, 1.f);
-	switch (materialType)
-	{
-	case MAT_ID_GLTF_Unlit:
-	{
-		const StructuredBuffer<UnlitData> materialData = UnlitParams[materialResourceIdx];
-		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
-			
-		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
-			
-		baseColorFactor = materialData[materialBufferIdx].g_baseColorFactor;
+	const TriangleData triangleData = LoadTriangleData(geoIdx, vertexStreamsLUTIdx);
+	const InterpolatedTriangleData interpolatedTriData = InterpolateTriangleData(triangleData, barycentrics);
+	const MaterialData materialData = LoadMaterialData(
+		interpolatedTriData, materialResourceIdx, materialBufferIdx, materialType);
 
-	}
-	break;
-	case MAT_ID_GLTF_PBRMetallicRoughness:
-	{
-		const StructuredBuffer<PBRMetallicRoughnessData> materialData = PBRMetallicRoughnessParams[materialResourceIdx];
-		baseColorResourceIdx = materialData[materialBufferIdx].g_bindlessTextureIndexes0.x;
-			
-		baseColorUVChannel = materialData[materialBufferIdx].g_uvChannelIndexes0.x;
-			
-		baseColorFactor = materialData[materialBufferIdx].g_baseColorFactor;
-	}
-	break;
-	}
-	
-	// UVs:
-	baseColorUVStreamResourceIdx = baseColorUVChannel == 0 ? 
-		vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w : vertexStreamLUT[geoIdx].g_UV1ColorIndex.x;
-	
-	const StructuredBuffer<float2> uvStream = VertexStreams_Float2[baseColorUVStreamResourceIdx];
-	
-	float2 uv =
-		uvStream[vertexIndexes.x].xy * barycentrics.x +
-		uvStream[vertexIndexes.y].xy * barycentrics.y +
-		uvStream[vertexIndexes.z].xy * barycentrics.z;
-	
-	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
-	uv = uv - floor(uv);
-	
-	// Unpack the GBuffer:
-	const GBuffer gbuffer = UnpackBindlessGBuffer(
-		uv,
-		baseColorResourceIdx,
-		INVALID_RESOURCE_IDX, // worldNormalResourceIdx
-		INVALID_RESOURCE_IDX, // RMAOVnResourceIdx
-		INVALID_RESOURCE_IDX, // emissiveResourceIdx
-		INVALID_RESOURCE_IDX, // matProp0ResourceIdx
-		INVALID_RESOURCE_IDX, // materialIDResourceIdx
-		INVALID_RESOURCE_IDX // depthResourceIdx
-	);
-	
-	// Vertex color:
-	float4 vertexColor = float4(1.f, 1.f, 1.f, 1.f);
-	const uint colorVertexStreamIdx = vertexStreamLUT[geoIdx].g_UV1ColorIndex.y;
-	if (colorVertexStreamIdx != INVALID_RESOURCE_IDX)
-	{
-		const StructuredBuffer<float4> vertexColorStream = VertexStreams_Float4[colorVertexStreamIdx];
-		
-		vertexColor = 
-			vertexColorStream[vertexIndexes.x] * barycentrics.x +
-			vertexColorStream[vertexIndexes.y] * barycentrics.y +
-			vertexColorStream[vertexIndexes.z] * barycentrics.z;
-	}
-	
-	// Combine:
-	colorOut = gbuffer.LinearAlbedo * vertexColor * baseColorFactor;
+	float3 colorOut = 
+		interpolatedTriData.m_color.rgb *
+		materialData.m_linearAlbedo.rgb * 
+		materialData.m_baseColorFactor.rgb;
 	
 	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
 }
@@ -117,24 +51,6 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 [shader("anyhit")]
 void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	////float3 barycentrics =
-	////  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
-	//const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
-
-	//uint vertId = 3 * PrimitiveIndex();
-	//// #DXR Extra: Per-Instance Data
-	//float3 hitColor = float3(0.6, 0.7, 0.6);
-	//// Shade only the first 3 instances (triangles)
-	//if (InstanceID() < 3)
-	//{
-	//	// #DXR Extra: Per-Instance Data
-	//	hitColor = BTriVertex[indices[vertId + 0]].color.rgb * barycentrics.x +
-	//		   BTriVertex[indices[vertId + 1]].color.rgb * barycentrics.y +
-	//		   BTriVertex[indices[vertId + 2]].color.rgb * barycentrics.z;
-	//}
-
-	//payload.g_colorAndDistance = float4(hitColor, RayTCurrent());
-	
 	payload.g_colorAndDistance = float4(float3(1, 1, 0), RayTCurrent());
 }
 

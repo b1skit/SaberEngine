@@ -5,8 +5,9 @@
 #include "IndexedBuffer.h"
 #include "RayTracingParamsHelpers.h"
 
-#include "Renderer/Shaders/Common/RayTracingParams.h"
-#include "Renderer/Shaders/Common/TransformParams.h"
+#include "Shaders/Common/RayTracingParams.h"
+#include "Shaders/Common/TransformParams.h"
+#include "Shaders/Common/MaterialParams.h"
 
 
 namespace grutil

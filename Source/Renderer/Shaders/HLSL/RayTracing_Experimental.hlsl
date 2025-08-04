@@ -32,8 +32,6 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 		
 	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	
-	float3 colorOut = float3(0, 0, 0);
-	
 #if defined(TEST_MATERIALS)
 	
 	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
@@ -113,7 +111,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	}
 	
 	// Combine:
-	colorOut = gbuffer.LinearAlbedo * vertexColor * baseColorFactor;
+	float3 colorOut = gbuffer.LinearAlbedo * vertexColor.rgb * baseColorFactor.rgb;
 	
 	
 #elif defined(TEST_VERTEX_STREAMS)

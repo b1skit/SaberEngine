@@ -64,6 +64,7 @@ RWTexture2D<float4> Texture2DRWFloat4[] : register(u0, space23);
 // ---------------------------------------------------------------------------------------------------------------------
 // Helper functions:
 // ---------------------------------------------------------------------------------------------------------------------
+
 uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 {
 	const uint vertexID = 3 * PrimitiveIndex(); // Triangle index -> Vertex index
@@ -98,6 +99,202 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 	}
 	
 	return vertexIndexes;
+}
+
+struct VertexData
+{
+	uint m_vertexIdx;
+	float3 m_position;
+	float3 m_normal; // Geometry normal (i.e. not from normal map)
+	float4 m_tangent;
+	float2 m_UV0;
+	float2 m_UV1;
+	float4 m_color;
+};
+struct TriangleData
+{
+	VertexData m_v0;
+	VertexData m_v1;
+	VertexData m_v2;
+};
+TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx)
+{	
+	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
+	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
+	
+	TriangleData triangleData;
+	
+	// Vertex indexes:	
+	triangleData.m_v0.m_vertexIdx = vertexIndexes.x;
+	triangleData.m_v1.m_vertexIdx = vertexIndexes.y;
+	triangleData.m_v2.m_vertexIdx = vertexIndexes.z;
+	
+	// Positions:
+	triangleData.m_v0.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.x];
+	triangleData.m_v1.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.y];
+	triangleData.m_v2.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.z];
+	
+	// Normals:
+	triangleData.m_v0.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x];
+	triangleData.m_v1.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y];
+	triangleData.m_v2.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z];
+	
+	// Tangents:
+	triangleData.m_v0.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
+	triangleData.m_v1.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.y];
+	triangleData.m_v2.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.z];
+	
+	if (vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w != INVALID_RESOURCE_IDX)
+	{
+		triangleData.m_v0.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.x];
+		triangleData.m_v1.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.y];
+		triangleData.m_v2.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.z];
+	}
+	else
+	{
+		triangleData.m_v0.m_UV0 = float2(0.f, 0.f);
+		triangleData.m_v1.m_UV0 = float2(0.f, 0.f);
+		triangleData.m_v2.m_UV0 = float2(0.f, 0.f);
+	}
+	
+	if (vertexStreamLUT[geoIdx].g_UV1ColorIndex.x != INVALID_RESOURCE_IDX)
+	{
+		triangleData.m_v0.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.x];
+		triangleData.m_v1.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.y];
+		triangleData.m_v2.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.z];
+	}
+	else
+	{
+		triangleData.m_v0.m_UV1 = float2(0.f, 0.f);
+		triangleData.m_v1.m_UV1 = float2(0.f, 0.f);
+		triangleData.m_v2.m_UV1 = float2(0.f, 0.f);
+	}
+	
+	// Color:
+	triangleData.m_v0.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.x];
+	triangleData.m_v1.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.y];
+	triangleData.m_v2.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.z];
+	
+	return triangleData;
+}
+
+
+//TriangleData GetWorldTriangleData(TriangleData triangleData, float4x4 localToWorldMatrix)
+//{
+//	TriangleData worldTriangleData = triangleData;
+	
+//	worldTriangleData.m_v0.m_position = mul(localToWorldMatrix, float4(triangleData.m_v0.m_position, 1.f)).xyz;
+//	worldTriangleData.m_v1.m_position = mul(localToWorldMatrix, float4(triangleData.m_v1.m_position, 1.f)).xyz;
+//	worldTriangleData.m_v2.m_position = mul(localToWorldMatrix, float4(triangleData.m_v2.m_position, 1.f)).xyz;
+
+
+	
+//	return worldTriangleData;
+//}
+
+
+struct InterpolatedTriangleData
+{
+	float2 m_UV0;
+	float2 m_UV1;
+	float4 m_color;
+	
+	// TODO: Add remaining hit point properties
+};
+InterpolatedTriangleData InterpolateTriangleData(TriangleData triangleData, float3 barycentrics)
+{
+	InterpolatedTriangleData hitPoint;
+	
+	// UVs:
+	hitPoint.m_UV0 =
+		triangleData.m_v0.m_UV0.xy * barycentrics.x +
+		triangleData.m_v1.m_UV0.xy * barycentrics.y +
+		triangleData.m_v2.m_UV0.xy * barycentrics.z;
+	hitPoint.m_UV1 =
+		triangleData.m_v0.m_UV1.xy * barycentrics.x +
+		triangleData.m_v1.m_UV1.xy * barycentrics.y +
+		triangleData.m_v2.m_UV1.xy * barycentrics.z;
+	
+	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
+	hitPoint.m_UV0 = hitPoint.m_UV0 - floor(hitPoint.m_UV0);
+	hitPoint.m_UV1 = hitPoint.m_UV1 - floor(hitPoint.m_UV1);
+	
+	// Color:
+	hitPoint.m_color =
+		triangleData.m_v0.m_color * barycentrics.x +
+		triangleData.m_v1.m_color * barycentrics.y +
+		triangleData.m_v2.m_color * barycentrics.z;
+	
+	return hitPoint;
+}
+
+
+struct MaterialData
+{
+	float4 m_linearAlbedo;
+	float4 m_baseColorFactor;
+	
+	// TODO: Add remaining material properties
+};
+MaterialData LoadMaterialData(
+	InterpolatedTriangleData interpolatedTriData, uint materialResourceIdx, uint materialBufferIdx, uint materialType)
+{
+	MaterialData materialData;
+	
+	// Get our indexes:
+	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
+	uint baseColorUVChannelIdx = INVALID_RESOURCE_IDX;
+	switch (materialType)
+	{
+	case MAT_ID_GLTF_Unlit:
+	{
+		const StructuredBuffer<UnlitData> materialBuffer = UnlitParams[materialResourceIdx];
+		baseColorResourceIdx = materialBuffer[materialBufferIdx].g_bindlessTextureIndexes0.x;
+		baseColorUVChannelIdx = materialBuffer[materialBufferIdx].g_uvChannelIndexes0.x;
+		materialData.m_baseColorFactor = materialBuffer[materialBufferIdx].g_baseColorFactor;
+	}
+	break;
+	case MAT_ID_GLTF_PBRMetallicRoughness:
+	{
+		const StructuredBuffer<PBRMetallicRoughnessData> materialBuffer = PBRMetallicRoughnessParams[materialResourceIdx];
+		baseColorResourceIdx = materialBuffer[materialBufferIdx].g_bindlessTextureIndexes0.x;
+		baseColorUVChannelIdx = materialBuffer[materialBufferIdx].g_uvChannelIndexes0.x;
+		materialData.m_baseColorFactor = materialBuffer[materialBufferIdx].g_baseColorFactor;
+	}
+	break;
+	}
+	
+	
+	if (baseColorResourceIdx != INVALID_RESOURCE_IDX && baseColorUVChannelIdx != INVALID_RESOURCE_IDX)
+	{
+		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
+
+		uint3 texDimensions = uint3(0, 0, 0);
+		baseColorTex.GetDimensions(0, texDimensions.x, texDimensions.y, texDimensions.z);
+				
+		uint3 pixelCoords;
+		switch (baseColorUVChannelIdx)
+		{
+		case 0:
+		{
+			pixelCoords = uint3(texDimensions.xy * interpolatedTriData.m_UV0, 0);				
+		}
+		break;
+		case 1:
+		{
+			pixelCoords = uint3(texDimensions.xy * interpolatedTriData.m_UV1, 0);
+		}
+		break;
+		}
+				
+		materialData.m_linearAlbedo = baseColorTex.Load(pixelCoords);
+	}
+	else
+	{
+		materialData.m_linearAlbedo = float4(1.f, 1.f, 1.f, 1.f); // GLTF specs: Default base color is (1,1,1)
+	}	
+	
+	return materialData;
 }
 
 

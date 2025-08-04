@@ -1,6 +1,9 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "BatchBuilder.h"
+#include "BatchHandle.h"
+#include "BufferView.h"
+#include "Buffer.h"
 #include "GraphicsSystem_ReferencePathTracer.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
@@ -93,7 +96,7 @@ namespace gr
 						.m_hitgroupStyles = effect::drawstyle::HitGroup_Reference,
 						.m_effectID = m_refPathTracerEffectID,
 						.m_maxPayloadByteSize = sizeof(PathTracer_HitInfo),
-						.m_maxRecursionDepth = 1, });
+						.m_maxRecursionDepth = 1, }); // Use iterative ray generation
 			}
 
 			re::BufferInput const& indexedBufferLUT = grutil::GetInstancedBufferLUTBufferInput(
