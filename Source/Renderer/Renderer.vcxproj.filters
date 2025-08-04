@@ -1300,5 +1300,8 @@
     <None Include="Shaders\HLSL\GBufferBindless.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\ReferencePathTracer.hlsl">
+      <Filter>Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
 </Project>
