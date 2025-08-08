@@ -463,7 +463,6 @@ namespace dx12
 		D3D12_SHADER_INPUT_BIND_DESC const& inputBindingDesc,
 		std::array<std::vector<RangeInput>, DescriptorType::Type_Count>& rangeInputs,
 		std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
-		std::vector<std::string>& staticSamplerNames,
 		std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers)
 	{
 		auto AddRangeInput = [&rangeInputs, &inputBindingDesc, &shaderType]
@@ -676,8 +675,6 @@ namespace dx12
 				SEAssert(staticSamplers.size() <= 2032,
 					"The maximum number of unique static samplers across live root signatures is 2032 (+16 reserved "
 					"for drivers that need their own samplers)");
-
-				staticSamplerNames.emplace_back(inputBindingDesc.Name);
 			}
 			else
 			{
@@ -1140,7 +1137,6 @@ namespace dx12
 							inputBindingDesc,
 							rangeInputs,
 							rootParameters,
-							newRootSig->m_staticSamplerNames,
 							staticSamplers);
 					}
 				}
@@ -1187,7 +1183,6 @@ namespace dx12
 						inputBindingDesc,
 						rangeInputs,
 						rootParameters,
-						newRootSig->m_staticSamplerNames,
 						staticSamplers);
 				}
 			}
@@ -1547,17 +1542,28 @@ namespace dx12
 	}
 
 
-	void RootSignature::AddStaticSampler(core::InvPtr<re::Sampler> const& sampler)
+	void RootSignature::AddStaticSampler(
+		core::InvPtr<re::Sampler> const& sampler,
+		uint32_t shaderRegister,
+		uint32_t registerSpace,
+		D3D12_SHADER_VISIBILITY shaderVisibility)
 	{
 		SEAssert(!m_isFinalized, "Root signature has already been finalized");
 
-		SEAssert(std::find(
-			m_staticSamplerNames.begin(), 
-			m_staticSamplerNames.end(), 
-			sampler->GetName()) == m_staticSamplerNames.end(),
+		SEAssert(std::find_if(
+			m_staticSamplers.begin(),
+			m_staticSamplers.end(),
+			[&](auto const& entry)
+			{
+				return entry.m_name == sampler->GetName();
+			}) == m_staticSamplers.end(),
 			"Sampler already added");
 		
-		m_staticSamplerNames.emplace_back(sampler->GetName());
+		m_staticSamplers.emplace_back(StaticSamplerDesc{
+			.m_name = sampler->GetName(),
+			.m_shaderRegister = shaderRegister,
+			.m_registerSpace = registerSpace,
+			.m_shaderVisibility = shaderVisibility });
 	}
 
 	
@@ -1670,14 +1676,18 @@ namespace dx12
 		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
 		staticSamplers.reserve(k_expectedNumberOfSamplers);
 
-		for (auto const& samplerName : m_staticSamplerNames)
+		for (auto const& entry : m_staticSamplers)
 		{
-			core::InvPtr<re::Sampler> const& sampler = core::Inventory::Get<re::Sampler>(samplerName);
+			core::InvPtr<re::Sampler> const& sampler = core::Inventory::Get<re::Sampler>(entry.m_name);
 
-			dx12::Sampler::PlatObj* samplerPlatObj =
-				sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
+			dx12::Sampler::PlatObj* samplerPlatObj = sampler->GetPlatformObject()->As<dx12::Sampler::PlatObj*>();
 
 			staticSamplers.emplace_back(samplerPlatObj->m_staticSamplerDesc);
+
+			// Update the static sampler description with the provided shader register, register space and visibility:
+			staticSamplers.back().ShaderRegister = entry.m_shaderRegister;
+			staticSamplers.back().RegisterSpace = entry.m_registerSpace;
+			staticSamplers.back().ShaderVisibility = entry.m_shaderVisibility;
 		}
 		SEAssert(staticSamplers.size() <= 2032,
 			"The maximum number of unique static samplers across live root signatures is 2032 (+16 reserved "

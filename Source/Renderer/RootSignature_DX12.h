@@ -6,6 +6,11 @@
 struct CD3DX12_ROOT_PARAMETER1;
 struct CD3DX12_DESCRIPTOR_RANGE1;
 
+namespace core
+{
+	template<typename T>
+	class InvPtr;
+}
 namespace re
 {
 	class Sampler;
@@ -187,7 +192,12 @@ namespace dx12
 			std::vector<DescriptorRangeCreateDesc> const&,
 			D3D12_SHADER_VISIBILITY = D3D12_SHADER_VISIBILITY_ALL);
 
-		void AddStaticSampler(core::InvPtr<re::Sampler> const&);
+		void AddStaticSampler(
+			core::InvPtr<re::Sampler> const&,
+			uint32_t shaderRegister,
+			uint32_t registerSpace,
+			D3D12_SHADER_VISIBILITY);
+		
 
 		void Finalize(dx12::Context*, char const* name, D3D12_ROOT_SIGNATURE_FLAGS);
 
@@ -238,6 +248,7 @@ namespace dx12
 
 
 	private: // Create() helpers:
+		struct StaticSamplerDesc;
 		struct RangeInput : public D3D12_SHADER_INPUT_BIND_DESC
 		{
 			// We inherit from D3D12_SHADER_INPUT_BIND_DESC so we can store the visibility, and store the .Name in a
@@ -253,7 +264,6 @@ namespace dx12
 			D3D12_SHADER_INPUT_BIND_DESC const&,
 			std::array<std::vector<RangeInput>, DescriptorType::Type_Count>& rangeInputs,
 			std::vector<CD3DX12_ROOT_PARAMETER1>& rootParameters,
-			std::vector<std::string>& staticSamplerNames,
 			std::vector<D3D12_STATIC_SAMPLER_DESC>& staticSamplers);
 
 		static void ParseTableRanges(
@@ -284,7 +294,14 @@ namespace dx12
 
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 
-		std::vector<std::string> m_staticSamplerNames;
+		struct StaticSamplerDesc
+		{
+			std::string m_name;
+			uint32_t m_shaderRegister;
+			uint32_t m_registerSpace;
+			D3D12_SHADER_VISIBILITY m_shaderVisibility;
+		};
+		std::vector<StaticSamplerDesc> m_staticSamplers; // Only used for unfinalized root signatures
 
 		bool m_isFinalized;
 	};
