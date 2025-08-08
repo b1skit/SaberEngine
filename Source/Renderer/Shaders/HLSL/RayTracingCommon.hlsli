@@ -77,7 +77,7 @@ float TraceShadowRay(
 	RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | \
 	RAY_FLAG_CULL_BACK_FACING_TRIANGLES
 			
-	RayQuery < QUERY_RAY_FLAGS > rayQuery;
+	RayQuery<QUERY_RAY_FLAGS> rayQuery;
 			
 	// Configure the trace:
 	rayQuery.TraceRayInline(
