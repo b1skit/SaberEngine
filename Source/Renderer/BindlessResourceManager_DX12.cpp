@@ -5,6 +5,8 @@
 #include "RootSignature_DX12.h"
 #include "SysInfo_DX12.h"
 
+#include "Core/Inventory.h"
+
 #include "Renderer/Shaders/Common/CameraParams.h"
 #include "Renderer/Shaders/Common/MaterialParams.h"
 #include "Renderer/Shaders/Common/RayTracingParams.h"
@@ -48,6 +50,19 @@ namespace
 		// Create a global root signature:
 		std::unique_ptr<dx12::RootSignature> globalRootSig = dx12::RootSignature::CreateUninitialized();
 
+		// Static samplers:
+		uint32_t staticShaderRegister = 0;
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("WrapMinMagLinearMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("ClampMinMagLinearMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("ClampMinMagMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("WhiteBorderMinMagMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("ClampMinMagMipLinear"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("WrapMinMagMipLinear"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("WrapAnisotropic"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("BorderCmpMinMagLinearMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+		globalRootSig->AddStaticSampler(core::Inventory::Get<re::Sampler>("WrapCmpMinMagLinearMipPoint"), staticShaderRegister++, 0, D3D12_SHADER_VISIBILITY_ALL);
+
+		// Descriptor tables:
 		std::vector<dx12::RootSignature::DescriptorRangeCreateDesc> tableRanges;
 		tableRanges.reserve(dx12::RootSignature::k_maxRootSigEntries);
 

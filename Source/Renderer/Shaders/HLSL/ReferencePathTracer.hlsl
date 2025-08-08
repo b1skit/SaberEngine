@@ -18,30 +18,45 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
-	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	// Camera:
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+	const CameraData cameraParams = CameraParams[cameraParamsIdx];	
 	
 	// Get our Vertex stream LUTs buffer:
 	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
-	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];	
 	
 	// Compute our geometry index for buffer arrays aligned with AS geometry:
 	const uint geoIdx = InstanceID() + GeometryIndex();
 	
 	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
-	const StructuredBuffer<InstancedBufferLUTData> instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx];
+	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
 	
-	const uint materialResourceIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.x;
-	const uint materialBufferIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.y;
-	const uint materialType = instancedBuffersLUT[geoIdx].g_materialIndexes.z;
+	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
+	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
+	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
 	
-	const TriangleData triangleData = LoadTriangleData(geoIdx, vertexStreamsLUTIdx);
-	const InterpolatedTriangleData interpolatedTriData = InterpolateTriangleData(triangleData, barycentrics);
+	const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
+	const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
+	
+	// Triangle data:
+	const TriangleData triangleData =
+		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
+	
+	// Interpolated triangle data at the hit point:
+	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);
+	
+	// Material data:
 	const MaterialData materialData = LoadMaterialData(
-		interpolatedTriData, materialResourceIdx, materialBufferIdx, materialType);
-
-	float3 colorOut = 
-		interpolatedTriData.m_color.rgb *
-		materialData.m_linearAlbedo.rgb * 
+		hitData,
+		materialResourceIdx, 
+		materialBufferIdx, 
+		materialType);
+	
+	float3 colorOut =
+		hitData.m_color.rgb *
+		materialData.m_linearAlbedo.rgb *
 		materialData.m_baseColorFactor.rgb;
 	
 	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
@@ -58,46 +73,34 @@ void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttribu
 [shader("raygeneration")]
 void RayGeneration()
 {
-	// Initialize the ray payload
-	PathTracer_HitInfo payload;
-	payload.g_colorAndDistance = float4(0, 0, 0, 0);
-
-	// Get the location within the dispatched 2D grid of work items
-	// (often maps to pixels, so this could represent a pixel coordinate).
-	uint2 launchIndex = DispatchRaysIndex().xy;
-	float2 dims = float2(DispatchRaysDimensions().xy);
-	float2 d = (((launchIndex.xy + 0.5f) / dims.xy) * 2.f - 1.f);
-	
-	// Define a ray, consisting of origin, direction, and the min-max distance
-	// values
-	// #DXR Extra: Perspective Camera
-	float aspectRatio = dims.x / dims.y;
-	
-	// Perspective
-	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
-	
 	const uint sceneBVHDescriptorIdx = RootConstants0.g_data.x;
 	const uint traceRayParamsIdx = RootConstants0.g_data.y;
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	
 	const TraceRayData traceRayParams = TraceRayParams[traceRayParamsIdx];
-	
-	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
 	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
+
+	// Compute the ray origin and direction in world space:
+	const uint2 launchIndex = DispatchRaysIndex().xy;
+	const uint2 screenDims = DispatchRaysDimensions().xy;
 	
-	ray.Origin = mul(cameraParams.g_invView, float4(0, 0, 0, 1)).xyz;
-	float4 target = mul(cameraParams.g_invProjection, float4(d.x, -d.y, 1, 1));
-	ray.Direction = mul(cameraParams.g_invView, float4(target.xyz, 0)).xyz;
+	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
-	ray.TMin = 0;
-	ray.TMax = 100000;
+	ray.Origin = cameraParams.g_cameraWPos;	
+	ray.Direction = GetViewRay(launchIndex, screenDims, cameraParams.g_cameraWPos.xyz, cameraParams.g_invViewProjection);
+		
+	ray.TMin = 0.f;
+	ray.TMax = FLT_MAX;
 	
-	// Trace the ray
+	// Initialize the ray payload
+	PathTracer_HitInfo payload;
+	payload.g_colorAndDistance = float4(0, 0, 0, 0);
+	
+	// Trace the ray:
 	TraceRay(
-		// Parameter name: AccelerationStructure
-		// Acceleration structure
 		SceneBVH[sceneBVHDescriptorIdx],
 
 		// Parameter name: RayFlags
@@ -139,13 +142,7 @@ void RayGeneration()
 		// hence an index 0
 		traceRayParams.g_traceRayParams.w,
 
-		// Parameter name: Ray
-		// Ray information to trace
 		ray,
-
-		// Parameter name: Payload
-		// Payload associated to the ray, which will be used to communicate
-		// between the hit/miss shaders and the raygen
 		payload);
 
 

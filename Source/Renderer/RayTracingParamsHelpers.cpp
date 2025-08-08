@@ -2,12 +2,13 @@
 #include "AccelerationStructure.h"
 #include "Buffer.h"
 #include "BufferView.h"
+#include "Effect.h"
 #include "IndexedBuffer.h"
 #include "RayTracingParamsHelpers.h"
 
+#include "Shaders/Common/MaterialParams.h"
 #include "Shaders/Common/RayTracingParams.h"
 #include "Shaders/Common/TransformParams.h"
-#include "Shaders/Common/MaterialParams.h"
 
 
 namespace grutil

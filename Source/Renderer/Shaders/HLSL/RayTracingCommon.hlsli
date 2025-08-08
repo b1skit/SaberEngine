@@ -1,4 +1,9 @@
-// � 2025 Adam Badke. All rights reserved.
+﻿// © 2025 Adam Badke. All rights reserved.
+#ifndef RAY_TRACING_COMMON_HLSLI
+#define RAY_TRACING_COMMON_HLSLI
+
+#include "MathConstants.hlsli"
+
 #include "../Common/RayTracingParams.h"
 
 
@@ -6,6 +11,23 @@
 float3 GetBarycentricWeights(float2 bary)
 {
 	return float3(1.f - bary.x - bary.y, bary.x, bary.y);
+}
+
+
+// Returns a ray direction in world space, given pixel coordinates, screen dimensions, camera position, and the inverse
+// view-projection matrix. By default, the ray direction is offset by 0.5 pixels to center it in the pixel, but this can
+// be adjusted/jittered with the 'offset' parameter.
+float3 GetViewRay(uint2 pixelCoords, uint2 screenDims, float3 camWorldPos, float4x4 invViewProjection, float offset = 0.5f)
+{
+	const float2 screenUV = (pixelCoords + offset) / screenDims.xy; // Centered pixel UVs, top-left origin
+	const float2 ndc = screenUV * 2.f - 1.f; // [-1, 1]
+	
+	const float4 ndcPoint = float4(ndc.x, -ndc.y, 1.f, 1.f); // NDC ray: Flip Y to compensate for the top-left UV origin
+	
+	float4 worldPoint = mul(invViewProjection, ndcPoint);
+	worldPoint /= worldPoint.w; // Perspective divide
+	
+	return worldPoint.xyz - camWorldPos;
 }
 
 
@@ -50,7 +72,10 @@ float TraceShadowRay(
 	ray.TMin = tMin;
 	ray.TMax = tMax;
 
-#define QUERY_RAY_FLAGS RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_CULL_BACK_FACING_TRIANGLES
+#define QUERY_RAY_FLAGS \
+	RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | \
+	RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | \
+	RAY_FLAG_CULL_BACK_FACING_TRIANGLES
 			
 	RayQuery < QUERY_RAY_FLAGS > rayQuery;
 			
@@ -70,3 +95,6 @@ float TraceShadowRay(
 	}
 	return 1.f; // Miss: We're not occluded
 }
+
+
+#endif // RAY_TRACING_COMMON_HLSLI

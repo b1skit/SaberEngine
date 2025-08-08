@@ -6,6 +6,8 @@
 
 #include "Core/Util/ImGuiUtils.h"
 
+#include "Renderer/Shaders/Common/CameraParams.h"
+
 
 namespace pr
 {
@@ -83,7 +85,9 @@ namespace pr
 			cameraConfig.m_bloomRadius.y,
 			gr::Camera::ComputeExposure(bloomEV100));
 
-		cameraParams.g_cameraWPos = glm::vec4(transform.GetGlobalTranslation().xyz, 0.f);
+		cameraParams.g_cameraWPos = glm::vec4(
+			transform.GetGlobalTranslation().xyz,
+			0.f);
 
 		return cameraParams;
 	}

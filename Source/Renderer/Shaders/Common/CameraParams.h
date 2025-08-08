@@ -19,7 +19,7 @@ struct CameraData
 	float4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
 	float4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
 
-	float4 g_cameraWPos;
+	float4 g_cameraWPos; // .xyz = world space camera position, .w = unused
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "CameraParams";

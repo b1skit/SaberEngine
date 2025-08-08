@@ -1,17 +1,22 @@
 // © 2025 Adam Badke. All rights reserved.
 #ifndef BINDLESS_RESOURCES
 #define BINDLESS_RESOURCES
+#include "NormalMapUtils.hlsli"
+#include "RayTracingCommon.hlsli"
+#include "Samplers.hlsli"
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Bindless resources
-// Note: We use register spaces to overlap unbounded arrays on index 0
-// ---------------------------------------------------------------------------------------------------------------------
 #include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
 #include "../Common/ResourceCommon.h"
 #include "../Common/RTAOParams.h"
 #include "../Common/TransformParams.h"
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Bindless resources
+// Note: We use register spaces to overlap unbounded arrays on index 0
+// ---------------------------------------------------------------------------------------------------------------------
 
 
 // TODO: Use code generation to populate this and automate the space assignments
@@ -104,9 +109,9 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 struct VertexData
 {
 	uint m_vertexIdx;
-	float3 m_position;
-	float3 m_normal; // Geometry normal (i.e. not from normal map)
-	float4 m_tangent;
+	float3 m_worldPosition;
+	float4 m_tangent;		// Still in local space
+	float3 m_worldNormal;	// Vertex/geometry normal (i.e. not from normal map)
 	float2 m_UV0;
 	float2 m_UV1;
 	float4 m_color;
@@ -117,8 +122,10 @@ struct TriangleData
 	VertexData m_v1;
 	VertexData m_v2;
 };
-TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx)
-{	
+TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transformResourceIdx,	uint transformBufferIdx)
+{
+	const TransformData transform = TransformParams[transformResourceIdx][transformBufferIdx];
+	
 	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
 	
@@ -130,14 +137,20 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx)
 	triangleData.m_v2.m_vertexIdx = vertexIndexes.z;
 	
 	// Positions:
-	triangleData.m_v0.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.x];
-	triangleData.m_v1.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.y];
-	triangleData.m_v2.m_position = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.z];
+	triangleData.m_v0.m_worldPosition =
+		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.x], 1.f)).xyz;
+	triangleData.m_v1.m_worldPosition =
+		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.y], 1.f)).xyz;
+	triangleData.m_v2.m_worldPosition =
+		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.z], 1.f)).xyz;
 	
 	// Normals:
-	triangleData.m_v0.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x];
-	triangleData.m_v1.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y];
-	triangleData.m_v2.m_normal = VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z];
+	triangleData.m_v0.m_worldNormal = normalize(
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x]).xyz);
+	triangleData.m_v1.m_worldNormal = normalize(
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y]).xyz);
+	triangleData.m_v2.m_worldNormal = normalize(
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z]).xyz);
 	
 	// Tangents:
 	triangleData.m_v0.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
@@ -179,53 +192,60 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx)
 }
 
 
-//TriangleData GetWorldTriangleData(TriangleData triangleData, float4x4 localToWorldMatrix)
-//{
-//	TriangleData worldTriangleData = triangleData;
-	
-//	worldTriangleData.m_v0.m_position = mul(localToWorldMatrix, float4(triangleData.m_v0.m_position, 1.f)).xyz;
-//	worldTriangleData.m_v1.m_position = mul(localToWorldMatrix, float4(triangleData.m_v1.m_position, 1.f)).xyz;
-//	worldTriangleData.m_v2.m_position = mul(localToWorldMatrix, float4(triangleData.m_v2.m_position, 1.f)).xyz;
-
-
-	
-//	return worldTriangleData;
-//}
-
-
-struct InterpolatedTriangleData
+struct TriangleHitData
 {
+	float3 m_worldPosition;
+	float4 m_tangent;		// Still in local space
+	float3 m_worldNormal;	// Vertex/geometry normal (i.e. not from normal map)
 	float2 m_UV0;
 	float2 m_UV1;
 	float4 m_color;
 	
-	// TODO: Add remaining hit point properties
+	// TODO: Add remaining properties
 };
-InterpolatedTriangleData InterpolateTriangleData(TriangleData triangleData, float3 barycentrics)
+TriangleHitData GetTriangleHitData(TriangleData triangleData, float3 barycentrics)
 {
-	InterpolatedTriangleData hitPoint;
+	TriangleHitData hitData;
+	
+	// Position:	
+	hitData.m_worldPosition =
+		triangleData.m_v0.m_worldPosition * barycentrics.x +
+		triangleData.m_v1.m_worldPosition * barycentrics.y +
+		triangleData.m_v2.m_worldPosition * barycentrics.z;
+	
+	// Tangent:
+	hitData.m_tangent =
+		triangleData.m_v0.m_tangent * barycentrics.x +
+		triangleData.m_v1.m_tangent * barycentrics.y +
+		triangleData.m_v2.m_tangent * barycentrics.z;
+	
+	// Normal:	
+	hitData.m_worldNormal = normalize(
+		triangleData.m_v0.m_worldNormal * barycentrics.x +
+		triangleData.m_v1.m_worldNormal * barycentrics.y +
+		triangleData.m_v2.m_worldNormal * barycentrics.z);
 	
 	// UVs:
-	hitPoint.m_UV0 =
+	hitData.m_UV0 =
 		triangleData.m_v0.m_UV0.xy * barycentrics.x +
 		triangleData.m_v1.m_UV0.xy * barycentrics.y +
 		triangleData.m_v2.m_UV0.xy * barycentrics.z;
-	hitPoint.m_UV1 =
+	hitData.m_UV1 =
 		triangleData.m_v0.m_UV1.xy * barycentrics.x +
 		triangleData.m_v1.m_UV1.xy * barycentrics.y +
 		triangleData.m_v2.m_UV1.xy * barycentrics.z;
 	
 	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
-	hitPoint.m_UV0 = hitPoint.m_UV0 - floor(hitPoint.m_UV0);
-	hitPoint.m_UV1 = hitPoint.m_UV1 - floor(hitPoint.m_UV1);
+	hitData.m_UV0 = hitData.m_UV0 - floor(hitData.m_UV0);
+	hitData.m_UV1 = hitData.m_UV1 - floor(hitData.m_UV1);
 	
 	// Color:
-	hitPoint.m_color =
+	hitData.m_color =
 		triangleData.m_v0.m_color * barycentrics.x +
 		triangleData.m_v1.m_color * barycentrics.y +
 		triangleData.m_v2.m_color * barycentrics.z;
 	
-	return hitPoint;
+	return hitData;
 }
 
 
@@ -237,7 +257,10 @@ struct MaterialData
 	// TODO: Add remaining material properties
 };
 MaterialData LoadMaterialData(
-	InterpolatedTriangleData interpolatedTriData, uint materialResourceIdx, uint materialBufferIdx, uint materialType)
+	TriangleHitData hitData,
+	uint materialResourceIdx,
+	uint materialBufferIdx,
+	uint materialType)
 {
 	MaterialData materialData;
 	
@@ -264,7 +287,7 @@ MaterialData LoadMaterialData(
 	break;
 	}
 	
-	
+	// Base color:
 	if (baseColorResourceIdx != INVALID_RESOURCE_IDX && baseColorUVChannelIdx != INVALID_RESOURCE_IDX)
 	{
 		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
@@ -277,12 +300,12 @@ MaterialData LoadMaterialData(
 		{
 		case 0:
 		{
-			pixelCoords = uint3(texDimensions.xy * interpolatedTriData.m_UV0, 0);				
+			pixelCoords = uint3(texDimensions.xy * hitData.m_UV0, 0);				
 		}
 		break;
 		case 1:
 		{
-			pixelCoords = uint3(texDimensions.xy * interpolatedTriData.m_UV1, 0);
+			pixelCoords = uint3(texDimensions.xy * hitData.m_UV1, 0);
 		}
 		break;
 		}
