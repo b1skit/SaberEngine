@@ -30,7 +30,7 @@ namespace eventkey
 	constexpr util::CHashKey InputMouseRight("InputMouseRight");
 
 	// System:
-	constexpr util::CHashKey ToggleConsole("ToggleConsole");
+	constexpr util::CHashKey ToggleFreeLook("ToggleFreeLook");
 	constexpr util::CHashKey TogglePerformanceTimers("TogglePerformanceTimers");
 	constexpr util::CHashKey ToggleVSync("ToggleVSync");
 	constexpr util::CHashKey VSyncModeChanged("VSyncModeChanged");

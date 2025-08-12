@@ -177,9 +177,9 @@ namespace en
 						transformedEvent.m_eventKey = eventkey::ToggleUIVisibility;
 					}
 					break;
-					case definitions::KeyboardInputButton::InputButton_Console:
+					case definitions::KeyboardInputButton::InputButton_ToggleFreeLook:
 					{
-						transformedEvent.m_eventKey = eventkey::ToggleConsole;
+						transformedEvent.m_eventKey = eventkey::ToggleFreeLook;
 					}
 					break;
 					case definitions::KeyboardInputButton::InputButton_VSync:

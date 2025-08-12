@@ -188,7 +188,7 @@ namespace pr
 		core::EventManager::Subscribe(eventkey::MouseWheelEvent, this);
 		core::EventManager::Subscribe(eventkey::DragAndDrop, this);
 		core::EventManager::Subscribe(eventkey::VSyncModeChanged, this);
-		core::EventManager::Subscribe(eventkey::ToggleConsole, this);
+		core::EventManager::Subscribe(eventkey::ToggleFreeLook, this);
 		core::EventManager::Subscribe(eventkey::ToggleUIVisibility, this);
 
 		// Create UI render systems:
@@ -227,11 +227,6 @@ namespace pr
 
 		HandleEvents();
 
-		if (!m_showImGui)
-		{
-			return;
-		}
-
 		if (m_debugUIRenderSystemCreated.load())
 		{
 			// Update ImGui visibility state:
@@ -250,7 +245,7 @@ namespace pr
 
 				// Disable ImGui mouse listening if the console is not active: Prevents UI elements
 				// flashing as the hidden mouse cursor passes by
-				if (m_imguiMenuActive)
+				if (m_imguiMenuActive && m_showImGui)
 				{
 					io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 				}
@@ -276,7 +271,10 @@ namespace pr
 					.m_data = (m_imguiMenuActive || m_imguiWantsToCaptureMouse), });
 			}
 
-			SubmitImGuiRenderCommands(frameNum);
+			if (m_showImGui)
+			{
+				SubmitImGuiRenderCommands(frameNum);
+			}
 		}
 	}
 
@@ -299,7 +297,7 @@ namespace pr
 
 			switch (eventInfo.m_eventKey)
 			{
-			case eventkey::ToggleConsole:
+			case eventkey::ToggleFreeLook:
 			{
 				// Only respond to console toggle events if we're not typing
 				if (!m_imguiWantsToCaptureKeyboard && !m_imguiWantsTextInput)
