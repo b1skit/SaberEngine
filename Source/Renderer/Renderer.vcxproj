@@ -468,6 +468,7 @@
     <None Include="Shaders\HLSL\Shadows.hlsli" />
     <None Include="Shaders\HLSL\SkinningAnimation_CShader.hlsl" />
     <None Include="Shaders\HLSL\Skybox_PShader.hlsl" />
+    <None Include="Shaders\HLSL\TextureLODHelpers.hlsli" />
     <None Include="Shaders\HLSL\Tonemapping_CShader.hlsl" />
     <None Include="Shaders\HLSL\Transformations.hlsli" />
     <None Include="Shaders\HLSL\UVUtils.hlsli" />

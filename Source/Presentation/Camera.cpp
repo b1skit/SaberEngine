@@ -67,11 +67,13 @@ namespace pr
 			cameraConfig.m_sensitivity,
 			cameraConfig.m_exposureCompensation);
 
+		const float tanHalfFOV = glm::tan(cameraConfig.m_yFOV * 0.5f);
+
 		cameraParams.g_exposureProperties = glm::vec4(
 			gr::Camera::ComputeExposure(ev100),
 			ev100,
-			0.f,
-			0.f);
+			tanHalfFOV,
+			cameraConfig.m_aspectRatio);
 
 		const float bloomEV100 = gr::Camera::ComputeEV100FromExposureSettings(
 			cameraConfig.m_aperture,

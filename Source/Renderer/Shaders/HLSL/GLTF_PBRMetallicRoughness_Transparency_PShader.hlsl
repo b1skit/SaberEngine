@@ -152,7 +152,7 @@ float4 PShader(VertexOut In) : SV_Target
 				if (shadowEnabled)
 				{
 #if defined(SHADOWS_RAYTRACED)
-				shadowFactor = TraceShadowRay(
+				shadowFactor = TraceShadowRayInline(
 					SceneBVH,
 					TraceRayInlineParams,
 					worldPos,
@@ -247,7 +247,7 @@ float4 PShader(VertexOut In) : SV_Target
 			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
 					
 			// Trace in reverse: Light -> world position, so we don't hit fake light source meshes
-			shadowFactor = TraceShadowRay(
+			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
 				TraceRayInlineParams,
 				lightWorldPos,
@@ -352,7 +352,7 @@ float4 PShader(VertexOut In) : SV_Target
 #if defined(SHADOWS_RAYTRACED)
 			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
 			
-			shadowFactor = TraceShadowRay(
+			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
 				TraceRayInlineParams,
 				worldPos,

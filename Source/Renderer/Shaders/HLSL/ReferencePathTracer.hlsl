@@ -2,6 +2,7 @@
 #include "BindlessResources.hlsli"
 #include "RayTracingCommon.hlsli"
 #include "GBufferBindless.hlsli"
+#include "TextureLODHelpers.hlsli"
 
 #include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
@@ -10,64 +11,6 @@
 
 // .x = SceneBVH idx, .y = TraceRayParams idx, .z = DescriptorIndexes, .w = unused
 ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
-
-
-[shader("closesthit")]
-void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
-	
-	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
-	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
-	
-	// Camera:
-	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
-	const CameraData cameraParams = CameraParams[cameraParamsIdx];	
-	
-	// Get our Vertex stream LUTs buffer:
-	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
-	
-	// Compute our geometry index for buffer arrays aligned with AS geometry:
-	const uint geoIdx = InstanceID() + GeometryIndex();
-	
-	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
-	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
-	
-	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
-	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
-	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
-	
-	const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
-	const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
-	
-	// Triangle data:
-	const TriangleData triangleData =
-		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
-	
-	// Interpolated triangle data at the hit point:
-	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);
-	
-	// Material data:
-	const MaterialData materialData = LoadMaterialData(
-		hitData,
-		materialResourceIdx, 
-		materialBufferIdx, 
-		materialType);
-	
-	float3 colorOut =
-		hitData.m_color.rgb *
-		materialData.m_linearAlbedo.rgb *
-		materialData.m_baseColorFactor.rgb;
-	
-	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
-}
-
-
-[shader("anyhit")]
-void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-	payload.g_colorAndDistance = float4(float3(1, 1, 0), RayTCurrent());
-}
 
 
 [shader("raygeneration")]
@@ -84,20 +27,28 @@ void RayGeneration()
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
 
 	// Compute the ray origin and direction in world space:
-	const uint2 launchIndex = DispatchRaysIndex().xy;
+	const uint2 pixelCoords = DispatchRaysIndex().xy;
 	const uint2 screenDims = DispatchRaysDimensions().xy;
 	
 	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
-	ray.Origin = cameraParams.g_cameraWPos;	
-	ray.Direction = GetViewRay(launchIndex, screenDims, cameraParams.g_cameraWPos.xyz, cameraParams.g_invViewProjection);
+	ray.Origin = cameraParams.g_cameraWPos;
+	ray.Direction = CreateViewRay(pixelCoords, screenDims, cameraParams.g_cameraWPos.xyz, cameraParams.g_invViewProjection);
 		
 	ray.TMin = 0.f;
 	ray.TMax = FLT_MAX;
 	
+	const RayDifferential rayDiff = CreateEyeRayDifferential(
+		ray.Direction,
+		cameraParams.g_invView,
+		cameraParams.g_exposureProperties.w, // Aspect ratio
+		cameraParams.g_exposureProperties.z, // tan(fovY/2)
+		screenDims);
+	
 	// Initialize the ray payload
 	PathTracer_HitInfo payload;
 	payload.g_colorAndDistance = float4(0, 0, 0, 0);
+	payload.g_rayDiff = rayDiff;
 	
 	// Trace the ray:
 	TraceRay(
@@ -149,17 +100,84 @@ void RayGeneration()
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
-	outputTex[launchIndex] = payload.g_colorAndDistance;
+	outputTex[pixelCoords] = payload.g_colorAndDistance;
+}
+
+
+[shader("closesthit")]
+void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
+{
+	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
+	
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	// Camera:
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+	const CameraData cameraParams = CameraParams[cameraParamsIdx];	
+	
+	// Get our Vertex stream LUTs buffer:
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
+	
+	// Compute our geometry index for buffer arrays aligned with AS geometry:
+	const uint geoIdx = InstanceID() + GeometryIndex();
+	
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
+	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
+	
+	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
+	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
+	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
+	
+	const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
+	const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
+	
+	// Triangle data:
+	const TriangleData triangleData =
+		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
+	
+	// Interpolated triangle data at the hit point:
+	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);	
+	
+	const RayDifferential transferredRayDiff = Transfer(
+		triangleData,
+		payload.g_rayDiff,
+		WorldRayDirection(),
+		RayTCurrent());
+	
+	// Material data:
+	const MaterialData materialData = LoadMaterialData(
+		triangleData,
+		hitData,
+		transferredRayDiff,
+		materialResourceIdx, 
+		materialBufferIdx, 
+		materialType);
+	
+	float3 colorOut =
+		hitData.m_hitColor.rgb *
+		materialData.m_linearAlbedo.rgb *
+		materialData.m_baseColorFactor.rgb;
+	
+	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
+	payload.g_rayDiff = transferredRayDiff;
+}
+
+
+[shader("anyhit")]
+void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
+{
+	payload.g_colorAndDistance = float4(float3(1, 1, 0), RayTCurrent());
 }
 
 
 [shader("miss")]
 void Miss(inout PathTracer_HitInfo payload : SV_RayPayload)
 {
-	uint2 launchIndex = DispatchRaysIndex().xy;
+	uint2 pixelCoords = DispatchRaysIndex().xy;
 	float2 dims = float2(DispatchRaysDimensions().xy);
 
-	float ramp = launchIndex.y / dims.y;
+	float ramp = pixelCoords.y / dims.y;
 	
 	payload.g_colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
 }

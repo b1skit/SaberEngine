@@ -1,9 +1,12 @@
 // © 2025 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "Batch.h"
 #include "BatchBuilder.h"
 #include "BatchHandle.h"
-#include "BufferView.h"
 #include "Buffer.h"
+#include "BufferView.h"
+#include "EnumTypes.h"
+#include "GraphicsSystem.h"
 #include "GraphicsSystem_ReferencePathTracer.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
@@ -11,11 +14,15 @@
 #include "Material.h"
 #include "RayTracingParamsHelpers.h"
 #include "RenderObjectIDs.h"
+#include "RenderPipeline.h"
 #include "ShaderBindingTable.h"
+#include "Stage.h"
 #include "TextureView.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+
+#include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/ImGuiUtils.h"
@@ -23,7 +30,7 @@
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ResourceCommon.h"
 
-#include <_generated/DrawStyles.h>
+#include "_generated/DrawStyles.h"
 
 
 namespace gr

@@ -49,4 +49,15 @@ float3x3 GetTransposeInvRotationScale(float4x4 transposeInvModel)
 }
 
 
+// Extracts the basis vectors (X, Y, Z) from a camera's inverse view matrix (which are logically stored as column
+// vectors).
+// Note: Z points to rear of the camera (i.e. +Z in camera space). Use -Z to obtain the forward/look vector.
+void GetCameraBasisVectors(float4x4 invView, out float3 X, out float3 Y, out float3 Z)
+{
+	X = normalize(float3(invView[0][0], invView[1][0], invView[2][0])); // column 0
+	Y = normalize(float3(invView[0][1], invView[1][1], invView[2][1])); // column 1
+	Z = normalize(float3(invView[0][2], invView[1][2], invView[2][2])); // column 2
+}
+
+
 #endif // SABER_TRANSFORMATIONS

@@ -4,6 +4,7 @@
 #include "NormalMapUtils.hlsli"
 #include "RayTracingCommon.hlsli"
 #include "Samplers.hlsli"
+#include "TextureLODHelpers.hlsli"
 
 #include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
@@ -106,22 +107,7 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 	return vertexIndexes;
 }
 
-struct VertexData
-{
-	uint m_vertexIdx;
-	float3 m_worldPosition;
-	float4 m_tangent;		// Still in local space
-	float3 m_worldNormal;	// Vertex/geometry normal (i.e. not from normal map)
-	float2 m_UV0;
-	float2 m_UV1;
-	float4 m_color;
-};
-struct TriangleData
-{
-	VertexData m_v0;
-	VertexData m_v1;
-	VertexData m_v2;
-};
+
 TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transformResourceIdx,	uint transformBufferIdx)
 {
 	const TransformData transform = TransformParams[transformResourceIdx][transformBufferIdx];
@@ -131,119 +117,104 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transf
 	
 	TriangleData triangleData;
 	
-	// Vertex indexes:	
-	triangleData.m_v0.m_vertexIdx = vertexIndexes.x;
-	triangleData.m_v1.m_vertexIdx = vertexIndexes.y;
-	triangleData.m_v2.m_vertexIdx = vertexIndexes.z;
-	
 	// Positions:
-	triangleData.m_v0.m_worldPosition =
+	triangleData.m_v0.m_worldVertexPosition =
 		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.x], 1.f)).xyz;
-	triangleData.m_v1.m_worldPosition =
+	triangleData.m_v1.m_worldVertexPosition =
 		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.y], 1.f)).xyz;
-	triangleData.m_v2.m_worldPosition =
+	triangleData.m_v2.m_worldVertexPosition =
 		mul(transform.g_model, float4(VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.x][vertexIndexes.z], 1.f)).xyz;
 	
-	// Normals:
-	triangleData.m_v0.m_worldNormal = normalize(
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x]).xyz);
-	triangleData.m_v1.m_worldNormal = normalize(
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y]).xyz);
-	triangleData.m_v2.m_worldNormal = normalize(
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z]).xyz);
+	// Unnormalized vertex normals:
+	triangleData.m_v0.m_worldVertexNormal =
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x]).xyz;
+	triangleData.m_v1.m_worldVertexNormal =
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y]).xyz;
+	triangleData.m_v2.m_worldVertexNormal =
+		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z]).xyz;
+	
+	// Triangle plane normal:
+	triangleData.m_worldTriPlaneNormal = normalize(cross(
+		triangleData.m_v1.m_worldVertexPosition - triangleData.m_v0.m_worldVertexPosition,
+		triangleData.m_v2.m_worldVertexPosition - triangleData.m_v0.m_worldVertexPosition));
 	
 	// Tangents:
-	triangleData.m_v0.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
-	triangleData.m_v1.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.y];
-	triangleData.m_v2.m_tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.z];
+	triangleData.m_v0.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
+	triangleData.m_v1.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.y];
+	triangleData.m_v2.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.z];
 	
 	if (vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w != INVALID_RESOURCE_IDX)
 	{
-		triangleData.m_v0.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.x];
-		triangleData.m_v1.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.y];
-		triangleData.m_v2.m_UV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.z];
+		triangleData.m_v0.m_vertexUV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.x];
+		triangleData.m_v1.m_vertexUV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.y];
+		triangleData.m_v2.m_vertexUV0 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w][vertexIndexes.z];
 	}
 	else
 	{
-		triangleData.m_v0.m_UV0 = float2(0.f, 0.f);
-		triangleData.m_v1.m_UV0 = float2(0.f, 0.f);
-		triangleData.m_v2.m_UV0 = float2(0.f, 0.f);
+		triangleData.m_v0.m_vertexUV0 = float2(0.f, 0.f);
+		triangleData.m_v1.m_vertexUV0 = float2(0.f, 0.f);
+		triangleData.m_v2.m_vertexUV0 = float2(0.f, 0.f);
 	}
 	
 	if (vertexStreamLUT[geoIdx].g_UV1ColorIndex.x != INVALID_RESOURCE_IDX)
 	{
-		triangleData.m_v0.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.x];
-		triangleData.m_v1.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.y];
-		triangleData.m_v2.m_UV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.z];
+		triangleData.m_v0.m_vertexUV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.x];
+		triangleData.m_v1.m_vertexUV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.y];
+		triangleData.m_v2.m_vertexUV1 = VertexStreams_Float2[vertexStreamLUT[geoIdx].g_UV1ColorIndex.x][vertexIndexes.z];
 	}
 	else
 	{
-		triangleData.m_v0.m_UV1 = float2(0.f, 0.f);
-		triangleData.m_v1.m_UV1 = float2(0.f, 0.f);
-		triangleData.m_v2.m_UV1 = float2(0.f, 0.f);
+		triangleData.m_v0.m_vertexUV1 = float2(0.f, 0.f);
+		triangleData.m_v1.m_vertexUV1 = float2(0.f, 0.f);
+		triangleData.m_v2.m_vertexUV1 = float2(0.f, 0.f);
 	}
 	
 	// Color:
-	triangleData.m_v0.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.x];
-	triangleData.m_v1.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.y];
-	triangleData.m_v2.m_color = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.z];
+	triangleData.m_v0.m_vertexColor = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.x];
+	triangleData.m_v1.m_vertexColor = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.y];
+	triangleData.m_v2.m_vertexColor = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_UV1ColorIndex.y][vertexIndexes.z];
 	
 	return triangleData;
 }
 
 
-struct TriangleHitData
-{
-	float3 m_worldPosition;
-	float4 m_tangent;		// Still in local space
-	float3 m_worldNormal;	// Vertex/geometry normal (i.e. not from normal map)
-	float2 m_UV0;
-	float2 m_UV1;
-	float4 m_color;
-	
-	// TODO: Add remaining properties
-};
 TriangleHitData GetTriangleHitData(TriangleData triangleData, float3 barycentrics)
 {
 	TriangleHitData hitData;
 	
 	// Position:	
-	hitData.m_worldPosition =
-		triangleData.m_v0.m_worldPosition * barycentrics.x +
-		triangleData.m_v1.m_worldPosition * barycentrics.y +
-		triangleData.m_v2.m_worldPosition * barycentrics.z;
+	hitData.m_worldHitPosition =
+		triangleData.m_v0.m_worldVertexPosition * barycentrics.x +
+		triangleData.m_v1.m_worldVertexPosition * barycentrics.y +
+		triangleData.m_v2.m_worldVertexPosition * barycentrics.z;
 	
 	// Tangent:
-	hitData.m_tangent =
-		triangleData.m_v0.m_tangent * barycentrics.x +
-		triangleData.m_v1.m_tangent * barycentrics.y +
-		triangleData.m_v2.m_tangent * barycentrics.z;
+	hitData.m_hitTangent =
+		triangleData.m_v0.m_vertexTangent * barycentrics.x +
+		triangleData.m_v1.m_vertexTangent * barycentrics.y +
+		triangleData.m_v2.m_vertexTangent * barycentrics.z;
 	
-	// Normal:	
-	hitData.m_worldNormal = normalize(
-		triangleData.m_v0.m_worldNormal * barycentrics.x +
-		triangleData.m_v1.m_worldNormal * barycentrics.y +
-		triangleData.m_v2.m_worldNormal * barycentrics.z);
+	// Interpolated world vertex normal:	
+	hitData.m_worldHitNormal = normalize(
+		triangleData.m_v0.m_worldVertexNormal * barycentrics.x +
+		triangleData.m_v1.m_worldVertexNormal * barycentrics.y +
+		triangleData.m_v2.m_worldVertexNormal * barycentrics.z);
 	
 	// UVs:
-	hitData.m_UV0 =
-		triangleData.m_v0.m_UV0.xy * barycentrics.x +
-		triangleData.m_v1.m_UV0.xy * barycentrics.y +
-		triangleData.m_v2.m_UV0.xy * barycentrics.z;
-	hitData.m_UV1 =
-		triangleData.m_v0.m_UV1.xy * barycentrics.x +
-		triangleData.m_v1.m_UV1.xy * barycentrics.y +
-		triangleData.m_v2.m_UV1.xy * barycentrics.z;
-	
-	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
-	hitData.m_UV0 = hitData.m_UV0 - floor(hitData.m_UV0);
-	hitData.m_UV1 = hitData.m_UV1 - floor(hitData.m_UV1);
+	hitData.m_hitUV0 =
+		triangleData.m_v0.m_vertexUV0.xy * barycentrics.x +
+		triangleData.m_v1.m_vertexUV0.xy * barycentrics.y +
+		triangleData.m_v2.m_vertexUV0.xy * barycentrics.z;
+	hitData.m_hitUV1 =
+		triangleData.m_v0.m_vertexUV1.xy * barycentrics.x +
+		triangleData.m_v1.m_vertexUV1.xy * barycentrics.y +
+		triangleData.m_v2.m_vertexUV1.xy * barycentrics.z;
 	
 	// Color:
-	hitData.m_color =
-		triangleData.m_v0.m_color * barycentrics.x +
-		triangleData.m_v1.m_color * barycentrics.y +
-		triangleData.m_v2.m_color * barycentrics.z;
+	hitData.m_hitColor =
+		triangleData.m_v0.m_vertexColor * barycentrics.x +
+		triangleData.m_v1.m_vertexColor * barycentrics.y +
+		triangleData.m_v2.m_vertexColor * barycentrics.z;
 	
 	return hitData;
 }
@@ -257,12 +228,21 @@ struct MaterialData
 	// TODO: Add remaining material properties
 };
 MaterialData LoadMaterialData(
+	TriangleData triangleData,
 	TriangleHitData hitData,
+	RayDifferential transferredRayDiff,	// Transferred ray differentials at the hit point
 	uint materialResourceIdx,
 	uint materialBufferIdx,
 	uint materialType)
 {
+	const BarycentricDerivatives barycentricDerivatives =
+		ComputeBarycentricDerivatives(transferredRayDiff, WorldRayDirection(), triangleData);
+	
 	MaterialData materialData;
+	
+	// Default values:
+	materialData.m_linearAlbedo = float4(1.f, 1.f, 1.f, 1.f); // GLTF specs: Default base color is (1,1,1)
+	materialData.m_baseColorFactor = float4(1.f, 1.f, 1.f, 1.f);
 	
 	// Get our indexes:
 	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
@@ -292,29 +272,26 @@ MaterialData LoadMaterialData(
 	{
 		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
 
-		uint3 texDimensions = uint3(0, 0, 0);
-		baseColorTex.GetDimensions(0, texDimensions.x, texDimensions.y, texDimensions.z);
-				
-		uint3 pixelCoords;
+		uint3 texDims = uint3(0, 0, 0);
+		baseColorTex.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
+		
+		const float mipLevel =
+			ComputeIsotropicTextureLOD(texDims.xy, barycentricDerivatives, triangleData, baseColorUVChannelIdx);
+		
 		switch (baseColorUVChannelIdx)
 		{
-		case 0:
-		{
-			pixelCoords = uint3(texDimensions.xy * hitData.m_UV0, 0);				
-		}
-		break;
 		case 1:
 		{
-			pixelCoords = uint3(texDimensions.xy * hitData.m_UV1, 0);
+			materialData.m_linearAlbedo = baseColorTex.SampleLevel(WrapMinMagMipLinear, hitData.m_hitUV1, mipLevel);
+		}
+		break;
+		case 0:
+		default:
+		{
+			materialData.m_linearAlbedo = baseColorTex.SampleLevel(WrapMinMagMipLinear, hitData.m_hitUV0, mipLevel);
 		}
 		break;
 		}
-				
-		materialData.m_linearAlbedo = baseColorTex.Load(pixelCoords);
-	}
-	else
-	{
-		materialData.m_linearAlbedo = float4(1.f, 1.f, 1.f, 1.f); // GLTF specs: Default base color is (1,1,1)
 	}	
 	
 	return materialData;

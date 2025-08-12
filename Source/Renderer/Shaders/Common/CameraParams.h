@@ -16,7 +16,7 @@ struct CameraData
 
 	float4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
 
-	float4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
+	float4 g_exposureProperties; // .x = exposure, .y = ev100, .z = tan(yFOV/2), .w = aspect ratio
 	float4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
 
 	float4 g_cameraWPos; // .xyz = world space camera position, .w = unused

@@ -55,7 +55,7 @@ float4 PShader(VertexOut In) : SV_Target
 		if (shadowEnabled)
 		{
 #if defined(SHADOWS_RAYTRACED)
-			shadowFactor = TraceShadowRay(
+			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
 				TraceRayInlineParams,
 				worldPos,

@@ -123,9 +123,19 @@ struct raypayload RTAO_HitInfo
 };
 
 
+struct RayDifferential
+{
+	float3 dOdx;	// Derivative of ray origin w.r.t. x
+	float3 dOdy;	// Derivative of ray origin w.r.t. y
+
+	float3 dDdx;	// Derivative of ray direction w.r.t. x
+	float3 dDdy;	// Derivative of ray direction w.r.t. y
+};
+
 struct raypayload PathTracer_HitInfo
 {
-	float4 g_colorAndDistance read(caller) write(caller, anyhit, closesthit, miss);
+	float4 g_colorAndDistance read(caller) write(caller, closesthit, anyhit, miss);
+	RayDifferential g_rayDiff read(caller, closesthit, anyhit) write(caller, closesthit);
 };
 
 

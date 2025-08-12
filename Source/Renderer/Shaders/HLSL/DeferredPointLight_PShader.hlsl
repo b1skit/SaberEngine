@@ -71,7 +71,7 @@ float4 PShader(VertexOut In) : SV_Target
 			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
 			
 			// Trace in reverse: Light -> world position, so we don't hit fake light source meshes
-			shadowFactor = TraceShadowRay(
+			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
 				TraceRayInlineParams,
 				lightWorldPos,

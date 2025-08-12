@@ -82,7 +82,7 @@ float4 PShader(VertexOut In) : SV_Target
 #if defined(SHADOWS_RAYTRACED)
 			const float rayLength = length(lightWorldPos - worldPos) - TraceRayInlineParams.g_rayParams.y;
 			
-			shadowFactor = TraceShadowRay(
+			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
 				TraceRayInlineParams,
 				worldPos,
