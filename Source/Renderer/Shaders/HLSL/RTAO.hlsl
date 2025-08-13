@@ -16,7 +16,7 @@ ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
 
 
 [shader("anyhit")]
-void RTAO_AnyHit(inout RTAO_HitInfo hitInfo, BuiltInTriangleIntersectionAttributes attrib)
+void RTAO_AnyHit(inout VisibilityPayload hitInfo, BuiltInTriangleIntersectionAttributes attrib)
 {
 	// TODO: Handle transparent geo: Add 1 when transparent geometry is missed
 	
@@ -25,7 +25,7 @@ void RTAO_AnyHit(inout RTAO_HitInfo hitInfo, BuiltInTriangleIntersectionAttribut
 
 
 [shader("miss")]
-void RTAO_Miss(inout RTAO_HitInfo hitInfo : SV_RayPayload)
+void RTAO_Miss(inout VisibilityPayload hitInfo : SV_RayPayload)
 {
 	hitInfo.g_visibility = 1.f; // Increment visibility when no geometry is hit
 }
@@ -107,7 +107,7 @@ void RTAO_RayGeneration()
 		ray.Direction = normalize(sampleDir);
 	
 		// Initialize the ray hitInfo:
-		RTAO_HitInfo hitInfo;
+		VisibilityPayload hitInfo;
 		hitInfo.g_visibility = 0.f;
 		
 		// Trace the ray

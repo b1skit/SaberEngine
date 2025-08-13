@@ -59,7 +59,7 @@ void RayGeneration()
 		screenDims);
 	
 	// Initialize the ray payload
-	PathTracer_HitInfo payload;
+	PathPayload payload;
 	payload.g_pathRadiance = float4(0, 0, 0, 0);
 	payload.g_rayDiff = rayDiff;
 	
@@ -88,7 +88,7 @@ void RayGeneration()
 
 
 [shader("closesthit")]
-void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
+void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
@@ -148,14 +148,14 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 
 
 [shader("anyhit")]
-void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
+void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
 	//
 }
 
 
 [shader("miss")]
-void Miss(inout PathTracer_HitInfo payload : SV_RayPayload)
+void Miss(inout PathPayload payload : SV_RayPayload)
 {
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];

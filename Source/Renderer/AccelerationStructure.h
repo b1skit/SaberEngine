@@ -262,6 +262,10 @@ namespace re
 		void AddShaderBindingTable(EffectID, re::ShaderBindingTable::SBTParams const&);
 
 
+	public:
+		void ShowImGuiWindow(EffectID, uint32_t& rayGenIdxOut, uint32_t& missIdxOut, uint8_t& geometryInstanceMaskOut) const;
+
+
 	private:
 		AccelerationStructure(char const* name, Type, std::unique_ptr<IASParams>&&); // Use Create() instead
 

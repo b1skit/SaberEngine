@@ -16,9 +16,6 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 
-#include "Core/Util/CastUtils.h"
-#include "Core/Util/ImGuiUtils.h"
-
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ResourceCommon.h"
 
@@ -100,7 +97,7 @@ namespace gr
 						},
 						.m_hitgroupStyles = effect::drawstyle::HitGroup_Experimental,
 						.m_effectID = m_rtEffectID,
-						.m_maxPayloadByteSize = sizeof(HitInfo_Experimental),
+						.m_maxPayloadByteSize = sizeof(ExperimentalPayload),
 						.m_maxRecursionDepth = 2, });
 			}
 
@@ -173,100 +170,16 @@ namespace gr
 			return;
 		}
 
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
-		SEAssert(tlasParams, "Failed to cast to TLASParams");
-
-		std::shared_ptr<re::ShaderBindingTable const> const& sbt = tlasParams->GetShaderBindingTable(m_rtEffectID);
-
-		ImGui::Text("Effect Shader Binding Table: \"%s\"", sbt->GetName().c_str());
-
-		// Ray gen shader:
-		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_rayGenStyles.size());
-
-		std::vector<std::string> rayGenComboOptions;
-		rayGenComboOptions.reserve(numRayGenStyles);
-		for (uint32_t i = 0; i < numRayGenStyles; ++i)
-		{
-			rayGenComboOptions.emplace_back(std::format("{}", i));
-		}
-
-		static uint32_t curRayGenIdx = m_rayGenIdx;
-		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, m_rayGenIdx);
-
-
-		// Miss shader:
-		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_missStyles.size());
-
-		std::vector<std::string> comboOptions;
-		comboOptions.reserve(numMissStyles);
-		for (uint32_t i = 0; i < numMissStyles; ++i)
-		{
-			comboOptions.emplace_back(std::format("{}", i));
-		}
-
-		static uint32_t curMissIdx = m_missShaderIdx;
-		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
-
-		// Geometry inclusion masks:
-		auto SetInclusionMaskBits = [this](re::AccelerationStructure::InclusionMask flag, bool enabled)
-			{
-				if (enabled)
-				{
-					m_geometryInstanceMask |= flag;
-				}
-				else
-				{
-					m_geometryInstanceMask &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
-				}
-			};
-
-		static bool s_alphaMode_Opaque = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Opaque;
-		if (ImGui::Checkbox("AlphaMode_Opaque", &s_alphaMode_Opaque))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Opaque, s_alphaMode_Opaque);
-		}
-
-		static bool s_alphaMode_Mask = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Mask;
-		if (ImGui::Checkbox("AlphaMode_Mask", &s_alphaMode_Mask))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Mask, s_alphaMode_Mask);
-		}
-
-		static bool s_alphaMode_Blend = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Blend;
-		if (ImGui::Checkbox("AlphaMode_Blend", &s_alphaMode_Blend))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Blend, s_alphaMode_Blend);
-		}
-
-		static bool s_singleSided = m_geometryInstanceMask & re::AccelerationStructure::SingleSided;
-		if (ImGui::Checkbox("SingleSided", &s_singleSided))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::SingleSided, s_singleSided);
-		}
-
-		static bool s_doubleSided = m_geometryInstanceMask & re::AccelerationStructure::DoubleSided;
-		if (ImGui::Checkbox("DoubleSided", &s_doubleSided))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::DoubleSided, s_doubleSided);
-		}
-
-		static bool s_noShadow = m_geometryInstanceMask & re::AccelerationStructure::NoShadow;
-		if (ImGui::Checkbox("NoShadow", &s_noShadow))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::NoShadow, s_noShadow);
-		}
-
-		static bool s_shadowCaster = m_geometryInstanceMask & re::AccelerationStructure::ShadowCaster;
-		if (ImGui::Checkbox("ShadowCaster", &s_shadowCaster))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, s_shadowCaster);
-		}
+		(*m_sceneTLAS)->ShowImGuiWindow(m_rtEffectID, m_rayGenIdx, m_missShaderIdx, m_geometryInstanceMask);
 
 		// LUT buffer debugging:
 		if (ImGui::CollapsingHeader("Instanced Buffer LUT debugging"))
 		{
 			ImGui::Indent();
+
+			re::AccelerationStructure::TLASParams const* tlasParams =
+				dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
+			SEAssert(tlasParams, "Failed to cast to TLASParams");
 
 			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryOwnerIDs();
 

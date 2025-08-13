@@ -27,9 +27,6 @@
 
 #include "Core/Interfaces/INamedObject.h"
 
-#include "Core/Util/CastUtils.h"
-#include "Core/Util/ImGuiUtils.h"
-
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 #include "Renderer/Shaders/Common/ResourceCommon.h"
 
@@ -225,6 +222,9 @@ namespace gr
 		{
 			if (!(*m_sceneTLAS)->HasShaderBindingTable(m_refPathTracerEffectID))
 			{
+				constexpr uint32_t k_maxPayloadByteSize = 
+					static_cast<uint32_t>(std::max(sizeof(PathPayload), sizeof(VisibilityPayload)));
+
 				(*m_sceneTLAS)->AddShaderBindingTable(
 					m_refPathTracerEffectID,
 					re::ShaderBindingTable::SBTParams{
@@ -232,7 +232,7 @@ namespace gr
 						.m_missStyles = { effect::drawstyle::Miss_Default, },
 						.m_hitgroupStyles = effect::drawstyle::HitGroup_Reference,
 						.m_effectID = m_refPathTracerEffectID,
-						.m_maxPayloadByteSize = sizeof(PathTracer_HitInfo),
+						.m_maxPayloadByteSize = k_maxPayloadByteSize,
 						.m_maxRecursionDepth = 1, }); // Use iterative ray generation
 			}
 
@@ -302,130 +302,6 @@ namespace gr
 			return;
 		}
 
-		re::AccelerationStructure::TLASParams const* tlasParams =
-			dynamic_cast<re::AccelerationStructure::TLASParams const*>((*m_sceneTLAS)->GetASParams());
-		SEAssert(tlasParams, "Failed to cast to TLASParams");
-
-		std::shared_ptr<re::ShaderBindingTable const> const& sbt = 
-			tlasParams->GetShaderBindingTable(m_refPathTracerEffectID);
-
-		ImGui::Text("Effect Shader Binding Table: \"%s\"", sbt->GetName().c_str());
-
-		// Ray gen shader:
-		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_rayGenStyles.size());
-
-		std::vector<std::string> rayGenComboOptions;
-		rayGenComboOptions.reserve(numRayGenStyles);
-		for (uint32_t i = 0; i < numRayGenStyles; ++i)
-		{
-			rayGenComboOptions.emplace_back(std::format("{}", i));
-		}
-
-		static uint32_t curRayGenIdx = m_rayGenIdx;
-		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, m_rayGenIdx);
-
-
-		// Miss shader:
-		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_missStyles.size());
-
-		std::vector<std::string> comboOptions;
-		comboOptions.reserve(numMissStyles);
-		for (uint32_t i = 0; i < numMissStyles; ++i)
-		{
-			comboOptions.emplace_back(std::format("{}", i));
-		}
-
-		static uint32_t curMissIdx = m_missShaderIdx;
-		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, m_missShaderIdx);
-
-		// Geometry inclusion masks:
-		auto SetInclusionMaskBits = [this](re::AccelerationStructure::InclusionMask flag, bool enabled)
-			{
-				if (enabled)
-				{
-					m_geometryInstanceMask |= flag;
-				}
-				else
-				{
-					m_geometryInstanceMask &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
-				}
-			};
-
-		static bool s_alphaMode_Opaque = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Opaque;
-		if (ImGui::Checkbox("AlphaMode_Opaque", &s_alphaMode_Opaque))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Opaque, s_alphaMode_Opaque);
-		}
-
-		static bool s_alphaMode_Mask = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Mask;
-		if (ImGui::Checkbox("AlphaMode_Mask", &s_alphaMode_Mask))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Mask, s_alphaMode_Mask);
-		}
-
-		static bool s_alphaMode_Blend = m_geometryInstanceMask & re::AccelerationStructure::AlphaMode_Blend;
-		if (ImGui::Checkbox("AlphaMode_Blend", &s_alphaMode_Blend))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Blend, s_alphaMode_Blend);
-		}
-
-		static bool s_singleSided = m_geometryInstanceMask & re::AccelerationStructure::SingleSided;
-		if (ImGui::Checkbox("SingleSided", &s_singleSided))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::SingleSided, s_singleSided);
-		}
-
-		static bool s_doubleSided = m_geometryInstanceMask & re::AccelerationStructure::DoubleSided;
-		if (ImGui::Checkbox("DoubleSided", &s_doubleSided))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::DoubleSided, s_doubleSided);
-		}
-
-		static bool s_noShadow = m_geometryInstanceMask & re::AccelerationStructure::NoShadow;
-		if (ImGui::Checkbox("NoShadow", &s_noShadow))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::NoShadow, s_noShadow);
-		}
-
-		static bool s_shadowCaster = m_geometryInstanceMask & re::AccelerationStructure::ShadowCaster;
-		if (ImGui::Checkbox("ShadowCaster", &s_shadowCaster))
-		{
-			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, s_shadowCaster);
-		}
-
-		// LUT buffer debugging:
-		if (ImGui::CollapsingHeader("Instanced Buffer LUT debugging"))
-		{
-			ImGui::Indent();
-
-			std::vector<gr::RenderDataID> const& blasGeoIDs = tlasParams->GetBLASGeometryOwnerIDs();
-
-			std::vector<InstancedBufferLUTData> instancedBufferLUTData(blasGeoIDs.size());
-			m_graphicsSystemManager->GetRenderData().GetInstancingIndexedBufferManager().GetLUTBufferData(
-				instancedBufferLUTData,
-				blasGeoIDs);
-
-			SEAssert(blasGeoIDs.size() == instancedBufferLUTData.size(), "Size mismatch");
-
-			for (size_t i = 0; i < blasGeoIDs.size(); ++i)
-			{
-				ImGui::Text(std::format("BLAS Geometry RenderDataID: {}", blasGeoIDs[i]).c_str());
-
-				InstancedBufferLUTData const& lutEntry = instancedBufferLUTData[i];
-
-				ImGui::Text(std::format("Material resource index: {}", lutEntry.g_materialIndexes.x).c_str());
-				ImGui::Text(std::format("Material buffer index: {}", lutEntry.g_materialIndexes.y).c_str());
-				ImGui::Text(std::format("Material type: {}",
-					gr::Material::MaterialIDToNameCStr(
-						static_cast<gr::Material::MaterialID>(lutEntry.g_materialIndexes.z))).c_str());
-
-				ImGui::Text(std::format("Transform resource index: {}", lutEntry.g_transformIndexes.x).c_str());
-				ImGui::Text(std::format("Transform buffer index: {}", lutEntry.g_transformIndexes.y).c_str());
-
-				ImGui::Separator();
-			}
-
-			ImGui::Unindent();
-		}
+		(*m_sceneTLAS)->ShowImGuiWindow(m_refPathTracerEffectID, m_rayGenIdx, m_missShaderIdx, m_geometryInstanceMask);
 	}
 }

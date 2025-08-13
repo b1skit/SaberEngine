@@ -114,13 +114,13 @@ struct DescriptorIndexData
 };
 
 
-struct raypayload HitInfo_Experimental
+struct raypayload ExperimentalPayload
 {
 	float4 g_colorAndDistance read(caller) write(caller, anyhit, closesthit, miss);
 };
 
 
-struct raypayload RTAO_HitInfo
+struct raypayload VisibilityPayload
 {
 	float g_visibility read(caller) write(caller, miss, anyhit);
 };
@@ -135,10 +135,11 @@ struct RayDifferential
 	float3 dDdy;	// Derivative of ray direction w.r.t. y
 };
 
-struct raypayload PathTracer_HitInfo
+struct raypayload PathPayload
 {
-	float4 g_pathRadiance read(caller) write(caller, closesthit, anyhit, miss);
 	RayDifferential g_rayDiff read(caller, closesthit, anyhit) write(caller, closesthit);
+
+	float4 g_pathRadiance read(caller) write(caller, closesthit, anyhit, miss);
 };
 
 

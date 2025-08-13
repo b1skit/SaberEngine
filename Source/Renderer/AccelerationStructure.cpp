@@ -12,6 +12,7 @@
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Util/CastUtils.h"
+#include "Core/Util/ImGuiUtils.h"
 
 #include "Renderer/Shaders/Common/RayTracingParams.h"
 
@@ -372,5 +373,98 @@ namespace re
 				effectID,
 				re::ShaderBindingTable::Create(effectID.GetEffect()->GetName().c_str(), sbtParams, this));
 		}		
+	}
+
+
+	void AccelerationStructure::ShowImGuiWindow(
+		EffectID effectID, uint32_t& rayGenIdxOut, uint32_t& missIdxOut, uint8_t& geometryInstanceMaskOut) const
+	{
+		re::AccelerationStructure::TLASParams const* tlasParams = 
+			dynamic_cast<re::AccelerationStructure::TLASParams const*>(GetASParams());
+		SEAssert(tlasParams, "Failed to cast to TLASParams");
+
+		std::shared_ptr<re::ShaderBindingTable const> const& sbt =
+			tlasParams->GetShaderBindingTable(effectID);
+
+		ImGui::Text("Effect Shader Binding Table: \"%s\"", sbt->GetName().c_str());
+
+		// Ray gen shader:
+		const uint32_t numRayGenStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_rayGenStyles.size());
+
+		std::vector<std::string> rayGenComboOptions;
+		rayGenComboOptions.reserve(numRayGenStyles);
+		for (uint32_t i = 0; i < numRayGenStyles; ++i)
+		{
+			rayGenComboOptions.emplace_back(std::format("{}", i));
+		}
+
+		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, rayGenIdxOut);
+
+		// Miss shader:
+		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_missStyles.size());
+
+		std::vector<std::string> comboOptions;
+		comboOptions.reserve(numMissStyles);
+		for (uint32_t i = 0; i < numMissStyles; ++i)
+		{
+			comboOptions.emplace_back(std::format("{}", i));
+		}
+
+		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, missIdxOut);
+
+		// Geometry inclusion masks:
+		auto SetInclusionMaskBits = [&](re::AccelerationStructure::InclusionMask flag, bool enabled)
+			{
+				if (enabled)
+				{
+					geometryInstanceMaskOut |= flag;
+				}
+				else
+				{
+					geometryInstanceMaskOut &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
+				}
+			};
+
+		bool alphaMode_Opaque = geometryInstanceMaskOut & re::AccelerationStructure::AlphaMode_Opaque;
+		if (ImGui::Checkbox("AlphaMode_Opaque", &alphaMode_Opaque))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Opaque, alphaMode_Opaque);
+		}
+
+		bool alphaMode_Mask = geometryInstanceMaskOut & re::AccelerationStructure::AlphaMode_Mask;
+		if (ImGui::Checkbox("AlphaMode_Mask", &alphaMode_Mask))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Mask, alphaMode_Mask);
+		}
+
+		bool alphaMode_Blend = geometryInstanceMaskOut & re::AccelerationStructure::AlphaMode_Blend;
+		if (ImGui::Checkbox("AlphaMode_Blend", &alphaMode_Blend))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::AlphaMode_Blend, alphaMode_Blend);
+		}
+
+		bool singleSided = geometryInstanceMaskOut & re::AccelerationStructure::SingleSided;
+		if (ImGui::Checkbox("SingleSided", &singleSided))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::SingleSided, singleSided);
+		}
+
+		bool doubleSided = geometryInstanceMaskOut & re::AccelerationStructure::DoubleSided;
+		if (ImGui::Checkbox("DoubleSided", &doubleSided))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::DoubleSided, doubleSided);
+		}
+
+		bool noShadow = geometryInstanceMaskOut & re::AccelerationStructure::NoShadow;
+		if (ImGui::Checkbox("NoShadow", &noShadow))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::NoShadow, noShadow);
+		}
+
+		bool shadowCaster = geometryInstanceMaskOut & re::AccelerationStructure::ShadowCaster;
+		if (ImGui::Checkbox("ShadowCaster", &shadowCaster))
+		{
+			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, shadowCaster);
+		}
 	}
 }

@@ -155,7 +155,7 @@ namespace gr
 						.m_missStyles = { effect::drawstyle::Miss_Default, },
 						.m_hitgroupStyles = effect::drawstyle::HitGroup_AO,
 						.m_effectID = m_RTAOEffectID,
-						.m_maxPayloadByteSize = sizeof(RTAO_HitInfo),
+						.m_maxPayloadByteSize = sizeof(VisibilityPayload),
 						.m_maxRecursionDepth = 1, });
 			}
 

@@ -13,7 +13,7 @@ ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
 
 
 [shader("closesthit")]
-void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
+void ClosestHit_Experimental(inout ExperimentalPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
 //#define TEST_VERTEX_STREAMS
 #define TEST_MATERIALS
@@ -144,7 +144,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 
 
 [shader("anyhit")]
-void AnyHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleIntersectionAttributes attrib)
+void AnyHit_Experimental(inout ExperimentalPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
 	////float3 barycentrics =
 	////  float3(1.f - attrib.barycentrics.x - attrib.barycentrics.y, attrib.barycentrics.x, attrib.barycentrics.y);
@@ -172,7 +172,7 @@ void AnyHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangleInte
 void RayGeneration_Experimental()
 {
 	// Initialize the ray payload
-	HitInfo_Experimental payload;
+	ExperimentalPayload payload;
 	payload.g_colorAndDistance = float4(0, 0, 0, 0);
 
 	// Get the location within the dispatched 2D grid of work items
@@ -277,7 +277,7 @@ void RayGeneration_Experimental()
 
 
 [shader("miss")]
-void Miss_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
+void Miss_Experimental(inout ExperimentalPayload payload : SV_RayPayload)
 {
 	uint2 launchIndex = DispatchRaysIndex().xy;
 	float2 dims = float2(DispatchRaysDimensions().xy);
@@ -296,7 +296,7 @@ void Miss_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
 
 
 [shader("callable")]
-void Callable_Experimental(inout HitInfo_Experimental payload : SV_RayPayload)
+void Callable_Experimental(inout ExperimentalPayload payload : SV_RayPayload)
 {
 	//
 }
