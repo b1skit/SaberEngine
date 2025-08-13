@@ -172,4 +172,13 @@ struct TraceRayInlineData
 };
 
 
+struct TemporalAccumulationData
+{
+	uint4 g_frameStats; // .x = Num. accumulated frames, .yzw = unused
+
+#if defined(__cplusplus)
+	static constexpr char const* const s_shaderName = "TemporalParams";
+#endif
+};
+
 #endif // SE_RAYTRACING_COMMON

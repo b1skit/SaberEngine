@@ -2,7 +2,9 @@
 #pragma once
 #include "Assert.h"
 #include "Logger.h"
+#include "EventManager.h"
 
+#include "Definitions/EventKeys.h"
 #include "Definitions/ForwardDeclarations.h"
 
 #include "Util/CHashKey.h"
@@ -162,12 +164,20 @@ namespace core
 				s_configValues.contains(key),
 				"Cannot initialize config entry with a dynamically-allocated key");
 
+			SEAssert(!s_configValues.contains(key) || s_configValues.at(key).second == settingType,
+				"settingType does not match the current SettingType");
+
 			s_configValues[key] = { value, settingType };
 			if (settingType == SettingType::Serialized)
 			{
 				s_isDirty = true;
 			}
 		}
+
+		// Notify listeners that a config value has changed:
+		core::EventManager::Notify(core::EventManager::EventInfo{
+			.m_eventKey = eventkey::ConfigSetValue,
+			.m_data = key });
 	}
 
 

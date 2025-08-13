@@ -86,6 +86,9 @@ namespace gr
 	private:
 		void CreateBatches();
 
+	private:
+		void HandleEvents() override;
+
 
 	private: // Ambient lights:
 		struct AmbientLightRenderData

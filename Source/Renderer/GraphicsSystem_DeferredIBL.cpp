@@ -3,6 +3,7 @@
 #include "BatchFactories.h"
 #include "Buffer.h"
 #include "Effect.h"
+#include "GraphicsEvent.h"
 #include "GraphicsSystem_DeferredIBL.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystemCommon.h"
@@ -13,6 +14,7 @@
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "RenderDataManager.h"
+#include "RenderObjectIDs.h"
 #include "Sampler.h"
 #include "Stage.h"
 #include "TextureTarget.h"
@@ -25,7 +27,6 @@
 
 #include "Renderer/Shaders/Common/IBLGenerationParams.h"
 #include "Renderer/Shaders/Common/LightParams.h"
-
 
 
 namespace
@@ -471,6 +472,41 @@ namespace gr
 
 		// Append the ambient stage:
 		pipeline.AppendStage(m_ambientStage);
+
+		// Register for events:
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<DeferredIBLGraphicsSystem>(
+			greventkey::k_activeAmbientLightHasChanged, this);
+	}
+
+
+	void DeferredIBLGraphicsSystem::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			gr::GraphicsEvent const& event = GetEvent();
+			switch (event.m_eventKey)
+			{
+			case greventkey::k_activeAmbientLightHasChanged:
+			{
+				const gr::RenderDataID newAmbientLightID = std::get<gr::RenderDataID>(event.m_data);
+
+				// Update the shared active ambient light pointers:
+				if (newAmbientLightID != m_activeAmbientLightData.m_renderDataID)
+				{
+					SEAssert(m_ambientLightData.contains(newAmbientLightID), "Cannot find active ambient light");
+
+					AmbientLightRenderData const& activeAmbientLightData = m_ambientLightData.at(newAmbientLightID);
+
+					m_activeAmbientLightData.m_renderDataID = newAmbientLightID;
+					m_activeAmbientLightData.m_ambientParams = activeAmbientLightData.m_ambientParams;
+					m_activeAmbientLightData.m_IEMTex = activeAmbientLightData.m_IEMTex;
+					m_activeAmbientLightData.m_PMREMTex = activeAmbientLightData.m_PMREMTex;
+				}
+			}
+			break;
+			default: SEAssertF("Unexpected event in DeferredIBLGraphicsSystem");
+			}
+		}
 	}
 
 
@@ -479,21 +515,7 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 		gr::IndexedBufferManager& ibm = renderData.GetInstancingIndexedBufferManager();
 
-		// Removed any deleted directional/point/spot lights:
-		auto DeleteLights = []<typename T>(
-			std::vector<gr::RenderDataID> const* deletedIDs, std::unordered_map<gr::RenderDataID, T>&stageData)
-		{
-			if (!deletedIDs)
-			{
-				return;
-			}
-			for (gr::RenderDataID id : *deletedIDs)
-			{
-				stageData.erase(id);
-			}
-		};
-
-		// Null out the active ambient light tracking if it has been deleted
+		// Removed any deleted ambient lights, and null out the active ambient light tracking if necessary:
 		std::vector<gr::RenderDataID> const* deletedAmbientIDs =
 			renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
 		if (deletedAmbientIDs)
@@ -502,11 +524,10 @@ namespace gr
 			{
 				if (deletedAmbientID == m_activeAmbientLightData.m_renderDataID)
 				{
-					m_activeAmbientLightData = {};
-					break;
+					m_activeAmbientLightData = {};					
 				}
+				m_ambientLightData.erase(deletedAmbientID);
 			}
-			DeleteLights(deletedAmbientIDs, m_ambientLightData);
 		}
 
 
@@ -600,21 +621,8 @@ namespace gr
 			}
 		}
 
-		// Update the shared active ambient light pointers:
-		if (m_graphicsSystemManager->HasActiveAmbientLight() &&
-			m_graphicsSystemManager->GetActiveAmbientLightID() != m_activeAmbientLightData.m_renderDataID)
-		{
-			const gr::RenderDataID activeAmbientID = m_graphicsSystemManager->GetActiveAmbientLightID();
-
-			SEAssert(m_ambientLightData.contains(activeAmbientID), "Cannot find active ambient light");
-
-			AmbientLightRenderData& activeAmbientLightData = m_ambientLightData.at(activeAmbientID);
-
-			m_activeAmbientLightData.m_renderDataID = activeAmbientID;
-			m_activeAmbientLightData.m_ambientParams = activeAmbientLightData.m_ambientParams;
-			m_activeAmbientLightData.m_IEMTex = activeAmbientLightData.m_IEMTex;
-			m_activeAmbientLightData.m_PMREMTex = activeAmbientLightData.m_PMREMTex;
-		}
+		// Now that our ambient light tracking is updated, we can handle events:
+		HandleEvents();
 
 		CreateBatches();
 	}

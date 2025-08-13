@@ -77,6 +77,8 @@ namespace gr
 		template<typename T>
 		std::vector<gr::RenderDataID> const* GetIDsWithDirtyData() const;
 
+		[[nodiscard]] bool HasAnyDirtyData() const; // Has any dirty data at all, regardless of type
+
 		template<typename... Ts>
 		[[nodiscard]] bool HasAnyDirtyData() const;
 
@@ -868,6 +870,25 @@ namespace gr
 	inline std::vector<gr::TransformID> const* RenderDataManager::GetIDsWithDirtyData<gr::Transform::RenderData>() const
 	{
 		return &GetIDsWithDirtyTransformData();
+	}
+
+
+	inline bool RenderDataManager::HasAnyDirtyData() const
+	{
+		bool hasDirtyData = m_perFrameDirtyTransformIDs.empty() == false;
+		if (!hasDirtyData)
+		{
+			for (auto const& dirtyIDs : m_perFramePerTypeDirtyDataIDs)
+			{
+				hasDirtyData |= dirtyIDs.empty() == false;
+
+				if (hasDirtyData)
+				{
+					break; // Early out
+				}
+			}
+		}
+		return hasDirtyData;
 	}
 
 

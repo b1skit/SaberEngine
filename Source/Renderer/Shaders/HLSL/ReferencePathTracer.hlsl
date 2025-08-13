@@ -2,6 +2,7 @@
 #include "BindlessResources.hlsli"
 #include "RayTracingCommon.hlsli"
 #include "GBufferBindless.hlsli"
+#include "Random.hlsli"
 #include "TextureLODHelpers.hlsli"
 
 #include "../Common/MaterialParams.h"
@@ -19,21 +20,32 @@ void RayGeneration()
 	const uint sceneBVHDescriptorIdx = RootConstants0.g_data.x;
 	const uint traceRayParamsIdx = RootConstants0.g_data.y;
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
+	const uint temporalAccumulationIdx = RootConstants0.g_data.w;
 	
 	const TraceRayData traceRayParams = TraceRayParams[traceRayParamsIdx];
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
+	const TemporalAccumulationData temporalAccumulationData = TemporalAccumulationParams[temporalAccumulationIdx];
+	const uint numAccumulatedFrames = temporalAccumulationData.g_frameStats.x;
+	
 	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
-
-	// Compute the ray origin and direction in world space:
+	
 	const uint2 pixelCoords = DispatchRaysIndex().xy;
 	const uint2 screenDims = DispatchRaysDimensions().xy;
 	
+	RNGState2D rngState = InitializeRNGState2D(pixelCoords.xy, numAccumulatedFrames);
+	
 	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
+	// Compute the ray origin and direction in world space:
 	ray.Origin = cameraParams.g_cameraWPos;
-	ray.Direction = CreateViewRay(pixelCoords, screenDims, cameraParams.g_cameraWPos.xyz, cameraParams.g_invViewProjection);
+	ray.Direction = CreateViewRay(
+		pixelCoords, 
+		screenDims, 
+		cameraParams.g_cameraWPos.xyz, 
+		cameraParams.g_invViewProjection,
+		GetNextFloat2(rngState)); // Jitter the ray origin in the pixel
 		
 	ray.TMin = 0.f;
 	ray.TMax = FLT_MAX;
@@ -96,11 +108,17 @@ void RayGeneration()
 		ray,
 		payload);
 
-
+	
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
-	
-	outputTex[pixelCoords] = payload.g_colorAndDistance;
+		
+	// Compute a temporal cumulative average:	
+	const float3 prevAccumulation = numAccumulatedFrames * outputTex[pixelCoords].rgb;
+	const float3 newContribution = payload.g_colorAndDistance.rgb;
+		
+	float3 newAverage = (prevAccumulation + newContribution) / (numAccumulatedFrames + 1.f);
+		
+	outputTex[pixelCoords] = float4(newAverage, 1.f);
 }
 
 

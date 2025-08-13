@@ -3,6 +3,7 @@
 #include "BufferView.h"
 #include "CameraRenderData.h"
 #include "Context.h"
+#include "GraphicsEvent.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "LightRenderData.h"
@@ -22,7 +23,6 @@ namespace gr
 		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeAmbientLightRenderDataID(gr::k_invalidTransformID)
-		, m_activeAmbientLightHasChanged(true)
 		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 		, m_numFramesInFlight(context->GetNumFramesInFlight())
 		, m_isCreated(false)
@@ -81,6 +81,7 @@ namespace gr
 		}
 
 		UpdateActiveAmbientLight();
+		HandleTemporalResetEvent();
 
 		SEEndCPUEvent();
 	}
@@ -143,8 +144,8 @@ namespace gr
 
 	void GraphicsSystemManager::UpdateActiveAmbientLight()
 	{
-		// Reset our active ambient changed flag for the new frame:
-		m_activeAmbientLightHasChanged = false;
+		// Track if our active ambient light ahs changed for the new frame:
+		bool activeAmbientLightHasChanged = false;
 
 		// Update the active ambient light:
 		// First, check if our currently active light has been deleted:
@@ -157,7 +158,7 @@ namespace gr
 				if (ambientID == m_activeAmbientLightRenderDataID)
 				{
 					m_activeAmbientLightRenderDataID = gr::k_invalidRenderDataID;
-					m_activeAmbientLightHasChanged = true;
+					activeAmbientLightHasChanged = true;
 					break;
 				}
 			}
@@ -173,7 +174,7 @@ namespace gr
 			if (!activeAmbientData.m_isActive)
 			{
 				m_activeAmbientLightRenderDataID = gr::k_invalidRenderDataID;
-				m_activeAmbientLightHasChanged = true;
+				activeAmbientLightHasChanged = true;
 			}
 		}
 
@@ -187,10 +188,30 @@ namespace gr
 				if (ambientData.m_isActive)
 				{
 					m_activeAmbientLightRenderDataID = ambientData.m_renderDataID;
-					m_activeAmbientLightHasChanged = true;
+					activeAmbientLightHasChanged = true;
 					break;
 				}
 			}
+		}
+
+		if (activeAmbientLightHasChanged)
+		{
+			PostGraphicsEventInternal(gr::GraphicsEvent{
+				greventkey::k_activeAmbientLightHasChanged,
+				m_activeAmbientLightRenderDataID });
+		}
+	}
+
+
+	void GraphicsSystemManager::HandleTemporalResetEvent()
+	{
+		bool temporalAccumulationResetRequired = false;
+
+		temporalAccumulationResetRequired |= m_renderData->HasAnyDirtyData();
+
+		if (temporalAccumulationResetRequired)
+		{
+			PostGraphicsEventInternal(gr::GraphicsEvent{ greventkey::k_triggerTemporalAccumulationReset, true });
 		}
 	}
 
@@ -209,6 +230,23 @@ namespace gr
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;
+	}
+
+
+	void GraphicsSystemManager::PostGraphicsEventInternal(gr::GraphicsEvent const& newEvent)
+	{
+		{
+			std::shared_lock readLock(m_eventListenersMutex);
+
+			auto itr = m_eventListeners.find(newEvent.m_eventKey);
+			if (itr != m_eventListeners.end())
+			{
+				for (auto& listener : itr->second)
+				{
+					listener->PostEvent(gr::GraphicsEvent(newEvent));
+				}
+			}
+		}
 	}
 
 

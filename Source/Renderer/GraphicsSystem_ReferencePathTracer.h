@@ -3,6 +3,7 @@
 #include "Effect.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
+#include "RenderPipeline.h"
 
 #include "Core/InvPtr.h"
 
@@ -56,17 +57,28 @@ namespace gr
 
 
 	private:
+		void HandleEvents() override;
+
+
+	private:
 		std::shared_ptr<re::AccelerationStructure> const* m_sceneTLAS;
 
 		gr::StagePipeline* m_stagePipeline;
+		gr::StagePipeline::StagePipelineItr m_stagePipelineParentItr;
 
 		std::shared_ptr<gr::Stage> m_rtStage;
-		core::InvPtr<re::Texture> m_rtTarget;
+		core::InvPtr<re::Texture> m_workingAccumulation;
+		core::InvPtr<re::Texture> m_outputAccumulation;
 
 		EffectID m_refPathTracerEffectID;
 
 		uint32_t m_rayGenIdx;
 		uint32_t m_missShaderIdx;
 		uint8_t m_geometryInstanceMask;
+
+		std::shared_ptr<re::Buffer> m_temporalParams;
+		uint64_t m_accumulationStartFrame;
+		uint32_t m_numAccumulatedFrames;
+		bool m_mustResetTemporalAccumulation;
 	};
 }

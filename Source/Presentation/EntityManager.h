@@ -78,6 +78,8 @@ namespace pr
 		void ShowSceneObjectsImGuiWindow(bool* show);
 		void ShowSceneTransformImGuiWindow(bool* show);
 		void ShowImGuiEntityComponentDebug(bool* show);
+		void PopulateCamerasImGuiMenu();
+
 
 	private:
 		void ShowImGuiEntityComponentDebugHelper(
@@ -157,6 +159,9 @@ namespace pr
 
 		std::vector<entt::entity> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
+
+	private: // Systems:
+		bool m_animationEnabled;
 
 
 	private:

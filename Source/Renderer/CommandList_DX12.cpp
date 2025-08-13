@@ -942,6 +942,9 @@ namespace dx12
 #if defined(USE_NSIGHT_AFTERMATH)
 			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearUnorderedAccessViewFloat", false);
 #endif
+			// Ensure we're in a UAV state:
+			TransitionResource(rwTexInput.m_texture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, rwTexInput.m_textureView);
+
 			m_commandList->ClearUnorderedAccessViewFloat(
 				gpuVisibleTexDescriptor, 
 				texDescriptor,
@@ -969,6 +972,9 @@ namespace dx12
 #if defined(USE_NSIGHT_AFTERMATH)
 			aftermath::s_instance.SetAftermathEventMarker(m_commandList.Get(), "ClearUnorderedAccessViewUint", false);
 #endif
+			// Ensure we're in a UAV state:
+			TransitionResource(rwTexInput.m_texture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, rwTexInput.m_textureView);
+
 			m_commandList->ClearUnorderedAccessViewUint(
 				gpuVisibleTexDescriptor,
 				texDescriptor,

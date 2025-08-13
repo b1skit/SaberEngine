@@ -28,6 +28,7 @@ ConstantBuffer<CameraData> CameraParams[] : register(b0, space20);
 ConstantBuffer<TraceRayData> TraceRayParams[] : register(b0, space21);
 ConstantBuffer<DescriptorIndexData> DescriptorIndexes[] : register(b0, space22);
 ConstantBuffer<RTAOParamsData> RTAOParams[] : register(b0, space23);
+ConstantBuffer<TemporalAccumulationData> TemporalAccumulationParams[] : register(b0, space24);
 
 // SRV Buffers:
 StructuredBuffer<VertexStreamLUTData> VertexStreamLUTs[] : register(t0, space20);

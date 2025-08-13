@@ -40,6 +40,10 @@ namespace gr
 
 
 	private:
+		void HandleEvents() override;
+
+
+	private:
 		static constexpr char const* k_skyboxTexShaderName = "Tex0";
 
 		std::shared_ptr<gr::Stage> m_skyboxStage;
@@ -51,6 +55,10 @@ namespace gr
 		
 		glm::vec3 m_backgroundColor;
 		bool m_showBackgroundColor;
+
+		gr::RenderDataID m_activeAmbientLightID;
+		bool m_activeAmbientLightHasChanged;
+
 		bool m_isDirty;
 	};
 }

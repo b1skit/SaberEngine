@@ -9,6 +9,8 @@
 
 #include "Core/Config.h"
 
+#include "Core/Definitions/ConfigKeys.h"
+
 #include "Core/Util/CHashKey.h"
 
 #include "Renderer/Shaders/Common/RayTracingParams.h"
@@ -96,7 +98,7 @@ namespace gr
 		RegisterDataInput(k_spotLightCullingDataInput);
 
 		// Shadow-related inputs:
-		m_shadowMode = core::Config::KeyExists(util::CHashKey(core::configkeys::k_raytracingKey)) ?
+		m_shadowMode = core::Config::GetValue<bool>(util::CHashKey(core::configkeys::k_raytracingEnabledKey)) ?
 			ShadowMode::RayTraced : ShadowMode::ShadowMap;
 		switch (m_shadowMode)
 		{

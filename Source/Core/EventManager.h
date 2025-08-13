@@ -28,7 +28,8 @@ namespace core
 			std::pair<int32_t, int32_t>,
 			std::pair<uint32_t, bool>,
 			std::pair<uint32_t, uint32_t>,
-			std::pair<float, float>>;
+			std::pair<float, float>,
+			util::CHashKey>;
 
 		struct EventInfo
 		{

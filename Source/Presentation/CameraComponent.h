@@ -21,6 +21,7 @@ namespace pr
 	class CameraComponent final
 	{
 	public:
+		struct CameraConceptMarker final {}; // Identifies cameras created via CreateCameraConcept (e.g. scene cameras)
 		struct MainCameraMarker final {};
 		struct NewMainCameraMarker final {};
 

@@ -37,6 +37,7 @@ namespace eventkey
 	constexpr util::CHashKey ToggleUIVisibility("ToggleUIVisibility");
 	constexpr util::CHashKey WindowFocusChanged("WindowFocusChanged");
 	constexpr util::CHashKey DragAndDrop("DragAndDropEvent");
+	constexpr util::CHashKey ConfigSetValue("ConfigSetValue");
 
 	constexpr util::CHashKey EngineQuit("EngineQuit");
 

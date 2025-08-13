@@ -95,7 +95,7 @@ namespace pr
 	{
 		m_isDirty |= ImGui::Checkbox(std::format("Shadow enabled?##{}", uniqueID).c_str(), &m_isEnabled);
 
-		const bool rayTracingEnabled = core::Config::KeyExists(core::configkeys::k_raytracingKey);
+		const bool rayTracingEnabled = core::Config::GetValue<bool>(core::configkeys::k_raytracingEnabledKey);
 
 		ImGui::BeginDisabled(rayTracingEnabled);
 		

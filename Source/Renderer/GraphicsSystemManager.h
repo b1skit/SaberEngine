@@ -4,6 +4,8 @@
 #include "GraphicsEvent.h"
 #include "RenderObjectIDs.h"
 
+#include "Core/InvPtr.h"
+
 #include "Core/Util/CHashKey.h"
 #include "Core/Util/HashKey.h"
 
@@ -68,12 +70,6 @@ namespace gr
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
 
-	public:
-		bool ActiveAmbientLightHasChanged() const;
-		bool HasActiveAmbientLight() const;
-		gr::RenderDataID GetActiveAmbientLightID() const;
-
-
 	public: // Graphics system events: These functions are only available to GraphicsSystems
 		template<typename T>
 		void SubscribeToGraphicsEvent(
@@ -87,7 +83,10 @@ namespace gr
 
 
 	private:
+		void PostGraphicsEventInternal(gr::GraphicsEvent const& newEvent);
+
 		std::unordered_map<util::CHashKey, std::vector<gr::GraphicsSystem*>> m_eventListeners;
+		std::shared_mutex m_eventListenersMutex;
 
 
 	public:
@@ -96,6 +95,7 @@ namespace gr
 
 	private:
 		void UpdateActiveAmbientLight();
+		void HandleTemporalResetEvent();
 
 
 	private:
@@ -109,10 +109,8 @@ namespace gr
 		re::BufferInput m_activeCameraParams;
 
 		gr::RenderDataID m_activeAmbientLightRenderDataID;
-		bool m_activeAmbientLightHasChanged;
 
 		re::Context* m_context;
-
 
 		uint64_t m_currentFrameNum;
 		uint8_t m_numFramesInFlight;
@@ -167,24 +165,6 @@ namespace gr
 	}
 
 
-	inline bool GraphicsSystemManager::ActiveAmbientLightHasChanged() const
-	{
-		return m_activeAmbientLightHasChanged;
-	}
-
-
-	inline bool GraphicsSystemManager::HasActiveAmbientLight() const
-	{
-		return m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID;
-	}
-
-
-	inline gr::RenderDataID GraphicsSystemManager::GetActiveAmbientLightID() const
-	{
-		return m_activeAmbientLightRenderDataID;
-	}
-
-
 	inline gr::RenderDataID GraphicsSystemManager::GetActiveCameraRenderDataID() const
 	{
 		return m_activeCameraRenderDataID;
@@ -196,7 +176,10 @@ namespace gr
 		util::CHashKey const& eventKey, gr::GraphicsSystem* listener)
 		requires GraphicsSystemType<T>
 	{
-		m_eventListeners[eventKey].emplace_back(listener);
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_eventListenersMutex);
+			m_eventListeners[eventKey].emplace_back(listener);
+		}
 	}
 
 
@@ -204,14 +187,7 @@ namespace gr
 	void GraphicsSystemManager::PostGraphicsEvent(gr::GraphicsEvent const& newEvent)
 		requires GraphicsSystemType<T>
 	{
-		auto itr = m_eventListeners.find(newEvent.m_eventKey);
-		if (itr != m_eventListeners.end())
-		{
-			for (auto& listener : itr->second)
-			{
-				listener->PostEvent(gr::GraphicsEvent(newEvent));
-			}
-		}
+		PostGraphicsEventInternal(newEvent);
 	}
 
 

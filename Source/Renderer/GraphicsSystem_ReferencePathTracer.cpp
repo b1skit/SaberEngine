@@ -21,6 +21,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Logger.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
@@ -33,6 +34,37 @@
 #include "_generated/DrawStyles.h"
 
 
+namespace
+{
+	void UpdateTemporalParams(std::shared_ptr<re::Buffer>& temporalParams, uint64_t numAccumulatedFrames)
+	{
+		TemporalAccumulationData temporalAccumulationData{
+			.g_frameStats = glm::uvec4(
+				numAccumulatedFrames,
+				0,
+				0,
+				0),
+		};
+
+		if (temporalParams == nullptr)
+		{
+			temporalParams = re::Buffer::Create(
+				"Temporal Accumulation Buffer",
+				temporalAccumulationData,
+				re::Buffer::BufferParams{
+					.m_stagingPool = re::Buffer::StagingPool::Permanent,
+					.m_memPoolPreference = re::Buffer::UploadHeap,
+					.m_accessMask = re::Buffer::GPURead | re::Buffer::CPUWrite,
+					.m_usageMask = re::Buffer::Constant,
+				});
+		}
+		else
+		{
+			temporalParams->Commit(temporalAccumulationData);
+		}
+	}
+}
+
 namespace gr
 {
 	ReferencePathTracerGraphicsSystem::ReferencePathTracerGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
@@ -42,6 +74,9 @@ namespace gr
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
 		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_accumulationStartFrame(0)
+		, m_numAccumulatedFrames(0)
+		, m_mustResetTemporalAccumulation(true)
 	{
 	}
 
@@ -54,7 +89,7 @@ namespace gr
 
 	void ReferencePathTracerGraphicsSystem::RegisterOutputs()
 	{
-		RegisterTextureOutput("LightAccumulation", &m_rtTarget);
+		RegisterTextureOutput("LightAccumulation", &m_outputAccumulation);
 	}
 
 
@@ -68,11 +103,13 @@ namespace gr
 
 		m_sceneTLAS = GetDependency<TLAS>(k_sceneTLASInput, dataDependencies);
 
+		m_stagePipelineParentItr = pipeline.AppendStage(gr::Stage::CreateParentStage("ReferencePathTracer Parent Stage"));
+
 		// Ray tracing stage:
 		m_rtStage = gr::Stage::CreateRayTracingStage("ReferencePathTracer", gr::Stage::RayTracingStageParams{});
 
 		// Create a UAV target (Note: We access this bindlessly):
-		m_rtTarget = re::Texture::Create("Light Accumulation",
+		m_workingAccumulation = re::Texture::Create("Working Light Accumulation",
 			re::Texture::TextureParams{
 				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
 				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
@@ -84,12 +121,82 @@ namespace gr
 				.m_mipMode = re::Texture::MipMode::None,
 			});
 
-		pipeline.AppendStage(m_rtStage);
+		m_outputAccumulation = re::Texture::Create("Light Accumulation Output",
+			re::Texture::TextureParams{
+				.m_width = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowWidthKey)),
+				.m_height = static_cast<uint32_t>(core::Config::GetValue<int>(core::configkeys::k_windowHeightKey)),
+				.m_numMips = 1,
+				.m_usage = re::Texture::Usage::ColorSrc | re::Texture::Usage::ColorTarget,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = re::Texture::Format::RGBA32F,
+				.m_colorSpace = re::Texture::ColorSpace::Linear,
+				.m_mipMode = re::Texture::MipMode::None,
+			});
+
+		auto rtStageItr = pipeline.AppendStage(m_stagePipelineParentItr, m_rtStage);
+
+		// Copy the working accumulation to the output texture so future stages can modify it (e.g. Tonemapping):
+		std::shared_ptr<gr::CopyStage> outputCopyStage =
+			gr::Stage::CreateCopyStage(m_workingAccumulation, m_outputAccumulation);
+
+		pipeline.AppendStage(rtStageItr, outputCopyStage);
+
+		// Register for events:
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<ReferencePathTracerGraphicsSystem>(
+			greventkey::k_triggerTemporalAccumulationReset, this);
+	}
+
+
+	void ReferencePathTracerGraphicsSystem::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			gr::GraphicsEvent const& event = GetEvent();
+			switch (event.m_eventKey)
+			{
+			case greventkey::k_triggerTemporalAccumulationReset:
+			{
+				m_mustResetTemporalAccumulation = true;
+			}
+			break;
+			default: SEAssertF("Unexpected graphics event in ReferencePathTracerGraphicsSystem");
+			}
+		}
 	}
 
 
 	void ReferencePathTracerGraphicsSystem::PreRender()
 	{
+		HandleEvents();
+
+		if (m_mustResetTemporalAccumulation ||
+			(m_sceneTLAS && *m_sceneTLAS) == false)
+		{
+			std::shared_ptr<gr::ClearRWTexturesStage> clearStage =
+				gr::Stage::CreateSingleFrameRWTextureClearStage("Reference Path Tracer Target clear stage");
+
+			clearStage->AddSingleFrameRWTextureInput(m_workingAccumulation, re::TextureView(m_workingAccumulation));
+			clearStage->SetClearValue(glm::vec4(0.f));
+
+			m_stagePipeline->AppendSingleFrameStage(m_stagePipelineParentItr, clearStage);
+
+			const uint64_t currentFrameNum = m_graphicsSystemManager->GetCurrentRenderFrameNum();
+			if (currentFrameNum != m_accumulationStartFrame + 1)
+			{
+				LOG("Temporal accumulation reset");
+			}
+			m_accumulationStartFrame = currentFrameNum;
+			m_numAccumulatedFrames = 0;
+
+			m_mustResetTemporalAccumulation = false;
+		}
+
+		if (m_numAccumulatedFrames > 0 && m_numAccumulatedFrames % 1000 == 0)
+		{
+			LOG("Accumulated %d frames so far...", m_numAccumulatedFrames);
+		}
+		
+
 		// If the TLAS is valid, create a ray tracing batch:
 		if (m_sceneTLAS && *m_sceneTLAS)
 		{
@@ -105,6 +212,11 @@ namespace gr
 						.m_maxPayloadByteSize = sizeof(PathTracer_HitInfo),
 						.m_maxRecursionDepth = 1, }); // Use iterative ray generation
 			}
+
+
+			UpdateTemporalParams(m_temporalParams, m_numAccumulatedFrames++);
+			SEAssert(m_numAccumulatedFrames < std::numeric_limits<uint32_t>::max(),
+				"Temporary accumulation frame index is about to overflow");
 
 			re::BufferInput const& indexedBufferLUT = grutil::GetInstancedBufferLUTBufferInput(
 				(*m_sceneTLAS).get(),
@@ -126,7 +238,7 @@ namespace gr
 				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetResourceHandle(re::ViewType::SRV),
 				indexedBufferLUT.GetBuffer()->GetResourceHandle(re::ViewType::SRV),
 				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetResourceHandle(re::ViewType::CBV),
-				m_rtTarget->GetResourceHandle(re::ViewType::UAV));
+				m_workingAccumulation->GetResourceHandle(re::ViewType::UAV));
 
 			// Ray tracing params:
 			std::shared_ptr<re::Buffer> const& traceRayParams = grutil::CreateTraceRayParams(
@@ -142,7 +254,8 @@ namespace gr
 
 			SEAssert((*m_sceneTLAS)->GetResourceHandle() != INVALID_RESOURCE_IDX &&
 				traceRayParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
-				descriptorIndexes->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
+				descriptorIndexes->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
+				m_temporalParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
 				"Invalid resource handle detected");
 
 			// Set root constants for the frame:
@@ -150,19 +263,9 @@ namespace gr
 				(*m_sceneTLAS)->GetResourceHandle(),						// SceneBVH[]
 				traceRayParams->GetResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
 				descriptorIndexes->GetResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
-				0);															// unused
+				m_temporalParams->GetResourceHandle(re::ViewType::CBV));	// TemporalParams[]
 
 			m_rtStage->SetRootConstant("RootConstants0", &rootConstants, re::DataType::UInt4);
-		}
-		else
-		{
-			std::shared_ptr<gr::ClearRWTexturesStage> clearStage =
-				gr::Stage::CreateSingleFrameRWTextureClearStage("Reference Path Tracer Target clear stage");
-
-			clearStage->AddSingleFrameRWTextureInput(m_rtTarget, re::TextureView(m_rtTarget));
-			clearStage->SetClearValue(glm::vec4(0.f));
-
-			m_stagePipeline->AppendSingleFrameStage(clearStage);
 		}
 	}
 

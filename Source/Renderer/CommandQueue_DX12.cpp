@@ -67,6 +67,8 @@ namespace
 				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE |
 				D3D12_RESOURCE_STATE_STREAM_OUT |
 				D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT |
+				D3D12_RESOURCE_STATE_COPY_DEST |
+				D3D12_RESOURCE_STATE_COPY_SOURCE |
 				D3D12_RESOURCE_STATE_RESOLVE_DEST |
 				D3D12_RESOURCE_STATE_RESOLVE_SOURCE |
 				D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE |
@@ -171,9 +173,10 @@ namespace
 #else
 		SEAssert(CommandListTypeSupportsState(cmdListType, beforeState) &&
 			CommandListTypeSupportsState(cmdListType, afterState),
-			"Invalid transition \"%s -> %s\" for the current command list type for resource \"%s\"",
+			"Invalid transition \"%s -> %s\" for the current command list type \"%s\" for resource \"%s\"",
 				dx12::GetResourceStateAsCStr(beforeState),
 				dx12::GetResourceStateAsCStr(afterState),
+				dx12::CommandList::GetCommandListTypeName(cmdListType),
 				dx12::GetDebugName(resource).c_str());
 #endif
 

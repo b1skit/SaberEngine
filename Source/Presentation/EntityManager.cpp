@@ -3,8 +3,8 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CameraControlComponent.h"
-#include "EntityManager.h"
 #include "EntityCommands.h"
+#include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialInstanceComponent.h"
@@ -19,6 +19,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/EventManager.h"
 #include "Core/ProfilingMarkers.h"
 
 #include "Core/Definitions/ConfigKeys.h"
@@ -61,6 +62,7 @@ namespace pr
 
 		// Event subscriptions:
 		core::EventManager::Subscribe(eventkey::SceneResetRequest, this);
+		core::EventManager::Subscribe(eventkey::ConfigSetValue, this);
 
 		// Process entity commands issued during scene loading:
 		ProcessEntityCommands();
@@ -108,7 +110,10 @@ namespace pr
 		UpdateCameraController(stepTimeMs);
 
 		// Update the scene state:
-		UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
+		if (m_animationEnabled)
+		{
+			UpdateAnimationControllers(stepTimeMs);  // Modifies Transforms
+		}
 
 		UpdateTransforms(); // Transforms are immutable after this point
 		
@@ -608,6 +613,19 @@ namespace pr
 			case eventkey::SceneResetRequest:
 			{
 				Reset();
+			}
+			break;
+			case eventkey::ConfigSetValue:
+			{
+				switch (std::get<util::CHashKey>(eventInfo.m_data))
+				{
+				case core::configkeys::k_animationEnabledKey:
+				{
+					m_animationEnabled = core::Config::GetValue<bool>(core::configkeys::k_animationEnabledKey);
+				}
+				break;
+				default: break; // Do nothing
+				}
 			}
 			break;
 			default:
@@ -1476,5 +1494,58 @@ namespace pr
 		ImGui::End();
 
 		SEEndCPUEvent();
+	}
+
+
+	void EntityManager::PopulateCamerasImGuiMenu()
+	{
+		if (ImGui::BeginMenu("Camera"))
+		{
+			entt::entity mainCamEntity = GetMainCamera();
+			bool cameraChanged = false;
+
+			{
+				std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
+
+				// We ly show cameras that have the CameraConceptMarker, so we can filter out "non-standard" cameras
+				// (e.g. shadow cameras)
+				auto cameraCmptView = 
+					m_registry.view<pr::CameraComponent, pr::NameComponent, CameraComponent::CameraConceptMarker>();
+
+				// Find the index of the main camera:
+				int mainCamIdx = 0;
+				for (entt::entity entity : cameraCmptView)
+				{
+					if (entity == mainCamEntity)
+					{
+						break;
+					}
+					mainCamIdx++;
+				}
+
+				for (entt::entity entity : cameraCmptView)
+				{
+					pr::CameraComponent const& currentCam = cameraCmptView.get<pr::CameraComponent>(entity);
+					pr::NameComponent const& camName = cameraCmptView.get<pr::NameComponent>(entity);
+
+					if (ImGui::RadioButton(
+						std::format("{}##{}", camName.GetName().c_str(), static_cast<uint32_t>(entity)).c_str(),
+						entity == mainCamEntity) &&
+						!cameraChanged)
+					{
+						mainCamEntity = entity;
+						cameraChanged = true;
+					}
+				}
+			}
+
+			// Update the main camera:
+			if (cameraChanged)
+			{
+				SetMainCamera(mainCamEntity);
+			}
+
+			ImGui::EndMenu();
+		}
 	}
 }

@@ -2,7 +2,12 @@
 	"PipelineMetadata":
 	{
 		"Name": "Reference Path Tracer",
-		"ExcludedPlatforms": [ "OpenGL" ]
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"RuntimeSettings": [
+			{
+				"Setting" : "RayTracingEnabled"
+			}
+		]
 	},
 	"Pipeline": [
 		{

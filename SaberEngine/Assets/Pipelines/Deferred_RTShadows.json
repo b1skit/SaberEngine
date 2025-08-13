@@ -4,7 +4,7 @@
 		"ExcludedPlatforms": [ "OpenGL" ],
 		"RuntimeSettings": [
 			{
-				"Setting" : "RayTracing"
+				"Setting" : "RayTracingEnabled"
 			}
 		]
 	},

@@ -27,6 +27,9 @@ namespace pr
 		pr::CameraComponent* cameraComponent = 
 			em.EmplaceComponent<pr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
 
+		// Camera concept marker:
+		em.EmplaceComponent<CameraComponent::CameraConceptMarker>(sceneNode);
+
 		cameraComponent->MarkDirty(em, sceneNode);
 	}
 

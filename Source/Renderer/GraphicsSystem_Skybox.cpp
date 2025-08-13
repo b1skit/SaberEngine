@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "GraphicsEvent.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
@@ -7,6 +8,7 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
+#include "Core/Assert.h"
 #include "Core/InvPtr.h"
 
 #include "Renderer/Shaders/Common/SkyboxParams.h"
@@ -33,6 +35,8 @@ namespace gr
 		, m_skyTexture(nullptr)
 		, m_backgroundColor(135.f / 255.f, 206.f / 255.f, 235.f / 255.f)
 		, m_showBackgroundColor(false)
+		, m_activeAmbientLightID(gr::k_invalidRenderDataID)
+		, m_activeAmbientLightHasChanged(true)
 		, m_isDirty(true)
 	{
 	}
@@ -103,6 +107,10 @@ namespace gr
 
 
 		pipeline.AppendStage(m_skyboxStage);
+
+		// Register for events:
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<SkyboxGraphicsSystem>(
+			greventkey::k_activeAmbientLightHasChanged, this);
 	}
 
 
@@ -119,18 +127,39 @@ namespace gr
 	}
 
 
+	void SkyboxGraphicsSystem::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			gr::GraphicsEvent const& event = GetEvent();
+			switch (event.m_eventKey)
+			{
+				case greventkey::k_activeAmbientLightHasChanged:
+				{
+					m_activeAmbientLightID = std::get<gr::RenderDataID>(event.m_data);
+					m_activeAmbientLightHasChanged = true;
+				}
+				break;
+				default: SEAssertF("Unexpected event in SkyboxGraphicsSystem");
+			}
+		}
+	}
+
+
 	void SkyboxGraphicsSystem::PreRender()
 	{
+		HandleEvents();
+
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		if (m_graphicsSystemManager->ActiveAmbientLightHasChanged())
+		if (m_activeAmbientLightHasChanged)
 		{
-			if (m_graphicsSystemManager->HasActiveAmbientLight())
-			{
-				const gr::RenderDataID ambientID = m_graphicsSystemManager->GetActiveAmbientLightID();
+			m_activeAmbientLightHasChanged = false;
 
+			if (m_activeAmbientLightID != gr::k_invalidRenderDataID)
+			{
 				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(ambientID);
+					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightID);
 
 				m_skyTexture = &ambientRenderData.m_iblTex;
 			}

@@ -2,7 +2,12 @@
 	"PipelineMetadata":
 	{
 		"Name": "Ray Tracing (Experimental)",
-		"ExcludedPlatforms": [ "OpenGL" ]
+		"ExcludedPlatforms": [ "OpenGL" ],
+		"RuntimeSettings": [
+			{
+				"Setting" : "RayTracingEnabled"
+			}
+		]
 	},
 	"Pipeline": [
 		{

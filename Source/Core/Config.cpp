@@ -436,6 +436,8 @@ namespace core
 		SetRuntimeValue(core::configkeys::k_defaultSpotLightMinShadowBiasKey,			0.03f);
 		SetRuntimeValue(core::configkeys::k_defaultSpotLightMaxShadowBiasKey,			0.055f);
 		SetRuntimeValue(core::configkeys::k_defaultSpotLightShadowSoftnessKey,			0.1f);
+		SetRuntimeValue(core::configkeys::k_raytracingEnabledKey,						false);
+		SetRuntimeValue(core::configkeys::k_animationEnabledKey,						true);
 	}
 	
 

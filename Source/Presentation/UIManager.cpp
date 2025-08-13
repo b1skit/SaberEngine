@@ -572,6 +572,23 @@ namespace pr
 						ImGui::EndMenu();
 					}
 
+					if (ImGui::BeginMenu("Scene"))
+					{
+						bool animationEnabled = false;
+						core::Config::TryGetValue<bool>(core::configkeys::k_animationEnabledKey, animationEnabled);
+						if (ImGui::Checkbox("Animation enabled", &animationEnabled))
+						{
+							core::Config::SetValue<bool>(
+								core::configkeys::k_animationEnabledKey, 
+								animationEnabled, 
+								core::Config::SettingType::Runtime);
+						}
+
+						m_entityManager->PopulateCamerasImGuiMenu();
+
+						ImGui::EndMenu();
+					}
+
 					if (ImGui::BeginMenu("Debug"))
 					{
 						m_debugGraphicsService.PopulateImGuiMenu();
