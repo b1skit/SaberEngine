@@ -1,6 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "Buffer.h"
 #include "GraphicsSystem.h"
+#include "RenderObjectIDs.h"
 
 
 namespace gr
@@ -47,7 +49,7 @@ namespace gr
 		static constexpr char const* k_skyboxTexShaderName = "Tex0";
 
 		std::shared_ptr<gr::Stage> m_skyboxStage;
-		core::InvPtr<re::Texture> const* m_skyTexture;
+		core::InvPtr<re::Texture> m_skyTexture;
 		std::shared_ptr<re::Buffer> m_skyboxParams;
 
 		// Fallback if no ambient light/IBL texture is found, but the flat color debug mode is not enabled

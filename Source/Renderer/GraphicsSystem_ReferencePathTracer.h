@@ -3,6 +3,7 @@
 #include "Effect.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystemCommon.h"
+#include "RenderObjectIDs.h"
 #include "RenderPipeline.h"
 
 #include "Core/InvPtr.h"
@@ -80,5 +81,7 @@ namespace gr
 		uint64_t m_accumulationStartFrame;
 		uint32_t m_numAccumulatedFrames;
 		bool m_mustResetTemporalAccumulation;
+
+		core::InvPtr<re::Texture> m_environmentMap; // Spherical (latitude-longitude) environment map
 	};
 }

@@ -103,7 +103,10 @@ struct InstancedBufferLUTData
 struct DescriptorIndexData
 {
 	// .x = VertexStreamLUTs, .y = InstancedBufferLUTs, .z = CameraParams, .w = target Texture2DRWFloat4 idx
-	uint4 g_descriptorIndexes; 
+	uint4 g_descriptorIndexes0;
+
+	// .x = EnvironmentMap, .yzw = unused
+	uint4 g_descriptorIndexes1;
 
 #if defined(__cplusplus)
 	static constexpr char const* const s_shaderName = "DescriptorIndexes";
@@ -134,7 +137,7 @@ struct RayDifferential
 
 struct raypayload PathTracer_HitInfo
 {
-	float4 g_colorAndDistance read(caller) write(caller, closesthit, anyhit, miss);
+	float4 g_pathRadiance read(caller) write(caller, closesthit, anyhit, miss);
 	RayDifferential g_rayDiff read(caller, closesthit, anyhit) write(caller, closesthit);
 };
 

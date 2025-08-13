@@ -11,8 +11,10 @@
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
+#include "LightRenderData.h"
 #include "Material.h"
 #include "RayTracingParamsHelpers.h"
+#include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "RenderPipeline.h"
 #include "ShaderBindingTable.h"
@@ -144,6 +146,8 @@ namespace gr
 		// Register for events:
 		m_graphicsSystemManager->SubscribeToGraphicsEvent<ReferencePathTracerGraphicsSystem>(
 			greventkey::k_triggerTemporalAccumulationReset, this);
+		m_graphicsSystemManager->SubscribeToGraphicsEvent<ReferencePathTracerGraphicsSystem>(
+			greventkey::k_activeAmbientLightHasChanged, this);
 	}
 
 
@@ -157,6 +161,25 @@ namespace gr
 			case greventkey::k_triggerTemporalAccumulationReset:
 			{
 				m_mustResetTemporalAccumulation = true;
+			}
+			break;
+			case greventkey::k_activeAmbientLightHasChanged:
+			{
+				const gr::RenderDataID activeAmbientLightID = std::get<gr::RenderDataID>(event.m_data);
+
+				if (activeAmbientLightID != gr::k_invalidRenderDataID)
+				{
+					gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
+					gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+						renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(activeAmbientLightID);
+
+					m_environmentMap = ambientRenderData.m_iblTex;
+				}
+				else
+				{
+					m_environmentMap = nullptr;
+				}
 			}
 			break;
 			default: SEAssertF("Unexpected graphics event in ReferencePathTracerGraphicsSystem");
@@ -238,7 +261,8 @@ namespace gr
 				(*m_sceneTLAS)->GetBindlessVertexStreamLUT().GetBuffer()->GetResourceHandle(re::ViewType::SRV),
 				indexedBufferLUT.GetBuffer()->GetResourceHandle(re::ViewType::SRV),
 				m_graphicsSystemManager->GetActiveCameraParams().GetBuffer()->GetResourceHandle(re::ViewType::CBV),
-				m_workingAccumulation->GetResourceHandle(re::ViewType::UAV));
+				m_workingAccumulation->GetResourceHandle(re::ViewType::UAV),
+				m_environmentMap ? m_environmentMap->GetResourceHandle(re::ViewType::SRV) : INVALID_RESOURCE_IDX);
 
 			// Ray tracing params:
 			std::shared_ptr<re::Buffer> const& traceRayParams = grutil::CreateTraceRayParams(

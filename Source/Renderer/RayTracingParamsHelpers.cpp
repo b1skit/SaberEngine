@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "BindlessResourceManager.h"
 #include "Buffer.h"
 #include "BufferView.h"
 #include "Effect.h"
@@ -99,7 +100,8 @@ namespace grutil
 		ResourceHandle vertexStreamLUTsDescriptorIdx,
 		ResourceHandle instancedBufferLUTsDescriptorIdx,
 		ResourceHandle cameraParamsDescriptorIdx,
-		ResourceHandle targetUAVDescriptorIdx)
+		ResourceHandle targetUAVDescriptorIdx,
+		ResourceHandle environmentMapDescriptorIdx /*= INVALID_RESOURCE_IDX*/)
 	{
 		SEAssert(vertexStreamLUTsDescriptorIdx != INVALID_RESOURCE_IDX &&
 			instancedBufferLUTsDescriptorIdx != INVALID_RESOURCE_IDX &&
@@ -109,11 +111,17 @@ namespace grutil
 
 		// .x = VertexStreamLUTs, .y = InstancedBufferLUTs, .z = CameraParams, .w = output Texture2DRWFloat4 idx
 		const DescriptorIndexData descriptorIndexData{
-			.g_descriptorIndexes = glm::uvec4(
+			.g_descriptorIndexes0 = glm::uvec4(
 				vertexStreamLUTsDescriptorIdx,		// VertexStreamLUTs[]
 				instancedBufferLUTsDescriptorIdx,	// InstancedBufferLUTs[]
 				cameraParamsDescriptorIdx,			// CameraParams[]
 				targetUAVDescriptorIdx),			// Texture2DRWFloat4[]
+
+			.g_descriptorIndexes1 = glm::uvec4(
+				environmentMapDescriptorIdx,		// Texture2DFloat4[]
+				0,									// Unused
+				0,									// Unused
+				0),									// Unused
 		};
 
 		const re::Buffer::BufferParams descriptorIndexParams{

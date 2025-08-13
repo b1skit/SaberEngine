@@ -97,13 +97,13 @@ namespace gr
 		m_skyboxStage->AddPermanentBuffer(SkyboxData::s_shaderName, m_skyboxParams);
 
 		// Start with our default texture set, in case there is no IBL
-		m_skyTexture = &m_fallbackColorTex;
+		m_skyTexture = m_fallbackColorTex;
 
 		m_skyboxStage->AddPermanentTextureInput(
 			k_skyboxTexShaderName,
-			*m_skyTexture,
+			m_skyTexture,
 			m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint"),
-			re::TextureView(*m_skyTexture));
+			re::TextureView(m_skyTexture));
 
 
 		pipeline.AppendStage(m_skyboxStage);
@@ -161,18 +161,18 @@ namespace gr
 				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
 					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightID);
 
-				m_skyTexture = &ambientRenderData.m_iblTex;
+				m_skyTexture = ambientRenderData.m_iblTex;
 			}
 			else
 			{
-				m_skyTexture = &m_fallbackColorTex;
+				m_skyTexture = m_fallbackColorTex;
 			}
 
 			m_skyboxStage->AddPermanentTextureInput(
 				k_skyboxTexShaderName,
-				*m_skyTexture,
+				m_skyTexture,
 				m_graphicsSystemManager->GetSampler("WrapMinMagLinearMipPoint"),
-				re::TextureView(*m_skyTexture));
+				re::TextureView(m_skyTexture));
 
 		}
 		SEAssert(m_skyTexture != nullptr, "Failed to set a valid sky texture");

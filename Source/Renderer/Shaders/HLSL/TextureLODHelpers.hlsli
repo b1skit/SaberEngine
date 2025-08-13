@@ -309,4 +309,18 @@ float ComputeIsotropicTextureLOD(
 	return 0.5f * log2(max(max(dTxodTx, dTyodTy), FLT_MIN)); // LOD = log2(max(sqrt(dTx o dTx), sqrt(dTy o dTy)))
 }
 
+
+// As per Ray Tracing Gems, Ch 21. "Simple Environment Map Filtering Using Ray Cones and Ray Differentials"
+float ComputeIBLTextureLOD(
+	RayDifferential transferredRayDiff,
+	uint2 texDims) // Spherical (latitude/longitude) IBL's WxH texture dimensions (in pixels)
+{
+	const float gamma = 2.f * atan(0.5f * length(transferredRayDiff.dDdx + transferredRayDiff.dDdy));
+	
+	const float radiansPerTexel = M_PI / texDims.y;
+	
+	return log2(gamma / radiansPerTexel);
+}
+
+
 #endif //TEXTURE_LOD_HELPERS

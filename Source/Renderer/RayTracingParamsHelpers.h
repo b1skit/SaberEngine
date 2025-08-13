@@ -1,5 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #pragma once
+#include "BindlessResourceManager.h"
 
 
 enum RayFlag : uint32_t;
@@ -37,7 +38,8 @@ namespace grutil
 		ResourceHandle vertexStreamLUTsDescriptorIdx,
 		ResourceHandle instancedBufferLUTsDescriptorIdx,
 		ResourceHandle cameraParamsDescriptorIdx,
-		ResourceHandle targetUAVDescriptorIdx);
+		ResourceHandle targetUAVDescriptorIdx,
+		ResourceHandle environmentMapDescriptorIdx = INVALID_RESOURCE_IDX);
 
 	re::BufferInput GetInstancedBufferLUTBufferInput(re::AccelerationStructure* tlas, gr::IndexedBufferManager&);
 }

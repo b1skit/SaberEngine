@@ -4,6 +4,7 @@
 #include "GBufferBindless.hlsli"
 #include "Random.hlsli"
 #include "TextureLODHelpers.hlsli"
+#include "UVUtils.hlsli"
 
 #include "../Common/MaterialParams.h"
 #include "../Common/RayTracingParams.h"
@@ -28,7 +29,7 @@ void RayGeneration()
 	const TemporalAccumulationData temporalAccumulationData = TemporalAccumulationParams[temporalAccumulationIdx];
 	const uint numAccumulatedFrames = temporalAccumulationData.g_frameStats.x;
 	
-	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
 	
 	const uint2 pixelCoords = DispatchRaysIndex().xy;
@@ -59,62 +60,26 @@ void RayGeneration()
 	
 	// Initialize the ray payload
 	PathTracer_HitInfo payload;
-	payload.g_colorAndDistance = float4(0, 0, 0, 0);
+	payload.g_pathRadiance = float4(0, 0, 0, 0);
 	payload.g_rayDiff = rayDiff;
 	
 	// Trace the ray:
 	TraceRay(
-		SceneBVH[sceneBVHDescriptorIdx],
-
-		// Parameter name: RayFlags
-		// Flags can be used to specify the behavior upon hitting a surface
-		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/ray_flag
-		traceRayParams.g_rayFlags.x,
-
-		// Parameter name: InstanceInclusionMask
-		// Instance inclusion mask, which can be used to mask out some geometry to
-		// this ray by and-ing the mask with a geometry mask. The 0xFF flag then
-		// indicates no geometry will be masked
-		traceRayParams.g_traceRayParams.x,
-
-		// Parameter name: RayContributionToHitGroupIndex
-		// Depending on the type of ray, a given object can have several hit
-		// groups attached (ie. what to do when hitting to compute regular
-		// shading, and what to do when hitting to compute shadows). Those hit
-		// groups are specified sequentially in the SBT, so the value below
-		// indicates which offset (on 4 bits) to apply to the hit groups for this
-		// ray. In this sample we only have one hit group per object, hence an
-		// offset of 0.
-		traceRayParams.g_traceRayParams.y,
-
-		// Parameter name: MultiplierForGeometryContributionToHitGroupIndex
-		// The offsets in the SBT can be computed from the object ID, its instance
-		// ID, but also simply by the order the objects have been pushed in the
-		// acceleration structure. This allows the application to group shaders in
-		// the SBT in the same order as they are added in the AS, in which case
-		// the value below represents the stride (4 bits representing the number
-		// of hit groups) between two consecutive objects.
-		traceRayParams.g_traceRayParams.z,
-
-		// Parameter name: MissShaderIndex
-		// Index of the miss shader to use in case several consecutive miss
-		// shaders are present in the SBT. This allows to change the behavior of
-		// the program when no geometry have been hit, for example one to return a
-		// sky color for regular rendering, and another returning a full
-		// visibility value for shadow rays. This sample has only one miss shader,
-		// hence an index 0
-		traceRayParams.g_traceRayParams.w,
-
+		SceneBVH[sceneBVHDescriptorIdx],	// TLAS
+		traceRayParams.g_rayFlags.x,		// RayFlags
+		traceRayParams.g_traceRayParams.x,	// InstanceInclusionMask
+		traceRayParams.g_traceRayParams.y,	// RayContributionToHitGroupIndex
+		traceRayParams.g_traceRayParams.z,	// MultiplierForGeometryContributionToHitGroupIndex
+		traceRayParams.g_traceRayParams.w,	// Miss shader index
 		ray,
 		payload);
-
 	
-	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
+	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes0.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 		
 	// Compute a temporal cumulative average:	
 	const float3 prevAccumulation = numAccumulatedFrames * outputTex[pixelCoords].rgb;
-	const float3 newContribution = payload.g_colorAndDistance.rgb;
+	const float3 newContribution = payload.g_pathRadiance.rgb;
 		
 	float3 newAverage = (prevAccumulation + newContribution) / (numAccumulatedFrames + 1.f);
 		
@@ -131,16 +96,16 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
 	// Camera:
-	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];	
 	
 	// Get our Vertex stream LUTs buffer:
-	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
 	
 	// Compute our geometry index for buffer arrays aligned with AS geometry:
 	const uint geoIdx = InstanceID() + GeometryIndex();
 	
-	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
 	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
 	
 	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
@@ -177,7 +142,7 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 		materialData.m_linearAlbedo.rgb *
 		materialData.m_baseColorFactor.rgb;
 	
-	payload.g_colorAndDistance = float4(colorOut, RayTCurrent());
+	payload.g_pathRadiance = float4(colorOut, RayTCurrent());
 	payload.g_rayDiff = transferredRayDiff;
 }
 
@@ -185,17 +150,32 @@ void ClosestHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAtt
 [shader("anyhit")]
 void AnyHit(inout PathTracer_HitInfo payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	payload.g_colorAndDistance = float4(float3(1, 1, 0), RayTCurrent());
+	//
 }
 
 
 [shader("miss")]
 void Miss(inout PathTracer_HitInfo payload : SV_RayPayload)
 {
-	uint2 pixelCoords = DispatchRaysIndex().xy;
-	float2 dims = float2(DispatchRaysDimensions().xy);
-
-	float ramp = pixelCoords.y / dims.y;
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
-	payload.g_colorAndDistance = float4(0.0f, 0.2f, 0.7f - 0.3f * ramp, -1.0f);
+	const uint environmentMapIdx = descriptorIndexes.g_descriptorIndexes1.x;
+	if (environmentMapIdx != INVALID_RESOURCE_IDX)
+	{
+		Texture2D<float4> envMap = Texture2DFloat4[environmentMapIdx];
+
+		uint3 texDims = uint3(0, 0, 0);
+		envMap.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
+		
+		const float mipLevel = ComputeIBLTextureLOD(payload.g_rayDiff, texDims);
+		
+		const float2 uv = WorldDirToSphericalUV(WorldRayDirection());
+		
+		payload.g_pathRadiance = envMap.SampleLevel(WrapMinMagMipLinear, uv, mipLevel);
+	}
+	else
+	{
+		payload.g_pathRadiance = float4(135.f / 255.f, 206.f / 255.f, 235.f / 255.f, 1.f); // As per Skybox shader
+	}
 }

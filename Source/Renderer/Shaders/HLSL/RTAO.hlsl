@@ -49,7 +49,7 @@ void RTAO_RayGeneration()
     const uint gbufferDepthIdx = rtaoParams.g_indexes.x;
     const uint gbufferNormalIdx = rtaoParams.g_indexes.y;	
 	
-    const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+    const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
     const CameraData cameraParams = CameraParams[cameraParamsIdx];
 	
 	// Convert the launch pixel coords to UV coordinates:
@@ -71,7 +71,7 @@ void RTAO_RayGeneration()
 	const float3 worldNormal = gbufferNormalTex.Load(loadCoords).xyz;
 	
 	// Get our output target:
-	const uint outputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
+	const uint outputDescriptorIdx = descriptorIndexes.g_descriptorIndexes0.w;
 	RWTexture2D<float> outputTex = Texture2DRWFloat[outputDescriptorIdx];
 	
 	const uint numRays = rtaoParams.g_params.z;

@@ -24,7 +24,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
 	// Get our Vertex stream LUTs buffer:
-	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes.x;
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];	
 	
 	// Compute our geometry index for buffer arrays aligned with AS geometry:
@@ -34,7 +34,7 @@ void ClosestHit_Experimental(inout HitInfo_Experimental payload, BuiltInTriangle
 	
 #if defined(TEST_MATERIALS)
 	
-	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes.y;
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
 	const StructuredBuffer<InstancedBufferLUTData> instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx];
 	
 	const uint materialResourceIdx = instancedBuffersLUT[geoIdx].g_materialIndexes.x;
@@ -197,7 +197,7 @@ void RayGeneration_Experimental()
 	
 	const ConstantBuffer<DescriptorIndexData> descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
-	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes.z;
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
 	
 	ray.Origin = mul(cameraParams.g_invView, float4(0, 0, 0, 1)).xyz;
@@ -262,7 +262,7 @@ void RayGeneration_Experimental()
 		payload);
 
 
-	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes.w;
+	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes0.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 	
 #if defined(RAY_GEN_A)
