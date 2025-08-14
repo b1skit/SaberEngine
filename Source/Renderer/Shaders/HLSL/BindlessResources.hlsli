@@ -116,6 +116,8 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transf
 	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
 	
+	const float3x3 transposeInvRotationScale = (float3x3)transform.g_transposeInvModel;
+	
 	TriangleData triangleData;
 	
 	// Positions:
@@ -128,11 +130,11 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transf
 	
 	// Unnormalized vertex normals:
 	triangleData.m_v0.m_worldVertexNormal =
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x]).xyz;
+		mul(transposeInvRotationScale, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.x]).xyz;
 	triangleData.m_v1.m_worldVertexNormal =
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y]).xyz;
+		mul(transposeInvRotationScale, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.y]).xyz;
 	triangleData.m_v2.m_worldVertexNormal =
-		mul((float3x3)transform.g_transposeInvModel, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z]).xyz;
+		mul(transposeInvRotationScale, VertexStreams_Float3[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.y][vertexIndexes.z]).xyz;
 	
 	// Triangle plane normal:
 	triangleData.m_worldTriPlaneNormal = normalize(cross(
@@ -140,9 +142,12 @@ TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transf
 		triangleData.m_v2.m_worldVertexPosition - triangleData.m_v0.m_worldVertexPosition));
 	
 	// Tangents:
-	triangleData.m_v0.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
-	triangleData.m_v1.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.y];
-	triangleData.m_v2.m_vertexTangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.z];
+	const float4 v0Tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.x];
+	const float4 v1Tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.y];
+	const float4 v2Tangent = VertexStreams_Float4[vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.z][vertexIndexes.z];
+	triangleData.m_v0.m_worldVertexTangent = float4(mul(transposeInvRotationScale, v0Tangent.xyz), v0Tangent.w);
+	triangleData.m_v1.m_worldVertexTangent = float4(mul(transposeInvRotationScale, v1Tangent.xyz), v1Tangent.w);
+	triangleData.m_v2.m_worldVertexTangent = float4(mul(transposeInvRotationScale, v2Tangent.xyz), v2Tangent.w);
 	
 	if (vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w != INVALID_RESOURCE_IDX)
 	{
@@ -190,10 +195,10 @@ TriangleHitData GetTriangleHitData(TriangleData triangleData, float3 barycentric
 		triangleData.m_v2.m_worldVertexPosition * barycentrics.z;
 	
 	// Tangent:
-	hitData.m_hitTangent =
-		triangleData.m_v0.m_vertexTangent * barycentrics.x +
-		triangleData.m_v1.m_vertexTangent * barycentrics.y +
-		triangleData.m_v2.m_vertexTangent * barycentrics.z;
+	hitData.m_worldHitTangent = normalize(
+		triangleData.m_v0.m_worldVertexTangent * barycentrics.x +
+		triangleData.m_v1.m_worldVertexTangent * barycentrics.y +
+		triangleData.m_v2.m_worldVertexTangent * barycentrics.z);
 	
 	// Interpolated world vertex normal:	
 	hitData.m_worldHitNormal = normalize(
@@ -221,12 +226,56 @@ TriangleHitData GetTriangleHitData(TriangleData triangleData, float3 barycentric
 }
 
 
+float4 SampleTexture2DFloat4(
+	TriangleData triangleData,
+	TriangleHitData hitData,
+	BarycentricDerivatives barycentricDerivatives,
+	uint srcTexResourceIdx,
+	uint uvChannelIdx,
+	SamplerState samplerState = WrapMinMagMipLinear)
+{
+	Texture2D<float4> srcTex = Texture2DFloat4[srcTexResourceIdx];
+
+	uint3 texDims = uint3(0, 0, 0);
+	srcTex.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
+		
+	const float mipLevel =
+		ComputeIsotropicTextureLOD(texDims.xy, barycentricDerivatives, triangleData, uvChannelIdx);
+	
+	float4 result;
+	switch (uvChannelIdx)
+	{
+	case 1:
+	{
+		result = srcTex.SampleLevel(samplerState, hitData.m_hitUV1, mipLevel);
+	}
+	break;
+	case 0:
+	default:
+	{
+		result = srcTex.SampleLevel(samplerState, hitData.m_hitUV0, mipLevel);
+	}
+	break;
+	}
+	
+	return result;
+}
+
+
 struct MaterialData
 {
-	float4 m_linearAlbedo;
-	float4 m_baseColorFactor;
+	float4 LinearAlbedo; // srcTex * baseColorFactor
 	
-	// TODO: Add remaining material properties
+	float3 WorldNormal; // Texture normal in world space, normalized
+
+	float LinearMetalness;
+	float LinearRoughness;
+	float AO;
+
+	float3 Emissive;
+	float3 MatProp0; // .rgb = F0 (Surface response at 0 degrees)
+	
+	float AlphaCutoff;
 };
 MaterialData LoadMaterialData(
 	TriangleData triangleData,
@@ -242,28 +291,80 @@ MaterialData LoadMaterialData(
 	MaterialData materialData;
 	
 	// Default values:
-	materialData.m_linearAlbedo = float4(1.f, 1.f, 1.f, 1.f); // GLTF specs: Default base color is (1,1,1)
-	materialData.m_baseColorFactor = float4(1.f, 1.f, 1.f, 1.f);
+	materialData.LinearAlbedo = float4(1.f, 1.f, 1.f, 1.f); // GLTF specs: Default base color is (1,1,1)
+	materialData.WorldNormal = float3(0.f, 0.f, 1.f);
+	materialData.LinearRoughness = 1.f;						// GLTF specs: Default roughness is 1 (i.e. fully rough)
+	materialData.LinearMetalness = 0.f;						// GLTF specs: Default metalness is 0 (i.e. non-metallic)
+	materialData.AO = 1.f;									// GLTF specs: Default occlusion is 1 (i.e. no occlusion)
+	materialData.Emissive = float3(0.f, 0.f, 0.f);			// GLTF specs: Default emissive is (0,0,0)
+	materialData.MatProp0 = float3(0.04, 0.04f, 0.04f);		// GLTF specs: Default F0 is (0,0,0)
+	
+	float4 baseColorFactor = float4(1.f, 1.f, 1.f, 1.f);	
+	float normalScaleFactor = 1.f;
+	float metallicFactor = 1.f;
+	float roughnessFactor = 1.f;
+	float occlusionStrength = 1.f;
+	float3 emissiveFactor = float3(1.f, 1.f, 1.f);
+	float emissiveStrength = 1.f;
 	
 	// Get our indexes:
 	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
 	uint baseColorUVChannelIdx = INVALID_RESOURCE_IDX;
+	
+	uint normalResourceIdx = INVALID_RESOURCE_IDX;
+	uint normalUVChannelIdx = INVALID_RESOURCE_IDX;
+	
+	uint metallicRoughnessResourceIdx = INVALID_RESOURCE_IDX;
+	uint metallicRoughnessUVChannelIdx = INVALID_RESOURCE_IDX;
+	
+	uint occlusionResourceIdx = INVALID_RESOURCE_IDX;
+	uint occlusionUVChannelIdx = INVALID_RESOURCE_IDX;
+	
+	uint emissiveResourceIdx = INVALID_RESOURCE_IDX;
+	uint emissiveUVChannelIdx = INVALID_RESOURCE_IDX;
+	
 	switch (materialType)
 	{
 	case MAT_ID_GLTF_Unlit:
 	{
-		const StructuredBuffer<UnlitData> materialBuffer = UnlitParams[materialResourceIdx];
-		baseColorResourceIdx = materialBuffer[materialBufferIdx].g_bindlessTextureIndexes0.x;
-		baseColorUVChannelIdx = materialBuffer[materialBufferIdx].g_uvChannelIndexes0.x;
-		materialData.m_baseColorFactor = materialBuffer[materialBufferIdx].g_baseColorFactor;
+		const UnlitData materialBuffer = UnlitParams[materialResourceIdx][materialBufferIdx];
+			
+		baseColorFactor =			materialBuffer.g_baseColorFactor;
+		
+		baseColorUVChannelIdx =		materialBuffer.g_uvChannelIndexes0.x;
+			
+		baseColorResourceIdx =		materialBuffer.g_bindlessTextureIndexes0.x;		
+			
+		materialData.AlphaCutoff =	materialBuffer.g_alphaCutuff.x;
 	}
 	break;
 	case MAT_ID_GLTF_PBRMetallicRoughness:
 	{
-		const StructuredBuffer<PBRMetallicRoughnessData> materialBuffer = PBRMetallicRoughnessParams[materialResourceIdx];
-		baseColorResourceIdx = materialBuffer[materialBufferIdx].g_bindlessTextureIndexes0.x;
-		baseColorUVChannelIdx = materialBuffer[materialBufferIdx].g_uvChannelIndexes0.x;
-		materialData.m_baseColorFactor = materialBuffer[materialBufferIdx].g_baseColorFactor;
+		const PBRMetallicRoughnessData materialBuffer = PBRMetallicRoughnessParams[materialResourceIdx][materialBufferIdx];
+			
+		baseColorFactor =				materialBuffer.g_baseColorFactor;
+		metallicFactor =				materialBuffer.g_metRoughNmlOccScales.x;		
+		roughnessFactor =				materialBuffer.g_metRoughNmlOccScales.y;
+		normalScaleFactor =				materialBuffer.g_metRoughNmlOccScales.z;
+		occlusionStrength =				materialBuffer.g_metRoughNmlOccScales.w;
+		emissiveFactor =				materialBuffer.g_emissiveFactorStrength.rgb;
+		emissiveStrength =				materialBuffer.g_emissiveFactorStrength.w;
+			
+		baseColorUVChannelIdx =			materialBuffer.g_uvChannelIndexes0.x;
+		metallicRoughnessUVChannelIdx = materialBuffer.g_uvChannelIndexes0.y;
+		normalUVChannelIdx =			materialBuffer.g_uvChannelIndexes0.z;
+		occlusionUVChannelIdx =			materialBuffer.g_uvChannelIndexes0.w;
+			
+		emissiveUVChannelIdx =			materialBuffer.g_uvChannelIndexes1.x;
+		
+		baseColorResourceIdx =			materialBuffer.g_bindlessTextureIndexes0.x;
+		metallicRoughnessResourceIdx =	materialBuffer.g_bindlessTextureIndexes0.y;
+		normalResourceIdx =				materialBuffer.g_bindlessTextureIndexes0.z;
+		occlusionResourceIdx =			materialBuffer.g_bindlessTextureIndexes0.w;
+		
+		emissiveResourceIdx =			materialBuffer.g_bindlessTextureIndexes1.x;
+			
+		materialData.AlphaCutoff =		materialBuffer.g_f0AlphaCutoff.w;
 	}
 	break;
 	}
@@ -271,29 +372,80 @@ MaterialData LoadMaterialData(
 	// Base color:
 	if (baseColorResourceIdx != INVALID_RESOURCE_IDX && baseColorUVChannelIdx != INVALID_RESOURCE_IDX)
 	{
-		Texture2D<float4> baseColorTex = Texture2DFloat4[baseColorResourceIdx];
-
-		uint3 texDims = uint3(0, 0, 0);
-		baseColorTex.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
+		materialData.LinearAlbedo = baseColorFactor * hitData.m_hitColor *
+			SampleTexture2DFloat4(
+				triangleData, 
+				hitData, 
+				barycentricDerivatives, 
+				baseColorResourceIdx, 
+				baseColorUVChannelIdx, 
+				WrapMinMagMipLinear);
+	}
+	
+	// Normal:
+	if (normalResourceIdx != INVALID_RESOURCE_IDX && normalUVChannelIdx != INVALID_RESOURCE_IDX)
+	{
+		const float4 texNormal = SampleTexture2DFloat4(
+			triangleData,
+			hitData,
+			barycentricDerivatives,
+			normalResourceIdx,
+			normalUVChannelIdx,
+			WrapMinMagMipLinear);
 		
-		const float mipLevel =
-			ComputeIsotropicTextureLOD(texDims.xy, barycentricDerivatives, triangleData, baseColorUVChannelIdx);
+		const float3 worldBitangent = 
+			normalize(cross(hitData.m_worldHitNormal, hitData.m_worldHitTangent.xyz) * hitData.m_worldHitTangent.w);
 		
-		switch (baseColorUVChannelIdx)
-		{
-		case 1:
-		{
-			materialData.m_linearAlbedo = baseColorTex.SampleLevel(WrapMinMagMipLinear, hitData.m_hitUV1, mipLevel);
-		}
-		break;
-		case 0:
-		default:
-		{
-			materialData.m_linearAlbedo = baseColorTex.SampleLevel(WrapMinMagMipLinear, hitData.m_hitUV0, mipLevel);
-		}
-		break;
-		}
-	}	
+		// Matrix ctors pack in row-major ordering: Insert our TBN vectors as columns
+		const float3x3 TBN = float3x3(
+			hitData.m_worldHitTangent.x, worldBitangent.x, hitData.m_worldHitNormal.x,
+			hitData.m_worldHitTangent.y, worldBitangent.y, hitData.m_worldHitNormal.y,
+			hitData.m_worldHitTangent.z, worldBitangent.z, hitData.m_worldHitNormal.z);
+		
+		materialData.WorldNormal = WorldNormalFromTextureNormal(texNormal.xyz, normalScaleFactor, TBN);
+	}
+	
+	// MetallicRoughness:
+	if (metallicRoughnessResourceIdx != INVALID_RESOURCE_IDX && metallicRoughnessUVChannelIdx != INVALID_RESOURCE_IDX)
+	{
+		// Unpack/scale metallic/roughness: .G = roughness, .B = metalness
+		const float2 roughnessMetalness = SampleTexture2DFloat4(
+				triangleData,
+				hitData,
+				barycentricDerivatives,
+				metallicRoughnessResourceIdx,
+				metallicRoughnessUVChannelIdx,
+				WrapMinMagMipLinear).gb;
+		
+		materialData.LinearRoughness = roughnessMetalness.x * roughnessFactor;
+		materialData.LinearMetalness = roughnessMetalness.y * metallicFactor;
+	}
+	
+	// Occlusion:
+	if (occlusionResourceIdx != INVALID_RESOURCE_IDX && occlusionUVChannelIdx != INVALID_RESOURCE_IDX)
+	{
+		materialData.AO = occlusionStrength * 
+			SampleTexture2DFloat4(
+				triangleData,
+				hitData,
+				barycentricDerivatives,
+				occlusionResourceIdx,
+				occlusionUVChannelIdx,
+				WrapMinMagMipLinear).r;
+	}
+	
+	// Emissive:
+	if (emissiveResourceIdx != INVALID_RESOURCE_IDX && emissiveUVChannelIdx != INVALID_RESOURCE_IDX)
+	{
+		materialData.Emissive = emissiveFactor * emissiveStrength *
+			SampleTexture2DFloat4(
+				triangleData,
+				hitData,
+				barycentricDerivatives,
+				emissiveResourceIdx,
+				emissiveUVChannelIdx,
+				WrapMinMagMipLinear).rgb;
+	}
 	
 	return materialData;
 }

@@ -11,7 +11,7 @@
 struct VertexData
 {
 	float3 m_worldVertexPosition;
-	float4 m_vertexTangent;			// In local space
+	float4 m_worldVertexTangent;
 	float3 m_worldVertexNormal;		// Unnormalized vertex/geometry normal
 	float2 m_vertexUV0;
 	float2 m_vertexUV1;
@@ -27,7 +27,7 @@ struct TriangleData
 struct TriangleHitData
 {
 	float3 m_worldHitPosition;
-	float4 m_hitTangent;		// In local space
+	float4 m_worldHitTangent;
 	float3 m_worldHitNormal;	// Normalized vertex normal (i.e. interpolated from v0/v1/v2 geometry normals)
 	float2 m_hitUV0;
 	float2 m_hitUV1;

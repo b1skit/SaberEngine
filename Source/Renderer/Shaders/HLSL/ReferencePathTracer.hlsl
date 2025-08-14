@@ -137,10 +137,7 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 		materialBufferIdx, 
 		materialType);
 	
-	float3 colorOut =
-		hitData.m_hitColor.rgb *
-		materialData.m_linearAlbedo.rgb *
-		materialData.m_baseColorFactor.rgb;
+	float3 colorOut = materialData.LinearAlbedo.rgb;
 	
 	payload.g_pathRadiance = float4(colorOut, RayTCurrent());
 	payload.g_rayDiff = transferredRayDiff;
