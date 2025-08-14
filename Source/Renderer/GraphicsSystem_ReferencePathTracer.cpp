@@ -301,6 +301,12 @@ namespace gr
 			return;
 		}
 
-		(*m_sceneTLAS)->ShowImGuiWindow(m_refPathTracerEffectID, m_rayGenIdx, m_missShaderIdx, m_geometryInstanceMask);
+		const bool didModify = 
+			(*m_sceneTLAS)->ShowImGuiWindow(m_refPathTracerEffectID, m_rayGenIdx, m_missShaderIdx, m_geometryInstanceMask);
+
+		if (didModify)
+		{
+			m_mustResetTemporalAccumulation = true;
+		}
 	}
 }

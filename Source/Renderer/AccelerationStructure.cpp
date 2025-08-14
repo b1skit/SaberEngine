@@ -376,9 +376,11 @@ namespace re
 	}
 
 
-	void AccelerationStructure::ShowImGuiWindow(
+	bool AccelerationStructure::ShowImGuiWindow(
 		EffectID effectID, uint32_t& rayGenIdxOut, uint32_t& missIdxOut, uint8_t& geometryInstanceMaskOut) const
 	{
+		bool didModify = false;
+
 		re::AccelerationStructure::TLASParams const* tlasParams = 
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>(GetASParams());
 		SEAssert(tlasParams, "Failed to cast to TLASParams");
@@ -398,7 +400,7 @@ namespace re
 			rayGenComboOptions.emplace_back(std::format("{}", i));
 		}
 
-		util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, rayGenIdxOut);
+		didModify |= util::ShowBasicComboBox("Ray gen shader index", rayGenComboOptions.data(), numRayGenStyles, rayGenIdxOut);
 
 		// Miss shader:
 		const uint32_t numMissStyles = util::CheckedCast<uint32_t>(sbt->GetSBTParams().m_missStyles.size());
@@ -410,7 +412,7 @@ namespace re
 			comboOptions.emplace_back(std::format("{}", i));
 		}
 
-		util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, missIdxOut);
+		didModify |= util::ShowBasicComboBox("Miss shader index", comboOptions.data(), numMissStyles, missIdxOut);
 
 		// Geometry inclusion masks:
 		auto SetInclusionMaskBits = [&](re::AccelerationStructure::InclusionMask flag, bool enabled)
@@ -423,6 +425,8 @@ namespace re
 				{
 					geometryInstanceMaskOut &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
 				}
+
+				didModify = true;
 			};
 
 		bool alphaMode_Opaque = geometryInstanceMaskOut & re::AccelerationStructure::AlphaMode_Opaque;
@@ -466,5 +470,7 @@ namespace re
 		{
 			SetInclusionMaskBits(re::AccelerationStructure::ShadowCaster, shadowCaster);
 		}
+
+		return didModify;
 	}
 }

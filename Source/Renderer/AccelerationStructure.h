@@ -263,7 +263,7 @@ namespace re
 
 
 	public:
-		void ShowImGuiWindow(EffectID, uint32_t& rayGenIdxOut, uint32_t& missIdxOut, uint8_t& geometryInstanceMaskOut) const;
+		bool ShowImGuiWindow(EffectID, uint32_t& rayGenIdxOut, uint32_t& missIdxOut, uint8_t& geometryInstanceMaskOut) const;
 
 
 	private:
