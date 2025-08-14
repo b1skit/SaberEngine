@@ -12,7 +12,6 @@
 #include "GraphicsSystemManager.h"
 #include "IndexedBuffer.h"
 #include "LightRenderData.h"
-#include "Material.h"
 #include "RayTracingParamsHelpers.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"

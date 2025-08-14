@@ -13,7 +13,6 @@
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "RenderPipeline.h"
-#include "ShaderBindingTable.h"
 #include "Stage.h"
 #include "TransformRenderData.h"
 #include "VertexStream.h"
@@ -25,8 +24,6 @@
 #include "Core/Util/CastUtils.h"
 #include "Core/Util/HashKey.h"
 #include "Core/Util/HashUtils.h"
-
-#include "Renderer/Shaders/Common/RayTracingParams.h"
 
 
 namespace
