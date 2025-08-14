@@ -95,10 +95,6 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
-	// Camera:
-	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
-	const CameraData cameraParams = CameraParams[cameraParamsIdx];	
-	
 	// Get our Vertex stream LUTs buffer:
 	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
 	
