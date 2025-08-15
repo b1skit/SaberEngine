@@ -288,7 +288,7 @@ namespace core
 			}
 
 			// Copy the front message into the intermediate buffer, then release the lock so more messages can be added
-			strcpy(messageBuffer.data(), s_messages.back().data());
+			strcpy(messageBuffer.data(), s_messages.front().data());
 			s_messages.pop();
 
 			waitingLock.unlock();
