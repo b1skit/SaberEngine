@@ -452,6 +452,12 @@ namespace re
 	inline void re::AccelerationStructure::TLASParams::AddBLASInstance(
 		std::shared_ptr<re::AccelerationStructure> const& blasInstance)
 	{
+#if defined(_DEBUG)
+		for (auto const& instance : m_blasInstances)
+		{
+			SEAssert(instance.get() != blasInstance.get(), "BLAS instance already added");
+		}
+#endif
 		m_blasInstances.emplace_back(blasInstance);
 	}
 

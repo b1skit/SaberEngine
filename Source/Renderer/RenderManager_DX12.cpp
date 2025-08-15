@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "AccelerationStructure_DX12.h"
 #include "AccelerationStructure.h"
 #include "Batch.h"
 #include "Context_DX12.h"
@@ -396,10 +395,6 @@ namespace dx12
 						break;
 						case gr::Stage::Type::RayTracing:
 						{
-							gr::Stage::RayTracingStageParams const* rtStageParams = 
-								dynamic_cast<gr::Stage::RayTracingStageParams const*>((*stageItr)->GetStageParams());
-							SEAssert(rtStageParams, "Failed to cast to RayTracingStageParams parameters");
-
 							std::vector<gr::StageBatchHandle> const& batches = (*stageItr)->GetStageBatches();
 							for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 							{
