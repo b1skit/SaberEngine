@@ -100,7 +100,7 @@ namespace re
 			NoShadow			= 1 << 5,
 			ShadowCaster		= 1 << 6,
 
-			InstanceInclusionMask_Always = 0xFF,
+			InclusionMask_Always = 0xFF,
 		};
 
 
@@ -187,8 +187,8 @@ namespace re
 
 			std::shared_ptr<re::Buffer> m_transform; // Buffer of mat3x4 in row-major order. Indexes correspond with m_geometry
 
-			InclusionMask m_instanceMask = InstanceInclusionMask_Always; // Visibility mask: 0 = ignored, 1 = visible
-			InstanceFlags m_instanceFlags = InstanceFlags::InstanceFlags_None;
+			InclusionMask m_inclusionMask = InclusionMask_Always; // Visibility mask: 0 = ignored, 1 = visible
+			InstanceFlags m_instanceFlags = InstanceFlags_None;
 		};
 		struct TLASParams final : public virtual IASParams
 		{

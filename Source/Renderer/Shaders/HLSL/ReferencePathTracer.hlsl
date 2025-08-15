@@ -143,7 +143,59 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 [shader("anyhit")]
 void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	//
+	
+	
+	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
+	
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	// Camera:
+	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
+	const CameraData cameraParams = CameraParams[cameraParamsIdx];
+	
+	// Get our Vertex stream LUTs buffer:
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
+	
+	// Compute our geometry index for buffer arrays aligned with AS geometry:
+	const uint geoIdx = InstanceID() + GeometryIndex();
+	
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
+	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
+	
+	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
+	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
+	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
+	
+	const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
+	const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
+	
+	// Triangle data:
+	const TriangleData triangleData =
+		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
+	
+	// Interpolated triangle data at the hit point:
+	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);
+	
+	const RayDifferential transferredRayDiff = Transfer(
+		triangleData,
+		payload.g_rayDiff,
+		WorldRayDirection(),
+		RayTCurrent());
+	
+	// Material data:
+	const MaterialData materialData = LoadMaterialData(
+		triangleData,
+		hitData,
+		transferredRayDiff,
+		materialResourceIdx,
+		materialBufferIdx,
+		materialType);
+	
+	if (materialData.LinearAlbedo.a < materialData.AlphaCutoff)
+	{
+		IgnoreHit();
+	}
 }
 
 

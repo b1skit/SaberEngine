@@ -57,11 +57,13 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, std::unordered_set<gr::RenderDataID>> m_meshConceptToPrimitiveIDs;
 		std::unordered_map<gr::RenderDataID, gr::RenderDataID> m_meshPrimToMeshConceptID;
 		
+		using BLASKey = util::HashKey; // Hash of (MeshConceptID, InclusionMask)
+
 		std::unordered_map<gr::RenderDataID, // MeshConcept RenderDataID
-			std::map<util::HashKey, // BLAS key
+			std::map<BLASKey,
 				std::pair<std::shared_ptr<re::AccelerationStructure>, uint32_t>>> m_meshConceptToBLASAndCount;
 
-		std::unordered_map<gr::RenderDataID, util::HashKey> m_meshPrimToBLASKey;
+		std::unordered_map<gr::RenderDataID, BLASKey> m_meshPrimToBLASKey;
 
 		gr::StagePipeline* m_stagePipeline;
 		gr::StagePipeline::StagePipelineItr m_rtParentStageItr;

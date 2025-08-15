@@ -93,7 +93,7 @@ namespace gr
 		, m_sceneTLAS(nullptr)
 		, m_tMin(0.f) // Note: This is in addition to the offset along geometry normals applied in the shader
 		, m_rayLengthOffset(0.01f)
-		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_geometryInstanceMask(re::AccelerationStructure::InclusionMask_Always)
 	{
 		m_lightingTargetSet = re::TextureTargetSet::Create("Deferred light targets");
 	}

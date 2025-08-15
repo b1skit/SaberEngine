@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "AccelerationStructure.h"
 #include "Batch.h"
 #include "Buffer.h"
 #include "Texture.h"
@@ -346,6 +347,45 @@ namespace gr
 			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_shaderName);
 			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_accelerationStructure->GetNameHash());
 			AddDataBytesToHash(m_rayTracingParams.m_dispatchDimensions);
+
+			AddDataBytesToHash(m_rayTracingParams.m_ASInput.m_accelerationStructure->GetType());
+
+			re::AccelerationStructure::IASParams const* asParams = 
+				m_rayTracingParams.m_ASInput.m_accelerationStructure->GetASParams();
+
+			AddDataBytesToHash(asParams->m_buildFlags);
+
+			switch (m_rayTracingParams.m_ASInput.m_accelerationStructure->GetType())
+			{
+			case re::AccelerationStructure::Type::TLAS:
+			{
+				re::AccelerationStructure::TLASParams const* tlasParams =
+					dynamic_cast<re::AccelerationStructure::TLASParams const*>(asParams);
+
+				for (auto const& blasID : tlasParams->GetBLASGeometryOwnerIDs())
+				{
+					AddDataBytesToHash(blasID);
+				}
+			}
+			break;
+			case re::AccelerationStructure::Type::BLAS:
+			{
+				re::AccelerationStructure::BLASParams const* blasParams = 
+					dynamic_cast<re::AccelerationStructure::BLASParams const*>(asParams);
+
+				for (auto const& geo : blasParams->m_geometry)
+				{
+					AddDataBytesToHash(geo.GetOwnerID());
+					AddDataBytesToHash(geo.GetGeometryFlags());
+					AddDataBytesToHash(geo.GetDrawstyleBits());
+				}
+
+				AddDataBytesToHash(blasParams->m_inclusionMask);		
+				AddDataBytesToHash(blasParams->m_instanceFlags);
+			}
+			break;
+			default: SEAssertF("Invalid AccelerationStructure type");
+			}
 		}
 		break;
 		default: SEAssertF("Invalid type");

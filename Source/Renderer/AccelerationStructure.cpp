@@ -423,7 +423,7 @@ namespace re
 				}
 				else
 				{
-					geometryInstanceMaskOut &= (re::AccelerationStructure::InstanceInclusionMask_Always ^ flag);
+					geometryInstanceMaskOut &= (re::AccelerationStructure::InclusionMask_Always ^ flag);
 				}
 
 				didModify = true;

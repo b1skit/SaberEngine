@@ -155,7 +155,7 @@ namespace gr
 					SEAssert(m_meshPrimToBLASKey.contains(deletedPrimitiveID),
 						"Failed to find the MeshPrimtiveID. This should not be possible");
 
-					const util::HashKey blasKey = m_meshPrimToBLASKey.at(deletedPrimitiveID);
+					const BLASKey blasKey = m_meshPrimToBLASKey.at(deletedPrimitiveID);
 
 					SEAssert(m_meshConceptToPrimitiveIDs.contains(owningMeshConceptID) &&
 						m_meshConceptToBLASAndCount.contains(owningMeshConceptID) &&
@@ -227,11 +227,11 @@ namespace gr
 
 			// Create a BLAS key: This uniquely identifies a BLAS based on its owning MeshConcept and material
 			// properties that affect the BLAS behavior
-			const util::HashKey blasKey = CreateBLASKey(
+			const BLASKey blasKey = CreateBLASKey(
 				owningMeshConceptID, 
 				static_cast<re::AccelerationStructure::InclusionMask>(
 					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
-						&meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
+						meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
 
 			// Create/update the BLAS count:
 			bool isNewBlasKey = false;
@@ -248,7 +248,7 @@ namespace gr
 			else if (meshPrimToBLASKeyItr->second != blasKey)
 			{
 				// Get the old BLAS key:
-				const util::HashKey prevBlasKey = meshPrimToBLASKeyItr->second;
+				const BLASKey prevBlasKey = meshPrimToBLASKeyItr->second;
 
 				// Update the meshPrim RenderDataID -> BLAS key map with the new blas key
 				meshPrimToBLASKeyItr->second = blasKey; 
@@ -336,7 +336,7 @@ namespace gr
 
 				const re::AccelerationStructure::InclusionMask inclusionMask = 
 					static_cast<re::AccelerationStructure::InclusionMask>(
-						gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(&materialRenderData));
+						gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(materialRenderData));
 
 				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
 			}
@@ -347,7 +347,7 @@ namespace gr
 				std::vector<glm::mat4 const*> blasMatrices;
 				auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
 
-				util::HashKey const& blasKey = CreateBLASKey(meshConceptID, entry.first);
+				BLASKey const& blasKey = CreateBLASKey(meshConceptID, entry.first);
 
 				gr::TransformID parentTransformID = gr::k_invalidTransformID; // Maps to the identity Transform
 				for (gr::RenderDataID meshPrimID : entry.second)
@@ -355,15 +355,15 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData =
 						renderData.GetObjectData<gr::MeshPrimitive::RenderData>(meshPrimID);
 
-					re::AccelerationStructure::Geometry& instance = blasParams->m_geometry.emplace_back(meshPrimID);
+					re::AccelerationStructure::Geometry& geo = blasParams->m_geometry.emplace_back(meshPrimID);
 
-					gr::MeshPrimitive::RenderData::RegisterGeometryResources(meshPrimRenderData, instance);
+					gr::MeshPrimitive::RenderData::RegisterGeometryResources(meshPrimRenderData, geo);
 
 					// Replace the position buffer if it is animated:
 					auto animatedStreamsItr = m_animatedVertexStreams->find(meshPrimID);
 					if (animatedStreamsItr != m_animatedVertexStreams->end())
 					{
-						instance.SetVertexPositions(animatedStreamsItr->second[re::VertexStream::Position]);
+						geo.SetVertexPositions(animatedStreamsItr->second[re::VertexStream::Position]);
 					}
 
 					// We use the MeshPrimitive's local TRS matrix for our BLAS, and then use the parent's global TRS to
@@ -382,10 +382,11 @@ namespace gr
 					gr::Material::MaterialInstanceRenderData const& materialRenderData =
 						renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-					gr::Material::MaterialInstanceRenderData::RegisterGeometryResources(materialRenderData, instance);
+					gr::Material::MaterialInstanceRenderData::RegisterGeometryResources(materialRenderData, geo);
 
-					// Map the MeshPrimitive RenderDataID -> BLAS key:
-					m_meshPrimToBLASKey[meshPrimID] = blasKey;
+					SEAssert(m_meshPrimToBLASKey.contains(meshPrimID) &&
+						m_meshPrimToBLASKey.at(meshPrimID) == blasKey,
+						"Mesh primitive not found or blasKey mismatch. This should not be possible");
 				}
 
 				// Set the world Transform for all geometries in the BLAS
@@ -398,7 +399,7 @@ namespace gr
 					(re::AccelerationStructure::BuildFlags::AllowUpdate |
 						re::AccelerationStructure::BuildFlags::AllowCompaction);
 
-				blasParams->m_instanceMask = entry.first; // Visiblity mask
+				blasParams->m_inclusionMask = entry.first; // Visiblity mask
 				blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags_None;
 
 				SEAssert(m_meshConceptToBLASAndCount.contains(meshConceptID) &&

@@ -391,8 +391,7 @@
 				"ExcludedPlatforms": [ "OpenGL" ],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["OPAQUE_SINGLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
 				"Name": "HitGroup_Reference_ClipSingleSided",
@@ -400,19 +399,16 @@
 
 				"AnyHitShader": "ReferencePathTracer",
 				"AnyHitShaderEntryPoint" : "AnyHit",
-				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
 				"Name": "HitGroup_Reference_OpaqueDoubleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["OPAQUE_DOUBLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
 				"Name": "HitGroup_Reference_ClipDoubleSided",
@@ -420,11 +416,9 @@
 
 				"AnyHitShader": "ReferencePathTracer",
 				"AnyHitShaderEntryPoint" : "AnyHit",
-				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
 				"Name": "HitGroup_Reference_BlendSingleSided",
@@ -432,11 +426,9 @@
 
 				"AnyHitShader": "ReferencePathTracer",
 				"AnyHitShaderEntryPoint" : "AnyHit",
-				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["BLEND_SINGLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
 				"Name": "HitGroup_Reference_BlendDoubleSided",
@@ -444,11 +436,9 @@
 
 				"AnyHitShader": "ReferencePathTracer",
 				"AnyHitShaderEntryPoint" : "AnyHit",
-				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"],
 
 				"ClosestHitShader": "ReferencePathTracer",
-				"ClosestHitShaderEntryPoint" : "ClosestHit",
-				"ClosestHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
+				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			}
 		]
 	},

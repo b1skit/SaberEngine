@@ -30,7 +30,7 @@ namespace gr
 		, m_rtEffectID(effect::Effect::ComputeEffectID("RayTracing_Experimental"))
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
-		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_geometryInstanceMask(re::AccelerationStructure::InclusionMask_Always)
 	{		
 	}
 

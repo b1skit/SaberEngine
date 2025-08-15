@@ -71,7 +71,7 @@ namespace gr
 		, m_refPathTracerEffectID(effect::Effect::ComputeEffectID("ReferencePathTracer"))
 		, m_rayGenIdx(0)
 		, m_missShaderIdx(0)
-		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_geometryInstanceMask(re::AccelerationStructure::InclusionMask_Always)
 		, m_accumulationStartFrame(0)
 		, m_numAccumulatedFrames(0)
 		, m_mustResetTemporalAccumulation(true)

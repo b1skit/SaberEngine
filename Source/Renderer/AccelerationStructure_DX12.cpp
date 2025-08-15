@@ -1,7 +1,6 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure_DX12.h"
 #include "Buffer_DX12.h"
-#include "CommandList_DX12.h"
 #include "Context_DX12.h"
 #include "EnumTypes_DX12.h"
 
@@ -506,7 +505,7 @@ namespace
 			instanceDescs[blasInstanceIdx] = D3D12_RAYTRACING_INSTANCE_DESC{
 				// .Transform set below
 				.InstanceID = blasBaseOffset, // HLSL: InstanceID() -> Arbitrary identifier for each unique BLAS instance
-				.InstanceMask = blasParams->m_instanceMask,
+				.InstanceMask = blasParams->m_inclusionMask,
 				.InstanceContributionToHitGroupIndex = instanceContributionToHitGroupIndex,
 				.Flags = util::CheckedCast<uint32_t>(InstanceFlagsToD3DInstanceFlags(blasParams->m_instanceFlags)),
 				.AccelerationStructure = blasPlatObj->m_ASBuffer->GetGPUVirtualAddress(),

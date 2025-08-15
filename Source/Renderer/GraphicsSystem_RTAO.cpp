@@ -60,7 +60,7 @@ namespace gr
 		: GraphicsSystem(GetScriptName(), owningGSM)
 		, INamedObject(GetScriptName())
 		, m_RTAOEffectID(effect::Effect::ComputeEffectID("RTAO"))
-		, m_geometryInstanceMask(re::AccelerationStructure::InstanceInclusionMask_Always)
+		, m_geometryInstanceMask(re::AccelerationStructure::InclusionMask_Always)
 		, m_isDirty(true)
 		, m_tMinMax(0.001f, 0.2f)
 		, m_rayCount(6)
