@@ -242,7 +242,7 @@ namespace core
 		// internally locks a mutex before appending the new message
 		if (s_showHostConsole)
 		{
-			printf(msg);
+			std::fputs(msg, stdout);
 		}
 
 		s_logOutputStream << msg;
