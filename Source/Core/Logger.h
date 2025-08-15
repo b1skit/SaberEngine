@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Assert.h"
 #include "Definitions/ConfigKeys.h"
 
 #include "Util/TextUtils.h"
@@ -53,7 +52,6 @@ namespace core
 	private:
 		constexpr static uint32_t k_internalStagingBufferSize = 4096;
 
-
 		static void AddMessage(char const*);
 		static std::unique_ptr<ImGuiLogWindow> s_imGuiLogWindow; // Internally contains a mutex
 
@@ -105,7 +103,7 @@ namespace core
 	template<typename...Args>
 	inline void Logger::Log(std::string_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == '\0' && "std::string_view must be null-terminated for Logger usage");
 		LogInternal<char, Args...>(Logger::LogType::Log, msg.data(), std::forward<Args>(args)...);
 	}
 
@@ -113,7 +111,7 @@ namespace core
 	template<typename...Args>
 	inline void Logger::Log(std::wstring_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == L'\0' && "std::wstring_view must be null-terminated for Logger usage");
 		LogInternal<wchar_t, Args...>(Logger::LogType::Log, msg.data(), std::forward<Args>(args)...);
 	}
 
@@ -121,7 +119,7 @@ namespace core
 	template<typename... Args>
 	inline void Logger::LogWarning(std::string_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == '\0' && "std::string_view must be null-terminated for Logger usage");
 		LogInternal<char, Args...>(Logger::LogType::Warning, msg.data(), std::forward<Args>(args)...);
 	}
 
@@ -129,7 +127,7 @@ namespace core
 	template<typename... Args>
 	inline void Logger::LogWarning(std::wstring_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == L'\0' && "std::wstring_view must be null-terminated for Logger usage");
 		LogInternal<wchar_t, Args...>(Logger::LogType::Warning, msg.data(), std::forward<Args>(args)...);
 	}
 
@@ -137,7 +135,7 @@ namespace core
 	template<typename... Args>
 	inline void Logger::LogError(std::string_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == '\0', "std::string_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == '\0' && "std::string_view must be null-terminated for Logger usage");
 		LogInternal<char, Args...>(Logger::LogType::Error, msg.data(), std::forward<Args>(args)...);
 	}
 
@@ -145,7 +143,7 @@ namespace core
 	template<typename... Args>
 	inline void Logger::LogError(std::wstring_view msg, Args&&... args)
 	{
-		SEAssert(msg.data()[msg.size()] == L'\0', "std::wstring_view must be null-terminated for Logger usage");
+		assert(msg.data()[msg.size()] == L'\0' && "std::wstring_view must be null-terminated for Logger usage");
 		LogInternal<wchar_t, Args...>(Logger::LogType::Error, msg.data(), std::forward<Args>(args)...);
 	}
 

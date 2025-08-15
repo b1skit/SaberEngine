@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
 #include "Logger.h"
 #include "ThreadPool.h"
 
@@ -253,7 +252,7 @@ namespace core
 
 	void Logger::FlushMessages()
 	{
-		SEAssert(!s_isRunning, "Flushing messages while running. This is unexpected");
+		assert(!s_isRunning && "Flushing messages while running. This is unexpected");
 
 		{
 			std::unique_lock<std::mutex> modifyLock(s_messagesMutex);
@@ -274,7 +273,7 @@ namespace core
 		s_logOutputStream.open(
 			std::format("{}{}", core::configkeys::k_logOutputDir, core::configkeys::k_logFileName).c_str(),
 			std::ios::out);
-		SEAssert(s_logOutputStream.good(), "Error creating log output stream");
+		assert(s_logOutputStream.good() && "Error creating log output stream");
 
 		std::array<char, Logger::k_internalStagingBufferSize> messageBuffer{ '\0' };
 
