@@ -143,8 +143,6 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 [shader("anyhit")]
 void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-	
-	
 	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
 	
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
