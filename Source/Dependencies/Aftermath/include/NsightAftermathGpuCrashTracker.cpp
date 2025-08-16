@@ -211,8 +211,8 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void* pGpuCrashDump, const u
 
     // Write the crash dump data to a file using the .nv-gpudmp extension
     // registered with Nsight Graphics.
-    const std::string crashDumpFileName = outputDir + baseFileName + ".nv-gpudmp";
-    std::ofstream dumpFile(crashDumpFileName, std::ios::out | std::ios::binary);
+    m_lastSaveDumpPath = outputDir + baseFileName + ".nv-gpudmp";
+    std::ofstream dumpFile(m_lastSaveDumpPath, std::ios::out | std::ios::binary);
     if (dumpFile)
     {
         dumpFile.write((const char*)pGpuCrashDump, gpuCrashDumpSize);
@@ -239,7 +239,7 @@ void GpuCrashTracker::WriteGpuCrashDumpToFile(const void* pGpuCrashDump, const u
         json.data()));
 
     // Write the crash dump data as JSON to a file.
-    const std::string jsonFileName = crashDumpFileName + ".json";
+    const std::string jsonFileName = m_lastSaveDumpPath + ".json";
     std::ofstream jsonFile(jsonFileName, std::ios::out | std::ios::binary);
     if (jsonFile)
     {

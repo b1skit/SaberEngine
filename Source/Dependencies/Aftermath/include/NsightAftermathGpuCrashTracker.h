@@ -45,6 +45,10 @@ public:
     // Initialize the GPU crash dump tracker.
     void Initialize();
 
+	// Get the path to the last saved GPU crash dump file (empty if no dump was previously saved).
+    std::string const& GetCrashDumpFilePath() const { return m_lastSaveDumpPath; }
+
+
 private:
 
     //*********************************************************
@@ -162,4 +166,6 @@ private:
 
     // App-managed marker tracking
     const MarkerMap& m_markerMap;
+
+    std::string m_lastSaveDumpPath;
 };

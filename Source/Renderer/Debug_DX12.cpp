@@ -315,6 +315,15 @@ namespace dx12
 				aftermathStatusMsg << "Unexpected crash dump status: " << status;
 				MessageBoxA(NULL, aftermathStatusMsg.str().c_str(), "Aftermath Error", MB_OK);
 			}
+			else
+			{
+				MessageBoxA(NULL,
+					std::format("Aftermath crash dump saved:\n{}", aftermath::s_instance.GetCrashDumpFilePath()).c_str(),
+					"Saber Engine GPU Crash Captured",
+					MB_OK);
+
+				LOG_ERROR("Aftermath GPU Crash Output: %s", aftermath::s_instance.GetCrashDumpFilePath().c_str());
+			}
 		}
 #endif
 

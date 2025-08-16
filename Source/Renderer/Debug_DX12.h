@@ -100,6 +100,9 @@ namespace aftermath
 		void InitializeGPUCrashTracker();
 		void CreateCommandListContextHandle(ID3D12CommandList*);
 
+		std::string const& GetCrashDumpFilePath() const { return m_gpuCrashTracker.GetCrashDumpFilePath(); }
+			
+
 	public:
 		void BeginFrame();
 
