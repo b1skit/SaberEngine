@@ -128,6 +128,7 @@
     <ClInclude Include="Context_OpenGL.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Debug_DX12.h" />
+    <ClInclude Include="DREDHelpers_DX12.h" />
     <ClInclude Include="DescriptorCache_DX12.h" />
     <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="Effect.h" />
@@ -280,6 +281,7 @@
     <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
+    <ClCompile Include="DREDHelpers_DX12.cpp" />
     <ClCompile Include="DescriptorCache_DX12.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="Effect.cpp" />

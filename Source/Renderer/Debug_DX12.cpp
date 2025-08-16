@@ -7,6 +7,8 @@
 
 #include "Core/Util/TextUtils.h"
 
+#include <algorithm>
+
 using Microsoft::WRL::ComPtr;
 
 
