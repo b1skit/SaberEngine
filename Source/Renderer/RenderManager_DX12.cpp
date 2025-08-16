@@ -53,6 +53,10 @@ namespace dx12
 	{
 		SEBeginCPUEvent("RenderManager::Render");
 
+#if defined(USE_NSIGHT_AFTERMATH)
+		aftermath::s_instance.BeginFrame();
+#endif
+
 		dx12::Context* context = m_context->As<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);

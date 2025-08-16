@@ -100,6 +100,11 @@ namespace aftermath
 		void InitializeGPUCrashTracker();
 		void CreateCommandListContextHandle(ID3D12CommandList*);
 
+	public:
+		void BeginFrame();
+
+
+	public:
 		void SetAftermathEventMarker(ID3D12CommandList*, std::string const& markerData, bool appManagedMarker);
 
 
@@ -110,7 +115,9 @@ namespace aftermath
 		std::unordered_map<ID3D12CommandList const*, GFSDK_Aftermath_ContextHandle> m_aftermathCmdListContexts;
 		GpuCrashTracker m_gpuCrashTracker;
 
-		const bool m_isEnabled;
+		uint64_t m_currentFrameIdx;
+
+		bool m_isEnabled;
 
 		std::mutex m_aftermathMutex;
 	} s_instance;
