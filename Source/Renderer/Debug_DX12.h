@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -80,6 +80,8 @@ namespace dx12
 	extern constexpr char const* GetFeatureLevelAsCStr(D3D_FEATURE_LEVEL);
 	extern constexpr char const* D3D12ResourceBindingTierToCStr(D3D12_RESOURCE_BINDING_TIER);
 	extern constexpr char const* D3D12ResourceHeapTierToCStr(D3D12_RESOURCE_HEAP_TIER);
+	extern void PrintAdapterInfo(ID3D12Device* device);
+	extern std::string HResultToString(HRESULT hr);
 }
 
 
