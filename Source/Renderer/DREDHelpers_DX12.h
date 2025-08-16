@@ -1,3 +1,4 @@
+// © 2025 Adam Badke. All rights reserved.
 #pragma once
 
 #include <d3d12.h>
@@ -6,47 +7,44 @@
 
 namespace dx12
 {
-        struct DredBreadcrumbNodeView
-        {
-                const wchar_t* cmdListNameW;
-                const wchar_t* cmdQueueNameW;
-                const UINT* lastValue;
-                UINT count;
-                const D3D12_AUTO_BREADCRUMB_OP* history;
-                const D3D12_DRED_BREADCRUMB_CONTEXT* contexts;
-                UINT contextsCount;
-        };
+	struct DredBreadcrumbNodeView
+	{
+		const wchar_t* m_cmdListNameW;
+		const wchar_t* m_cmdQueueNameW;
+		const uint32_t* m_lastBreadcrumbValue;
+		uint32_t m_breadcrumbCount;
+		const D3D12_AUTO_BREADCRUMB_OP* m_commandHistory;
+		const D3D12_DRED_BREADCRUMB_CONTEXT* m_breadcrumbContexts;
+		uint32_t m_breadcrumbContextsCount;
+	};
 
-        struct DredPageFaultView
-        {
-                UINT64 pageFaultVA;
-                UINT pageFaultFlags;
-                const D3D12_DRED_ALLOCATION_NODE* existingHead;
-                const D3D12_DRED_ALLOCATION_NODE* recentFreedHead;
-        };
+	struct DredPageFaultView
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS m_pageFaultVA;
+		D3D12_DRED_PAGE_FAULT_FLAGS m_pageFaultFlags;
+		D3D12_DRED_ALLOCATION_NODE const* m_existingHead;
+		D3D12_DRED_ALLOCATION_NODE const* m_recentFreedHead;
+	};
 
-        class DredApi
-        {
-        public:
-                enum class Ver { None, V1, V1_1, V2, V3 };
+	class DREDQuery
+	{
+	public:
+		static DREDQuery Create(ID3D12Device* device);
 
-                static DredApi Query(ID3D12Device* device);
+	public:
+		bool IsValid() const { return m_version != 0; }
+		bool HasContexts() const { return m_version >= D3D12_DRED_VERSION_1_1; }
 
-                Ver GetVersion() const { return m_version; }
+		using BreadcrumbCallback = std::function<void(DredBreadcrumbNodeView const&)>;
+		bool ForEachBreadcrumb(BreadcrumbCallback const&) const;
 
-                using BreadcrumbCallback = std::function<void(DredBreadcrumbNodeView const&)>;
+		bool GetPageFault(DredPageFaultView& view) const;
 
-                bool ForEachBreadcrumb(bool* hasContexts, BreadcrumbCallback const& cb) const;
-                bool GetPageFault(DredPageFaultView& view) const;
-
-        private:
-                Ver m_version = Ver::None;
-                Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData> m_dred;
-                Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData1> m_dred1;
-                Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData2> m_dred2;
-        #if defined(__ID3D12DeviceRemovedExtendedData3_INTERFACE_DEFINED__)
-                Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData3> m_dred3;
-        #endif
-        };
+	private:
+		D3D12_DRED_VERSION m_version = static_cast<D3D12_DRED_VERSION>(0);
+		Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData> m_dred;
+		Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData1> m_dred1;
+		Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData2> m_dred2;
+	};
 }
 

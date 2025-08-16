@@ -1,158 +1,163 @@
+// © 2025 Adam Badke. All rights reserved.
 #include "DREDHelpers_DX12.h"
+
+#include "Core/Assert.h"
 
 using Microsoft::WRL::ComPtr;
 
+
 namespace dx12
 {
-        DredApi DredApi::Query(ID3D12Device* device)
-        {
-                DredApi api;
-                if (!device)
-                {
-                        return api;
-                }
+	DREDQuery DREDQuery::Create(ID3D12Device* device)
+	{
+		SEAssert(device, "Device cannot be null");
 
-        #if defined(__ID3D12DeviceRemovedExtendedData3_INTERFACE_DEFINED__)
-                if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred3))))
-                {
-                        api.m_dred3.As(&api.m_dred2);
-                        api.m_dred3.As(&api.m_dred1);
-                        api.m_dred3.As(&api.m_dred);
-                        api.m_version = Ver::V3;
-                        return api;
-                }
-        #endif
-        #if defined(__ID3D12DeviceRemovedExtendedData2_INTERFACE_DEFINED__)
-                if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred2))))
-                {
-                        api.m_dred2.As(&api.m_dred1);
-                        api.m_dred2.As(&api.m_dred);
-                        api.m_version = Ver::V2;
-                        return api;
-                }
-        #endif
-                if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred1))))
-                {
-                        api.m_dred1.As(&api.m_dred);
-                        api.m_version = Ver::V1_1;
-                        return api;
-                }
-                if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred))))
-                {
-                        api.m_version = Ver::V1;
-                        return api;
-                }
-                return api;
-        }
+		DREDQuery api;
 
-        bool DredApi::ForEachBreadcrumb(bool* hasContexts, BreadcrumbCallback const& cb) const
-        {
-                if (hasContexts)
-                {
-                        *hasContexts = (m_version >= Ver::V1_1);
-                }
+		if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred2))))
+		{
+			api.m_dred2.As(&api.m_dred1);
+			api.m_dred2.As(&api.m_dred);
+			api.m_version = D3D12_DRED_VERSION::D3D12_DRED_VERSION_1_2;
+			return api;
+		}
+		else if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred1))))
+		{
+			api.m_dred1.As(&api.m_dred);
+			api.m_version = D3D12_DRED_VERSION::D3D12_DRED_VERSION_1_1;
+			return api;
+		}
+		else if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&api.m_dred))))
+		{
+			api.m_version = D3D12_DRED_VERSION::D3D12_DRED_VERSION_1_0;
+			return api;
+		}
+		SEAssertF("Could not create a DRED interface");
 
-                if (m_version == Ver::None || cb == nullptr)
-                {
-                        return false;
-                }
+		return api;
+	}
 
-                if (m_version >= Ver::V1_1)
-                {
-                        D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 output{};
-                        HRESULT hr = m_dred1->GetAutoBreadcrumbsOutput1(&output);
-                        if (FAILED(hr))
-                        {
-                                return false;
-                        }
+	bool DREDQuery::ForEachBreadcrumb(BreadcrumbCallback const& breadcrumbCallback) const
+	{
+		if (!IsValid() || breadcrumbCallback == nullptr)
+		{
+			return false;
+		}
 
-                        const D3D12_AUTO_BREADCRUMB_NODE1* node = output.pHeadAutoBreadcrumbNode;
-                        while (node != nullptr)
-                        {
-                                DredBreadcrumbNodeView view{};
-                                view.cmdListNameW = node->pCommandListDebugNameW;
-                                view.cmdQueueNameW = node->pCommandQueueDebugNameW;
-                                view.lastValue = node->pLastBreadcrumbValue;
-                                view.count = node->BreadcrumbCount;
-                                view.history = node->pCommandHistory;
-                                view.contexts = node->pBreadcrumbContexts;
-                                view.contextsCount = node->BreadcrumbContextsCount;
-                                cb(view);
-                                node = node->pNext;
-                        }
-                }
-                else
-                {
-                        D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT output{};
-                        HRESULT hr = m_dred->GetAutoBreadcrumbsOutput(&output);
-                        if (FAILED(hr))
-                        {
-                                return false;
-                        }
-                        const D3D12_AUTO_BREADCRUMB_NODE* node = output.pHeadAutoBreadcrumbNode;
-                        while (node != nullptr)
-                        {
-                                DredBreadcrumbNodeView view{};
-                                view.cmdListNameW = node->pCommandListDebugNameW;
-                                view.cmdQueueNameW = node->pCommandQueueDebugNameW;
-                                view.lastValue = node->pLastBreadcrumbValue;
-                                view.count = node->BreadcrumbCount;
-                                view.history = node->pCommandHistory;
-                                view.contexts = nullptr;
-                                view.contextsCount = 0;
-                                cb(view);
-                                node = node->pNext;
-                        }
-                }
-                return true;
-        }
+		if (m_version >= D3D12_DRED_VERSION_1_1)
+		{
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 output{};
 
-        bool DredApi::GetPageFault(DredPageFaultView& view) const
-        {
-                if (m_version == Ver::None)
-                {
-                        return false;
-                }
+			const HRESULT hr = m_dred1->GetAutoBreadcrumbsOutput1(&output);
+			if (FAILED(hr))
+			{
+				return false;
+			}
 
-                if (m_version >= Ver::V2)
-                {
-                        D3D12_DRED_PAGE_FAULT_OUTPUT2 output{};
-                        HRESULT hr = m_dred2->GetPageFaultAllocationOutput2(&output);
-                        if (FAILED(hr))
-                        {
-                                return false;
-                        }
-                        view.pageFaultVA = output.PageFaultVA;
-                        view.pageFaultFlags = static_cast<UINT>(output.PageFaultFlags);
-                        view.existingHead = reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadExistingAllocationNode);
-                        view.recentFreedHead = reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadRecentFreedAllocationNode);
-                        return true;
-                }
-                if (m_version == Ver::V1_1)
-                {
-                        D3D12_DRED_PAGE_FAULT_OUTPUT1 output{};
-                        HRESULT hr = m_dred1->GetPageFaultAllocationOutput1(&output);
-                        if (FAILED(hr))
-                        {
-                                return false;
-                        }
-                        view.pageFaultVA = output.PageFaultVA;
-                        view.pageFaultFlags = 0;
-                        view.existingHead = reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadExistingAllocationNode);
-                        view.recentFreedHead = reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadRecentFreedAllocationNode);
-                        return true;
-                }
-                D3D12_DRED_PAGE_FAULT_OUTPUT output{};
-                HRESULT hr = m_dred->GetPageFaultAllocationOutput(&output);
-                if (FAILED(hr))
-                {
-                        return false;
-                }
-                view.pageFaultVA = output.PageFaultVA;
-                view.pageFaultFlags = 0;
-                view.existingHead = output.pHeadExistingAllocationNode;
-                view.recentFreedHead = output.pHeadRecentFreedAllocationNode;
-                return true;
-        }
+			D3D12_AUTO_BREADCRUMB_NODE1 const* node = output.pHeadAutoBreadcrumbNode;
+			while (node != nullptr)
+			{
+				const DredBreadcrumbNodeView view{
+					.m_cmdListNameW = node->pCommandListDebugNameW,
+					.m_cmdQueueNameW = node->pCommandQueueDebugNameW,
+					.m_lastBreadcrumbValue = node->pLastBreadcrumbValue,
+					.m_breadcrumbCount = node->BreadcrumbCount,
+					.m_commandHistory = node->pCommandHistory,
+					.m_breadcrumbContexts = node->pBreadcrumbContexts,
+					.m_breadcrumbContextsCount = node->BreadcrumbContextsCount,
+				};
+				
+				breadcrumbCallback(view);
+
+				node = node->pNext;
+			}
+		}
+		else
+		{
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT output{};
+
+			const HRESULT hr = m_dred->GetAutoBreadcrumbsOutput(&output);
+			if (FAILED(hr))
+			{
+				return false;
+			}
+
+			D3D12_AUTO_BREADCRUMB_NODE const* node = output.pHeadAutoBreadcrumbNode;
+			while (node != nullptr)
+			{
+				const DredBreadcrumbNodeView view{
+					.m_cmdListNameW = node->pCommandListDebugNameW,
+					.m_cmdQueueNameW = node->pCommandQueueDebugNameW,
+					.m_lastBreadcrumbValue = node->pLastBreadcrumbValue,
+					.m_breadcrumbCount = node->BreadcrumbCount,
+					.m_commandHistory = node->pCommandHistory,
+					.m_breadcrumbContexts = nullptr,
+					.m_breadcrumbContextsCount = 0,
+				};
+
+				breadcrumbCallback(view);
+
+				node = node->pNext;
+			}
+		}
+		return true;
+	}
+
+	bool DREDQuery::GetPageFault(DredPageFaultView& view) const
+	{
+		if (!IsValid())
+		{
+			return false;
+		}
+
+		if (m_version >= D3D12_DRED_VERSION_1_2)
+		{
+			D3D12_DRED_PAGE_FAULT_OUTPUT2 output{};
+			const HRESULT hr = m_dred2->GetPageFaultAllocationOutput2(&output);
+			if (FAILED(hr))
+			{
+				return false;
+			}
+
+			view.m_pageFaultVA = output.PageFaultVA;
+			view.m_pageFaultFlags = output.PageFaultFlags;
+			view.m_existingHead =
+				reinterpret_cast<D3D12_DRED_ALLOCATION_NODE const*>(output.pHeadExistingAllocationNode);
+			view.m_recentFreedHead =
+				reinterpret_cast<D3D12_DRED_ALLOCATION_NODE const*>(output.pHeadRecentFreedAllocationNode);
+		}
+		else if (m_version == D3D12_DRED_VERSION_1_1)
+		{
+			D3D12_DRED_PAGE_FAULT_OUTPUT1 output{};
+			const HRESULT hr = m_dred1->GetPageFaultAllocationOutput1(&output);
+			if (FAILED(hr))
+			{
+				return false;
+			}
+
+			view.m_pageFaultVA = output.PageFaultVA;
+			view.m_pageFaultFlags = D3D12_DRED_PAGE_FAULT_FLAGS_NONE;
+			view.m_existingHead =
+				reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadExistingAllocationNode);
+			view.m_recentFreedHead =
+				reinterpret_cast<const D3D12_DRED_ALLOCATION_NODE*>(output.pHeadRecentFreedAllocationNode);
+		}
+		else
+		{
+			D3D12_DRED_PAGE_FAULT_OUTPUT output{};
+			const HRESULT hr = m_dred->GetPageFaultAllocationOutput(&output);
+			if (FAILED(hr))
+			{
+				return false;
+			}
+
+			view.m_pageFaultVA = output.PageFaultVA;
+			view.m_pageFaultFlags = D3D12_DRED_PAGE_FAULT_FLAGS_NONE;
+			view.m_existingHead = output.pHeadExistingAllocationNode;
+			view.m_recentFreedHead = output.pHeadRecentFreedAllocationNode;
+		}
+
+		return true;
+	}
 }
 

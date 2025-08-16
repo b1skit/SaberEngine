@@ -118,9 +118,10 @@ namespace
 
 	void HandleDRED()
 	{
-		DredApi const dredApi = DredApi::Query(g_device);
-		if (dredApi.GetVersion() == DredApi::Ver::None)
+		const dx12::DREDQuery dredApi = dx12::DREDQuery::Create(g_device);
+		if (dredApi.IsValid() == false)
 		{
+			SEAssertF("Failed to get a valid DRED interface");
 			return;
 		}
 
@@ -139,77 +140,110 @@ namespace
 				DXGI_ADAPTER_DESC desc;
 				if (SUCCEEDED(adapter->GetDesc(&desc)))
 				{
-					LOG_ERROR("Adapter: %s (Vendor=%u, Device=%u, Flags=0x%08X)",
+					LOG_ERROR("Adapter: %s (Vendor=%u, Device=%u)",
 						util::FromWideString(desc.Description).c_str(),
 						desc.VendorId,
-						desc.DeviceId,
-						desc.Flags);
+						desc.DeviceId);
 				}
 			}
 		}
 
-		bool hasContexts = false;
-		bool headerPrinted = false;
-		dredApi.ForEachBreadcrumb(&hasContexts, [&](DredBreadcrumbNodeView const& node)
+		const bool hasContexts = dredApi.HasContexts();
+
+		constexpr char const* k_lastOKMarker = "Last OK";
+		constexpr char const* k_okMarker = "OK";
+		constexpr char const* k_notYetCompletedMarker = "Incomplete";
+		constexpr char const* k_possibleFaultMarker = "<------------- POSSIBLE FAULT POINT";
+		constexpr char const* k_likelyFaultMarker = "<------------- <<<<<<<<<<  !!! LIKELY FAULT POINT !!! >>>>>>>>>>";
+
+		LOG_ERROR("\nDRED AutoBreadcrumbs %s:\n"
+			"==================================================\n"
+			"Legend:\n"
+			"%s = Last operation that definitely completed\n"
+			"%s = Previous operation that definitely completed\n"
+			"%s = Operation not yet completed when device was removed\n"
+			"==================================================",
+			hasContexts ? "(contexts available)" : "",
+			k_lastOKMarker,
+			k_okMarker,
+			k_notYetCompletedMarker);
+
+		uint32_t nodeIdx = 0;
+		dredApi.ForEachBreadcrumb([&](dx12::DredBreadcrumbNodeView const& node)
 		{
-			if (!headerPrinted)
+			std::string const& cmdListName = node.m_cmdListNameW ? util::FromWideString(node.m_cmdListNameW) : "<null>";
+			std::string const& cmdQueueName = node.m_cmdQueueNameW ? util::FromWideString(node.m_cmdQueueNameW) : "<null>";
+			const uint32_t lastBreadcrumbValue = node.m_lastBreadcrumbValue ? *node.m_lastBreadcrumbValue : 0;
+
+			LOG_ERROR(
+				"\n--------------------------------------------------\n"
+				"DRED Breadcrumb Node %d:\n"
+				"Command Queue: \"%s\"\n"
+				"Command List: \"%s\"\n"				
+				"Breadcrumb count: %u\n"
+				"Last breadcrumb value: %u\n",
+				nodeIdx++, cmdQueueName.c_str(), cmdListName.c_str(), node.m_breadcrumbCount, lastBreadcrumbValue);
+
+			LOG_ERROR("Command History:");
+			if (node.m_commandHistory && node.m_breadcrumbCount > 0)
 			{
-				LOG_ERROR("DRED AutoBreadcrumbs%s:", hasContexts ? " (contexts available)" : "");
-				headerPrinted = true;
-			}
-
-			const std::string clName = node.cmdListNameW ? util::FromWideString(node.cmdListNameW) : "<null>";
-			const std::string cqName = node.cmdQueueNameW ? util::FromWideString(node.cmdQueueNameW) : "<null>";
-			const UINT lastVal = node.lastValue ? *node.lastValue : 0;
-
-			LOG_ERROR("Node: CL=\"%s\" CQ=\"%s\" Count=%u Last=%u",
-				clName.c_str(), cqName.c_str(), node.count, lastVal);
-
-			if (node.history && node.count > 0)
-			{
-				const UINT before = 32;
-				const UINT after = 16;
-				const UINT start = lastVal > before ? lastVal - before : 0;
-				const UINT end = std::min(node.count, lastVal + 1 + after);
-				for (UINT i = start; i < end; ++i)
+				const uint32_t before = 32;
+				const uint32_t after = 16;
+				const uint32_t start = lastBreadcrumbValue > before ? lastBreadcrumbValue - before : 0;
+				const uint32_t end = std::min(node.m_breadcrumbCount, lastBreadcrumbValue + 1 + after);
+				for (uint32_t i = start; i < end; ++i)
 				{
-					const char* prefix = (i == lastVal) ? "x" : (i < lastVal ? "..." : "");
-					LOG_ERROR("%s %u: %s", prefix, i, D3D12_AUTO_BREADCRUMB_OP_ToCStr(node.history[i]));
+					const bool isPossibleFault = i == lastBreadcrumbValue + 1;
+					const bool isLikelyFault = isPossibleFault && lastBreadcrumbValue > 0;
+
+					char const* statusMarker = (i == lastBreadcrumbValue) ? k_lastOKMarker : 
+						(i < lastBreadcrumbValue ? k_okMarker : k_notYetCompletedMarker);
+					LOG_ERROR("%u: %s (%s) %s",
+						i, 
+						D3D12_AUTO_BREADCRUMB_OP_ToCStr(node.m_commandHistory[i]),
+						statusMarker,
+						isLikelyFault ? k_likelyFaultMarker : (isPossibleFault ? k_possibleFaultMarker : ""));
+						/*isPossibleFault ? k_possibleFaultMarker : "");*/
 				}
 			}
 
-			if (hasContexts && node.contexts && node.contextsCount > 0)
+			if (hasContexts && node.m_breadcrumbContexts && node.m_breadcrumbContextsCount > 0)
 			{
-				LOG_ERROR("Contexts (%u):", node.contextsCount);
-				for (UINT i = 0; i < node.contextsCount; ++i)
+				LOG_ERROR("\n%u Breadcrumb Contexts:", node.m_breadcrumbContextsCount);
+				for (uint32_t i = 0; i < node.m_breadcrumbContextsCount; ++i)
 				{
-					const auto& ctx = node.contexts[i];
-					const std::string ctxStr = ctx.pContextString ? util::FromWideString(ctx.pContextString) : "<null>";
-					LOG_ERROR("[%u] size=%u strW=\"%s\"", i, ctx.ContextStringSizeInBytes, ctxStr.c_str());
+					const D3D12_DRED_BREADCRUMB_CONTEXT& ctx = node.m_breadcrumbContexts[i];
+					std::string const& ctxStr = ctx.pContextString ? util::FromWideString(ctx.pContextString) : "<null>";
+					LOG_ERROR("[%u] \"%s\"", i, ctxStr.c_str());
 				}
 			}
 		});
 
-		DredPageFaultView pageFault{};
+		dx12::DredPageFaultView pageFault{};
 		if (dredApi.GetPageFault(pageFault))
 		{
-			LOG_ERROR("DRED PageFault:");
-			LOG_ERROR("VA=0x%016llX Flags=0x%08X", pageFault.pageFaultVA, pageFault.pageFaultFlags);
+			LOG_ERROR(std::format("\nDRED PageFault:\n"
+				"GPU Virtual Address: 0x{:016X}\n"
+				"Flags=0x{:08X}",
+				static_cast<unsigned long long>(pageFault.m_pageFaultVA),
+				static_cast<unsigned int>(pageFault.m_pageFaultFlags)));
 
 			LOG_ERROR("Existing allocations:");
-			const D3D12_DRED_ALLOCATION_NODE* node = pageFault.existingHead;
-			for (UINT idx = 0; node != nullptr; node = node->pNext, ++idx)
+			D3D12_DRED_ALLOCATION_NODE const* current = pageFault.m_existingHead;
+			for (uint32_t i = 0; current != nullptr; current = current->pNext, ++i)
 			{
-				const std::string name = node->ObjectNameW ? util::FromWideString(node->ObjectNameW) : "<null>";
-				LOG_ERROR("[%u] %s \"%s\"", idx, D3D12_DRED_ALLOCATION_TYPE_ToCStr(node->AllocationType), name.c_str());
+				std::string const& name = current->ObjectNameW ? util::FromWideString(current->ObjectNameW) : "<null>";
+				LOG_ERROR("[%u] Allocation type: \"%s\", Object name: \"%s\"",
+					i, D3D12_DRED_ALLOCATION_TYPE_ToCStr(current->AllocationType), name.c_str());
 			}
 
 			LOG_ERROR("Recently freed:");
-			node = pageFault.recentFreedHead;
-			for (UINT idx = 0; node != nullptr; node = node->pNext, ++idx)
+			current = pageFault.m_recentFreedHead;
+			for (uint32_t i = 0; current != nullptr; current = current->pNext, ++i)
 			{
-				const std::string name = node->ObjectNameW ? util::FromWideString(node->ObjectNameW) : "<null>";
-				LOG_ERROR("[%u] %s \"%s\"", idx, D3D12_DRED_ALLOCATION_TYPE_ToCStr(node->AllocationType), name.c_str());
+				std::string const& name = current->ObjectNameW ? util::FromWideString(current->ObjectNameW) : "<null>";
+				LOG_ERROR("[%u] Allocation type \"%s\", Object name: \"%s\"",
+					i, D3D12_DRED_ALLOCATION_TYPE_ToCStr(current->AllocationType), name.c_str());
 			}
 		}
 	}
@@ -360,12 +394,12 @@ namespace dx12
 			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 
 			
-                        ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings1;
-                        if (SUCCEEDED(dredSettings->QueryInterface(IID_PPV_ARGS(&dredSettings1))))
-                        {
-                                dredSettings1->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-                        }
-                        LOG("D3D12 DRED enabled");
+			ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings1;
+			if (SUCCEEDED(dredSettings->QueryInterface(IID_PPV_ARGS(&dredSettings1))))
+			{
+					dredSettings1->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+			}
+			LOG("D3D12 DRED enabled");
 		}
 
 		
