@@ -1,4 +1,6 @@
-// © 2022 Adam Badke. All rights reserved.
+#include "DREDHelpers_DX12.h"
+#include <algorithm>
+// Â© 2022 Adam Badke. All rights reserved.
 #include "Debug_DX12.h"
 
 #include "Core/Assert.h"
@@ -116,65 +118,133 @@ namespace
 
 	void HandleDRED()
 	{
-		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
-		SEVerify(SUCCEEDED(g_device->QueryInterface(IID_PPV_ARGS(&dredQuery))),
-			"Failed to get DRED query interface");
-
-		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
-		SEVerify(SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)),
-			"Failed to get DRED auto breadcrumbs output");
-
-		// Breadcrumbs:
-		D3D12_AUTO_BREADCRUMB_NODE const* breadcrumbHead = dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
-		const uint32_t numBreadcrumbs = 
-			breadcrumbHead ? dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode->BreadcrumbCount : 0;
-
-		LOG_ERROR("DRED BREADCRUMBS (%d):\n-----------------", numBreadcrumbs);
-		for (uint32_t curBreadcrumb = 0; breadcrumbHead != nullptr && curBreadcrumb < numBreadcrumbs; curBreadcrumb++)
+		const dx12::DREDQuery dredApi = dx12::DREDQuery::Create(g_device);
+		if (dredApi.IsValid() == false)
 		{
-			LOG_ERROR("Command list: %s", 
-				breadcrumbHead->pCommandListDebugNameW ? util::FromWideString(breadcrumbHead->pCommandListDebugNameW).c_str() : "<null pCommandListDebugNameW>");
-			LOG_ERROR("Command queue: %s", 
-				breadcrumbHead->pCommandQueueDebugNameW ? util::FromWideString(breadcrumbHead->pCommandQueueDebugNameW).c_str() : "<null pCommandQueueDebugNameW>");
-			LOG_ERROR("Breadcrumb count: %d", 
-				breadcrumbHead->BreadcrumbCount);
-			LOG_ERROR("Last breadcrumb value: %d", 
-				breadcrumbHead->pLastBreadcrumbValue ? *breadcrumbHead->pLastBreadcrumbValue : -1);
-			LOG_ERROR("Command history: %s", 
-				breadcrumbHead->pCommandHistory ? D3D12_AUTO_BREADCRUMB_OP_ToCStr(*breadcrumbHead->pCommandHistory) : "<null pCommandHistory>");
-
-			breadcrumbHead = breadcrumbHead->pNext;
+			SEAssertF("Failed to get a valid DRED interface");
+			return;
 		}
-		
-		// Page fault allocation output:
-		D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
-		SEVerify(SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)),
-			"Failed to get DRED page fault allocation output");
 
-		LOG_ERROR("DRED PAGE FAULT OUTPUT:\n-----------------------");
-		LOG_ERROR("Page fault virtual address: %llu\n", dredPageFaultOutput.PageFaultVA);
+		const HRESULT removedReason = g_device->GetDeviceRemovedReason();
+		const _com_error comError(removedReason);
+		LOG_ERROR("Device removed: reason=0x%08X \"%s\"",
+			static_cast<unsigned>(removedReason),
+			util::FromWideCString(comError.ErrorMessage()).c_str());
 
-		LOG_ERROR("Existing allocation nodes:\n--------------------------");
-		D3D12_DRED_ALLOCATION_NODE const* existingAllocationNode = dredPageFaultOutput.pHeadExistingAllocationNode;
-		while (existingAllocationNode != nullptr)
+		ComPtr<IDXGIDevice> dxgiDevice;
+		if (SUCCEEDED(g_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice))))
 		{
-			LOG_ERROR("Object name: %s\nAllocation type: %s", 
-				util::FromWideString(existingAllocationNode->ObjectNameW).c_str(),
-				D3D12_DRED_ALLOCATION_TYPE_ToCStr(existingAllocationNode->AllocationType));
-
-			existingAllocationNode = existingAllocationNode->pNext;
+			ComPtr<IDXGIAdapter> adapter;
+			if (SUCCEEDED(dxgiDevice->GetAdapter(&adapter)))
+			{
+				DXGI_ADAPTER_DESC desc;
+				if (SUCCEEDED(adapter->GetDesc(&desc)))
+				{
+					LOG_ERROR("Adapter: %s (Vendor=%u, Device=%u)",
+						util::FromWideString(desc.Description).c_str(),
+						desc.VendorId,
+						desc.DeviceId);
+				}
+			}
 		}
-		
 
-		LOG_ERROR("Recently freed allocation nodes:\n--------------------------------");
-		D3D12_DRED_ALLOCATION_NODE const* recentFreedAllocationNode = dredPageFaultOutput.pHeadRecentFreedAllocationNode;
-		while (recentFreedAllocationNode != nullptr)
+		const bool hasContexts = dredApi.HasContexts();
+
+		constexpr char const* k_lastOKMarker = "Last OK";
+		constexpr char const* k_okMarker = "OK";
+		constexpr char const* k_notYetCompletedMarker = "Incomplete";
+		constexpr char const* k_possibleFaultMarker = "<------------- POSSIBLE FAULT POINT";
+		constexpr char const* k_likelyFaultMarker = "<------------- <<<<<<<<<<  !!! LIKELY FAULT POINT !!! >>>>>>>>>>";
+
+		LOG_ERROR("\nDRED AutoBreadcrumbs %s:\n"
+			"==================================================\n"
+			"Legend:\n"
+			"%s = Last operation that definitely completed\n"
+			"%s = Previous operation that definitely completed\n"
+			"%s = Operation not yet completed when device was removed\n"
+			"==================================================",
+			hasContexts ? "(contexts available)" : "",
+			k_lastOKMarker,
+			k_okMarker,
+			k_notYetCompletedMarker);
+
+		uint32_t nodeIdx = 0;
+		dredApi.ForEachBreadcrumb([&](dx12::DredBreadcrumbNodeView const& node)
 		{
-			LOG_ERROR("Object name: %s\nAllocation type: %s",
-				util::FromWideString(recentFreedAllocationNode->ObjectNameW).c_str(),
-				D3D12_DRED_ALLOCATION_TYPE_ToCStr(recentFreedAllocationNode->AllocationType));
+			std::string const& cmdListName = node.m_cmdListNameW ? util::FromWideString(node.m_cmdListNameW) : "<null>";
+			std::string const& cmdQueueName = node.m_cmdQueueNameW ? util::FromWideString(node.m_cmdQueueNameW) : "<null>";
+			const uint32_t lastBreadcrumbValue = node.m_lastBreadcrumbValue ? *node.m_lastBreadcrumbValue : 0;
 
-			recentFreedAllocationNode = recentFreedAllocationNode->pNext;
+			LOG_ERROR(
+				"\n--------------------------------------------------\n"
+				"DRED Breadcrumb Node %d:\n"
+				"Command Queue: \"%s\"\n"
+				"Command List: \"%s\"\n"				
+				"Breadcrumb count: %u\n"
+				"Last breadcrumb value: %u\n",
+				nodeIdx++, cmdQueueName.c_str(), cmdListName.c_str(), node.m_breadcrumbCount, lastBreadcrumbValue);
+
+			LOG_ERROR("Command History:");
+			if (node.m_commandHistory && node.m_breadcrumbCount > 0)
+			{
+				const uint32_t before = 32;
+				const uint32_t after = 16;
+				const uint32_t start = lastBreadcrumbValue > before ? lastBreadcrumbValue - before : 0;
+				const uint32_t end = std::min(node.m_breadcrumbCount, lastBreadcrumbValue + 1 + after);
+				for (uint32_t i = start; i < end; ++i)
+				{
+					const bool isPossibleFault = i == lastBreadcrumbValue + 1;
+					const bool isLikelyFault = isPossibleFault && lastBreadcrumbValue > 0;
+
+					char const* statusMarker = (i == lastBreadcrumbValue) ? k_lastOKMarker : 
+						(i < lastBreadcrumbValue ? k_okMarker : k_notYetCompletedMarker);
+					LOG_ERROR("%u: %s (%s) %s",
+						i, 
+						D3D12_AUTO_BREADCRUMB_OP_ToCStr(node.m_commandHistory[i]),
+						statusMarker,
+						isLikelyFault ? k_likelyFaultMarker : (isPossibleFault ? k_possibleFaultMarker : ""));
+						/*isPossibleFault ? k_possibleFaultMarker : "");*/
+				}
+			}
+
+			if (hasContexts && node.m_breadcrumbContexts && node.m_breadcrumbContextsCount > 0)
+			{
+				LOG_ERROR("\n%u Breadcrumb Contexts:", node.m_breadcrumbContextsCount);
+				for (uint32_t i = 0; i < node.m_breadcrumbContextsCount; ++i)
+				{
+					const D3D12_DRED_BREADCRUMB_CONTEXT& ctx = node.m_breadcrumbContexts[i];
+					std::string const& ctxStr = ctx.pContextString ? util::FromWideString(ctx.pContextString) : "<null>";
+					LOG_ERROR("[%u] \"%s\"", i, ctxStr.c_str());
+				}
+			}
+		});
+
+		dx12::DredPageFaultView pageFault{};
+		if (dredApi.GetPageFault(pageFault))
+		{
+			LOG_ERROR(std::format("\nDRED PageFault:\n"
+				"GPU Virtual Address: 0x{:016X}\n"
+				"Flags=0x{:08X}",
+				static_cast<unsigned long long>(pageFault.m_pageFaultVA),
+				static_cast<unsigned int>(pageFault.m_pageFaultFlags)));
+
+			LOG_ERROR("Existing allocations:");
+			D3D12_DRED_ALLOCATION_NODE const* current = pageFault.m_existingHead;
+			for (uint32_t i = 0; current != nullptr; current = current->pNext, ++i)
+			{
+				std::string const& name = current->ObjectNameW ? util::FromWideString(current->ObjectNameW) : "<null>";
+				LOG_ERROR("[%u] Allocation type: \"%s\", Object name: \"%s\"",
+					i, D3D12_DRED_ALLOCATION_TYPE_ToCStr(current->AllocationType), name.c_str());
+			}
+
+			LOG_ERROR("Recently freed:");
+			current = pageFault.m_recentFreedHead;
+			for (uint32_t i = 0; current != nullptr; current = current->pNext, ++i)
+			{
+				std::string const& name = current->ObjectNameW ? util::FromWideString(current->ObjectNameW) : "<null>";
+				LOG_ERROR("[%u] Allocation type \"%s\", Object name: \"%s\"",
+					i, D3D12_DRED_ALLOCATION_TYPE_ToCStr(current->AllocationType), name.c_str());
+			}
 		}
 	}
 }
@@ -323,6 +393,12 @@ namespace dx12
 			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 
+			
+			ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings1;
+			if (SUCCEEDED(dredSettings->QueryInterface(IID_PPV_ARGS(&dredSettings1))))
+			{
+					dredSettings1->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+			}
 			LOG("D3D12 DRED enabled");
 		}
 
