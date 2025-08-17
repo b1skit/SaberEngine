@@ -178,18 +178,9 @@
 				"Conditions": [
 					{ "Rule" : "HitGroup", "Mode" : "Reference" },
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
-					{ "Rule": "MaterialSidedness", "Mode": "Single" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
 				"Technique": "HitGroup_Reference_OpaqueSingleSided"
-			},
-			{
-				"Conditions": [
-					{ "Rule" : "HitGroup", "Mode" : "Reference" },
-					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
-					{ "Rule": "MaterialSidedness", "Mode": "Single" }
-				],
-				"Technique": "HitGroup_Reference_ClipSingleSided"
 			},
 			{
 				"Conditions": [
@@ -198,6 +189,14 @@
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
 				"Technique": "HitGroup_Reference_OpaqueDoubleSided"
+			},
+			{
+				"Conditions": [
+					{ "Rule" : "HitGroup", "Mode" : "Reference" },
+					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
+					{ "Rule": "MaterialSidedness", "Mode": "Single" }
+				],
+				"Technique": "HitGroup_Reference_ClipSingleSided"
 			},
 			{
 				"Conditions": [
@@ -394,18 +393,18 @@
 				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
-				"Name": "HitGroup_Reference_ClipSingleSided",
+				"Name": "HitGroup_Reference_OpaqueDoubleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
-
-				"AnyHitShader": "ReferencePathTracer",
-				"AnyHitShaderEntryPoint" : "AnyHit",
 
 				"ClosestHitShader": "ReferencePathTracer",
 				"ClosestHitShaderEntryPoint" : "ClosestHit"
 			},
 			{
-				"Name": "HitGroup_Reference_OpaqueDoubleSided",
+				"Name": "HitGroup_Reference_ClipSingleSided",
 				"ExcludedPlatforms": [ "OpenGL" ],
+
+				"AnyHitShader": "ReferencePathTracer",
+				"AnyHitShaderEntryPoint" : "AnyHit",
 
 				"ClosestHitShader": "ReferencePathTracer",
 				"ClosestHitShaderEntryPoint" : "ClosestHit"

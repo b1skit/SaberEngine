@@ -1,7 +1,6 @@
-#include "DREDHelpers_DX12.h"
-#include <algorithm>
 // © 2022 Adam Badke. All rights reserved.
 #include "Debug_DX12.h"
+#include "DREDHelpers_DX12.h"
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
