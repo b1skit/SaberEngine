@@ -135,10 +135,17 @@ namespace core
 				"Pointer should refer to an empty unique pointer here");
 
 			// Populate the unique_ptr held by the ResourceSystem.
-			// Note: We don't lock m_loadContextMutex here to modify m_object as the Loading state can only be reached
-			// by a single thread, but it will be locked internally to add dependencies
-			*m_control->m_object =
-				std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext)->CallLoad();
+			// Note: Lock the load context mutex to ensure the LoadContext remains valid during the Load() call.
+			// This prevents race conditions where the LoadContext might be destroyed while Load() is executing.
+			std::unique_ptr<T> loadedObject;
+			{
+				std::lock_guard<std::mutex> lock(m_control->m_loadContextMutex);
+				if (m_control->m_loadContext)
+				{
+					loadedObject = std::dynamic_pointer_cast<ILoadContext<T>>(m_control->m_loadContext)->CallLoad();
+				}
+			}
+			*m_control->m_object = std::move(loadedObject);
 
 			if (*m_control->m_object == nullptr)
 			{

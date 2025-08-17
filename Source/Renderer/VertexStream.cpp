@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "BindlessResource.h"
 #include "BindlessResourceManager.h"
 #include "Buffer.h"

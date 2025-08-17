@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
