@@ -583,6 +583,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
 	{
+		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
 		m_newShaders.EmplaceBack(newObject);
 	}
 
@@ -590,6 +591,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
 	{
+		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
 		m_newTextures.EmplaceBack(newObject);
 	}
 
@@ -597,6 +599,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Sampler> const& newObject)
 	{
+		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
 		m_newSamplers.EmplaceBack(newObject);
 	}
 
@@ -604,6 +607,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
 	{
+		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
 		m_newVertexStreams.EmplaceBack(newObject);
 	}
 
@@ -611,6 +615,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(std::shared_ptr<re::AccelerationStructure> const& newObject)
 	{
+		SEAssert(newObject, "Cannot register null shared_ptr for API creation");
 		m_newAccelerationStructures.EmplaceBack(newObject);
 	}
 
@@ -618,6 +623,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(std::shared_ptr<re::ShaderBindingTable> const& newObject)
 	{
+		SEAssert(newObject, "Cannot register null shared_ptr for API creation");
 		m_newShaderBindingTables.EmplaceBack(newObject);
 	}
 
@@ -625,6 +631,7 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> const& newObject)
 	{
+		SEAssert(newObject, "Cannot register null shared_ptr for API creation");
 		m_newTargetSets.EmplaceBack(newObject);
 	}
 
