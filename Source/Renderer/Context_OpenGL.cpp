@@ -12,6 +12,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Logger.h"
 
 #include "Core/Host/Window_Win32.h"
 
@@ -528,6 +529,12 @@ namespace opengl
 			SEBeginCPUEvent("Create vertex streams");
 			for (auto& vertexStream : m_newVertexStreams.GetReadData())
 			{
+				if (!vertexStream.IsValid())
+				{
+					LOG_WARNING("Skipping invalid VertexStream InvPtr during CreateAPIResources_Platform. "
+						"This indicates a race condition during resource loading.");
+					continue;
+				}
 				vertexStream->CreateBuffers(vertexStream);
 			}
 			SEEndCPUEvent(); // "Create vertex streams"

@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_Platform.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -15,6 +15,7 @@
 
 #include "Core/Assert.h"
 #include "Core/Config.h"
+#include "Core/Logger.h"
 #include "Core/ProfilingMarkers.h"
 
 using Microsoft::WRL::ComPtr;
@@ -392,6 +393,12 @@ namespace dx12
 					}
 					for (auto& vertexStream : m_newVertexStreams.GetReadData())
 					{
+						if (!vertexStream.IsValid())
+						{
+							LOG_WARNING("Skipping invalid VertexStream InvPtr during CreateAPIResources_Platform. "
+								"This indicates a race condition during resource loading.");
+							continue;
+						}
 						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)
