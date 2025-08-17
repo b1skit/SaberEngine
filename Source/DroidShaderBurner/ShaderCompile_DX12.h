@@ -1,9 +1,8 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #pragma once
 #include "EffectParsing.h"
 
 #include "Renderer/Shader.h"
-
 
 namespace droid
 {
@@ -27,6 +26,7 @@ namespace droid
 	{
 		std::future<droid::ErrorCode> future;
 		std::string shaderName;
+		std::ostringstream logStream;
 	};
 
 
@@ -54,7 +54,8 @@ namespace droid
 		std::string const& entryPointName,
 		re::Shader::ShaderType,
 		std::vector<std::string> const& defines,
-		std::string const& outputDir);
+		std::string const& outputDir,
+		std::ostream* pOutputStream = nullptr);
 
 	droid::ErrorCode PrintHLSLCompilerVersion(std::string const& directXCompilerExePath);
 }

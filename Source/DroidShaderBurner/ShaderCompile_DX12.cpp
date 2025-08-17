@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "ParseHelpers.h"
 #include "ShaderCompile_DX12.h"
 
@@ -159,8 +159,10 @@ namespace
 		std::string const& entryPointName,
 		re::Shader::ShaderType shaderType,
 		std::vector<std::string> const& defines,
-		std::string const& outputDir)
+		std::string const& outputDir,
+		std::ostream* pOutputStream = nullptr)
 	{
+		std::ostream& outputStream = pOutputStream ? *pOutputStream : std::cout;
 		std::string const& outputFileName = std::format("{}.cso",
 			droid::BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
 
@@ -175,7 +177,7 @@ namespace
 			outputFileName,
 			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
-		std::cout << outputMsg.c_str();
+		outputStream << outputMsg.c_str();
 
 		// Initialize COM if not already done
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -209,7 +211,7 @@ namespace
 		std::string inputPath = BuildInputPath(includeDirectories, extensionlessSrcFilename);
 		if (inputPath.find("DROID_ERROR") != std::string::npos)
 		{
-			std::cout << "Failed to find shader source file: " << extensionlessSrcFilename << ".hlsl\n";
+			outputStream << "Failed to find shader source file: " << extensionlessSrcFilename << ".hlsl\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -222,7 +224,7 @@ namespace
 		hr = utils->LoadFile(inputPathW.c_str(), nullptr, &sourceBlob);
 		if (FAILED(hr))
 		{
-			std::cout << "Failed to load shader source file: " << inputPath << "\n";
+			outputStream << "Failed to load shader source file: " << inputPath << "\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -319,7 +321,7 @@ namespace
 		hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
 		if (FAILED(hr))
 		{
-			std::cout << "Failed to create IDxcUtils instance with HRESULT: 0x" << std::hex << hr << "\n";
+			outputStream << "Failed to create IDxcUtils instance with HRESULT: 0x" << std::hex << hr << "\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -332,7 +334,7 @@ namespace
 		hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
 		if (FAILED(hr))
 		{
-			std::cout << "Failed to create IDxcIncludeHandler with HRESULT: 0x" << std::hex << hr << "\n";
+			outputStream << "Failed to create IDxcIncludeHandler with HRESULT: 0x" << std::hex << hr << "\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -356,7 +358,7 @@ namespace
 
 		if (FAILED(hr))
 		{
-			std::cout << "DXC compilation failed with HRESULT: 0x" << std::hex << hr << "\n";
+			outputStream << "DXC compilation failed with HRESULT: 0x" << std::hex << hr << "\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -375,7 +377,7 @@ namespace
 				HRESULT outputResult = compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
 				if (errors && errors->GetStringLength() > 0)
 				{
-					std::wcout << "Shader compilation errors:\n" << errors->GetStringPointer() << "\n";
+					outputStream << "Shader compilation errors:\n" << errors->GetStringPointer() << "\n";
 				}
 			}
 
@@ -391,7 +393,7 @@ namespace
 		compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), nullptr);
 		if (!shaderBlob)
 		{
-			std::cout << "Failed to get compiled shader blob\n";
+			outputStream << "Failed to get compiled shader blob\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -409,7 +411,7 @@ namespace
 		std::ofstream outFile(combinedFilePath, std::ios::binary);
 		if (!outFile.is_open())
 		{
-			std::cout << "Failed to create output file: " << combinedFilePath << "\n";
+			outputStream << "Failed to create output file: " << combinedFilePath << "\n";
 			if (comInitialized)
 			{
 				CoUninitialize();
@@ -455,7 +457,8 @@ namespace droid
 				entryPointName,
 				shaderType,
 				defines,
-				outputDir);
+				outputDir,
+				&pAsyncTask->logStream);
 			
 			return droid::ErrorCode::Success;
 		}
@@ -470,7 +473,8 @@ namespace droid
 				entryPointName,
 				shaderType,
 				defines,
-				outputDir);
+				outputDir,
+				nullptr);
 		}
 	}
 
@@ -485,8 +489,10 @@ namespace droid
 		std::string const& entryPointName,
 		re::Shader::ShaderType shaderType,
 		std::vector<std::string> const& defines,
-		std::string const& outputDir)
+		std::string const& outputDir,
+		std::ostream* pOutputStream)
 	{
+		std::ostream& outputStream = pOutputStream ? *pOutputStream : std::cout;
 		std::string const& outputFileName = std::format("{}.cso",
 			BuildExtensionlessShaderVariantName(extensionlessSrcFilename, variantID));
 
@@ -501,7 +507,7 @@ namespace droid
 			outputFileName,
 			concatenatedDefines.empty() ? "" : ", Defines =",
 			concatenatedDefines);
-		std::cout << outputMsg.c_str();
+		outputStream << outputMsg.c_str();
 
 		droid::ErrorCode result = droid::ErrorCode::Success;
 
@@ -585,7 +591,7 @@ namespace droid
 
 		if (dxcCommandLineArgsW.size() >= k_maxCmdLineArgLength)
 		{
-			std::cout << "Command line for dxc.exe is too large: \"" << 
+			outputStream << "Command line for dxc.exe is too large: \"" << 
 				util::FromWideString(dxcCommandLineArgsW).c_str() << "\"\n";
 			return droid::ErrorCode::ConfigurationError;
 		}

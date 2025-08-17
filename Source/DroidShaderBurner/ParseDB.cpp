@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
@@ -647,6 +647,11 @@ namespace droid
 			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
 			std::vector<droid::AsyncCompilationTask> asyncTasks; // For API-based async compilation
 
+			// Reserve space to prevent reallocation which would invalidate logStream references
+			// Estimate: number of effects * techniques per effect * shader types per technique
+			size_t estimatedTaskCount = m_effectTechniqueDescs.size() * 10 * re::Shader::ShaderType_Count;
+			asyncTasks.reserve(estimatedTaskCount);
+
 			std::map<std::string, std::set<uint64_t>> seenShaderNamesAndVariants;
 
 			for (auto const& effect : m_effectTechniqueDescs)
@@ -722,7 +727,8 @@ namespace droid
 									entryPointName,
 									shaderType,
 									defines,
-									outputDir);
+									outputDir,
+									nullptr);
 
 								if (compileOptions.m_multithreadedCompilation == false)
 								{
@@ -747,10 +753,17 @@ namespace droid
 				}
 			}
 
-			 // Wait for async API compilation tasks to complete
+			 // Wait for async API compilation tasks to complete and output their logs
 			for (auto& asyncTask : asyncTasks)
 			{
 				const droid::ErrorCode taskResult = asyncTask.future.get();
+
+				// Output the collected log from this task
+				std::string const& logContent = asyncTask.logStream.str();
+				if (!logContent.empty())
+				{
+					std::cout << logContent;
+				}
 
 				if (taskResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
 				{
