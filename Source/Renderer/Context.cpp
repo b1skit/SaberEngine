@@ -604,13 +604,6 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
 	{
-		// Diagnostic: Add validation to detect when invalid InvPtrs are registered
-		if (!newObject.IsValid())
-		{
-			SEAssertF("RegisterForCreate called with invalid InvPtr. "
-				"This indicates a logic error in the resource loading system that must be fixed. "
-				"The InvPtr is either default-constructed, moved-from, or refers to a destroyed resource.");
-		}
 		m_newVertexStreams.EmplaceBack(newObject);
 	}
 
