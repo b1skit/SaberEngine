@@ -1,4 +1,4 @@
-// © 2024 Adam Badke. All rights reserved.
+// ï¿½ 2024 Adam Badke. All rights reserved.
 #include "EffectParsing.h"
 #include "FileWriter.h"
 #include "ParseDB.h"
@@ -722,7 +722,8 @@ namespace droid
 									entryPointName,
 									shaderType,
 									defines,
-									outputDir);
+									outputDir,
+									nullptr);
 
 								if (compileOptions.m_multithreadedCompilation == false)
 								{
@@ -747,10 +748,17 @@ namespace droid
 				}
 			}
 
-			 // Wait for async API compilation tasks to complete
+			 // Wait for async API compilation tasks to complete and output their logs
 			for (auto& asyncTask : asyncTasks)
 			{
 				const droid::ErrorCode taskResult = asyncTask.future.get();
+
+				// Output the collected log from this task
+				std::string const& logContent = asyncTask.logStream.str();
+				if (!logContent.empty())
+				{
+					std::cout << logContent;
+				}
 
 				if (taskResult != droid::ErrorCode::Success && result == droid::ErrorCode::Success)
 				{
