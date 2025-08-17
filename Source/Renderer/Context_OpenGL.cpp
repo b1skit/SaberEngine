@@ -486,6 +486,14 @@ namespace opengl
 			SEBeginCPUEvent("Create textures");
 			for (auto const& newObject : m_newTextures.GetReadData())
 			{
+				// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+				if (!newObject.IsValid())
+				{
+					LOG_ERROR("Encountered invalid Texture InvPtr in m_newTextures during CreateAPIResources_Platform. "
+						"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+					continue;
+				}
+				
 				platform::Texture::CreateAPIResource(newObject, nullptr);
 			}
 			SEEndCPUEvent(); // "Create Textures"
@@ -496,6 +504,14 @@ namespace opengl
 			SEBeginCPUEvent("Create samplers");
 			for (auto& newObject : m_newSamplers.GetReadData())
 			{
+				// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+				if (!newObject.IsValid())
+				{
+					LOG_ERROR("Encountered invalid Sampler InvPtr in m_newSamplers during CreateAPIResources_Platform. "
+						"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+					continue;
+				}
+				
 				opengl::Sampler::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create Samplers"
@@ -518,6 +534,14 @@ namespace opengl
 			SEBeginCPUEvent("Create shaders");
 			for (auto& newObject : m_newShaders.GetReadData())
 			{
+				// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+				if (!newObject.IsValid())
+				{
+					LOG_ERROR("Encountered invalid Shader InvPtr in m_newShaders during CreateAPIResources_Platform. "
+						"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+					continue;
+				}
+				
 				opengl::Shader::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create shaders"
@@ -528,6 +552,14 @@ namespace opengl
 			SEBeginCPUEvent("Create vertex streams");
 			for (auto& vertexStream : m_newVertexStreams.GetReadData())
 			{
+				// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+				if (!vertexStream.IsValid())
+				{
+					LOG_ERROR("Encountered invalid VertexStream InvPtr in m_newVertexStreams during CreateAPIResources_Platform. "
+						"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+					continue;
+				}
+				
 				vertexStream->CreateBuffers(vertexStream);
 			}
 			SEEndCPUEvent(); // "Create vertex streams"

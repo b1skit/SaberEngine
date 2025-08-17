@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
@@ -583,28 +583,56 @@ namespace re
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
 	{
-		m_newShaders.EmplaceBack(newObject);
+		if (newObject.IsValid())
+		{
+			m_newShaders.EmplaceBack(newObject);
+		}
+		else
+		{
+			SEAssertF("Attempted to register an invalid Shader InvPtr. This should not be possible and suggests a logic error or race condition");
+		}
 	}
 
 
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
 	{
-		m_newTextures.EmplaceBack(newObject);
+		if (newObject.IsValid())
+		{
+			m_newTextures.EmplaceBack(newObject);
+		}
+		else
+		{
+			SEAssertF("Attempted to register an invalid Texture InvPtr. This should not be possible and suggests a logic error or race condition");
+		}
 	}
 
 
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::Sampler> const& newObject)
 	{
-		m_newSamplers.EmplaceBack(newObject);
+		if (newObject.IsValid())
+		{
+			m_newSamplers.EmplaceBack(newObject);
+		}
+		else
+		{
+			SEAssertF("Attempted to register an invalid Sampler InvPtr. This should not be possible and suggests a logic error or race condition");
+		}
 	}
 
 
 	template<>
 	void Context::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
 	{
-		m_newVertexStreams.EmplaceBack(newObject);
+		if (newObject.IsValid())
+		{
+			m_newVertexStreams.EmplaceBack(newObject);
+		}
+		else
+		{
+			SEAssertF("Attempted to register an invalid VertexStream InvPtr. This should not be possible and suggests a logic error or race condition");
+		}
 	}
 
 

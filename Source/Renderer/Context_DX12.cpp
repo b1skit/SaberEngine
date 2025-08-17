@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_Platform.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -253,6 +253,14 @@ namespace dx12
 					}
 					for (auto& texture : m_newTextures.GetReadData())
 					{
+						// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+						if (!texture.IsValid())
+						{
+							LOG_ERROR("Encountered invalid Texture InvPtr in m_newTextures during CreateAPIResources_Platform. "
+								"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+							continue;
+						}
+						
 						platform::Texture::CreateAPIResource(texture, copyCommandList.get());
 					}
 					if (!singleThreaded)
@@ -291,6 +299,14 @@ namespace dx12
 					}
 					for (auto& newObject : m_newSamplers.GetReadData())
 					{
+						// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+						if (!newObject.IsValid())
+						{
+							LOG_ERROR("Encountered invalid Sampler InvPtr in m_newSamplers during CreateAPIResources_Platform. "
+								"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+							continue;
+						}
+						
 						dx12::Sampler::Create(*newObject);
 					}
 					if (!singleThreaded)
@@ -359,6 +375,14 @@ namespace dx12
 					}
 					for (auto& shader : m_newShaders.GetReadData())
 					{
+						// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+						if (!shader.IsValid())
+						{
+							LOG_ERROR("Encountered invalid Shader InvPtr in m_newShaders during CreateAPIResources_Platform. "
+								"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+							continue;
+						}
+						
 						dx12::Shader::Create(*shader);
 					}
 					if (!singleThreaded)
@@ -392,6 +416,14 @@ namespace dx12
 					}
 					for (auto& vertexStream : m_newVertexStreams.GetReadData())
 					{
+						// Defensive check: Skip invalid InvPtrs that somehow made it into the collection
+						if (!vertexStream.IsValid())
+						{
+							LOG_ERROR("Encountered invalid VertexStream InvPtr in m_newVertexStreams during CreateAPIResources_Platform. "
+								"This suggests a race condition or logic error. Skipping this entry to prevent crash.");
+							continue;
+						}
+						
 						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)
