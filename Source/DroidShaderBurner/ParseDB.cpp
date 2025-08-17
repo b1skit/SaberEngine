@@ -647,6 +647,11 @@ namespace droid
 			std::vector<PROCESS_INFORMATION> processInfos; // For command line compilation
 			std::vector<droid::AsyncCompilationTask> asyncTasks; // For API-based async compilation
 
+			// Reserve space to prevent reallocation which would invalidate logStream references
+			// Estimate: number of effects * techniques per effect * shader types per technique
+			size_t estimatedTaskCount = m_effectTechniqueDescs.size() * 10 * re::Shader::ShaderType_Count;
+			asyncTasks.reserve(estimatedTaskCount);
+
 			std::map<std::string, std::set<uint64_t>> seenShaderNamesAndVariants;
 
 			for (auto const& effect : m_effectTechniqueDescs)
