@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_Platform.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -392,6 +392,13 @@ namespace dx12
 					}
 					for (auto& vertexStream : m_newVertexStreams.GetReadData())
 					{
+						// Diagnostic: Validate InvPtr before accessing it
+						if (!vertexStream.IsValid())
+						{
+							SEAssertF("Invalid InvPtr found in m_newVertexStreams during CreateAPIResources_Platform. "
+								"The InvPtr was registered successfully but became invalid before being accessed. "
+								"This suggests a lifecycle or threading issue with the InvPtr or its ControlBlock.");
+						}
 						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)
