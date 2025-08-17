@@ -97,7 +97,7 @@ namespace pr
 
 				entt::entity transformEntity = entt::null;
 				if (pr::TransformComponent const* transformCmpt = 
-					parentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(transformEntity))
+					parentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(*em, transformEntity))
 				{
 					m_parentOfCommonRootEntity = transformEntity;
 					m_parentOfCommonRootTransformID = transformCmpt->GetTransformID();
@@ -106,7 +106,7 @@ namespace pr
 					// cancel out its recursive contribution
 					entt::entity recursiveRoot = m_parentOfCommonRootEntity;
 					pr::Relationship const& curParentRelationship = em->GetComponent<pr::Relationship>(recursiveRoot);
-					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<pr::AnimationComponent>(recursiveRoot))
+					if (curParentRelationship.GetLastAndEntityInHierarchyAbove<pr::AnimationComponent>(*em, recursiveRoot))
 					{
 						pr::Relationship const& recursiveRootRelationship = em->GetComponent<pr::Relationship>(recursiveRoot);
 						if (recursiveRootRelationship.HasParent())
@@ -116,7 +116,8 @@ namespace pr
 
 							entt::entity parentTransformEntity = entt::null;
 							pr::TransformComponent const* parentTransform =
-								nextParentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(parentTransformEntity);
+								nextParentRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(
+									*em, parentTransformEntity);
 							if (parentTransform)
 							{
 								// If the last AnimationComponent in the hierarchy above has a parent, and it has a Transform,

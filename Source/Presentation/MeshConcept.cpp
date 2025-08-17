@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "EntityManager.h"
 #include "MaterialInstanceComponent.h"
@@ -28,7 +28,7 @@ namespace pr
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 		if (!transformCmpt)
 		{
 			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -39,7 +39,7 @@ namespace pr
 
 		// Before we attach a BoundsComponent, search the hierarchy above for a potential encapsulation
 		const entt::entity encapsulatingBounds =
-			relationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>();
+			relationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>(em);
 
 		// Mesh bounds: Encompasses all attached primitive bounds
 		pr::BoundsComponent::AttachBoundsComponent(em, owningEntity, encapsulatingBounds);
@@ -73,7 +73,7 @@ namespace pr
 			pr::BoundsComponent::ShowImGuiWindow(em, meshConcept);
 
 			// Mesh primitives:
-			const uint32_t numMeshPrims = meshRelationship.GetNumInImmediateChildren<pr::MeshPrimitiveComponent>();
+			const uint32_t numMeshPrims = meshRelationship.GetNumInImmediateChildren<pr::MeshPrimitiveComponent>(em);
 			if (ImGui::CollapsingHeader(
 				std::format("Mesh Primitives ({})##{}", numMeshPrims, meshName.GetUniqueID()).c_str(),
 				ImGuiTreeNodeFlags_None))
@@ -104,7 +104,7 @@ namespace pr
 	}
 
 
-	void Mesh::ShowImGuiSpawnWindow()
+	void Mesh::ShowImGuiSpawnWindow(pr::EntityManager& em)
 	{
 		enum SourceType : uint8_t
 		{
@@ -199,7 +199,6 @@ namespace pr
 		};
 		static HelloTriangleSpawnParams s_helloTriangleSpawnParams;
 
-		pr::EntityManager* em = pr::EntityManager::Get();
 
 		static char* s_nameInputBuffer = nullptr;
 		static std::string s_meshFactoryMaterialName;
@@ -300,7 +299,7 @@ namespace pr
 			static uint32_t s_selectedMaterialIdx = 0;
 			std::vector<std::string> materialNames;
 			{
-				std::vector<entt::entity> const& materialEntities = em->GetAllEntities<pr::MaterialInstanceComponent>();
+				std::vector<entt::entity> const& materialEntities = em.GetAllEntities<pr::MaterialInstanceComponent>();
 
 				materialNames.reserve(materialEntities.size() + 1); // +1 for the default material
 
@@ -308,7 +307,7 @@ namespace pr
 				std::unordered_set<std::string> seenMaterials;
 				for (entt::entity matEntity : materialEntities)
 				{
-					pr::MaterialInstanceComponent& material = em->GetComponent<pr::MaterialInstanceComponent>(matEntity);
+					pr::MaterialInstanceComponent& material = em.GetComponent<pr::MaterialInstanceComponent>(matEntity);
 
 					if (!seenMaterials.contains(material.GetMaterial()->GetName()))
 					{
@@ -353,8 +352,8 @@ namespace pr
 			{
 			case SourceType::MeshFactory:
 			{
-				const entt::entity sceneNode = pr::SceneNode::Create(*em, s_nameInputBuffer, entt::null);
-				pr::Mesh::AttachMeshConceptMarker(*em, sceneNode, s_nameInputBuffer);
+				const entt::entity sceneNode = pr::SceneNode::Create(em, s_nameInputBuffer, entt::null);
+				pr::Mesh::AttachMeshConceptMarker(em, sceneNode, s_nameInputBuffer);
 
 				glm::vec3 minXYZ = glm::vec3(0.f);
 				glm::vec3 maxXYZ = glm::vec3(0.f);
@@ -418,7 +417,7 @@ namespace pr
 				}
 
 				entt::entity meshPrimimitiveEntity = pr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
-					*em,
+					em,
 					sceneNode,
 					mesh,
 					minXYZ,
@@ -429,7 +428,7 @@ namespace pr
 					core::Inventory::Get<gr::Material>(s_meshFactoryMaterialName.c_str());
 
 				pr::MaterialInstanceComponent::AttachMaterialComponent(
-					*em, meshPrimimitiveEntity, material);
+					em, meshPrimimitiveEntity, material);
 			}
 			break;
 			case SourceType::GLTFFile:

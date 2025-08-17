@@ -16,7 +16,7 @@ namespace pr
 	class EntityManager final : public virtual en::IEngineComponent, public virtual core::IEventListener
 	{
 	public:
-		static EntityManager* Get(); // Singleton functionality
+		EntityManager();
 
 
 	public: // IEngineComponent interface:
@@ -162,13 +162,6 @@ namespace pr
 
 	private: // Systems:
 		bool m_animationEnabled;
-
-
-	private:
-		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-		EntityManager() = delete;
-	public:
-		EntityManager(PrivateCTORTag);
 	};
 
 

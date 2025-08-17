@@ -60,7 +60,7 @@ namespace pr
 		static void Update(pr::EntityManager&, entt::entity, pr::LightComponent&, pr::Transform* lightTransform, pr::Camera* shadowCam);
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity lightEntity);
-		static void ShowImGuiSpawnWindow();
+		static void ShowImGuiSpawnWindow(pr::EntityManager& em);
 
 
 	public:

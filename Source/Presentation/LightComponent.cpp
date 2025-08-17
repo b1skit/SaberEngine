@@ -105,7 +105,7 @@ namespace pr
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 		if (!transformCmpt)
 		{
 			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -169,7 +169,7 @@ namespace pr
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 
-		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 		if (!transformCmpt)
 		{
 			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -215,7 +215,7 @@ namespace pr
 		bool hasShadow)
 	{
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
-		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+		pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 		if (!transformCmpt)
 		{
 			transformCmpt = &pr::TransformComponent::AttachTransformComponent(em, owningEntity);
@@ -493,7 +493,7 @@ namespace pr
 	}
 
 
-	void LightComponent::ShowImGuiSpawnWindow()
+	void LightComponent::ShowImGuiSpawnWindow(pr::EntityManager& em)
 	{
 		struct LightSpawnParams
 		{
@@ -554,9 +554,7 @@ namespace pr
 
 			if (ImGui::Button("Spawn"))
 			{
-				pr::EntityManager* em = pr::EntityManager::Get();
-
-				entt::entity sceneNode = pr::SceneNode::Create(*em, s_nameInputBuffer.data(), entt::null);
+				entt::entity sceneNode = pr::SceneNode::Create(em, s_nameInputBuffer.data(), entt::null);
 
 				switch (static_cast<pr::Light::Type>(s_selectedLightType))
 				{
@@ -568,7 +566,7 @@ namespace pr
 				case pr::Light::Type::Directional:
 				{
 					pr::LightComponent::AttachDeferredDirectionalLightConcept(
-						*em,
+						em,
 						sceneNode,
 						std::format("{}_DirectionalLight", s_nameInputBuffer.data()).c_str(),
 						s_spawnParams->m_colorIntensity,
@@ -578,7 +576,7 @@ namespace pr
 				case pr::Light::Type::Point:
 				{
 					pr::LightComponent::AttachDeferredPointLightConcept(
-						*em,
+						em,
 						sceneNode,
 						std::format("{}_PointLight", s_nameInputBuffer.data()).c_str(),
 						s_spawnParams->m_colorIntensity,
@@ -588,7 +586,7 @@ namespace pr
 				case pr::Light::Type::Spot:
 				{
 					pr::LightComponent::AttachDeferredSpotLightConcept(
-						*em,
+						em,
 						sceneNode,
 						std::format("{}_SpotLight", s_nameInputBuffer.data()).c_str(),
 						s_spawnParams->m_colorIntensity,
