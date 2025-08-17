@@ -70,11 +70,11 @@ float3 CreateViewRay(
 // tan(fovY/2), and the inverse view matrix. By default, the ray direction is offset by 0.5 pixels to center it in the
 // pixel, but this can be adjusted/jittered with the 'offset' parameter [0,1]
 float3 CreateViewRay(
+	uint2 pixelCoords,
+	uint2 screenDims,
 	float4x4 invView,
 	float aspectRatio,
 	float tanHalfFovY, // tan(fovY/2)
-	uint2 pixelCoords,
-	uint2 screenDims,
 	float2 offset = float2(0.5f, 0.5f))
 {
 	// Get the camera basis vectors:
