@@ -6,7 +6,6 @@
 #include "Core/Util/MathUtils.h"
 #include "Core/Util/ThreadProtector.h"
 
-SE_DISABLE_OPTIMIZATIONS;
 
 namespace dx12
 {
