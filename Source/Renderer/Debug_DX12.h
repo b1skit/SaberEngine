@@ -87,7 +87,7 @@ namespace dx12
 //#define USE_NSIGHT_AFTERMATH
 #if defined(USE_NSIGHT_AFTERMATH)
 
-#include "NsightAftermathHelpers.h"
+#include "GFSDK_Aftermath.h"
 #include "NsightAftermathGpuCrashTracker.h"
 
 namespace aftermath

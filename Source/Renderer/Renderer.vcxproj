@@ -94,6 +94,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dependencies\Aftermath\include\GFSDK_Aftermath.h" />
     <ClInclude Include="..\Dependencies\Aftermath\include\NsightAftermathGpuCrashTracker.h" />
     <ClInclude Include="..\Dependencies\Aftermath\include\NsightAftermathHelpers.h" />
     <ClInclude Include="..\Dependencies\Aftermath\include\NsightAftermathShaderDatabase.h" />

@@ -1043,6 +1043,10 @@ namespace dx12
 			m_resource.Get(),
 			initialState,
 			GetNumberOfSubresources(existingResourceDesc));
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		GFSDK_Aftermath_DX12_RegisterResource(m_resource.Get(), &m_aftermathResourceHandle);
+#endif
 	}
 
 
@@ -1080,6 +1084,10 @@ namespace dx12
 			m_resource.Get(),
 			committedResourceDesc.m_initialState,
 			GetNumberOfSubresources(committedResourceDesc.m_resourceDesc));
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		GFSDK_Aftermath_DX12_RegisterResource(m_resource.Get(), &m_aftermathResourceHandle);
+#endif
 	}
 
 
@@ -1120,6 +1128,10 @@ namespace dx12
 			m_resource.Get(),
 			resourceDesc.m_initialState,
 			GetNumberOfSubresources(resourceDesc.m_resourceDesc));
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		GFSDK_Aftermath_DX12_RegisterResource(m_resource.Get(), &m_aftermathResourceHandle);
+#endif
 	}
 
 
@@ -1169,6 +1181,10 @@ namespace dx12
 			// If we're here, the resource is being destroyed from the HeapManager's deferred delete queue. Unregister
 			// our resource from the state tracker before we're destroyed
 			s_globalResourceStateTracker->UnregisterResource(m_resource.Get());
+
+#if defined(USE_NSIGHT_AFTERMATH)
+			GFSDK_Aftermath_DX12_UnregisterResource(m_aftermathResourceHandle);
+#endif
 		}
 	}
 

@@ -1,5 +1,7 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "Debug_DX12.h"
+
 #include "Core/Assert.h"
 
 #include "Core/Util/HashKey.h"
@@ -248,6 +250,11 @@ namespace dx12
 		HeapAllocation m_heapAllocation; // Note: Deferred deletion is managed by the HeapManager
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_resource;
 		bool m_isValid;
+
+
+#if defined(USE_NSIGHT_AFTERMATH)
+		GFSDK_Aftermath_ResourceHandle m_aftermathResourceHandle{};
+#endif
 
 
 	private:
