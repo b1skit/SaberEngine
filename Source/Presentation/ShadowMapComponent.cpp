@@ -214,7 +214,7 @@ namespace pr
 			sharedRenderDataCmpt.GetTransformID());
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
-		pr::TransformComponent* owningTransform = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+		pr::TransformComponent* owningTransform = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 		SEAssert(owningTransform != nullptr, "A shadow map requires a TransformComponent");
 
 		// We need to recompute the Transform, as it's likely dirty during scene construction

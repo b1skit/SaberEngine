@@ -73,14 +73,13 @@ namespace pr
 	}
 
 
-	void Relationship::Destroy()
+	void Relationship::Destroy(pr::EntityManager& em)
 	{
-		SEAssert(m_isValid, "Trying to destroy a Relationship that is already invalid");
-		m_isValid = false;
-
 		// Need to manually destroy relationships; We can't rely on the DTOR as it is only called once the registry has
 		// swapped the object out with another
-		pr::EntityManager& em = *pr::EntityManager::Get();
+
+		SEAssert(m_isValid, "Trying to destroy a Relationship that is already invalid");
+		m_isValid = false;
 
 		SetParent(em, entt::null);
 
@@ -258,13 +257,11 @@ namespace pr
 	}
 
 
-	std::vector<entt::entity> Relationship::GetAllDescendents() const
+	std::vector<entt::entity> Relationship::GetAllDescendents(EntityManager& em) const
 	{
 		SEAssert((m_firstChild != entt::null && m_lastChild != entt::null) || 
 			(m_firstChild == entt::null && m_lastChild == entt::null),
 			"Either first and last child must both be null, or both be not null");
-
-		pr::EntityManager& em = *pr::EntityManager::Get();
 
 		std::vector<entt::entity> descendents;
 		{
@@ -317,10 +314,8 @@ namespace pr
 	}
 
 
-	std::vector<entt::entity> Relationship::GetAllChildren() const
+	std::vector<entt::entity> Relationship::GetAllChildren(EntityManager& em) const
 	{
-		pr::EntityManager& em = *pr::EntityManager::Get();
-
 		std::vector<entt::entity> siblings;
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);

@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// Â© 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "CameraControlComponent.h"
 #include "EntityCommands.h"
@@ -250,12 +250,12 @@ namespace pr
 				{
 				case EntityType::Light:
 				{
-					pr::LightComponent::ShowImGuiSpawnWindow();
+					pr::LightComponent::ShowImGuiSpawnWindow(*m_entityManager);
 				}
 				break;
 				case EntityType::Mesh:
 				{
-					pr::Mesh::ShowImGuiSpawnWindow();
+					pr::Mesh::ShowImGuiSpawnWindow(*m_entityManager);
 				}
 				break;
 				default: SEAssertF("Invalid EntityType");

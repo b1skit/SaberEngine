@@ -42,7 +42,7 @@ namespace
 		if (!em.HasComponent<pr::BoundsComponent::SceneBoundsMarker>(boundsEntity))
 		{
 			pr::TransformComponent const* transformCmpt =
-				em.GetComponent<pr::Relationship>(boundsEntity).GetFirstInHierarchyAbove<pr::TransformComponent>();
+				em.GetComponent<pr::Relationship>(boundsEntity).GetFirstInHierarchyAbove<pr::TransformComponent>(em);
 
 			pr::BoundsComponent const& globalBounds =
 				bounds.GetTransformedAABBBounds(transformCmpt->GetTransform().GetGlobalMatrix());
@@ -103,7 +103,7 @@ namespace pr
 	pr::BoundsComponent& BoundsComponent::AttachBoundsComponent(
 		pr::EntityManager& em, entt::entity entity, entt::entity encapsulatingBounds)
 	{
-		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(),
+		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(em),
 			"A Bounds requires a TransformComponent");
 
 		// Attach the BoundsComponent (which will trigger event listeners)
@@ -124,7 +124,7 @@ namespace pr
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ)
 	{
-		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(),
+		SEAssert(em.GetComponent<pr::Relationship>(entity).IsInHierarchyAbove<pr::TransformComponent>(em),
 			"A Bounds requires a TransformComponent");
 
 		// Attach the BoundsComponent (which will trigger event listeners)
@@ -147,7 +147,7 @@ namespace pr
 		pr::Relationship const& relationship,
 		entt::entity boundsEntity)
 	{
-		if (pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>())
+		if (pr::TransformComponent const* transformCmpt = relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(em))
 		{
 			if (transformCmpt->GetTransform().HasChanged())
 			{
@@ -156,7 +156,7 @@ namespace pr
 		}
 
 		std::vector<entt::entity> const& childBounds = 
-			relationship.GetAllEntitiesInImmediateChildren<pr::BoundsComponent>();
+			relationship.GetAllEntitiesInImmediateChildren<pr::BoundsComponent>(em);
 		for (entt::entity child : childBounds)
 		{
 			pr::BoundsComponent& childBounds = em.GetComponent<pr::BoundsComponent>(child);

@@ -7,6 +7,7 @@
 #include "Core/Interfaces/IEngineComponent.h"
 #include "Core/Interfaces/IEventListener.h"
 
+#include "Presentation/EntityManager.h"
 #include "Presentation/SceneManager.h"
 #include "Presentation/UIManager.h"
 
@@ -59,6 +60,7 @@ namespace app
 		static EngineApp* m_engineApp;
 
 		std::unique_ptr<en::InputManager> m_inputManager;
+		std::unique_ptr<pr::EntityManager> m_entityManager;
 		std::unique_ptr<pr::SceneManager> m_sceneManager;
 		std::unique_ptr<pr::UIManager> m_uiManager;
 		std::unique_ptr<gr::RenderManager> m_renderManager;

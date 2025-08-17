@@ -113,9 +113,9 @@ namespace app
 		constexpr bool k_allowDragAndDrop = true; // Always allowed, for now
 		InitializeAppWindow(m_window.get(), k_allowDragAndDrop);
 
-		pr::EntityManager* entityMgr = pr::EntityManager::Get();
-		m_sceneManager = std::make_unique<pr::SceneManager>(entityMgr);
-		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), entityMgr, m_renderManager.get());
+		m_entityManager = std::make_unique<pr::EntityManager>();
+		m_sceneManager = std::make_unique<pr::SceneManager>(m_entityManager.get());
+		m_uiManager = std::make_unique<pr::UIManager>(m_sceneManager.get(), m_entityManager.get(), m_renderManager.get());
 		m_inputManager = std::make_unique<en::InputManager>();
 
 		// Dependency injection:
@@ -134,7 +134,7 @@ namespace app
 
 		m_sceneManager->Startup();
 
-		entityMgr->Startup();
+		m_entityManager->Startup();
 
 		m_renderManager->ThreadInitialize();
 
@@ -150,8 +150,6 @@ namespace app
 	void EngineApp::Run()
 	{
 		LOG("\nEngineApp: Starting main game loop\n");
-
-		pr::EntityManager* entityManager = pr::EntityManager::Get();
 
 		core::PerfLogger* perfLogger = core::PerfLogger::Get();
 
@@ -202,7 +200,7 @@ namespace app
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::EntityManager::Update");
-				entityManager->Update(m_frameNum, k_fixedTimeStep);
+				m_entityManager->Update(m_frameNum, k_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEEndCPUEvent();
@@ -217,7 +215,7 @@ namespace app
 			SEEndCPUEvent();
 
 			SEBeginCPUEvent("pr::EntityManager::EnqueueRenderUpdates");
-			entityManager->EnqueueRenderUpdates();
+			m_entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
 
 			// Pump the render thread:
@@ -259,7 +257,7 @@ namespace app
 		m_uiManager->Shutdown();
 		m_uiManager = nullptr;
 		
-		pr::EntityManager::Get()->Shutdown();
+		m_entityManager->Shutdown();
 
 		m_sceneManager->Shutdown();
 		m_sceneManager = nullptr;

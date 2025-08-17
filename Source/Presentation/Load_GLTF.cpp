@@ -2452,9 +2452,11 @@ namespace
 
 					// Note: The entity associated with the skeleton node might not be the entity with the next 
 					// TransformationComponent in the hierarchy above; it might be modified here
-					pr::Relationship const& skeletonRootRelationship = em->GetComponent<pr::Relationship>(skeletonRootEntity);
-					pr::TransformComponent const* skeletonTransformCmpt =
-						skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(skeletonRootEntity);
+					pr::Relationship const& skeletonRootRelationship = 
+						em->GetComponent<pr::Relationship>(skeletonRootEntity);
+					pr::TransformComponent const* skeletonTransformCmpt = 
+						skeletonRootRelationship.GetFirstAndEntityInHierarchyAbove<pr::TransformComponent>(
+							*em, skeletonRootEntity);
 					if (skeletonTransformCmpt)
 					{
 						skeletonTransformID = skeletonTransformCmpt->GetTransformID();

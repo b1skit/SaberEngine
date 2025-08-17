@@ -37,14 +37,7 @@ namespace
 
 namespace pr
 {
-	EntityManager* EntityManager::Get()
-	{
-		static std::unique_ptr<pr::EntityManager> instance = std::make_unique<pr::EntityManager>(PrivateCTORTag{});
-		return instance.get();
-	}
-
-
-	EntityManager::EntityManager(PrivateCTORTag)
+	EntityManager::EntityManager()
 		: m_entityCommands(k_entityCommandBufferSize)
 	{
 		// Handle this during construction before anything can interact with the registry
@@ -588,7 +581,7 @@ namespace pr
 				}
 
 				// Manually destroy the relationship, while the component is still active in the registry
-				m_registry.get<pr::Relationship>(entity).Destroy();
+				m_registry.get<pr::Relationship>(entity).Destroy(*this);
 				
 				// Finally, destroy the entity:
 				m_registry.destroy(entity);
@@ -767,7 +760,7 @@ namespace pr
 									pr::Relationship const& relationship = boundsView.get<pr::Relationship>(entity);
 
 									pr::TransformComponent const* transformCmpt =
-										relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+										relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(*this);
 									SEAssert(transformCmpt,
 										"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
 
@@ -1350,7 +1343,7 @@ namespace pr
 
 					// This is executed on the render thread, so we register children for deletion first, then
 					// parents, so we don't risk having orphans between frames
-					std::vector<entt::entity> descendents = entityRelationship.GetAllDescendents();
+					std::vector<entt::entity> descendents = entityRelationship.GetAllDescendents(*this);
 					for (size_t i = descendents.size(); i > 0; i--)
 					{
 						RegisterEntityForDelete(descendents[i - 1]);
