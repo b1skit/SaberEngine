@@ -1,4 +1,4 @@
-// © 2023 Adam Badke. All rights reserved.
+// ï¿½ 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "SceneManager.h"
 #include "UIManager.h"
@@ -595,7 +595,7 @@ namespace pr
 
 						ImGui::Separator();
 						
-						m_cullingGraphicsService.PopulateImGuiMenu();
+						m_cullingGraphicsService.PopulateImGuiMenu(*m_entityManager);
 
 						ImGui::EndMenu();
 					}

@@ -37,7 +37,7 @@ namespace
 		pr::Relationship const& owningEntityRelationship = em.GetComponent<pr::Relationship>(owningEntity);
 
 		const entt::entity encapsulatingBounds =
-			owningEntityRelationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>();
+			owningEntityRelationship.GetFirstEntityInHierarchyAbove<pr::Mesh::MeshConceptMarker, pr::BoundsComponent>(em);
 
 		// Bounds for the MeshPrimitive
 		pr::BoundsComponent const& meshPrimitiveBounds = pr::BoundsComponent::AttachBoundsComponent(
@@ -110,7 +110,7 @@ namespace pr
 
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(owningEntity);
 		
-		pr::RenderDataComponent* meshPrimRenderCmpt = relationship.GetFirstInHierarchyAbove<pr::RenderDataComponent>();
+		pr::RenderDataComponent* meshPrimRenderCmpt = relationship.GetFirstInHierarchyAbove<pr::RenderDataComponent>(em);
 
 		// Note: A Material component will typically need to be attached to the owningEntity
 		AttachMeshPrimitiveComponentHelper(

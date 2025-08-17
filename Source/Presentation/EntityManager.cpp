@@ -767,7 +767,7 @@ namespace pr
 									pr::Relationship const& relationship = boundsView.get<pr::Relationship>(entity);
 
 									pr::TransformComponent const* transformCmpt =
-										relationship.GetFirstInHierarchyAbove<pr::TransformComponent>();
+										relationship.GetFirstInHierarchyAbove<pr::TransformComponent>(*this);
 									SEAssert(transformCmpt,
 										"Failed to find a TransformComponent in the hierarchy above. This is unexpected");
 

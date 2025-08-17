@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #pragma once
 #include "IGraphicsService.h"
 
@@ -25,7 +25,7 @@ namespace pr
 
 
 	public:
-		void PopulateImGuiMenu();
+		void PopulateImGuiMenu(pr::EntityManager& em);
 
 
 	private: // Static state shared by all owners of a service instance

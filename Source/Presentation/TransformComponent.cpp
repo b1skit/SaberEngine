@@ -17,7 +17,7 @@ namespace pr
 		
 		// Retrieve the parent transform, if one exists:
 		pr::Relationship const& relationship = em.GetComponent<pr::Relationship>(entity);
-		TransformComponent* parentTransformCmpt = relationship.GetFirstInHierarchyAbove<TransformComponent>();
+		TransformComponent* parentTransformCmpt = relationship.GetFirstInHierarchyAbove<TransformComponent>(em);
 
 		pr::Transform* parentTransform = nullptr;
 		if (parentTransformCmpt)

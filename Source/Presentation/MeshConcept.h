@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -18,6 +18,6 @@ namespace pr
 
 
 		static void ShowImGuiWindow(pr::EntityManager&, entt::entity meshConcept);
-		static void ShowImGuiSpawnWindow();
+		static void ShowImGuiSpawnWindow(pr::EntityManager& em);
 	};
 }

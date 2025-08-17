@@ -1,4 +1,4 @@
-// © 2025 Adam Badke. All rights reserved.
+// ï¿½ 2025 Adam Badke. All rights reserved.
 #include "GraphicsService_Culling.h"
 
 #include "CameraComponent.h"
@@ -104,7 +104,7 @@ namespace pr
 	}
 
 
-	void CullingGraphicsService::PopulateImGuiMenu()
+	void CullingGraphicsService::PopulateImGuiMenu(pr::EntityManager& em)
 	{
 		bool cullingEnabled = IsCullingEnabled();
 		if (ImGui::Checkbox("Enable culling", &cullingEnabled))
@@ -115,7 +115,7 @@ namespace pr
 		if (ImGui::BeginMenu("Culling override"))
 		{
 			std::vector<std::pair<std::string, gr::RenderDataID>> const& cameras =
-				pr::EntityManager::Get()->QueryRegistry<pr::CameraComponent, pr::NameComponent, pr::RenderDataComponent>(
+				em.QueryRegistry<pr::CameraComponent, pr::NameComponent, pr::RenderDataComponent>(
 					[](auto const& view) -> std::vector<std::pair<std::string, gr::RenderDataID>>
 					{
 						std::vector<std::pair<std::string, gr::RenderDataID>>  camIDs;
