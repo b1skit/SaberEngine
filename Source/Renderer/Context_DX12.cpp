@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_Platform.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -253,6 +253,10 @@ namespace dx12
 					}
 					for (auto& texture : m_newTextures.GetReadData())
 					{
+						// Validate InvPtr before use to catch race conditions  
+						SEAssert(texture && texture.IsValid(), 
+							"Texture InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+							
 						platform::Texture::CreateAPIResource(texture, copyCommandList.get());
 					}
 					if (!singleThreaded)
@@ -291,6 +295,10 @@ namespace dx12
 					}
 					for (auto& newObject : m_newSamplers.GetReadData())
 					{
+						// Validate InvPtr before use to catch race conditions
+						SEAssert(newObject && newObject.IsValid(), 
+							"Sampler InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+							
 						dx12::Sampler::Create(*newObject);
 					}
 					if (!singleThreaded)
@@ -359,6 +367,10 @@ namespace dx12
 					}
 					for (auto& shader : m_newShaders.GetReadData())
 					{
+						// Validate InvPtr before use to catch race conditions
+						SEAssert(shader && shader.IsValid(), 
+							"Shader InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+							
 						dx12::Shader::Create(*shader);
 					}
 					if (!singleThreaded)
@@ -392,6 +404,10 @@ namespace dx12
 					}
 					for (auto& vertexStream : m_newVertexStreams.GetReadData())
 					{
+						// Validate InvPtr before use to catch race conditions
+						SEAssert(vertexStream && vertexStream.IsValid(), 
+							"VertexStream InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+						
 						vertexStream->CreateBuffers(vertexStream);
 					}
 					if (!singleThreaded)

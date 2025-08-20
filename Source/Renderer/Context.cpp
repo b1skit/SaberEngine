@@ -1,4 +1,4 @@
-// © 2022 Adam Badke. All rights reserved.
+// ï¿½ 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
@@ -584,7 +584,12 @@ namespace re
 	void Context::RegisterForCreate(core::InvPtr<re::Shader> const& newObject)
 	{
 		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
-		m_newShaders.EmplaceBack(newObject);
+		
+		// Create a local copy and validate again to prevent race conditions
+		core::InvPtr<re::Shader> localCopy = newObject;
+		SEAssert(localCopy && localCopy.IsValid(), "InvPtr became invalid during registration (race condition)");
+		
+		m_newShaders.EmplaceBack(localCopy);
 	}
 
 
@@ -592,7 +597,12 @@ namespace re
 	void Context::RegisterForCreate(core::InvPtr<re::Texture> const& newObject)
 	{
 		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
-		m_newTextures.EmplaceBack(newObject);
+		
+		// Create a local copy and validate again to prevent race conditions
+		core::InvPtr<re::Texture> localCopy = newObject;
+		SEAssert(localCopy && localCopy.IsValid(), "InvPtr became invalid during registration (race condition)");
+		
+		m_newTextures.EmplaceBack(localCopy);
 	}
 
 
@@ -600,7 +610,12 @@ namespace re
 	void Context::RegisterForCreate(core::InvPtr<re::Sampler> const& newObject)
 	{
 		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
-		m_newSamplers.EmplaceBack(newObject);
+		
+		// Create a local copy and validate again to prevent race conditions
+		core::InvPtr<re::Sampler> localCopy = newObject;
+		SEAssert(localCopy && localCopy.IsValid(), "InvPtr became invalid during registration (race condition)");
+		
+		m_newSamplers.EmplaceBack(localCopy);
 	}
 
 
@@ -608,7 +623,12 @@ namespace re
 	void Context::RegisterForCreate(core::InvPtr<re::VertexStream> const& newObject)
 	{
 		SEAssert(newObject && newObject.IsValid(), "Cannot register an invalid InvPtr for API creation");
-		m_newVertexStreams.EmplaceBack(newObject);
+		
+		// Create a local copy and validate again to prevent race conditions
+		core::InvPtr<re::VertexStream> localCopy = newObject;
+		SEAssert(localCopy && localCopy.IsValid(), "InvPtr became invalid during registration (race condition)");
+		
+		m_newVertexStreams.EmplaceBack(localCopy);
 	}
 
 

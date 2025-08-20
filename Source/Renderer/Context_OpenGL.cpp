@@ -486,6 +486,10 @@ namespace opengl
 			SEBeginCPUEvent("Create textures");
 			for (auto const& newObject : m_newTextures.GetReadData())
 			{
+				// Validate InvPtr before use to catch race conditions
+				SEAssert(newObject && newObject.IsValid(), 
+					"Texture InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+					
 				platform::Texture::CreateAPIResource(newObject, nullptr);
 			}
 			SEEndCPUEvent(); // "Create Textures"
@@ -496,6 +500,10 @@ namespace opengl
 			SEBeginCPUEvent("Create samplers");
 			for (auto& newObject : m_newSamplers.GetReadData())
 			{
+				// Validate InvPtr before use to catch race conditions
+				SEAssert(newObject && newObject.IsValid(), 
+					"Sampler InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+					
 				opengl::Sampler::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create Samplers"
@@ -518,6 +526,10 @@ namespace opengl
 			SEBeginCPUEvent("Create shaders");
 			for (auto& newObject : m_newShaders.GetReadData())
 			{
+				// Validate InvPtr before use to catch race conditions
+				SEAssert(newObject && newObject.IsValid(), 
+					"Shader InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+					
 				opengl::Shader::Create(*newObject);
 			}
 			SEEndCPUEvent(); // "Create shaders"
@@ -528,6 +540,10 @@ namespace opengl
 			SEBeginCPUEvent("Create vertex streams");
 			for (auto& vertexStream : m_newVertexStreams.GetReadData())
 			{
+				// Validate InvPtr before use to catch race conditions
+				SEAssert(vertexStream && vertexStream.IsValid(), 
+					"VertexStream InvPtr is invalid in CreateAPIResources_Platform (race condition detected)");
+					
 				vertexStream->CreateBuffers(vertexStream);
 			}
 			SEEndCPUEvent(); // "Create vertex streams"
