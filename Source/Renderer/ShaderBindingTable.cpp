@@ -18,6 +18,30 @@
 #include "_generated/DrawStyles.h"
 
 
+namespace
+{
+	void ValidateTechniqueForGeometry(effect::Technique const* technique, re::AccelerationStructure::Geometry const& geo)
+	{
+#if defined(_DEBUG)
+		if (geo.GetGeometryFlags() | re::AccelerationStructure::GeometryFlags::Opaque)
+		{
+			return;
+		}
+
+		bool hasAnyHitShader = false;
+		for (auto const& metadata : technique->GetShader()->GetMetadata())
+		{
+			if (metadata.m_type == re::Shader::ShaderType::HitGroup_AnyHit)
+			{
+				hasAnyHitShader = true;
+				break;
+			}
+		}
+		SEAssert(hasAnyHitShader, "Invalid Technique for non-opaque material: Shader does not have an AnyHit entry point");
+	}
+#endif
+}
+
 namespace re
 {
 	std::shared_ptr<re::ShaderBindingTable> ShaderBindingTable::Create(
@@ -124,6 +148,8 @@ namespace re
 					geo.GetDrawstyleBits() | m_sbtParams.m_hitgroupStyles;
 
 				effect::Technique const* technique = geo.GetEffectID().GetTechnique(finalBitmask);
+
+				ValidateTechniqueForGeometry(technique, geo); // _DEBUG only
 
 				if (seenTechniques.emplace(technique->GetTechniqueID()).second)
 				{
