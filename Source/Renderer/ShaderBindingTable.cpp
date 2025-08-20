@@ -38,8 +38,8 @@ namespace
 			}
 		}
 		SEAssert(hasAnyHitShader, "Invalid Technique for non-opaque material: Shader does not have an AnyHit entry point");
-	}
 #endif
+	}
 }
 
 namespace re
