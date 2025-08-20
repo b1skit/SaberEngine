@@ -4,6 +4,7 @@
 #include "Context_DX12.h"
 #include "EnumTypes_DX12.h"
 
+#include "Core/Util/HashKey.h"
 #include "Core/Util/HashUtils.h"
 #include "Core/Util/MathUtils.h"
 
@@ -412,7 +413,7 @@ namespace
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
 		// Compute the hit group indexes:
-		auto ComputeStyleHash = [](std::vector<re::AccelerationStructure::Geometry> const& geometry)
+		auto ComputeBLASInstanceStyleHash = [](std::vector<re::AccelerationStructure::Geometry> const& geometry)
 			-> util::HashKey
 			{
 				// We only want to include an EffectID/Material Drawstyle bit combination once in our hash (i.e. the
@@ -422,10 +423,10 @@ namespace
 				util::HashKey styleHash;
 				for (auto const& geo : geometry)
 				{
-					// We don't have knowledge of what shaders will eventually be resolved, as we don't have the hit
-					// group drawstyle bits that will be passed to our ShaderBindingTable. However, these drawstyle bits
-					// are identical for all hit groups, thus we can use the geometry EffectID and material drawstyle
-					// bits to differentiate BLAS instances that will eventually resolve to a specific hit group shader					
+					// We don't have knowledge of what shaders will eventually be resolved, as we might be using this AS
+					// with multiple different ShaderBindingTables. However, these drawstyle bits are identical for all
+					// hit groups, thus we can use the geometry EffectID and material drawstyle bits to differentiate
+					// BLAS instances that will eventually resolve to a specific hit group shader
 					util::HashKey curHash;
 					util::AddDataToHash(curHash, geo.GetEffectID());
 					util::AddDataToHash(curHash, geo.GetDrawstyleBits());
@@ -447,12 +448,12 @@ namespace
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blas->GetASParams());
 			SEAssert(blasParams, "Failed to get TLASParams");
 
-			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
-			if (!styleHashToHitGroupIdx.contains(styleHash))
+			util::HashKey const& blasInstanceStyleHash = ComputeBLASInstanceStyleHash(blasParams->m_geometry);
+			if (!styleHashToHitGroupIdx.contains(blasInstanceStyleHash))
 			{
 				SEAssert(currentHitGroupIdx < 0xFFFFFF, "Hit group indexes have a maximum of 24 bits");
 
-				styleHashToHitGroupIdx.emplace(styleHash, currentHitGroupIdx++);
+				styleHashToHitGroupIdx.emplace(blasInstanceStyleHash, currentHitGroupIdx++);
 			}
 		}
 
@@ -493,7 +494,7 @@ namespace
 				dynamic_cast<re::AccelerationStructure::BLASParams const*>(blasAS->GetASParams());
 			SEAssert(blasParams, "Failed to get BLASParams");
 
-			util::HashKey const& styleHash = ComputeStyleHash(blasParams->m_geometry);
+			util::HashKey const& styleHash = ComputeBLASInstanceStyleHash(blasParams->m_geometry);
 			const uint32_t instanceContributionToHitGroupIndex = styleHashToHitGroupIdx.at(styleHash);
 
 			dx12::AccelerationStructure::PlatObj* blasPlatObj =
