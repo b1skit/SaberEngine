@@ -1,10 +1,10 @@
 // © 2025 Adam Badke. All rights reserved.
 #include "AccelerationStructure.h"
+#include "Context.h"
 #include "Effect.h"
-#include "RenderManager.h"
 #include "Shader.h"
-#include "ShaderBindingTable_Platform.h"
 #include "ShaderBindingTable.h"
+#include "ShaderBindingTable_Platform.h"
 #include "Technique.h"
 
 #include "Core/Assert.h"
@@ -12,6 +12,8 @@
 #include "Core/Logger.h"
 
 #include "Core/Interfaces/INamedObject.h"
+
+#include "Core/Util/HashKey.h"
 
 #include "_generated/DrawStyles.h"
 
@@ -76,12 +78,12 @@ namespace re
 		auto ResolveShaders = [](
 			std::set<ShaderID>& seenShaders,
 			EffectID effectID, 
-			std::vector<effect::drawstyle::Bitmask> const& styles,
+			std::vector<effect::drawstyle::Bitmask> const& drawstyles,
 			std::vector<core::InvPtr<re::Shader>>& shadersOut)
 			{
-				for (auto const& entry : styles)
+				for (auto const& drawstyleBits : drawstyles)
 				{
-					core::InvPtr<re::Shader> const& shader = effectID.GetResolvedShader(entry);
+					core::InvPtr<re::Shader> const& shader = effectID.GetResolvedShader(drawstyleBits);
 					if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
 					{
 						shadersOut.emplace_back(shader);
@@ -102,7 +104,10 @@ namespace re
 			dynamic_cast<re::AccelerationStructure::TLASParams const*>(tlas->GetASParams());
 		SEAssert(tlasParams, "Failed to get TLASParams");
 
-		std::set<ShaderID> seenHitShaders;
+		// Note: We must filter on Techniques,to ensure correct hit group layouts, as multiple Techniques can share the
+		// same shader(s)
+		std::set<TechniqueID> seenTechniques;
+
 		for (auto const& blas : tlasParams->GetBLASInstances())
 		{
 			re::AccelerationStructure::BLASParams const* blasParams =
@@ -120,11 +125,10 @@ namespace re
 
 				effect::Technique const* technique = geo.GetEffectID().GetTechnique(finalBitmask);
 
-				core::InvPtr<re::Shader> const& shader = technique->GetShader();
-				if (seenHitShaders.emplace(shader->GetShaderIdentifier()).second)
+				if (seenTechniques.emplace(technique->GetTechniqueID()).second)
 				{
 					// Note: We use the Technique name as the hit group name
-					m_hitGroupNamesAndShaders.emplace_back(technique->GetName(), shader);
+					m_hitGroupNamesAndShaders.emplace_back(technique->GetName(), technique->GetShader());
 				}
 			}
 		}
@@ -136,18 +140,18 @@ namespace re
 
 #if defined (_DEBUG)
 		// Validate we don't have any duplicates between our various sets of shaders:
-		std::set<ShaderID> seenShaderIDs;
-		auto ValidateUniqueIDs = [&seenShaderIDs](std::set<ShaderID> const& ids)
+		std::set<util::HashKey> seenIDs;
+		auto ValidateUniqueIDs = [&seenIDs](std::set<ShaderID> const& ids)
 			{
 				for (ShaderID id : ids)
 				{
-					const bool isUnique = seenShaderIDs.emplace(id).second;
-					SEAssert(isUnique, "Found a duplicate ShaderID. This should not be possible");
+					const bool isUnique = seenIDs.emplace(id).second;
+					SEAssert(isUnique, "Found a duplicate ID. This should not be possible");
 				}
 			};
 		ValidateUniqueIDs(seenRayGenShaders);
 		ValidateUniqueIDs(seenMissShaders);
-		ValidateUniqueIDs(seenHitShaders);
+		ValidateUniqueIDs(seenTechniques);
 		ValidateUniqueIDs(seenCallableShaders);
 #endif
 	}

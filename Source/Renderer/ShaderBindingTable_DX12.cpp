@@ -62,43 +62,49 @@ namespace
 				return numLibraryDescriptions;
 			};
 
-		auto AppendLibraryDescriptions = [](std::ranges::range auto&& shaders, std::vector<LibraryDesc>& libraryDescs)
+		std::set<ShaderID> seenShaders; // Ensure we only export each shader exactly once
+		
+		auto AppendLibraryDescriptions = [&seenShaders](
+			std::ranges::range auto&& shaders, std::vector<LibraryDesc>& libraryDescs)
 			{
 				for (auto const& shader : shaders)
 				{
-					dx12::Shader::PlatObj const* shaderPlatObj =
-						shader->GetPlatformObject()->As<dx12::Shader::PlatObj const*>();
-
-					std::vector<re::Shader::Metadata> const& metadata = shader->GetMetadata();
-					for (auto const& entry : metadata)
+					if (seenShaders.emplace(shader->GetShaderIdentifier()).second)
 					{
-						const re::Shader::ShaderType shaderType = entry.m_type;
-						SEAssert(re::Shader::IsRayTracingType(shaderType), "Invalid shader type");
-						SEAssert(shaderPlatObj->m_shaderBlobs[shaderType], "Missing DXIL blob for shader type");
+						dx12::Shader::PlatObj const* shaderPlatObj =
+							shader->GetPlatformObject()->As<dx12::Shader::PlatObj const*>();
 
-						LibraryDesc& libDesc = libraryDescs.emplace_back(LibraryDesc{});
+						std::vector<re::Shader::Metadata> const& metadata = shader->GetMetadata();
+						for (auto const& entry : metadata)
+						{
+							const re::Shader::ShaderType shaderType = entry.m_type;
+							SEAssert(re::Shader::IsRayTracingType(shaderType), "Invalid shader type");
+							SEAssert(shaderPlatObj->m_shaderBlobs[shaderType], "Missing DXIL blob for shader type");
 
-						libDesc.m_dxilLibraryBlob = shaderPlatObj->m_shaderBlobs[shaderType].Get();
+							LibraryDesc& libDesc = libraryDescs.emplace_back(LibraryDesc{});
 
-						libDesc.m_name = util::ToWideString(entry.m_entryPoint);
+							libDesc.m_dxilLibraryBlob = shaderPlatObj->m_shaderBlobs[shaderType].Get();
 
-						// Create a unique mangled name for the export
-						libDesc.m_exportedName = CreateExportName(shader, entry.m_entryPoint);
+							libDesc.m_name = util::ToWideString(entry.m_entryPoint);
 
-						libDesc.m_exportDesc = D3D12_EXPORT_DESC{
-							.Name = libDesc.m_exportedName.c_str(),
-							.ExportToRename = libDesc.m_name.c_str(),
-							.Flags = D3D12_EXPORT_FLAG_NONE,
-						};
+							// Create a unique mangled name for the export
+							libDesc.m_exportedName = CreateExportName(shader, entry.m_entryPoint);
 
-						libDesc.m_dxilLibraryDesc = D3D12_DXIL_LIBRARY_DESC{
-							.DXILLibrary = D3D12_SHADER_BYTECODE{
-								.pShaderBytecode = shaderPlatObj->m_shaderBlobs[shaderType]->GetBufferPointer(),
-								.BytecodeLength = shaderPlatObj->m_shaderBlobs[shaderType]->GetBufferSize(),
-							},
-							.NumExports = 1,
-							.pExports = &libDesc.m_exportDesc,
-						};
+							libDesc.m_exportDesc = D3D12_EXPORT_DESC{
+								.Name = libDesc.m_exportedName.c_str(),
+								.ExportToRename = libDesc.m_name.c_str(),
+								.Flags = D3D12_EXPORT_FLAG_NONE,
+							};
+
+							libDesc.m_dxilLibraryDesc = D3D12_DXIL_LIBRARY_DESC{
+								.DXILLibrary = D3D12_SHADER_BYTECODE{
+									.pShaderBytecode = shaderPlatObj->m_shaderBlobs[shaderType]->GetBufferPointer(),
+									.BytecodeLength = shaderPlatObj->m_shaderBlobs[shaderType]->GetBufferSize(),
+								},
+								.NumExports = 1,
+								.pExports = &libDesc.m_exportDesc,
+							};
+						}
 					}
 				}
 			};
@@ -117,7 +123,7 @@ namespace
 		AppendLibraryDescriptions(missShaders, libraryDescs);
 		AppendLibraryDescriptions(hitGroupShaders, libraryDescs);
 
-		SEAssert(libraryDescs.size() == numLibraryDescriptions, "Unexpected library descriptions size");
+		SEAssert(libraryDescs.size() <= numLibraryDescriptions, "Unexpected library descriptions size");
 
 		return libraryDescs;
 	}
