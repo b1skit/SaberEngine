@@ -648,6 +648,8 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
+			SEAssert(platObj, "Trying to register an empty platform object for deferred deletion");
+
 			m_deletedPlatObjects.emplace(PlatformDeferredDelete{
 				.m_platObj = std::move(platObj),
 				.m_frameNum = m_currentFrameNum });
@@ -657,12 +659,11 @@ namespace re
 
 	void Context::ProcessDeferredDeletions(uint64_t frameNum)
 	{
-		const uint8_t numFramesInFlight = m_numFramesInFlight;
 		{
 			std::lock_guard<std::mutex> lock(m_deletedPlatObjectsMutex);
 
 			while (!m_deletedPlatObjects.empty() &&
-				m_deletedPlatObjects.front().m_frameNum + numFramesInFlight < frameNum)
+				m_deletedPlatObjects.front().m_frameNum + m_numFramesInFlight < frameNum)
 			{
 				m_deletedPlatObjects.front().m_platObj->Destroy();
 				m_deletedPlatObjects.pop();
