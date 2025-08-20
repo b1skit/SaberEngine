@@ -1,11 +1,14 @@
 // © 2024 Adam Badke. All rights reserved.
 #pragma once
+#include "Core/Assert.h"
+
 #include "Core/Interfaces/INamedObject.h"
 
 #include "Core/Util/CHashKey.h" // Required for DrawStyles.h
 #include "Core/Util/HashKey.h"
 
 #include "_generated/DrawStyles.h"
+
 
 namespace core
 {

@@ -6,6 +6,7 @@
 #include "BufferView.h"
 #include "Context.h"
 #include "Effect.h"
+#include "ShaderBindingTable.h"
 
 #include "Core/Assert.h"
 
