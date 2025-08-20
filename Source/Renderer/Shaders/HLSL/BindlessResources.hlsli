@@ -5,6 +5,7 @@
 #include "RayTracingCommon.hlsli"
 #include "Samplers.hlsli"
 #include "TextureLODHelpers.hlsli"
+#include "UVUtils.hlsli"
 
 #include "../Common/CameraParams.h"
 #include "../Common/MaterialParams.h"
@@ -28,7 +29,7 @@ ConstantBuffer<CameraData> CameraParams[] : register(b0, space20);
 ConstantBuffer<TraceRayData> TraceRayParams[] : register(b0, space21);
 ConstantBuffer<DescriptorIndexData> DescriptorIndexes[] : register(b0, space22);
 ConstantBuffer<RTAOParamsData> RTAOParams[] : register(b0, space23);
-ConstantBuffer<TemporalAccumulationData> TemporalAccumulationParams[] : register(b0, space24);
+ConstantBuffer<PathTracerData> PathTracerParams[] : register(b0, space24);
 
 // SRV Buffers:
 StructuredBuffer<VertexStreamLUTData> VertexStreamLUTs[] : register(t0, space20);
@@ -72,13 +73,18 @@ RWTexture2D<float4> Texture2DRWFloat4[] : register(u0, space23);
 // Helper functions:
 // ---------------------------------------------------------------------------------------------------------------------
 
-uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
+uint3 GetVertexIndexes(
+	uint vertexStreamsLUTIdx,
+	uint geometryIdx,	// i.e. LUT index
+	uint primitiveIdx)	// i.e. PrimitiveIndex()
 {
-	const uint vertexID = 3 * PrimitiveIndex(); // Triangle index -> Vertex index
+	const uint vertexID = 3 * primitiveIdx; // Triangle index -> Vertex index
 	
 	uint3 vertexIndexes = uint3(0, 0, 0);
 	
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
+	
+	const uint lutIdx = geometryIdx;
 	
 	if (vertexStreamLUT[lutIdx].g_UV1ColorIndex.z != INVALID_RESOURCE_IDX)
 	{
@@ -109,11 +115,25 @@ uint3 GetVertexIndexes(uint vertexStreamsLUTIdx, uint lutIdx)
 }
 
 
-TriangleData LoadTriangleData(uint geoIdx, uint vertexStreamsLUTIdx, uint transformResourceIdx,	uint transformBufferIdx)
+// Convenience wrapper for when we can call PrimitiveIndex() directly
+uint3 GetVertexIndexes(
+	uint vertexStreamsLUTIdx,
+	uint geometryIdx)			// i.e. LUT index
+{
+	return GetVertexIndexes(vertexStreamsLUTIdx, geometryIdx, PrimitiveIndex());
+}
+
+
+TriangleData LoadTriangleData(
+	uint geoIdx,
+	uint primitiveIdx,
+	uint vertexStreamsLUTIdx,
+	uint transformResourceIdx,
+	uint transformBufferIdx)
 {
 	const TransformData transform = TransformParams[transformResourceIdx][transformBufferIdx];
 	
-	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
+	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx, primitiveIdx);
 	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
 	
 	const float3x3 transposeInvRotationScale = (float3x3)transform.g_transposeInvModel;
@@ -281,12 +301,13 @@ MaterialData LoadMaterialData(
 	TriangleData triangleData,
 	TriangleHitData hitData,
 	RayDifferential transferredRayDiff,	// Transferred ray differentials at the hit point
+	float3 worldRayDirection, // i.e. WorldRayDirection()
 	uint materialResourceIdx,
 	uint materialBufferIdx,
 	uint materialType)
 {
 	const BarycentricDerivatives barycentricDerivatives =
-		ComputeBarycentricDerivatives(transferredRayDiff, WorldRayDirection(), triangleData);
+		ComputeBarycentricDerivatives(transferredRayDiff, worldRayDirection, triangleData);
 	
 	MaterialData materialData;
 	
@@ -448,6 +469,28 @@ MaterialData LoadMaterialData(
 	}
 	
 	return materialData;
+}
+
+
+float4 SampleEnvironmentMap(uint environmentMapIdx, RayDifferential rayDiff, float3 worldRayDirection)
+{
+	if (environmentMapIdx != INVALID_RESOURCE_IDX)
+	{
+		Texture2D<float4> envMap = Texture2DFloat4[environmentMapIdx];
+
+		uint3 texDims = uint3(0, 0, 0);
+		envMap.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
+		
+		const float mipLevel = ComputeIBLTextureLOD(rayDiff, texDims.xy);
+		
+		const float2 uv = WorldDirToSphericalUV(worldRayDirection);
+		
+		return envMap.SampleLevel(WrapMinMagMipLinear, uv, mipLevel);
+	}
+	else
+	{
+		return float4(135.f / 255.f, 206.f / 255.f, 235.f / 255.f, 1.f); // As per Skybox shader
+	}
 }
 
 

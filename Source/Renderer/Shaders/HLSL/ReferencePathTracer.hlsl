@@ -26,8 +26,9 @@ void RayGeneration()
 	const TraceRayData traceRayParams = TraceRayParams[traceRayParamsIdx];
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
-	const TemporalAccumulationData temporalAccumulationData = TemporalAccumulationParams[temporalAccumulationIdx];
-	const uint numAccumulatedFrames = temporalAccumulationData.g_frameStats.x;
+	const PathTracerData pathTracerData = PathTracerParams[temporalAccumulationIdx];
+	const uint numAccumulatedFrames = pathTracerData.g_frameStats.x;
+	const uint maxRays = pathTracerData.g_frameStats.y;
 	
 	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
@@ -39,8 +40,8 @@ void RayGeneration()
 	
 	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
 	
-	// Compute the ray origin and direction in world space:
-	ray.Origin = cameraParams.g_cameraWPos;
+	// Compute the initial ray origin and direction in world space:
+	ray.Origin = cameraParams.g_cameraWPos.xyz;
 	ray.Direction = CreateViewRay(
 		pixelCoords, 
 		screenDims, 
@@ -60,26 +61,91 @@ void RayGeneration()
 	
 	// Initialize the ray payload
 	PathPayload payload;
-	payload.g_pathRadiance = float4(0, 0, 0, 0);
 	payload.g_rayDiff = rayDiff;
+	payload.g_worldHitPositionAndDistance = float4(cameraParams.g_cameraWPos.xyz, 0.f);
+	payload.g_hitBarycentricsGeoPrimIdx = float4(0.f, 0.f, INVALID_RESOURCE_IDX, INVALID_RESOURCE_IDX);
 	
-	// Trace the ray:
-	TraceRay(
-		SceneBVH[sceneBVHDescriptorIdx],	// TLAS
-		traceRayParams.g_rayFlags.x,		// RayFlags
-		traceRayParams.g_traceRayParams.x,	// InstanceInclusionMask
-		traceRayParams.g_traceRayParams.y,	// RayContributionToHitGroupIndex
-		traceRayParams.g_traceRayParams.z,	// MultiplierForGeometryContributionToHitGroupIndex
-		traceRayParams.g_traceRayParams.w,	// Miss shader index
-		ray,
-		payload);
+	float4 pathRadiance = float4(0.f, 0.f, 0.f, 0.f);
+	
+	for (uint bounceIdx = 0; bounceIdx < maxRays; ++bounceIdx)
+	{
+		// Trace a ray to find the next point of intersection:
+		if (payload.g_worldHitPositionAndDistance.w != FLT_MAX)
+		{
+			TraceRay(
+				SceneBVH[sceneBVHDescriptorIdx],	// TLAS
+				traceRayParams.g_rayFlags.x,		// RayFlags
+				traceRayParams.g_traceRayParams.x,	// InstanceInclusionMask
+				traceRayParams.g_traceRayParams.y,	// RayContributionToHitGroupIndex
+				traceRayParams.g_traceRayParams.z,	// MultiplierForGeometryContributionToHitGroupIndex
+				traceRayParams.g_traceRayParams.w,	// Miss shader index
+				ray,
+				payload);
+		}
+		
+		// Hit:
+		if (payload.g_worldHitPositionAndDistance.w != FLT_MAX)
+		{
+			const float3 barycentrics = GetBarycentricWeights(payload.g_hitBarycentricsGeoPrimIdx.xy);
+		
+			// Get our Vertex stream LUTs buffer:
+			const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
+	
+			// Compute our geometry index for buffer arrays aligned with AS geometry:
+			const uint geoIdx = payload.g_hitBarycentricsGeoPrimIdx.z;
+			const uint primitiveIdx = payload.g_hitBarycentricsGeoPrimIdx.w;
+	
+			const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
+			const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
+	
+			const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
+			const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
+			const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
+	
+			const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
+			const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
+	
+			// Triangle data:
+			const TriangleData triangleData =
+				LoadTriangleData(geoIdx, primitiveIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
+	
+			// Interpolated triangle data at the hit point:
+			const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);
+			
+			const RayDifferential transferredRayDiff = payload.g_rayDiff;
+	
+			// Material data:
+			const MaterialData materialData = LoadMaterialData(
+				triangleData,
+				hitData,
+				transferredRayDiff,
+				ray.Direction,
+				materialResourceIdx,
+				materialBufferIdx,
+				materialType);
+	
+			float3 colorOut = materialData.LinearAlbedo.rgb;
+	
+			pathRadiance += float4(colorOut, 1.f);
+			
+			// Update the ray for the next iteration:
+			ray.Origin = ComputeOriginOffset(payload.g_worldHitPositionAndDistance.xyz, hitData.m_worldHitNormal);
+			//ray.Direction = ; // TODO
+		}
+		else // Miss:
+		{
+			const uint environmentMapIdx = descriptorIndexes.g_descriptorIndexes1.x;
+			pathRadiance = SampleEnvironmentMap(environmentMapIdx, payload.g_rayDiff, ray.Direction);
+			break;
+		}
+	}
 	
 	const uint gOutputDescriptorIdx = descriptorIndexes.g_descriptorIndexes0.w;
 	RWTexture2D<float4> outputTex = Texture2DRWFloat4[gOutputDescriptorIdx];
 		
 	// Compute a temporal cumulative average:	
 	const float3 prevAccumulation = numAccumulatedFrames * outputTex[pixelCoords].rgb;
-	const float3 newContribution = payload.g_pathRadiance.rgb;
+	const float3 newContribution = pathRadiance.rgb;
 		
 	float3 newAverage = (prevAccumulation + newContribution) / (numAccumulatedFrames + 1.f);
 		
@@ -89,9 +155,7 @@ void RayGeneration()
 
 [shader("closesthit")]
 void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
-	
+{	
 	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
 	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
 	
@@ -104,19 +168,12 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
 	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
 	
-	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
-	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
-	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
-	
 	const uint transformResourceIdx = instancedBuffersLUT.g_transformIndexes.x;
 	const uint transformBufferIdx = instancedBuffersLUT.g_transformIndexes.y;
 	
 	// Triangle data:
 	const TriangleData triangleData =
-		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
-	
-	// Interpolated triangle data at the hit point:
-	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);	
+		LoadTriangleData(geoIdx, PrimitiveIndex(), vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
 	
 	const RayDifferential transferredRayDiff = Transfer(
 		triangleData,
@@ -124,19 +181,14 @@ void ClosestHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes
 		WorldRayDirection(),
 		RayTCurrent());
 	
-	// Material data:
-	const MaterialData materialData = LoadMaterialData(
-		triangleData,
-		hitData,
-		transferredRayDiff,
-		materialResourceIdx, 
-		materialBufferIdx, 
-		materialType);
-	
-	float3 colorOut = materialData.LinearAlbedo.rgb;
-	
-	payload.g_pathRadiance = float4(colorOut, RayTCurrent());
+	// Update the payload:
 	payload.g_rayDiff = transferredRayDiff;
+	
+	payload.g_worldHitPositionAndDistance =
+		float4(WorldRayOrigin() + WorldRayDirection() * RayTCurrent(),
+		RayTCurrent());
+	
+	payload.g_hitBarycentricsGeoPrimIdx = float4(attrib.barycentrics.xy, geoIdx, PrimitiveIndex());
 }
 
 
@@ -170,7 +222,7 @@ void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes att
 	
 	// Triangle data:
 	const TriangleData triangleData =
-		LoadTriangleData(geoIdx, vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
+		LoadTriangleData(geoIdx, PrimitiveIndex(), vertexStreamsLUTIdx, transformResourceIdx, transformBufferIdx);
 	
 	// Interpolated triangle data at the hit point:
 	const TriangleHitData hitData = GetTriangleHitData(triangleData, barycentrics);
@@ -186,6 +238,7 @@ void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes att
 		triangleData,
 		hitData,
 		transferredRayDiff,
+		WorldRayDirection(),
 		materialResourceIdx,
 		materialBufferIdx,
 		materialType);
@@ -201,25 +254,5 @@ void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes att
 [shader("miss")]
 void Miss(inout PathPayload payload : SV_RayPayload)
 {
-	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
-	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
-	
-	const uint environmentMapIdx = descriptorIndexes.g_descriptorIndexes1.x;
-	if (environmentMapIdx != INVALID_RESOURCE_IDX)
-	{
-		Texture2D<float4> envMap = Texture2DFloat4[environmentMapIdx];
-
-		uint3 texDims = uint3(0, 0, 0);
-		envMap.GetDimensions(0.f, texDims.x, texDims.y, texDims.z);
-		
-		const float mipLevel = ComputeIBLTextureLOD(payload.g_rayDiff, texDims);
-		
-		const float2 uv = WorldDirToSphericalUV(WorldRayDirection());
-		
-		payload.g_pathRadiance = envMap.SampleLevel(WrapMinMagMipLinear, uv, mipLevel);
-	}
-	else
-	{
-		payload.g_pathRadiance = float4(135.f / 255.f, 206.f / 255.f, 235.f / 255.f, 1.f); // As per Skybox shader
-	}
+	payload.g_worldHitPositionAndDistance.w = FLT_MAX; // Signal a miss
 }

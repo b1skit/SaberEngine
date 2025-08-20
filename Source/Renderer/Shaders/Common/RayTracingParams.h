@@ -137,9 +137,10 @@ struct RayDifferential
 
 struct raypayload PathPayload
 {
-	RayDifferential g_rayDiff read(caller, closesthit, anyhit) write(caller, closesthit);
+	RayDifferential g_rayDiff read(caller, anyhit) write(caller, closesthit);
 
-	float4 g_pathRadiance read(caller) write(caller, closesthit, anyhit, miss);
+	float4 g_worldHitPositionAndDistance read(caller) write(caller, closesthit, anyhit, miss);
+	float4 g_hitBarycentricsGeoPrimIdx read(caller) write(caller, closesthit, anyhit, miss); // .xy = barycentrics at hit, .z = geometry index, .w = unused
 };
 
 
@@ -176,12 +177,12 @@ struct TraceRayInlineData
 };
 
 
-struct TemporalAccumulationData
+struct PathTracerData
 {
-	uint4 g_frameStats; // .x = Num. accumulated frames, .yzw = unused
+	uint4 g_frameStats; // .x = Num. accumulated frames, .y = max path rays, .zw = unused
 
 #if defined(__cplusplus)
-	static constexpr char const* const s_shaderName = "TemporalParams";
+	static constexpr char const* const s_shaderName = "PathTracerParams";
 #endif
 };
 

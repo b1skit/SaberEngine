@@ -76,9 +76,10 @@ namespace gr
 		uint32_t m_missShaderIdx;
 		uint8_t m_geometryInstanceMask;
 
-		std::shared_ptr<re::Buffer> m_temporalParams;
+		std::shared_ptr<re::Buffer> m_pathTracerParams;
 		uint64_t m_accumulationStartFrame;
 		uint32_t m_numAccumulatedFrames;
+		uint32_t m_maxPathRays;
 		bool m_mustResetTemporalAccumulation;
 
 		core::InvPtr<re::Texture> m_environmentMap; // Spherical (latitude-longitude) environment map

@@ -123,7 +123,7 @@ namespace
 		});
 
 		tableRanges.emplace_back(dx12::RootSignature::DescriptorRangeCreateDesc{
-			.m_shaderName = TemporalAccumulationData::s_shaderName,
+			.m_shaderName = PathTracerData::s_shaderName,
 			.m_rangeDesc = D3D12_DESCRIPTOR_RANGE1{
 				.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
 				.NumDescriptors = std::numeric_limits<uint32_t>::max(), // Unbounded

@@ -34,21 +34,24 @@
 
 namespace
 {
-	void UpdateTemporalParams(std::shared_ptr<re::Buffer>& temporalParams, uint64_t numAccumulatedFrames)
+	void UpdatePathTracerParams(
+		std::shared_ptr<re::Buffer>& pathTracerParams,
+		uint32_t numAccumulatedFrames,
+		uint32_t maxPathRays)
 	{
-		TemporalAccumulationData temporalAccumulationData{
+		PathTracerData pathTracerData{
 			.g_frameStats = glm::uvec4(
 				numAccumulatedFrames,
-				0,
+				maxPathRays,
 				0,
 				0),
 		};
 
-		if (temporalParams == nullptr)
+		if (pathTracerParams == nullptr)
 		{
-			temporalParams = re::Buffer::Create(
+			pathTracerParams = re::Buffer::Create(
 				"Temporal Accumulation Buffer",
-				temporalAccumulationData,
+				pathTracerData,
 				re::Buffer::BufferParams{
 					.m_stagingPool = re::Buffer::StagingPool::Permanent,
 					.m_memPoolPreference = re::Buffer::UploadHeap,
@@ -58,7 +61,7 @@ namespace
 		}
 		else
 		{
-			temporalParams->Commit(temporalAccumulationData);
+			pathTracerParams->Commit(pathTracerData);
 		}
 	}
 }
@@ -74,6 +77,7 @@ namespace gr
 		, m_geometryInstanceMask(re::AccelerationStructure::InclusionMask_Always)
 		, m_accumulationStartFrame(0)
 		, m_numAccumulatedFrames(0)
+		, m_maxPathRays(1)
 		, m_mustResetTemporalAccumulation(true)
 	{
 	}
@@ -236,7 +240,7 @@ namespace gr
 			}
 
 
-			UpdateTemporalParams(m_temporalParams, m_numAccumulatedFrames++);
+			UpdatePathTracerParams(m_pathTracerParams, m_numAccumulatedFrames++, m_maxPathRays);
 			SEAssert(m_numAccumulatedFrames < std::numeric_limits<uint32_t>::max(),
 				"Temporary accumulation frame index is about to overflow");
 
@@ -278,7 +282,7 @@ namespace gr
 			SEAssert((*m_sceneTLAS)->GetResourceHandle() != INVALID_RESOURCE_IDX &&
 				traceRayParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
 				descriptorIndexes->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX &&
-				m_temporalParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
+				m_pathTracerParams->GetResourceHandle(re::ViewType::CBV) != INVALID_RESOURCE_IDX,
 				"Invalid resource handle detected");
 
 			// Set root constants for the frame:
@@ -286,7 +290,7 @@ namespace gr
 				(*m_sceneTLAS)->GetResourceHandle(),						// SceneBVH[]
 				traceRayParams->GetResourceHandle(re::ViewType::CBV),		// TraceRayParams[]
 				descriptorIndexes->GetResourceHandle(re::ViewType::CBV),	// DescriptorIndexes[]
-				m_temporalParams->GetResourceHandle(re::ViewType::CBV));	// TemporalParams[]
+				m_pathTracerParams->GetResourceHandle(re::ViewType::CBV));	// PathTracerParams[]
 
 			m_rtStage->SetRootConstant("RootConstants0", &rootConstants, re::DataType::UInt4);
 		}
@@ -301,8 +305,10 @@ namespace gr
 			return;
 		}
 
-		const bool didModify = 
+		bool didModify = 
 			(*m_sceneTLAS)->ShowImGuiWindow(m_refPathTracerEffectID, m_rayGenIdx, m_missShaderIdx, m_geometryInstanceMask);
+
+		didModify |= ImGui::SliderInt("Max path rays", reinterpret_cast<int*>(&m_maxPathRays), 0, 10);
 
 		if (didModify)
 		{
