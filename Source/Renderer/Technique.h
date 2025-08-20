@@ -7,6 +7,8 @@
 #include "Core/Interfaces/INamedObject.h"
 #include "Core/Interfaces/IUniqueID.h"
 
+#include "Core/Util/HashKey.h"
+
 
 using TechniqueID = util::HashKey;
 
