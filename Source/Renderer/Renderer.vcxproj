@@ -387,6 +387,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Dependencies\XeGTAO\XeGTAO.hlsli" />
+    <None Include="Effects\ReferencePathTracer.json" />
     <None Include="Effects\RTAO.json" />
     <None Include="Shaders\GLSL\AmbientCommon.glsli" />
     <None Include="Shaders\GLSL\Blit_PShader.glsl" />

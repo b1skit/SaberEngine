@@ -1315,5 +1315,8 @@
     <None Include="Shaders\HLSL\TextureLODHelpers.hlsli">
       <Filter>Shaders\HLSL</Filter>
     </None>
+    <None Include="Effects\ReferencePathTracer.json">
+      <Filter>Effects</Filter>
+    </None>
   </ItemGroup>
 </Project>
