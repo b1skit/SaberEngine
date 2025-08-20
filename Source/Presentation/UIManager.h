@@ -49,13 +49,13 @@ namespace pr
 
 
 	private:
-		bool m_showImGui;
-		bool m_imguiMenuActive;
+		bool m_showImGui;			// Is ImGui being rendered at all?
+		bool m_imguiMenuActive;		// Is ImGui being interacted with? (e.g. Not in free camera mode)
 		bool m_prevImguiMenuActive;
 
 		bool m_imguiWantsToCaptureKeyboard;
-		bool m_imguiWantsToCaptureMouse;
-		bool m_imguiWantsTextInput;
+		bool m_imguiWantsToCaptureMouse;	// E.g. Hovering over a panel
+		bool m_imguiWantsTextInput;			// E.g. Text input fields
 
 		enum Show : uint8_t
 		{

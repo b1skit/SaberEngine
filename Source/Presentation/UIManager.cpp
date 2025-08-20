@@ -261,14 +261,14 @@ namespace pr
 			{
 				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::KeyboardInputCaptureChange,
-					.m_data = (m_imguiMenuActive || imguiWantsButtonCapture), });
+					.m_data = m_imguiMenuActive, });
 			}
 
 			if (imguiVisiblityChanged || m_imguiWantsToCaptureMouse)
 			{
 				core::EventManager::Notify(core::EventManager::EventInfo{
 					.m_eventKey = eventkey::MouseInputCaptureChange,
-					.m_data = (m_imguiMenuActive || m_imguiWantsToCaptureMouse), });
+					.m_data = m_imguiMenuActive, });
 			}
 
 			if (m_showImGui)
@@ -500,6 +500,8 @@ namespace pr
 		// Menu bar:
 		auto ShowMenuBar = [&]()
 			{	
+				ImGui::BeginDisabled(m_imguiMenuActive == false); // Dim the menu if we're in free look mode
+
 				if (ImGui::BeginMainMenuBar())
 				{
 					menuBarSize = ImGui::GetWindowSize();
@@ -618,11 +620,10 @@ namespace pr
 					}
 				}
 				ImGui::EndMainMenuBar();
+
+				ImGui::EndDisabled();
 			};
-		if (m_imguiMenuActive)
-		{
 			m_debugUICommandMgr->Enqueue(frameNum, ShowMenuBar);
-		}
 
 		// Console log window:
 		auto ShowConsoleLog = [&]()
