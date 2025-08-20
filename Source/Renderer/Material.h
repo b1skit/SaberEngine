@@ -100,7 +100,11 @@ namespace gr
 			static effect::drawstyle::Bitmask GetDrawstyleBits(gr::Material::MaterialInstanceRenderData const*);
 
 			// Helper: Create an 8-bit ray tracing acceleration structure geometry instance inclusion mask
-			static uint8_t CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const&);
+			static re::AccelerationStructure::InclusionMask CreateInstanceInclusionMask(gr::Material::MaterialInstanceRenderData const&);
+
+			// Helper: Create material-specific BLAS AccelerationStructure::InstanceFlags
+			static re::AccelerationStructure::InstanceFlags CreateInstanceFlags(
+				gr::Material::MaterialInstanceRenderData const&);
 
 			// Helper: Registers all resources types on the MeshPrimitive RenderData with an AccelerationStructure
 			static void RegisterGeometryResources(

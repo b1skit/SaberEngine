@@ -63,13 +63,55 @@ namespace
 	}
 
 
+	// Create an instance inclusion key: Allows geometry with compatible flags to be grouped into the same BLAS
+	util::HashKey CreateInstanceInclusionKey(
+		re::AccelerationStructure::InclusionMask inclusionMask,
+		re::AccelerationStructure::InstanceFlags instanceFlags)
+	{
+		util::HashKey result;
+		util::AddDataToHash(result, inclusionMask);
+		util::AddDataToHash(result, instanceFlags);
+		return result;
+	}
+
+
+	util::HashKey CreateInstanceInclusionKey(gr::Material::MaterialInstanceRenderData const& matInstanceRenderData)
+	{
+		const re::AccelerationStructure::InclusionMask inclusionMask =
+			gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(matInstanceRenderData);
+
+		const re::AccelerationStructure::InstanceFlags instanceFlags =
+			gr::Material::MaterialInstanceRenderData::CreateInstanceFlags(matInstanceRenderData);
+
+		return CreateInstanceInclusionKey(inclusionMask, instanceFlags);
+	}
+
+
+	// Create a BLAS key: Uniquely identifies a BLAS based on its owning MeshConcept and common material properties of
+	// the contained geometry
 	util::HashKey CreateBLASKey(
-		gr::RenderDataID owningMeshConceptID, re::AccelerationStructure::InclusionMask inclusionMask)
+		gr::RenderDataID owningMeshConceptID,
+		re::AccelerationStructure::InclusionMask inclusionMask,
+		re::AccelerationStructure::InstanceFlags instanceFlags)
 	{
 		util::HashKey result;
 		util::AddDataToHash(result, owningMeshConceptID);
-		util::AddDataToHash(result, inclusionMask);
+		util::AddDataToHash(result, CreateInstanceInclusionKey(inclusionMask, instanceFlags));
 		return result;
+	}
+
+
+	util::HashKey CreateBLASKey(
+		gr::RenderDataID owningMeshConceptID,
+		gr::Material::MaterialInstanceRenderData const& matInstanceRenderData)
+	{
+		const re::AccelerationStructure::InclusionMask inclusionMask =
+			gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(matInstanceRenderData);
+
+		const re::AccelerationStructure::InstanceFlags instanceFlags =
+			gr::Material::MaterialInstanceRenderData::CreateInstanceFlags(matInstanceRenderData);
+
+		return CreateBLASKey(owningMeshConceptID, inclusionMask, instanceFlags);
 	}
 }
 
@@ -227,11 +269,13 @@ namespace gr
 
 			// Create a BLAS key: This uniquely identifies a BLAS based on its owning MeshConcept and material
 			// properties that affect the BLAS behavior
+			gr::Material::MaterialInstanceRenderData const& matInstanceData = 
+				meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>();
+
 			const BLASKey blasKey = CreateBLASKey(
-				owningMeshConceptID, 
-				static_cast<re::AccelerationStructure::InclusionMask>(
-					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
-						meshPrimItr->Get<gr::Material::MaterialInstanceRenderData>())));
+				owningMeshConceptID,
+				gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(matInstanceData),
+				gr::Material::MaterialInstanceRenderData::CreateInstanceFlags(matInstanceData));
 
 			// Create/update the BLAS count:
 			bool isNewBlasKey = false;
@@ -327,27 +371,25 @@ namespace gr
 
 			// Create a BLAS for each group of geometry with the same material properties, to allow accurate filtering
 			std::unordered_map<
-				re::AccelerationStructure::InclusionMask, 
-				std::vector<gr::RenderDataID>> inclusionMaskToRenderDataIDs;
+				util::HashKey,
+				std::vector<gr::RenderDataID>> instanceInclusionKeyToRenderDataIDs;
 			for (gr::RenderDataID meshPrimID : m_meshConceptToPrimitiveIDs.at(meshConceptID))
 			{
 				gr::Material::MaterialInstanceRenderData const& materialRenderData =
 					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(meshPrimID);
 
-				const re::AccelerationStructure::InclusionMask inclusionMask = 
-					static_cast<re::AccelerationStructure::InclusionMask>(
-						gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(materialRenderData));
-
-				inclusionMaskToRenderDataIDs[inclusionMask].emplace_back(meshPrimID);
+				instanceInclusionKeyToRenderDataIDs[CreateInstanceInclusionKey(materialRenderData)].emplace_back(meshPrimID);
 			}
 
 			// Build a BLAS for each group of geometry with the same Material flags:
-			for (auto const& entry : inclusionMaskToRenderDataIDs)
+			for (auto const& entry : instanceInclusionKeyToRenderDataIDs)
 			{
 				std::vector<glm::mat4 const*> blasMatrices;
 				auto blasParams = std::make_unique<re::AccelerationStructure::BLASParams>();
 
-				BLASKey const& blasKey = CreateBLASKey(meshConceptID, entry.first);
+				// All geometry in a BLAS must have the same Material flags, so we can use the first entry to create the BLAS key
+				BLASKey const& blasKey = CreateBLASKey(meshConceptID,
+					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(entry.second[0]));
 
 				gr::TransformID parentTransformID = gr::k_invalidTransformID; // Maps to the identity Transform
 				for (gr::RenderDataID meshPrimID : entry.second)
@@ -385,8 +427,11 @@ namespace gr
 					gr::Material::MaterialInstanceRenderData::RegisterGeometryResources(materialRenderData, geo);
 
 					SEAssert(m_meshPrimToBLASKey.contains(meshPrimID) &&
-						m_meshPrimToBLASKey.at(meshPrimID) == blasKey,
+						m_meshPrimToBLASKey.at(meshPrimID) == CreateBLASKey(meshConceptID, materialRenderData),
 						"Mesh primitive not found or blasKey mismatch. This should not be possible");
+
+					SEAssert(CreateBLASKey(meshConceptID, materialRenderData) == blasKey,
+						"BLAS keys must match for all geoemtry in a BLAS instance");
 				}
 
 				// Set the world Transform for all geometries in the BLAS
@@ -399,11 +444,19 @@ namespace gr
 					(re::AccelerationStructure::BuildFlags::AllowUpdate |
 						re::AccelerationStructure::BuildFlags::AllowCompaction);
 
-				blasParams->m_inclusionMask = entry.first; // Visiblity mask
-				blasParams->m_instanceFlags = re::AccelerationStructure::InstanceFlags_None;
+				// As we've asserted all geometry in a BLAS must have the same Material flags, we can use the
+				// MaterialInstanceRenderData in the first MeshPrimitive to set the BLAS params:
+				gr::Material::MaterialInstanceRenderData const& matInstanceRenderData =
+					renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(entry.second[0]);
+
+				blasParams->m_inclusionMask = 
+					gr::Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(matInstanceRenderData);
+				blasParams->m_instanceFlags =
+					gr::Material::MaterialInstanceRenderData::CreateInstanceFlags(matInstanceRenderData);
 
 				SEAssert(m_meshConceptToBLASAndCount.contains(meshConceptID) &&
-					m_meshConceptToBLASAndCount.at(meshConceptID).contains(blasKey),
+					m_meshConceptToBLASAndCount.at(meshConceptID).contains(CreateBLASKey(meshConceptID,
+						renderData.GetObjectData<gr::Material::MaterialInstanceRenderData>(entry.second[0]))),
 					"Could not find an existing BLAS record");
 
 				std::shared_ptr<re::AccelerationStructure> blas;

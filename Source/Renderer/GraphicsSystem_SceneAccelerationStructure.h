@@ -57,7 +57,7 @@ namespace gr
 		std::unordered_map<gr::RenderDataID, std::unordered_set<gr::RenderDataID>> m_meshConceptToPrimitiveIDs;
 		std::unordered_map<gr::RenderDataID, gr::RenderDataID> m_meshPrimToMeshConceptID;
 		
-		using BLASKey = util::HashKey; // Hash of (MeshConceptID, InclusionMask)
+		using BLASKey = util::HashKey; // Hash of (MeshConceptID, "Instance Inclusion Key")
 
 		std::unordered_map<gr::RenderDataID, // MeshConcept RenderDataID
 			std::map<BLASKey,

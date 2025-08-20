@@ -159,7 +159,7 @@ namespace gr
 	}
 
 
-	uint8_t Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
+	re::AccelerationStructure::InclusionMask Material::MaterialInstanceRenderData::CreateInstanceInclusionMask(
 		gr::Material::MaterialInstanceRenderData const& materialInstanceData)
 	{
 		uint8_t geoInstanceInclusionMask = 0;
@@ -194,7 +194,24 @@ namespace gr
 		geoInstanceInclusionMask |= materialInstanceData.m_isShadowCaster ?
 			re::AccelerationStructure::ShadowCaster : re::AccelerationStructure::NoShadow;
 
-		return geoInstanceInclusionMask;
+		SEAssert(geoInstanceInclusionMask != 0, "Invalid InclusionMask");
+		return static_cast<re::AccelerationStructure::InclusionMask>(geoInstanceInclusionMask);
+	}
+
+
+	re::AccelerationStructure::InstanceFlags Material::MaterialInstanceRenderData::CreateInstanceFlags(
+		gr::Material::MaterialInstanceRenderData const& materialInstanceData)
+	{
+		uint8_t blasInstanceFlags = 0;
+		SEStaticAssert(re::AccelerationStructure::InstanceFlags::InstanceFlags_None == 0,
+			"InstanceFlags_None is expected to be 0 here");
+
+		if (materialInstanceData.m_isDoubleSided)
+		{
+			blasInstanceFlags |= re::AccelerationStructure::InstanceFlags::TriangleCullDisable;
+		}
+
+		return static_cast<re::AccelerationStructure::InstanceFlags>(blasInstanceFlags);
 	}
 
 

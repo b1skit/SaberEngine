@@ -133,6 +133,8 @@ float TraceShadowRayInline(
 	ray.TMin = tMin;
 	ray.TMax = tMax;
 
+	// These ray query flags are OR'd with the ones provided in traceRayInlineParams (specified once for all draws), so
+	// we set the minimum here
 #define QUERY_RAY_FLAGS \
 	RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH | \
 	RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | \
@@ -143,18 +145,43 @@ float TraceShadowRayInline(
 	// Configure the trace:
 	rayQuery.TraceRayInline(
 		bvh,
-		QUERY_RAY_FLAGS | traceRayInlineParams.g_traceRayInlineParams.y, // Ray flags
+		traceRayInlineParams.g_traceRayInlineParams.y, // Ray flags: Interally OR'd with QUERY_RAY_FLAGS
 		traceRayInlineParams.g_traceRayInlineParams.x, // Instance mask
 		ray);
 			
 	// Execute the traversal:
-	rayQuery.Proceed();
-			
-	if (rayQuery.CommittedStatus() == COMMITTED_TRIANGLE_HIT)
+	while (rayQuery.Proceed())
+	{
+		switch (rayQuery.CandidateType())
+		{
+		case CANDIDATE_PROCEDURAL_PRIMITIVE:
+		{
+			rayQuery.Abort(); // Procedural primitives are not currently supported
+		}
+		break;
+		case CANDIDATE_NON_OPAQUE_TRIANGLE:
+		{
+			// TODO: Handle non-opaque triangles (e.g. alpha-tested)
+			rayQuery.CommitNonOpaqueTriangleHit();
+		}
+		break;
+		}
+	}
+	
+	switch (rayQuery.CommittedStatus())
+	{
+	case COMMITTED_TRIANGLE_HIT:
+	case COMMITTED_PROCEDURAL_PRIMITIVE_HIT:
 	{
 		return 0.f; // Hit: We're occluded
 	}
-	return 1.f; // Miss: We're not occluded
+	break;
+	default:
+	case COMMITTED_NOTHING:
+	{
+		return 1.f; // Miss: We're not occluded
+	}
+	}
 }
 
 

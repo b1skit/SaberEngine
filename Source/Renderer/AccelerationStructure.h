@@ -100,7 +100,7 @@ namespace re
 			NoShadow			= 1 << 5,
 			ShadowCaster		= 1 << 6,
 
-			InclusionMask_Always = 0xFF,
+			InclusionMask_Always = 0xFF, // Include all geoemetry
 		};
 
 
