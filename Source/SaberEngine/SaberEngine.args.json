@@ -213,6 +213,10 @@
           "Command": "-import Scenes\\MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
         },
         {
+          "Id": "860b083c-4da3-4aeb-a335-6c3b722fb63f",
+          "Command": "-import Scenes\\cornell_box\\scene.gltf"
+        },
+        {
           "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
           "Command": "-import Scenes\\MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
         },
