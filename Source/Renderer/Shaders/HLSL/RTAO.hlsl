@@ -15,22 +15,6 @@
 ConstantBuffer<RootConstantData> RootConstants0 : register(b0, space0);
 
 
-[shader("anyhit")]
-void RTAO_AnyHit(inout VisibilityPayload hitInfo, BuiltInTriangleIntersectionAttributes attrib)
-{
-	// TODO: Handle transparent geo: Add 1 when transparent geometry is missed
-	
-	hitInfo.g_visibility = 0.f; // Increment visibility when no geometry is hit
-}
-
-
-[shader("miss")]
-void RTAO_Miss(inout VisibilityPayload hitInfo : SV_RayPayload)
-{
-	hitInfo.g_visibility = 1.f; // Increment visibility when no geometry is hit
-}
-
-
 [shader("raygeneration")]
 void RTAO_RayGeneration()
 {	
@@ -127,4 +111,86 @@ void RTAO_RayGeneration()
 	const float visibilityFactor = visibility / numRays;
 
 	outputTex[launchIndex].r = visibilityFactor;
+}
+
+
+[shader("anyhit")]
+void RTAO_AnyHit(inout VisibilityPayload hitInfo, BuiltInTriangleIntersectionAttributes attrib)
+{
+#if defined(ALPHA_CLIP) || defined(ALPHA_BLEND)
+	
+	const float3 barycentrics = GetBarycentricWeights(attrib.barycentrics);
+	
+	const uint descriptorIndexesIdx = RootConstants0.g_data.z;
+	const DescriptorIndexData descriptorIndexes = DescriptorIndexes[descriptorIndexesIdx];
+	
+	// Get our Vertex stream LUTs buffer:
+	const uint vertexStreamsLUTIdx = descriptorIndexes.g_descriptorIndexes0.x;
+	const StructuredBuffer<VertexStreamLUTData> vertexStreamLUT = VertexStreamLUTs[vertexStreamsLUTIdx];
+	
+	// Compute our geometry index for buffer arrays aligned with AS geometry:
+	const uint geoIdx = InstanceID() + GeometryIndex();
+	
+	const uint3 vertexIndexes = GetVertexIndexes(vertexStreamsLUTIdx, geoIdx);
+	
+	const uint instancedBufferLUTIdx = descriptorIndexes.g_descriptorIndexes0.y;
+	const InstancedBufferLUTData instancedBuffersLUT = InstancedBufferLUTs[instancedBufferLUTIdx][geoIdx];
+	
+	const uint materialResourceIdx = instancedBuffersLUT.g_materialIndexes.x;
+	const uint materialBufferIdx = instancedBuffersLUT.g_materialIndexes.y;
+	const uint materialType = instancedBuffersLUT.g_materialIndexes.z;
+	
+	float alphaCutoff = 0.f;
+	uint baseColorResourceIdx = INVALID_RESOURCE_IDX;
+	uint baseColorUVChannel = 0;
+	switch (materialType)
+	{
+	case MAT_ID_GLTF_Unlit:
+	{
+		const UnlitData materialBuffer = UnlitParams[materialResourceIdx][materialBufferIdx];
+
+		baseColorResourceIdx = materialBuffer.g_bindlessTextureIndexes0.x;
+		baseColorUVChannel = materialBuffer.g_uvChannelIndexes0.x;
+		alphaCutoff = materialBuffer.g_alphaCutuff.x;
+	}
+	break;
+	case MAT_ID_GLTF_PBRMetallicRoughness:
+	{
+		const PBRMetallicRoughnessData materialBuffer = PBRMetallicRoughnessParams[materialResourceIdx][materialBufferIdx];
+			
+		baseColorResourceIdx = materialBuffer.g_bindlessTextureIndexes0.x;
+		baseColorUVChannel = materialBuffer.g_uvChannelIndexes0.x;
+		alphaCutoff = materialBuffer.g_f0AlphaCutoff.w;
+	}
+	break;
+	}
+	
+	// UVs:
+	const uint baseColorUVStreamResourceIdx = baseColorUVChannel == 0 ?
+		vertexStreamLUT[geoIdx].g_posNmlTanUV0Index.w : vertexStreamLUT[geoIdx].g_UV1ColorIndex.x;
+	
+	const StructuredBuffer<float2> uvStream = VertexStreams_Float2[baseColorUVStreamResourceIdx];
+	
+	float2 uv =
+		uvStream[vertexIndexes.x].xy * barycentrics.x +
+		uvStream[vertexIndexes.y].xy * barycentrics.y +
+		uvStream[vertexIndexes.z].xy * barycentrics.z;
+	
+	// Wrap the UVs (accounting for negative values, or values out of [0,1]):
+	uv = uv - floor(uv);
+	
+	const float alpha = Texture2DFloat4[baseColorResourceIdx].SampleLevel(WrapMinMagMipLinear, uv, 0);
+	
+	hitInfo.g_visibility = alpha; // Increase visibility when no geometry is hit
+	
+#else
+	hitInfo.g_visibility = 0.f; // Only increment visibility when no geometry is hit
+#endif
+}
+
+
+[shader("miss")]
+void RTAO_Miss(inout VisibilityPayload hitInfo : SV_RayPayload)
+{
+	hitInfo.g_visibility = 1.f; // Increment visibility when no geometry is hit
 }

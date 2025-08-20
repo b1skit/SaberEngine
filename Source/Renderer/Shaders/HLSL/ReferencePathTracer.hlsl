@@ -190,6 +190,7 @@ void AnyHit(inout PathPayload payload, BuiltInTriangleIntersectionAttributes att
 		materialBufferIdx,
 		materialType);
 	
+	// Alpha clipping:
 	if (materialData.LinearAlbedo.a < materialData.AlphaCutoff)
 	{
 		IgnoreHit();

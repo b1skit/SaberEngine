@@ -11,7 +11,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RTAO_HitGroup_OpaqueSingleSided"
+				"Technique": "RTAO_HitGroup_Opaque"
 			},
 			{
 				"Conditions": [
@@ -19,7 +19,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RTAO_HitGroup_ClipSingleSided"
+				"Technique": "RTAO_HitGroup_Clip"
 			},
 			{
 				"Conditions": [
@@ -27,7 +27,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Opaque" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RTAO_HitGroup_OpaqueDoubleSided"
+				"Technique": "RTAO_HitGroup_Opaque"
 			},
 			{
 				"Conditions": [
@@ -35,7 +35,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Clip" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RTAO_HitGroup_ClipDoubleSided"
+				"Technique": "RTAO_HitGroup_Clip"
 			},
 			{
 				"Conditions": [
@@ -43,7 +43,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Single" }
 				],
-				"Technique": "RTAO_HitGroup_BlendSingleSided"
+				"Technique": "RTAO_HitGroup_Blend"
 			},
 			{
 				"Conditions": [
@@ -51,7 +51,7 @@
 					{ "Rule": "MaterialAlphaMode", "Mode": "Blend" },
 					{ "Rule": "MaterialSidedness", "Mode": "Double" }
 				],
-				"Technique": "RTAO_HitGroup_BlendDoubleSided"
+				"Technique": "RTAO_HitGroup_Blend"
 			},
 
 			// Ray gen:
@@ -75,40 +75,21 @@
 			// Hit groups:
 			// Note: For hit groups, we use the Technique name as the hit group name
 			{
-				"Name": "RTAO_HitGroup_OpaqueSingleSided",
+				"Name": "RTAO_HitGroup_Opaque",
 				"AnyHitShader": "RTAO",
-				"AnyHitShaderEntryPoint": "RTAO_AnyHit",
-				"AnyHitShaderDefines": [ "OPAQUE_SINGLE_SIDED" ]
+				"AnyHitShaderEntryPoint": "RTAO_AnyHit"
 			},
 			{
-				"Name": "RTAO_HitGroup_ClipSingleSided",
+				"Name": "RTAO_HitGroup_Clip",
 				"AnyHitShader": "RTAO",
 				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
-				"AnyHitShaderDefines": ["CLIP_SINGLE_SIDED"]
+				"AnyHitShaderDefines": ["ALPHA_CLIP"]
 			},
 			{
-				"Name": "RTAO_HitGroup_OpaqueDoubleSided",
-				"AnyHitShader": "RTAO",
-				"AnyHitShaderEntryPoint": "RTAO_AnyHit",
-				"AnyHitShaderDefines": [ "OPAQUE_DOUBLE_SIDED" ]
-			},
-			{
-				"Name": "RTAO_HitGroup_ClipDoubleSided",
+				"Name": "RTAO_HitGroup_Blend",
 				"AnyHitShader": "RTAO",
 				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
-				"AnyHitShaderDefines": ["CLIP_DOUBLE_SIDED"]
-		  	},
-			{
-				"Name": "RTAO_HitGroup_BlendSingleSided",
-				"AnyHitShader": "RTAO",
-				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
-				"AnyHitShaderDefines": ["BLEND_SINGLE_SIDED"]
-			},
-			{
-				"Name": "RTAO_HitGroup_BlendDoubleSided",
-				"AnyHitShader": "RTAO",
-				"AnyHitShaderEntryPoint" : "RTAO_AnyHit",
-				"AnyHitShaderDefines": ["BLEND_DOUBLE_SIDED"]
+				"AnyHitShaderDefines": ["ALPHA_BLEND"]
 			},
 
 			// Ray gen:
