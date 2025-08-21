@@ -118,12 +118,13 @@ float3 ComputeOriginOffset(float3 p, float3 n)
 
 float TraceShadowRayInline(
 	RaytracingAccelerationStructure bvh,
-	ConstantBuffer<TraceRayInlineData> traceRayInlineParams,
 	float3 origin,
 	float3 direction,
 	float3 geometryNormal, // i.e. interpolated vertex normal
 	float tMin,
-	float tMax)
+	float tMax,
+	uint rayFlags, // Ray flags: Interally OR'd with QUERY_RAY_FLAGS
+	uint instanceMask)
 {
 	origin = ComputeOriginOffset(origin, geometryNormal);
 	
@@ -143,12 +144,8 @@ float TraceShadowRayInline(
 	RayQuery<QUERY_RAY_FLAGS> rayQuery;
 			
 	// Configure the trace:
-	rayQuery.TraceRayInline(
-		bvh,
-		traceRayInlineParams.g_traceRayInlineParams.y, // Ray flags: Interally OR'd with QUERY_RAY_FLAGS
-		traceRayInlineParams.g_traceRayInlineParams.x, // Instance mask
-		ray);
-			
+	rayQuery.TraceRayInline(bvh, rayFlags, instanceMask, ray);
+
 	// Execute the traversal:
 	while (rayQuery.Proceed())
 	{

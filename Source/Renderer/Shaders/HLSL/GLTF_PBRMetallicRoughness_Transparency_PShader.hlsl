@@ -154,12 +154,13 @@ float4 PShader(VertexOut In) : SV_Target
 #if defined(SHADOWS_RAYTRACED)
 				shadowFactor = TraceShadowRayInline(
 					SceneBVH,
-					TraceRayInlineParams,
 					worldPos,
 					lightData.g_lightWorldPosRadius.xyz,
 					worldVertexNormal,
 					TraceRayInlineParams.g_rayParams.x,
-					FLT_MAX);
+					FLT_MAX,
+					TraceRayInlineParams.g_traceRayInlineParams.y, // Ray flags
+					TraceRayInlineParams.g_traceRayInlineParams.x); // Instance mask	
 #else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
@@ -249,12 +250,13 @@ float4 PShader(VertexOut In) : SV_Target
 			// Trace in reverse: Light -> world position, so we don't hit fake light source meshes
 			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
-				TraceRayInlineParams,
 				lightWorldPos,
 				-lightWorldDir,
 				worldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
-				rayLength);
+				rayLength,
+				TraceRayInlineParams.g_traceRayInlineParams.y, // Ray flags
+				TraceRayInlineParams.g_traceRayInlineParams.x); // Instance mask
 #else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;
@@ -354,12 +356,13 @@ float4 PShader(VertexOut In) : SV_Target
 			
 			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
-				TraceRayInlineParams,
 				worldPos,
 				lightWorldDir,
 				worldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
-				rayLength);
+				rayLength,
+				TraceRayInlineParams.g_traceRayInlineParams.y, // Ray flags
+				TraceRayInlineParams.g_traceRayInlineParams.x); // Instance mask
 #else
 					const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 					const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;

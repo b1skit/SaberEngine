@@ -84,12 +84,13 @@ float4 PShader(VertexOut In) : SV_Target
 			
 			shadowFactor = TraceShadowRayInline(
 				SceneBVH,
-				TraceRayInlineParams,
 				worldPos,
 				lightWorldDir,
 				gbuffer.WorldVertexNormal,
 				TraceRayInlineParams.g_rayParams.x,
-				rayLength);
+				rayLength,
+				TraceRayInlineParams.g_traceRayInlineParams.y, // Ray flags
+				TraceRayInlineParams.g_traceRayInlineParams.x); // Instance mask	
 #else
 			const float2 shadowCamNearFar = shadowData.g_shadowCamNearFarBiasMinMax.xy;
 			const float2 minMaxShadowBias = shadowData.g_shadowCamNearFarBiasMinMax.zw;

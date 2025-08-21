@@ -3,6 +3,7 @@
 #include "RayTracingCommon.hlsli"
 #include "GBufferBindless.hlsli"
 #include "Random.hlsli"
+#include "Sampling.hlsli"
 #include "TextureLODHelpers.hlsli"
 #include "UVUtils.hlsli"
 
@@ -33,27 +34,28 @@ void RayGeneration()
 	const uint cameraParamsIdx = descriptorIndexes.g_descriptorIndexes0.z;
 	const CameraData cameraParams = CameraParams[cameraParamsIdx];
 	
+	const uint environmentMapIdx = descriptorIndexes.g_descriptorIndexes1.x;
+	
 	const uint2 pixelCoords = DispatchRaysIndex().xy;
 	const uint2 screenDims = DispatchRaysDimensions().xy;
 	
 	RNGState2D rngState = InitializeRNGState2D(pixelCoords.xy, numAccumulatedFrames);
 	
-	RayDesc ray; // https://learn.microsoft.com/en-us/windows/win32/direct3d12/raydesc
-	
-	// Compute the initial ray origin and direction in world space:
-	ray.Origin = cameraParams.g_cameraWPos.xyz;
-	ray.Direction = CreateViewRay(
+	// Compute the initial pathRay origin and direction in world space:
+	RayDesc pathRay;
+	pathRay.Origin = cameraParams.g_cameraWPos.xyz;
+	pathRay.Direction = CreateViewRay(
 		pixelCoords, 
 		screenDims, 
 		cameraParams.g_cameraWPos.xyz, 
 		cameraParams.g_invViewProjection,
-		GetNextFloat2(rngState)); // Jitter the ray origin in the pixel
+		GetNextFloat2(rngState)); // Jitter the pathRay origin in the pixel
 		
-	ray.TMin = 0.f;
-	ray.TMax = FLT_MAX;
+	pathRay.TMin = 0.f;
+	pathRay.TMax = FLT_MAX;
 	
 	const RayDifferential rayDiff = CreateEyeRayDifferential(
-		ray.Direction,
+		pathRay.Direction,
 		cameraParams.g_invView,
 		cameraParams.g_exposureProperties.w, // Aspect ratio
 		cameraParams.g_exposureProperties.z, // tan(fovY/2)
@@ -79,7 +81,7 @@ void RayGeneration()
 				traceRayParams.g_traceRayParams.y,	// RayContributionToHitGroupIndex
 				traceRayParams.g_traceRayParams.z,	// MultiplierForGeometryContributionToHitGroupIndex
 				traceRayParams.g_traceRayParams.w,	// Miss shader index
-				ray,
+				pathRay,
 				payload);
 		}
 		
@@ -119,23 +121,39 @@ void RayGeneration()
 				triangleData,
 				hitData,
 				transferredRayDiff,
-				ray.Direction,
+				pathRay.Direction,
 				materialResourceIdx,
 				materialBufferIdx,
 				materialType);
 	
-			float3 colorOut = materialData.LinearAlbedo.rgb;
-	
-			pathRadiance += float4(colorOut, 1.f);
+			// Sample the environment map at the hit point:
+			float3 envMapDir;
+			float NoL, pdf;
+			ImportanceSampleCosDir(materialData.WorldNormal, GetNextFloat2(rngState), envMapDir, NoL, pdf);
 			
-			// Update the ray for the next iteration:
-			ray.Origin = ComputeOriginOffset(payload.g_worldHitPositionAndDistance.xyz, hitData.m_worldHitNormal);
-			//ray.Direction = ; // TODO
+			const float visibility = TraceShadowRayInline(
+				SceneBVH[sceneBVHDescriptorIdx],
+				payload.g_worldHitPositionAndDistance.xyz,
+				envMapDir,
+				hitData.m_worldHitNormal,
+				0.f,
+				FLT_MAX,
+				traceRayParams.g_rayFlags.x,		// RayFlags
+				traceRayParams.g_traceRayParams.x);	// InstanceInclusionMask
+			
+			if (visibility > 0.f)
+			{
+				const float4 envMapSample =
+					SampleEnvironmentMap(environmentMapIdx, payload.g_rayDiff, envMapDir);
+				
+				float3 hitRadiance = materialData.LinearAlbedo.rgb * envMapSample.rgb;
+	
+				pathRadiance += float4(hitRadiance, 1.f);
+			}	
 		}
 		else // Miss:
 		{
-			const uint environmentMapIdx = descriptorIndexes.g_descriptorIndexes1.x;
-			pathRadiance = SampleEnvironmentMap(environmentMapIdx, payload.g_rayDiff, ray.Direction);
+			pathRadiance = SampleEnvironmentMap(environmentMapIdx, payload.g_rayDiff, pathRay.Direction);
 			break;
 		}
 	}
