@@ -69,8 +69,11 @@ void RayGeneration()
 	
 	float4 pathRadiance = float4(0.f, 0.f, 0.f, 0.f);
 	
+	uint totalSamples = 0;
 	for (uint bounceIdx = 0; bounceIdx < maxRays; ++bounceIdx)
 	{
+		totalSamples++;
+		
 		// Trace a ray to find the next point of intersection:
 		if (payload.g_worldHitPositionAndDistance.w != FLT_MAX)
 		{
@@ -163,7 +166,7 @@ void RayGeneration()
 		
 	// Compute a temporal cumulative average:	
 	const float3 prevAccumulation = numAccumulatedFrames * outputTex[pixelCoords].rgb;
-	const float3 newContribution = pathRadiance.rgb;
+	const float3 newContribution = pathRadiance.rgb / totalSamples;
 		
 	float3 newAverage = (prevAccumulation + newContribution) / (numAccumulatedFrames + 1.f);
 		
