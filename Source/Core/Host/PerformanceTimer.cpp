@@ -22,7 +22,7 @@ namespace host
 	}
 
 
-	void PerformanceTimer::Start()
+	void PerformanceTimer::Start() noexcept
 	{
 		SEAssert(!m_isStarted, "Timer has already been started");
 		m_isStarted = true;
@@ -31,23 +31,27 @@ namespace host
 	}
 
 
-	double PerformanceTimer::PeekMs() const
+	double PerformanceTimer::PeekMs() const noexcept
 	{
-		SEAssert(m_isStarted, "Timer has not been started");
-
-		return platform::PerformanceTimer::PeekMs(*this);
+		if (m_isStarted)
+		{
+			return platform::PerformanceTimer::PeekMs(*this);
+		}
+		return 0.0;
 	}
 
 
-	double PerformanceTimer::PeekSec() const
+	double PerformanceTimer::PeekSec() const noexcept
 	{
-		SEAssert(m_isStarted, "Timer has not been started");
-
-		return platform::PerformanceTimer::PeekSec(*this);
+		if (m_isStarted)
+		{
+			return platform::PerformanceTimer::PeekSec(*this);
+		}
+		return 0.0;
 	}
 
 
-	double PerformanceTimer::StopMs()
+	double PerformanceTimer::StopMs() noexcept
 	{
 		const double msTime = PeekMs();
 		m_isStarted = false;
@@ -55,10 +59,23 @@ namespace host
 	} 
 
 
-	double PerformanceTimer::StopSec()
+	double PerformanceTimer::StopSec() noexcept
 	{
 		const double secTime = PeekSec();
 		m_isStarted = false;
 		return secTime;
+	}
+
+
+	void PerformanceTimer::Stop() noexcept
+	{
+		m_isStarted = false;
+	}
+
+
+	void PerformanceTimer::Reset() noexcept
+	{
+		Stop();
+		Start();
 	}
 }

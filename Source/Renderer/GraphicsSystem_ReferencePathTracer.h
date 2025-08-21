@@ -7,6 +7,8 @@
 
 #include "Core/InvPtr.h"
 
+#include "Core/Host/PerformanceTimer.h"
+
 
 namespace re
 {
@@ -46,7 +48,7 @@ namespace gr
 
 	public:
 		ReferencePathTracerGraphicsSystem(gr::GraphicsSystemManager*);
-		~ReferencePathTracerGraphicsSystem() = default;
+		~ReferencePathTracerGraphicsSystem();
 
 		void InitPipeline(gr::StagePipeline&, TextureDependencies const&, BufferDependencies const&, DataDependencies const&);
 		void PreRender();
@@ -83,5 +85,7 @@ namespace gr
 		bool m_mustResetTemporalAccumulation;
 
 		core::InvPtr<re::Texture> m_environmentMap; // Spherical (latitude-longitude) environment map
+
+		host::PerformanceTimer m_accumulationTimer;
 	};
 }

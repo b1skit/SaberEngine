@@ -15,12 +15,16 @@ namespace host
 		PerformanceTimer();
 		~PerformanceTimer();
 
-		void Start();
-		double PeekMs() const; // Gets the current delta (in ms) since Start(), without stopping
-		double PeekSec() const; // Gets the current delta (in seconds) since Start(), without stopping
+		void Start() noexcept;
+		double PeekMs() const noexcept; // Gets the current delta (in ms) since Start(), without stopping
+		double PeekSec() const noexcept; // Gets the current delta (in seconds) since Start(), without stopping
 
-		double StopMs(); // Stops the timer, and returns the high precision time since Start() in ms
-		double StopSec(); // Stops the timer, and returns the high precision time since Start() in seconds
+		double StopMs() noexcept; // Stops the timer, and returns the high precision time since Start() in ms
+		double StopSec() noexcept; // Stops the timer, and returns the high precision time since Start() in seconds
+		
+		void Stop() noexcept; // Stops the timer, but does not return the time
+
+		void Reset() noexcept; // Stops and restarts the timer
 
 		bool IsRunning() const noexcept; // Has the timer been started?
 

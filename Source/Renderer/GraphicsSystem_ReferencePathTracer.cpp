@@ -10,7 +10,6 @@
 #include "GraphicsSystem_ReferencePathTracer.h"
 #include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
-#include "IndexedBuffer.h"
 #include "LightRenderData.h"
 #include "RayTracingParamsHelpers.h"
 #include "RenderDataManager.h"
@@ -23,6 +22,8 @@
 #include "Core/Assert.h"
 #include "Core/Config.h"
 #include "Core/Logger.h"
+
+#include "Core/Host/PerformanceTimer.h"
 
 #include "Core/Interfaces/INamedObject.h"
 
@@ -80,6 +81,12 @@ namespace gr
 		, m_maxPathRays(1)
 		, m_mustResetTemporalAccumulation(true)
 	{
+	}
+
+
+	ReferencePathTracerGraphicsSystem::~ReferencePathTracerGraphicsSystem()
+	{
+		m_accumulationTimer.Stop();
 	}
 
 
@@ -211,12 +218,14 @@ namespace gr
 			m_accumulationStartFrame = currentFrameNum;
 			m_numAccumulatedFrames = 0;
 
+			m_accumulationTimer.Reset();
+
 			m_mustResetTemporalAccumulation = false;
 		}
 
 		if (m_numAccumulatedFrames > 0 && m_numAccumulatedFrames % 1000 == 0)
 		{
-			LOG("Accumulated %d frames so far...", m_numAccumulatedFrames);
+			LOG("Accumulated %d frames, %f seconds", m_numAccumulatedFrames, m_accumulationTimer.PeekSec());
 		}
 		
 
