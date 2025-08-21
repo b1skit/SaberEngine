@@ -1,12 +1,20 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "BatchBuilder.h"
 #include "Context.h"
+#include "Effect.h"
+#include "GraphicsSystem.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystemCommon.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsUtils.h"
+#include "RenderPipeline.h"
 #include "Sampler.h"
 
+#include "Core/Interfaces/INamedObject.h"
+
 #include "Renderer/Shaders/Common/MipGenerationParams.h"
+
+#include "_generated/DrawStyles.h"
 
 
 namespace
