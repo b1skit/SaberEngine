@@ -6,19 +6,19 @@
 		"DrawStyles": [
 			{
 				"Conditions": [
-					{ "Rule": "TextureDimension", "Mode": "1D" }
+					{ "Rule": "GenerateMIPs", "Mode": "1D" }
 				],
 				"Technique": "Generate1DMips"
 			},
 			{
 				"Conditions": [
-					{ "Rule": "TextureDimension", "Mode": "2D" }
+					{ "Rule": "GenerateMIPs", "Mode": "2D" }
 				],
 				"Technique": "Generate2DMips"
 			},
 			{
 				"Conditions": [
-					{ "Rule": "TextureDimension", "Mode": "3D" }
+					{ "Rule": "GenerateMIPs", "Mode": "3D" }
 				],
 				"Technique": "Generate3DMips"
 			}
