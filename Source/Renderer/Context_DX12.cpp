@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "AccelerationStructure_Platform.h"
+#include "Capture.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "PipelineState_DX12.h"
@@ -84,25 +85,11 @@ namespace dx12
 
 		if (enablePIXPGPUrogrammaticCaptures)
 		{
-			LOG("Loading DX12 PIX GPU programmatic capture module");
-			m_pixGPUCaptureModule = PIXLoadLatestWinPixGpuCapturerLibrary(); // This must be done before loading any D3D12 APIs
-
-			if (m_pixGPUCaptureModule == nullptr)
-			{
-				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-				CheckHResult(hr, "Failed to create PIX GPU capture module");
-			}
+			m_pixGPUCaptureModule = re::PIXCapture::InitializePIXGPUCaptureModule();
 		}
 		else if (enablePIXPCPUProgrammaticCaptures)
 		{
-			LOG("Loading DX12 PIX CPU programmatic capture module");
-			m_pixCPUCaptureModule = PIXLoadLatestWinPixTimingCapturerLibrary();
-
-			if (m_pixCPUCaptureModule == nullptr)
-			{
-				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-				CheckHResult(hr, "Failed to create PIX CPU capture module");
-			}
+			m_pixCPUCaptureModule = re::PIXCapture::InitializePIXCPUCaptureModule();
 		}
 
 		m_frameFenceValues.resize(m_numFramesInFlight, 0);

@@ -2,6 +2,7 @@
 #pragma once
 #include "BindlessResourceManager.h"
 #include "BufferAllocator.h"
+#include "Capture.h"
 #include "GPUTimer.h"
 #include "RLibrary_Platform.h"
 #include "Shader.h"
@@ -10,8 +11,6 @@
 #include "Core/Host/Window.h"
 
 #include "Core/Util/NBufferedVector.h"
-
-#include "renderdoc_app.h"
 
 
 namespace core
@@ -100,6 +99,12 @@ namespace re
 		uint8_t GetNumFramesInFlight() const noexcept;
 
 		uint8_t GetFrameOffsetIdx() const noexcept; // Get an index in [0, NumFramesInFight)
+
+
+	public:
+		void RequestCapture(std::unique_ptr<ICapture>&&);
+	private:
+		std::unique_ptr<ICapture> m_currentCaptureRequest;
 
 
 	private:
@@ -250,6 +255,13 @@ namespace re
 	inline uint8_t Context::GetFrameOffsetIdx() const noexcept
 	{
 		return GetCurrentRenderFrameNum() % GetNumFramesInFlight();
+	}
+
+
+	inline void Context::RequestCapture(std::unique_ptr<ICapture>&& iCapture)
+	{
+		SEAssert(m_currentCaptureRequest == nullptr, "A capture is already in progress");
+		m_currentCaptureRequest = std::move(iCapture);
 	}
 
 

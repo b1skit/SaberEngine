@@ -584,6 +584,9 @@
     <ClInclude Include="..\Dependencies\Aftermath\include\GFSDK_Aftermath.h">
       <Filter>Dependencies\Aftermath</Filter>
     </ClInclude>
+    <ClInclude Include="Capture.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch\pch.cpp">
@@ -975,6 +978,9 @@
     </ClCompile>
     <ClCompile Include="GraphicsSystem_ReferencePathTracer.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="Capture.cpp">
+      <Filter>Source Files\re</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

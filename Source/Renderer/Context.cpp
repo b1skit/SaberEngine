@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Capture.h"
 #include "Context.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
@@ -17,8 +18,6 @@
 
 #include "Core/Interfaces/ILoadContext.h"
 #include "Core/Interfaces/IPlatformObject.h"
-
-#include "Core/Util/TextUtils.h"
 
 
 namespace re
@@ -82,65 +81,12 @@ namespace re
 		}
 		else if(enableRenderDocProgrammaticCaptures && !dredEnabled)
 		{
-			LOG("Loading renderdoc.dll...");
-
-			HMODULE renderDocModule = LoadLibraryA("renderdoc.dll");
-			if (renderDocModule)
-			{
-				LOG("Successfully loaded renderdoc.dll");
-
-				pRENDERDOC_GetAPI RENDERDOC_GetAPI = 
-					(pRENDERDOC_GetAPI)GetProcAddress(renderDocModule, "RENDERDOC_GetAPI");
-				int result = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&m_renderDocApi);
-				SEAssert(result == 1, "Failed to get the RenderDoc API");
-
-				// Set the capture options before the graphics API is initialized:
-				int captureOptionResult = 
-					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_AllowVSync, 1);
-
-				captureOptionResult =
-					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_AllowFullscreen, 1);
-
-				// Don't capture callstacks (for now)
-				captureOptionResult =
-					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_CaptureCallstacks, 0);
-
-				captureOptionResult =
-					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_CaptureCallstacksOnlyActions, 0);
-
-				if (core::Config::GetValue<int>(core::configkeys::k_debugLevelCmdLineArg) >= 1)
-				{
-					captureOptionResult =
-						m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_APIValidation, 1);
-
-					captureOptionResult =
-						m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_VerifyBufferAccess, 1);
-				}
-
-				// Only include resources necessary for the final capture (for now)
-				captureOptionResult =
-					m_renderDocApi->SetCaptureOptionU32(RENDERDOC_CaptureOption::eRENDERDOC_Option_RefAllResources, 0);
-
-				// Set the default output folder/file path. RenderDoc appends "_frameXYZ.rdc" to the end
-				std::string const& renderDocCapturePath = std::format("{}\\{}\\{}_{}_{}",
-					core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
-					core::configkeys::k_renderDocCaptureFolderName,
-					core::configkeys::k_captureTitle,
-					platform::RenderingAPIToCStr(api),
-					util::GetTimeAndDateAsString());
-				m_renderDocApi->SetCaptureFilePathTemplate(renderDocCapturePath.c_str());
-			}
-			else
-			{
-				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-				const _com_error comError(hr);
-				LOG_ERROR(std::format("HRESULT error loading RenderDoc module: \"{}\"",
-					util::FromWideCString(comError.ErrorMessage())).c_str());
-			}
+			m_renderDocApi = RenderDocCapture::InitializeRenderDocAPI(api);
 		}
 
 		core::IPlatObj::s_context = this;
 		core::ILoadContextBase::s_context = this;
+		re::ICapture::s_context = this;
 	}
 
 
@@ -205,6 +151,22 @@ namespace re
 		// Commit buffer data immediately before rendering
 		m_bufferAllocator->BufferData();
 
+		// Handle CPU/GPU captures:
+		if (m_currentCaptureRequest && m_currentCaptureRequest->CaptureIsTriggered() == false)
+		{
+			const bool success = m_currentCaptureRequest->TriggerCapture();
+			if (!success)
+			{
+				LOG_ERROR("Failed to trigger capture");
+				m_currentCaptureRequest.reset(); // Discard the request
+			}
+		}
+
+		if (m_currentCaptureRequest && m_currentCaptureRequest->CaptureIsComplete()) // Might be immediately done (e.g. RenderDoc)
+		{
+			m_currentCaptureRequest.reset();
+		}
+
 		SEEndCPUEvent();
 	}
 
@@ -267,6 +229,7 @@ namespace re
 
 		core::IPlatObj::s_context = nullptr;
 		core::ILoadContextBase::s_context = nullptr;
+		re::ICapture::s_context = nullptr;
 	}
 
 
