@@ -133,6 +133,7 @@ namespace dx12
 	{
 		HeapDesc(
 			D3D12_HEAP_TYPE, 
+			D3D12_HEAP_FLAGS,
 			uint32_t alignment, 
 			bool allowMSAATextures, 
 			uint32_t creationNodeMask,
@@ -192,9 +193,10 @@ namespace dx12
 		D3D12_RESOURCE_DESC m_resourceDesc;
 		D3D12_CLEAR_VALUE m_optimizedClearValue;
 		D3D12_HEAP_TYPE m_heapType;
-		D3D12_RESOURCE_STATES m_initialState;
-		bool m_isMSAATexture;
-		bool m_createAsComitted;
+		D3D12_HEAP_FLAGS m_heapFlags = D3D12_HEAP_FLAG_NONE;
+		D3D12_RESOURCE_STATES m_initialState = D3D12_RESOURCE_STATE_COMMON;
+		bool m_isMSAATexture = false;
+		bool m_createAsComitted = false;
 	};
 
 

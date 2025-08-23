@@ -320,14 +320,14 @@ namespace
 		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
 
 		// We'll update these settings for each type of texture resource:
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+		D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE;
 		if (needsUAV)
 		{
-			flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+			resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
 		if (simultaneousAccess)
 		{
-			flags |= D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
+			resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
 		}
 
 		// Note: optimizedClearValuePtr is ignored unless:
@@ -336,9 +336,17 @@ namespace
 		D3D12_CLEAR_VALUE optimizedClearValue = {};
 		optimizedClearValue.Format = texPlatObj->m_format;
 		
+		D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
+
 		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
 		{
-			flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+			resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+			if (heapFlags & D3D12_HEAP_FLAG_CREATE_NOT_ZEROED)
+			{
+				// Ensure we zero at creation to avoid DX12's RT/DS manual clear requirement
+				heapFlags ^= D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
+			}
 
 			optimizedClearValue.Color[0] = texParams.m_optimizedClear.m_color.r;
 			optimizedClearValue.Color[1] = texParams.m_optimizedClear.m_color.g;
@@ -348,7 +356,13 @@ namespace
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
-			flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+			resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+			if (heapFlags & D3D12_HEAP_FLAG_CREATE_NOT_ZEROED)
+			{
+				// Ensure we zero at creation to avoid DX12's RT/DS manual clear requirement
+				heapFlags ^= D3D12_HEAP_FLAG_CREATE_NOT_ZEROED;
+			}
 
 			optimizedClearValue.DepthStencil.Depth = texParams.m_optimizedClear.m_depthStencil.m_depth;
 			optimizedClearValue.DepthStencil.Stencil = texParams.m_optimizedClear.m_depthStencil.m_stencil;
@@ -373,7 +387,7 @@ namespace
 				texParams.m_width,
 				texParams.m_arraySize,
 				numMips,
-				flags,
+				resourceFlags,
 				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
 				0);								// alignment
 		}
@@ -389,7 +403,7 @@ namespace
 				numMips,
 				1,								// sampleCount
 				0,								// sampleQuality
-				flags,
+				resourceFlags,
 				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
 				0);								// alignment
 		}
@@ -402,7 +416,7 @@ namespace
 				texParams.m_height,
 				texParams.m_arraySize,			// Number of depth slices
 				numMips,
-				flags,
+				resourceFlags,
 				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
 				0);								// alignment
 		}
@@ -418,7 +432,7 @@ namespace
 				numMips,
 				1,								// sampleCount
 				0,								// sampleQuality
-				flags,
+				resourceFlags,
 				D3D12_TEXTURE_LAYOUT_UNKNOWN,	// layout
 				0);								// alignment
 		}
@@ -437,7 +451,9 @@ namespace
 				.m_optimizedClearValue = optimizedClearValue,
 				.m_heapType = D3D12_HEAP_TYPE_DEFAULT,
 				.m_initialState = k_initialState,
-				.m_isMSAATexture = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Enabled)},
+				.m_isMSAATexture = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Enabled),
+				.m_createAsComitted = false,
+			},
 			texture->GetWName().c_str());
 
 		return k_initialState;

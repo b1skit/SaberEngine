@@ -1,8 +1,11 @@
 // © 2024 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
+#include "Debug_DX12.h"
 #include "HeapManager_DX12.h"
 #include "SysInfo_DX12.h"
 
+#include "Core/Util/HashKey.h"
+#include "Core/Util/HashUtils.h"
 #include "Core/Util/MathUtils.h"
 
 
@@ -416,6 +419,7 @@ namespace
 	{
 		util::HashKey resourceHeapKey = 0;
 		util::AddDataBytesToHash(resourceHeapKey, resourceDesc.m_heapType);
+		util::AddDataBytesToHash(resourceHeapKey, resourceDesc.m_heapFlags);
 		util::AddDataBytesToHash(resourceHeapKey, resourceDesc.m_isMSAATexture);
 
 		util::AddDataBytesToHash(resourceHeapKey, heapAlignment);
@@ -500,6 +504,13 @@ namespace
 			resourceDesc.m_initialState == D3D12_RESOURCE_STATE_COPY_DEST,
 			"Placed resource created in the D3D12_HEAP_TYPE_READBACK heap must have a D3D12_RESOURCE_STATE_COPY_DEST "
 			"initial state");
+
+		SEAssert((resourceDesc.m_heapFlags & D3D12_HEAP_FLAG_CREATE_NOT_ZEROED) == 0 ||
+			((resourceDesc.m_resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == 0 && 
+				((resourceDesc.m_resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == 0)),
+			"Placed/reserved/committed resources with D3D12_HEAP_FLAG_CREATE_NOT_ZEROED flag with render target or "
+			"depth stencil flags must be initialized with a Discard/Clear/Copy operations before other operations are "
+			"supported. Thus, we mandate that they must be zeroed at create time here");
 #endif
 	}
 }
@@ -919,13 +930,14 @@ namespace dx12
 
 
 	HeapDesc::HeapDesc(
-		D3D12_HEAP_TYPE heapType, 
+		D3D12_HEAP_TYPE heapType,
+		D3D12_HEAP_FLAGS heapFlags,
 		uint32_t alignment, 
 		bool allowMSAATextures, 
 		uint32_t creationNodeMask, 
 		uint32_t visibleNodeMask)
 		: m_heapType(heapType)
-		, m_heapFlags(D3D12_HEAP_FLAG_CREATE_NOT_ZEROED)
+		, m_heapFlags(heapFlags)
 		, m_alignment(alignment)
 		, m_creationNodeMask(creationNodeMask)
 		, m_visibleNodeMask(visibleNodeMask)
@@ -1069,11 +1081,11 @@ namespace dx12
 		}
 
 		const HRESULT hr = s_device->CreateCommittedResource(
-			&heapProperties,					// Heap properties
-			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-			&committedResourceDesc.m_resourceDesc,		// Resource desc
+			&heapProperties,						// Heap properties
+			committedResourceDesc.m_heapFlags,		// Heap Flags
+			&committedResourceDesc.m_resourceDesc,	// Resource desc
 			committedResourceDesc.m_initialState,
-			clearVal,							// Optimized clear value
+			clearVal,								// Optimized clear value
 			IID_PPV_ARGS(&m_resource));
 		CheckHResult(hr, "Failed to create committed resource for mutable buffer");
 
@@ -1346,8 +1358,8 @@ namespace dx12
 
 		const uint32_t destinationHeapAlignment = ResourceDescToHeapAlignment(resourceDesc);
 
-		const util::HashKey resourceHeapKey =
-			ComputePagedResourceHeapHash(resourceDesc, destinationHeapAlignment, m_canMixResourceTypes);
+		const util::HashKey resourceHeapKey = ComputePagedResourceHeapHash(
+			resourceDesc, destinationHeapAlignment, m_canMixResourceTypes);
 
 		// Find the PagedResourceHeap we need using a shared lock (unless we need to create a new PagedResourceHeap):
 		PagedResourceHeap* pagedResourceHeap = nullptr;
@@ -1367,6 +1379,7 @@ namespace dx12
 						std::make_unique<PagedResourceHeap>(
 							HeapDesc(
 								resourceDesc.m_heapType,
+								resourceDesc.m_heapFlags,
 								destinationHeapAlignment,
 								resourceDesc.m_isMSAATexture,
 								creationNodeMask,
