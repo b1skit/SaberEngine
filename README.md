@@ -39,6 +39,8 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering research & deve
   - **Inline ray traced** shadows
   - **Radiometrically-correct screen-space ambient occlusion** (Intel XeGTAO)
   - **Ray traced ambient occlusion** (RTAO)
+  - **Ray differentials** for texture & environment map mip level calculations
+  - **Reference path tracer** for ground-truth rendering comparisons
   - **ACES filmic response** and Reinhard tone mapping
   - Physically-based **camera** & exposure settings
   - Physically-based **emissive** lighting & bloom
