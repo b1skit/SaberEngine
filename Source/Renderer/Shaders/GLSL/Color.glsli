@@ -38,9 +38,16 @@ vec4 LinearToSRGB(vec4 linearColorWithAlpha)
 }
 
 
+float LinearToLuminance(vec3 linearColor)
+{
+	// https://en.wikipedia.org/wiki/Luma_(video)
+	return dot(linearColor, vec3(0.2126f, 0.7152f, 0.0722f));
+}
+
+
 float sRGBToLuminance(vec3 sRGB)
 {	
-	return dot(sRGB, vec3(0.2126f, 0.7152f, 0.0722f));
+	return LinearToLuminance(sRGBToLinear(sRGB));
 }
 
 

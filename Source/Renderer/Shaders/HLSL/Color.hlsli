@@ -31,9 +31,16 @@ float4 LinearToSRGB(float4 linearColorWithAlpha)
 }
 
 
+float LinearToLuminance(float3 linearColor)
+{
+	// https://en.wikipedia.org/wiki/Luma_(video)
+	return dot(linearColor, float3(0.2126f, 0.7152f, 0.0722f));
+}
+
+
 float sRGBToLuminance(float3 sRGB)
 {	
-	return dot(sRGB, float3(0.2126f, 0.7152f, 0.0722f));
+	return LinearToLuminance(sRGBToLinear(sRGB));
 }
 
 
