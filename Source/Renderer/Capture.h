@@ -107,7 +107,10 @@ namespace re
 
 	public:
 		static void RequestGPUCapture(uint32_t numFrames, std::string const& captureOutputDirectory);
+		static void RequestGPUCapture(uint32_t numFrames);
+
 		static void RequestCPUCapture(PIXCPUCaptureSettings const&, std::string const& captureOutputDirectory);
+		static void RequestCPUCapture(PIXCPUCaptureSettings const&);
 
 
 	public:

@@ -307,6 +307,16 @@ namespace re
 	}
 
 
+	void PIXCapture::RequestGPUCapture(uint32_t numFrames)
+	{
+		std::string const& pixFilePath = std::format("{}\\{}\\",
+			core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+			core::configkeys::k_pixCaptureFolderName);
+
+		RequestGPUCapture(numFrames, pixFilePath);
+	}
+
+
 	void PIXCapture::RequestCPUCapture(
 		PIXCPUCaptureSettings const& captureSettings, std::string const& captureOutputDirectory)
 	{
@@ -331,6 +341,16 @@ namespace re
 			std::unique_ptr<PIXCapture> newCapture(new PIXCapture(captureSettings, std::string(captureOutputDirectory)));
 			s_context->RequestCapture(std::move(newCapture));
 		}
+	}
+
+
+	void PIXCapture::RequestCPUCapture(PIXCPUCaptureSettings const& captureSettings)
+	{
+		std::string const& pixFilePath = std::format("{}\\{}\\",
+			core::Config::GetValueAsString(core::configkeys::k_documentsFolderPathKey),
+			core::configkeys::k_pixCaptureFolderName);
+
+		RequestCPUCapture(captureSettings, pixFilePath);
 	}
 
 
@@ -391,7 +411,22 @@ namespace re
 		break;
 		case CaptureType::GPU:
 		{
-			return true; // GPU captures are triggered immediately
+			// Note: The caller is expected to call this immediately after TriggerCapture(), thus we post-decrement
+			// m_numGPUFrames here (which will underflow on the final iteration, which is fine)
+			const bool isComplete = m_numGPUFrames-- == 0;
+
+			if (isComplete)
+			{
+				const HRESULT gpuCaptureEndResult = PIXEndCapture(false);
+				if (gpuCaptureEndResult != S_OK)
+				{
+					const _com_error comError(gpuCaptureEndResult);
+					const std::string errorMessage = util::FromWideCString(comError.ErrorMessage());
+
+					LOG_ERROR("Failed to end PIX GPU capture: \"%s\"", errorMessage.c_str());
+				}
+			}
+			return isComplete;
 		}
 		break;
 		default: SEAssertF("Invalid PIX capture type");
@@ -438,7 +473,7 @@ namespace re
 				}
 			};
 
-			const HRESULT timingCaptureStartResult = PIXBeginCapture(captureFlags, &pixCaptureParams);
+			const HRESULT timingCaptureStartResult = ::PIXBeginCapture(captureFlags, &pixCaptureParams);
 			if (timingCaptureStartResult == S_OK)
 			{
 				m_cpuCaptureTimer.Start();
@@ -459,7 +494,13 @@ namespace re
 		break;
 		case CaptureType::GPU:
 		{
-			const HRESULT gpuHRESULT = ::PIXGpuCaptureNextFrames(filepath.c_str(), m_numGPUFrames);
+			PIXCaptureParameters pixCaptureParams = PIXCaptureParameters{
+				.GpuCaptureParameters{
+					.FileName = filepath.c_str(),
+				}
+			};
+
+			const HRESULT gpuHRESULT = ::PIXBeginCapture(PIX_CAPTURE_GPU, &pixCaptureParams);
 			if (gpuHRESULT != S_OK)
 			{
 				const _com_error comError(gpuHRESULT);
