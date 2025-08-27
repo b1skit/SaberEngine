@@ -81,15 +81,25 @@ namespace core
 
 		inline void Initialize(util::HashKey objectID, InvPtr<T> const& invPtr)
 		{
+			{
+				std::lock_guard<std::mutex> lock(m_invPtrMutex);
+				m_invPtr = invPtr;
+			}
+
 			ILoadContextBase::Initialize(objectID);
-			m_invPtr = invPtr;
 		}
 
-		inline void					CallOnLoadBegin()				{ OnLoadBegin(m_invPtr); }
-		inline std::unique_ptr<T>	CallLoad()						{ return Load(m_invPtr); }
-		inline void					CallOnLoadComplete() override	{ OnLoadComplete(m_invPtr); }
+		inline void CallOnLoadBegin()				
+			{ std::lock_guard<std::mutex> lock(m_invPtrMutex); OnLoadBegin(m_invPtr); }
+		
+		inline std::unique_ptr<T>	CallLoad()						
+			{ std::lock_guard<std::mutex> lock(m_invPtrMutex); return Load(m_invPtr); }
+		
+		inline void	CallOnLoadComplete() override	
+			{ std::lock_guard<std::mutex> lock(m_invPtrMutex); OnLoadComplete(m_invPtr); }
 
 		InvPtr<T> m_invPtr;
+		std::mutex m_invPtrMutex; // Guard against races when initializing/using the InvPtr
 
 
 	public:
