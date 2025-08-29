@@ -158,7 +158,6 @@ $(TargetPath) -projectRoot $(SolutionDir) -buildconfig Debug</Command>
       <AdditionalIncludeDirectories>$(ProjectDir)pch\;$(ProjectDir)..\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>

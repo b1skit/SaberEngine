@@ -108,7 +108,6 @@ xcopy "$(OutDir)dxil.dll" "$(SolutionDir)SaberEngine\" /y</Command>
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)Source\;$(ProjectDir)pch\;$(SolutionDir)Source\Dependencies\imgui\;$(SolutionDir)Source\Dependencies\Welder\;$(SolutionDir)Source\Dependencies\MikkTSpace\;$(SolutionDir)Source\Dependencies\glew\include\;$(SolutionDir)Source\Dependencies\stb\;$(SolutionDir)Source\Dependencies\RenderDoc\;$(SolutionDir)Source\Dependencies\XeGTAO\;$(SolutionDir)Source\Dependencies\Aftermath\include\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <BasicRuntimeChecks>StackFrameRuntimeCheck</BasicRuntimeChecks>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
