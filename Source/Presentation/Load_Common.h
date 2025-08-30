@@ -6,6 +6,10 @@ namespace core
 {
 	class Inventory;
 }
+namespace grutil
+{
+	struct AliasTableData;
+}
 
 namespace load
 {
@@ -70,12 +74,16 @@ namespace load
 			Never,
 		};
 		ActivationMode m_activationMode = ActivationMode::Always;
+		bool m_creatEntity = true; // Disable entity creation if we're just loading the texture resource
+
+		std::unique_ptr<grutil::AliasTableData> m_aliasTableData; // For sampling the IBL
 	};
 
 	core::InvPtr<re::Texture> ImportIBL(
 		std::string const& filepath,
 		IBLTextureFromFilePath::ActivationMode activationMode,
-		bool makePermanent = false);
+		bool makePermanent = false,
+		bool createEntity = true);
 
 
 	struct CameraMetadata final

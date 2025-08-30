@@ -11,9 +11,12 @@
 #include "Core/Inventory.h"
 #include "Core/Logger.h"
 
+#include "Core/Definitions/ConfigKeys.h"
+
 #include "Core/Host/PerformanceTimer.h"
 
 #include "Renderer/Context.h"
+#include "Renderer/GraphicsUtils.h"
 #include "Renderer/Texture.h"
 
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
@@ -428,26 +431,6 @@ namespace load
 	}
 
 
-	// Assemble a name for textures loaded from memory: Either use the provided name, or create a unique one
-	std::string GenerateEmbeddedTextureName(char const* texName)
-	{
-		std::string texNameStr;
-
-		if (texName != nullptr)
-		{
-			texNameStr = std::string(texName);
-		}
-		else
-		{
-			static std::atomic<uint32_t> unnamedTexIdx = 0;
-			const uint32_t thisTexIdx = unnamedTexIdx.fetch_add(1);
-			texNameStr = "EmbeddedTexture_" + std::to_string(thisTexIdx);
-		}
-
-		return texNameStr;
-	}
-
-
 	// We override this so we can skip the early registration (which would make the render thread wait)
 	void IBLTextureFromFilePath::OnLoadBegin(core::InvPtr<re::Texture>&)
 	{
@@ -459,6 +442,11 @@ namespace load
 	{
 		std::unique_ptr<re::Texture> result = load::TextureFromFilePath<re::Texture>::Load(newIBL);
 
+		// TODO: For now, we always create alias table data even if it's not required, as we won't know until the render
+		// pipeline is fully created if ray tracing is enabled or not. Instead, we should create this on the GPU IFF
+		// it's actually required
+		m_aliasTableData = grutil::CreateAliasTableData(result->GetTextureParams(), result->GetInitialData());
+
 		// Register for API-layer creation now that we've loaded the (typically large amount of) data
 		GetContext()->RegisterForCreate(newIBL);
 
@@ -468,6 +456,11 @@ namespace load
 
 	void IBLTextureFromFilePath::OnLoadComplete(core::InvPtr<re::Texture>& newIBL)
 	{
+		if (m_creatEntity == false)
+		{
+			return; // Early out: We're just loading the IBL texture
+		}
+
 		pr::EntityManager* em = GetEntityManager();
 
 		em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
@@ -508,8 +501,12 @@ namespace load
 	core::InvPtr<re::Texture> ImportIBL(
 		std::string const& filepath,
 		IBLTextureFromFilePath::ActivationMode activationMode,
-		bool makePermanent /*= false*/)
+		bool makePermanent /*= false*/,
+		bool createEntity /*= true*/)
 	{
+		SEAssert(createEntity || makePermanent,
+			"It doesn't make sense to create a non-permanent IBL without creating an entity");
+		
 		std::shared_ptr<IBLTextureFromFilePath> loadContext = std::make_shared<IBLTextureFromFilePath>();
 
 		loadContext->m_retentionPolicy = makePermanent ?
@@ -520,6 +517,7 @@ namespace load
 		loadContext->m_mipMode = re::Texture::MipMode::AllocateGenerate;
 		loadContext->m_filePath = filepath;
 		loadContext->m_activationMode = activationMode;
+		loadContext->m_creatEntity = createEntity;
 
 		return core::Inventory::Get<re::Texture>(util::HashKey(filepath), loadContext);
 	}

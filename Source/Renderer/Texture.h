@@ -47,8 +47,11 @@ namespace re
 			virtual uint32_t ArrayDepth() const { return m_arrayDepth; }
 			virtual uint8_t NumFaces() const { return m_numFaces; }
 			virtual void* GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx) = 0;
+			void const* GetDataBytes(uint8_t arrayIdx, uint8_t faceIdx) const
+				{ return const_cast<IInitialData*>(this)->GetDataBytes(arrayIdx, faceIdx); };
 			virtual void Clear() = 0;
 
+		protected:
 			uint32_t m_arrayDepth;
 			uint8_t m_numFaces;
 			uint32_t m_bytesPerFace;
@@ -268,6 +271,10 @@ namespace re
 
 		ResourceHandle GetResourceHandle(re::ViewType) const;
 
+		IInitialData const* GetInitialData() const;
+
+
+	public:
 		static void ShowImGuiWindow(core::InvPtr<re::Texture> const&);
 
 
@@ -395,6 +402,13 @@ namespace re
 		default: SEAssertF("Invalid view type");
 		}
 		return INVALID_RESOURCE_IDX; // This should never happen
+	}
+
+
+	inline Texture::IInitialData const* Texture::GetInitialData() const
+	{
+		SEAssert(m_initialData != nullptr, "Texture has no initial data, was it already cleared?");
+		return m_initialData.get();
 	}
 
 

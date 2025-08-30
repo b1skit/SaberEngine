@@ -148,7 +148,7 @@ namespace pr
 		}
 		else if (fileExtension == "hdr") // Assume we want to create an IBL from the loaded texture
 		{
-			load::ImportIBL(filePath, load::IBLTextureFromFilePath::ActivationMode::Always);
+			load::ImportIBL(filePath, load:: IBLTextureFromFilePath::ActivationMode::Always);
 			success = true;
 		}
 
@@ -169,13 +169,11 @@ namespace pr
 	{
 		LOG("Generating default resources...");
 
-		load::ImportTexture(
-			core::configkeys::k_defaultEngineIBLFilePath,
-			re::Texture::k_errorTextureColor,
-			re::Texture::Format::RGBA8_UNORM, // Fallback to something simple
-			re::Texture::ColorSpace::Linear,
-			re::Texture::MipMode::AllocateGenerate,
-			true);
+		load::ImportIBL(
+			core::configkeys::k_defaultEngineIBLFilePath, 
+			load::IBLTextureFromFilePath::ActivationMode::Never, // Unused: we're not creating an entity
+			true, // Make permanent: This is the default IBL
+			false); // Don't create an entity yet: We're just triggering asset loading here
 
 		load::GenerateDefaultGLTFMaterial();
 	}

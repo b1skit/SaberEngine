@@ -320,6 +320,7 @@
     <ClCompile Include="GraphicsSystem_DeferredUnlit.cpp" />
     <ClCompile Include="GraphicsSystem_VertexAnimation.cpp" />
     <ClCompile Include="GraphicsSystem_XeGTAO.cpp" />
+    <ClCompile Include="GraphicsUtils.cpp" />
     <ClCompile Include="IndexedBuffer.cpp" />
     <ClCompile Include="LightParamsHelpers.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
