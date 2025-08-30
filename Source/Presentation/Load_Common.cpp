@@ -465,10 +465,10 @@ namespace load
 
 		em->EnqueueEntityCommand([em, newIBL, activationMode = m_activationMode]()
 			{
-				const bool ambientExists = em->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
+				const bool ambientExists = em->EntityExists<pr::LightComponent::IBLDeferredMarker>();
 
 				// Create an Ambient LightComponent, and make it active if requested:
-				const entt::entity ambientLight = pr::LightComponent::CreateDeferredAmbientLightConcept(
+				const entt::entity ambientLight = pr::LightComponent::CreateImageBasedLightConcept(
 					*em,
 					newIBL->GetName().c_str(),
 					newIBL);

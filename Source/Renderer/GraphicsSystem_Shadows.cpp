@@ -52,7 +52,7 @@ namespace
 		case gr::Light::Directional: return re::TextureView(re::TextureView::Texture2DArrayView{ 0, 1, shadowTexArrayIdx, 1 });
 		case gr::Light::Point: return re::TextureView(re::TextureView::Texture2DArrayView{ 0, 1, shadowTexArrayIdx * 6, 6 });
 		case gr::Light::Spot: return re::TextureView(re::TextureView::Texture2DArrayView{ 0, 1, shadowTexArrayIdx, 1 });
-		case gr::Light::AmbientIBL:
+		case gr::Light::IBL:
 		default: SEAssertF("Invalid light type");
 		}
 		return re::TextureView(re::TextureView::Texture2DArrayView{ 0, 1, shadowTexArrayIdx, 1 }); // This should never happen
@@ -325,7 +325,7 @@ namespace gr
 					itr->Get<gr::Camera::RenderData>());
 			}
 			break;
-			case gr::Light::AmbientIBL:
+			case gr::Light::IBL:
 			default: SEAssertF("Invalid light type");
 			}
 		}
@@ -373,7 +373,7 @@ namespace gr
 					shadowStageData.m_shadowRenderCameraParams.GetBuffer()->Commit(cubemapShadowParams);
 				}
 				break;
-				case gr::Light::AmbientIBL:
+				case gr::Light::IBL:
 				default: SEAssertF("Invalid light type");
 				}
 			}
@@ -417,7 +417,7 @@ namespace gr
 				clearItr = m_stagePipeline->AppendStageForSingleFrame(m_pointParentStageItr, itr.second.m_clearStage);
 			}
 			break;
-			case gr::Light::AmbientIBL:
+			case gr::Light::IBL:
 			default: SEAssertF("Invalid light type");
 			}
 
@@ -531,7 +531,7 @@ namespace gr
 						}
 					}
 					break;
-					case gr::Light::AmbientIBL:
+					case gr::Light::IBL:
 					default: SEAssertF("Invalid light type");
 					}
 				}
@@ -590,7 +590,7 @@ namespace gr
 			return GetShadowArrayIndex(m_spotShadowTexMetadata, lightID);
 		}
 		break;
-		case gr::Light::AmbientIBL:
+		case gr::Light::IBL:
 		default: SEAssertF("Invalid light type");
 		}
 		return 0; // This should never happen
@@ -710,7 +710,7 @@ namespace gr
 				case gr::Light::Type::Directional: AddShadowToMetadata(m_directionalShadowTexMetadata); break;
 				case gr::Light::Type::Point: AddShadowToMetadata(m_pointShadowTexMetadata); break;
 				case gr::Light::Type::Spot: AddShadowToMetadata(m_spotShadowTexMetadata); break;
-				case gr::Light::Type::AmbientIBL:
+				case gr::Light::Type::IBL:
 				default: SEAssertF("Invalid light type");
 				}
 			}
@@ -785,7 +785,7 @@ namespace gr
 						shadowUpdateEventName = &greventkey::GS_Shadows_SpotShadowArrayUpdated;
 					}
 					break;
-					case gr::Light::AmbientIBL:
+					case gr::Light::IBL:
 					default: SEAssertF("Invalid light type");
 					}
 

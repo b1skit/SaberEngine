@@ -544,7 +544,7 @@ namespace gr
 
 		PopulateTypesImGuiHelper<gr::Bounds::RenderData>(names, "Bounds::RenderData");
 		PopulateTypesImGuiHelper<gr::Camera::RenderData>(names, "Camera::RenderData");
-		PopulateTypesImGuiHelper<gr::Light::RenderDataAmbientIBL>(names, "Light::RenderDataAmbientIBL");
+		PopulateTypesImGuiHelper<gr::Light::RenderDataIBL>(names, "Light::RenderDataAmbientIBL");
 		PopulateTypesImGuiHelper<gr::Light::RenderDataDirectional>(names, "Light::RenderDataDirectional");
 		PopulateTypesImGuiHelper<gr::Light::RenderDataPoint>(names, "Light::RenderDataPoint");
 		PopulateTypesImGuiHelper<gr::Light::RenderDataSpot>(names, "Light::RenderDataSpot");

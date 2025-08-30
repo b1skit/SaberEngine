@@ -79,10 +79,10 @@ namespace pr
 		m_entityManager->EnqueueEntityCommand([this, defaultIBL]()
 			{
 				// Create an Ambient LightComponent, and make it active if requested:
-				const bool ambientExists = m_entityManager->EntityExists<pr::LightComponent::AmbientIBLDeferredMarker>();
+				const bool ambientExists = m_entityManager->EntityExists<pr::LightComponent::IBLDeferredMarker>();
 				if (!ambientExists)
 				{
-					const entt::entity ambientLight = pr::LightComponent::CreateDeferredAmbientLightConcept(
+					const entt::entity ambientLight = pr::LightComponent::CreateImageBasedLightConcept(
 						*m_entityManager,
 						defaultIBL->GetName().c_str(),
 						defaultIBL);

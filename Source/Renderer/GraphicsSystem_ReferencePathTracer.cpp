@@ -178,8 +178,8 @@ namespace gr
 				{
 					gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-					gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-						renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(activeAmbientLightID);
+					gr::Light::RenderDataIBL const& ambientRenderData =
+						renderData.GetObjectData<gr::Light::RenderDataIBL>(activeAmbientLightID);
 
 					m_environmentMap = ambientRenderData.m_iblTex;
 				}

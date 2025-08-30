@@ -16,7 +16,7 @@ namespace
 		case pr::Light::Type::Directional: return pr::ShadowMap::ShadowType::Orthographic;
 		case pr::Light::Type::Point: return pr::ShadowMap::ShadowType::CubeMap;
 		case pr::Light::Type::Spot: return pr::ShadowMap::ShadowType::Perspective;
-		case pr::Light::Type::AmbientIBL:
+		case pr::Light::Type::IBL:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
 		}
@@ -63,7 +63,7 @@ namespace
 			shadowParams.m_softness = core::Config::GetValue<float>(core::configkeys::k_defaultPointLightShadowSoftnessKey);
 		}
 		break;
-		case pr::Light::Type::AmbientIBL:
+		case pr::Light::Type::IBL:
 		default: SEAssertF("Invalid light type");
 		}
 	}

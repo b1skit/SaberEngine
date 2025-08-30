@@ -17,7 +17,7 @@ namespace gr
 	public:
 		enum Type : uint8_t
 		{
-			AmbientIBL,
+			IBL,
 			Directional,
 			Point,
 			Spot,
@@ -27,7 +27,7 @@ namespace gr
 		static constexpr char const* LightTypeToCStr(Light::Type);
 
 
-		struct RenderDataAmbientIBL
+		struct RenderDataIBL
 		{
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
@@ -43,10 +43,10 @@ namespace gr
 			float m_specularScale = 1.f;
 
 		public:
-			RenderDataAmbientIBL(char const* name, gr::RenderDataID, gr::TransformID);
+			RenderDataIBL(char const* name, gr::RenderDataID, gr::TransformID);
 
 		private:
-			RenderDataAmbientIBL() = delete;
+			RenderDataIBL() = delete;
 		};
 
 
@@ -143,7 +143,7 @@ namespace gr
 	{
 		switch (lightType)
 		{
-			case AmbientIBL: return "AmbientIBL";
+			case IBL: return "IBL";
 			case Directional: return "Directional";
 			case Point: return "Point";
 			case Spot: return "Spot";

@@ -24,8 +24,8 @@ namespace pr
 	class LightComponent final
 	{
 	public:
-		struct AmbientIBLDeferredMarker final {};
-		struct IsActiveAmbientDeferredMarker final {};
+		struct IBLDeferredMarker final {};
+		struct IsActiveIBLMarker final {};
 
 		struct PointDeferredMarker final {};
 		struct SpotDeferredMarker final {};
@@ -33,7 +33,7 @@ namespace pr
 
 
 	public:
-		static entt::entity CreateDeferredAmbientLightConcept(EntityManager&, std::string_view name, core::InvPtr<re::Texture> const& iblTex);
+		static entt::entity CreateImageBasedLightConcept(EntityManager&, std::string_view name, core::InvPtr<re::Texture> const&);
 
 		static LightComponent& AttachDeferredPointLightConcept(
 			pr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
@@ -45,7 +45,7 @@ namespace pr
 			pr::EntityManager&, entt::entity, std::string_view name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 	public:
-		static gr::Light::RenderDataAmbientIBL CreateRenderDataAmbientIBL_Deferred(
+		static gr::Light::RenderDataIBL CreateRenderDataAmbientIBL_Deferred(
 			pr::NameComponent const&, pr::LightComponent const&);
 		
 		static gr::Light::RenderDataDirectional CreateRenderDataDirectional_Deferred(
@@ -93,7 +93,7 @@ namespace pr
 			PrivateCTORTag, 
 			pr::RenderDataComponent const&,
 			core::InvPtr<re::Texture> const& iblTex,
-			const pr::Light::Type = pr::Light::Type::AmbientIBL); // Ambient light only
+			const pr::Light::Type = pr::Light::Type::IBL); // Ambient light only
 	};
 
 
@@ -115,7 +115,7 @@ namespace pr
 		gr::Light::Type m_type;
 		union
 		{
-			gr::Light::RenderDataAmbientIBL m_ambientData;
+			gr::Light::RenderDataIBL m_ambientData;
 			gr::Light::RenderDataDirectional m_directionalData;
 			gr::Light::RenderDataPoint m_pointData;
 			gr::Light::RenderDataSpot m_spotData;

@@ -685,7 +685,7 @@ namespace gr
 								InstanceIndexData::s_shaderName, std::views::single(lightID)));
 						}
 						break;						
-						case gr::Light::Type::AmbientIBL:
+						case gr::Light::Type::IBL:
 						default: SEAssertF("Invalid light type");
 						}
 
@@ -722,7 +722,7 @@ namespace gr
 					AddBatch(m_spotStage.get());
 				}
 				break;
-				case gr::Light::Type::AmbientIBL:
+				case gr::Light::Type::IBL:
 				default: SEAssertF("Invalid light type");
 				}
 			}

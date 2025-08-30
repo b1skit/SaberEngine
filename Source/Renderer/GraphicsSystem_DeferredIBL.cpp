@@ -407,8 +407,7 @@ namespace gr
 		BufferDependencies const& bufferDependencies,
 		DataDependencies const& dataDependencies)
 	{
-		gr::Stage::GraphicsStageParams gfxStageParams;
-		m_ambientStage = gr::Stage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
+		m_ambientStage = gr::Stage::CreateGraphicsStage("Ambient light stage", {});
 
 		// Create the lighting target set:
 		m_lightingTargetSet->SetColorTarget(
@@ -517,7 +516,7 @@ namespace gr
 
 		// Removed any deleted ambient lights, and null out the active ambient light tracking if necessary:
 		std::vector<gr::RenderDataID> const* deletedAmbientIDs =
-			renderData.GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+			renderData.GetIDsWithDeletedData<gr::Light::RenderDataIBL>();
 		if (deletedAmbientIDs)
 		{
 			for (auto const& deletedAmbientID : *deletedAmbientIDs)
@@ -532,16 +531,16 @@ namespace gr
 
 
 		// Register new ambient lights:
-		if (renderData.HasIDsWithNewData<gr::Light::RenderDataAmbientIBL>())
+		if (renderData.HasIDsWithNewData<gr::Light::RenderDataIBL>())
 		{
 			std::vector<gr::RenderDataID> const* newAmbientIDs =
-				renderData.GetIDsWithNewData<gr::Light::RenderDataAmbientIBL>();
+				renderData.GetIDsWithNewData<gr::Light::RenderDataIBL>();
 
 			if (newAmbientIDs)
 			{
 				for (auto const& ambientItr : gr::IDAdapter(renderData, *newAmbientIDs))
 				{
-					gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataAmbientIBL>();
+					gr::Light::RenderDataIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataIBL>();
 
 					const gr::RenderDataID lightID = ambientData.m_renderDataID;
 
@@ -603,10 +602,10 @@ namespace gr
 		{
 			const gr::RenderDataID lightID = ambientLight.first;
 
-			if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(lightID))
+			if (renderData.IsDirty<gr::Light::RenderDataIBL>(lightID))
 			{
-				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(lightID);
+				gr::Light::RenderDataIBL const& ambientRenderData =
+					renderData.GetObjectData<gr::Light::RenderDataIBL>(lightID);
 
 				const uint32_t totalPMREMMipLevels = ambientLight.second.m_PMREMTex->GetNumMips();
 

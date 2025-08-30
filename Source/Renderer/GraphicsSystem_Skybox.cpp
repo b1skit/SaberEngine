@@ -158,8 +158,8 @@ namespace gr
 
 			if (m_activeAmbientLightID != gr::k_invalidRenderDataID)
 			{
-				gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-					renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightID);
+				gr::Light::RenderDataIBL const& ambientRenderData =
+					renderData.GetObjectData<gr::Light::RenderDataIBL>(m_activeAmbientLightID);
 
 				m_skyTexture = ambientRenderData.m_iblTex;
 			}

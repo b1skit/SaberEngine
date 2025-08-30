@@ -10,7 +10,7 @@ namespace pr
 	public:
 		enum Type : uint8_t
 		{
-			AmbientIBL,
+			IBL,
 			Directional,
 			Point,
 			Spot,
@@ -21,7 +21,7 @@ namespace pr
 			static_cast<uint8_t>(gr::Light::Type::Type_Count));
 
 		static constexpr std::array<char const*, pr::Light::Type::Type_Count> k_lightTypeNames = {
-			"Ambient Light",
+			"Image Based Light",
 			"Directional Light",
 			"Point Light",
 			"Spot Light",
@@ -34,7 +34,7 @@ namespace pr
 
 	public:
 		Light(Type lightType, glm::vec4 const& colorIntensity);
-		Light(core::InvPtr<re::Texture> const& iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
+		Light(core::InvPtr<re::Texture> const& iblTex, Type = Type::IBL); // IBL-only CTOR
 
 		Light(pr::Light&&) noexcept = default;
 		Light& operator=(pr::Light&&) noexcept = default;
@@ -56,11 +56,11 @@ namespace pr
 	public:
 		struct TypeProperties final
 		{
-			struct AmbientProperties
+			struct IBLProperties
 			{
 				core::InvPtr<re::Texture> m_IBLTex;
 
-				bool m_isActive; // Note: Only *one* ambient light can be active at any time
+				bool m_isActive; // Note: Only *one* IBL can be active at any time
 
 				float m_diffuseScale;
 				float m_specularScale;
@@ -92,7 +92,7 @@ namespace pr
 			Type m_type;
 			union
 			{
-				AmbientProperties m_ambient;
+				IBLProperties m_ibl;
 				DirectionalProperties m_directional;
 				PointProperties m_point;
 				SpotProperties m_spot;
@@ -130,7 +130,7 @@ namespace pr
 	{
 		switch (frLightType)
 		{
-		case pr::Light::Type::AmbientIBL: return gr::Light::Type::AmbientIBL;
+		case pr::Light::Type::IBL: return gr::Light::Type::IBL;
 		case pr::Light::Type::Directional: return gr::Light::Type::Directional;
 		case pr::Light::Type::Point: return gr::Light::Type::Point;
 		case pr::Light::Type::Spot: return gr::Light::Type::Spot;

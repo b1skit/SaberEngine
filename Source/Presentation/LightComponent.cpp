@@ -20,7 +20,6 @@
 
 #include "Renderer/MeshFactory.h"
 #include "Renderer/RenderDataManager.h"
-#include "Renderer/RenderSystem.h"
 
 
 namespace
@@ -51,7 +50,7 @@ namespace
 
 namespace pr
 {
-	entt::entity LightComponent::CreateDeferredAmbientLightConcept(
+	entt::entity LightComponent::CreateImageBasedLightConcept(
 		EntityManager& em, std::string_view name, core::InvPtr<re::Texture> const& iblTex)
 	{
 		SEAssert(!name.empty() && iblTex, "IBL name or texture cannot be null");
@@ -77,7 +76,7 @@ namespace pr
 			PrivateCTORTag{}, 
 			*renderDataComponent,
 			iblTex);
-		em.EmplaceComponent<AmbientIBLDeferredMarker>(lightEntity);
+		em.EmplaceComponent<IBLDeferredMarker>(lightEntity);
 
 		// Mark our new LightComponent as dirty:
 		em.EmplaceComponent<DirtyMarker<pr::LightComponent>>(lightEntity);
@@ -263,10 +262,10 @@ namespace pr
 
 
 
-	gr::Light::RenderDataAmbientIBL LightComponent::CreateRenderDataAmbientIBL_Deferred(
+	gr::Light::RenderDataIBL LightComponent::CreateRenderDataAmbientIBL_Deferred(
 		pr::NameComponent const& nameCmpt, pr::LightComponent const& lightCmpt)
 	{
-		gr::Light::RenderDataAmbientIBL renderData(
+		gr::Light::RenderDataIBL renderData(
 			nameCmpt.GetName().c_str(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
@@ -274,15 +273,15 @@ namespace pr
 		pr::Light const& light = lightCmpt.m_light;
 
 		pr::Light::TypeProperties const& typeProperties =
-			light.GetLightTypeProperties(pr::Light::Type::AmbientIBL);
-		SEAssert(typeProperties.m_ambient.m_IBLTex, "IBL texture cannot be null");
+			light.GetLightTypeProperties(pr::Light::Type::IBL);
+		SEAssert(typeProperties.m_ibl.m_IBLTex, "IBL texture cannot be null");
 
-		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
+		renderData.m_iblTex = typeProperties.m_ibl.m_IBLTex;
 
-		renderData.m_isActive = typeProperties.m_ambient.m_isActive;
+		renderData.m_isActive = typeProperties.m_ibl.m_isActive;
 
-		renderData.m_diffuseScale = typeProperties.m_diffuseEnabled * typeProperties.m_ambient.m_diffuseScale;
-		renderData.m_specularScale = typeProperties.m_specularEnabled * typeProperties.m_ambient.m_specularScale;
+		renderData.m_diffuseScale = typeProperties.m_diffuseEnabled * typeProperties.m_ibl.m_diffuseScale;
+		renderData.m_specularScale = typeProperties.m_specularEnabled * typeProperties.m_ibl.m_specularScale;
 
 		return renderData;
 	}
@@ -394,7 +393,7 @@ namespace pr
 
 		bool didModify = light.Update();
 
-		if (light.GetType() != pr::Light::Type::AmbientIBL && lightTransform->HasChanged())
+		if (light.GetType() != pr::Light::Type::IBL && lightTransform->HasChanged())
 		{
 			didModify = true;
 		}
@@ -403,7 +402,7 @@ namespace pr
 		{
 			switch (light.GetType())
 			{
-			case pr::Light::Type::AmbientIBL:
+			case pr::Light::Type::IBL:
 			{
 				//
 			}
@@ -464,7 +463,7 @@ namespace pr
 
 			// Transform:
 			pr::TransformComponent* transformComponent = em.TryGetComponent<pr::TransformComponent>(lightEntity);
-			SEAssert(transformComponent || lightCmpt.m_light.GetType() == pr::Light::Type::AmbientIBL,
+			SEAssert(transformComponent || lightCmpt.m_light.GetType() == pr::Light::Type::IBL,
 				"Failed to find TransformComponent");
 			if (transformComponent)
 			{
@@ -473,7 +472,7 @@ namespace pr
 
 			pr::BoundsComponent* boundsCmpt = em.TryGetComponent<pr::BoundsComponent>(lightEntity);
 			SEAssert(boundsCmpt || 
-				lightCmpt.m_light.GetType() == pr::Light::Type::AmbientIBL || 
+				lightCmpt.m_light.GetType() == pr::Light::Type::IBL || 
 				lightCmpt.m_light.GetType() == pr::Light::Type::Directional,
 				"Failed to find BoundsComponent");
 			if (boundsCmpt)
@@ -522,7 +521,7 @@ namespace pr
 		// Display type-specific spawn options
 		switch (s_selectedLightType)
 		{
-		case pr::Light::Type::AmbientIBL:
+		case pr::Light::Type::IBL:
 		{
 			if (ImGui::Button("Import"))
 			{
@@ -558,7 +557,7 @@ namespace pr
 
 				switch (static_cast<pr::Light::Type>(s_selectedLightType))
 				{
-				case pr::Light::Type::AmbientIBL:
+				case pr::Light::Type::IBL:
 				{
 					//
 				}
@@ -627,10 +626,10 @@ namespace pr
 		const pr::Light::Type ambientTypeOnly)
 		: m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
-		, m_light(iblTex, pr::Light::Type::AmbientIBL)
+		, m_light(iblTex, pr::Light::Type::IBL)
 		, m_hasShadow(false)
 	{
-		SEAssert(ambientTypeOnly == pr::Light::Type::AmbientIBL, "This constructor is for ambient light types only");
+		SEAssert(ambientTypeOnly == pr::Light::Type::IBL, "This constructor is for ambient light types only");
 	}
 
 
@@ -645,10 +644,10 @@ namespace pr
 		m_type = pr::Light::ConvertToGrLightType(lightComponent.GetLight().GetType());
 		switch (m_type)
 		{
-		case gr::Light::Type::AmbientIBL:
+		case gr::Light::Type::IBL:
 		{
 			// Zero initialize the union, as it contains an InvPtr
-			memset(&m_ambientData, 0, sizeof(gr::Light::RenderDataAmbientIBL));
+			memset(&m_ambientData, 0, sizeof(gr::Light::RenderDataIBL));
 
 			m_ambientData = pr::LightComponent::CreateRenderDataAmbientIBL_Deferred(nameComponent, lightComponent);
 		}
@@ -677,7 +676,7 @@ namespace pr
 	{
 		switch (m_type)
 		{
-		case gr::Light::Type::AmbientIBL:
+		case gr::Light::Type::IBL:
 		{
 			m_ambientData.m_iblTex = nullptr; // Make sure we don't leak
 		}
@@ -710,9 +709,9 @@ namespace pr
 
 		switch (cmdPtr->m_type)
 		{
-		case gr::Light::Type::AmbientIBL:
+		case gr::Light::Type::IBL:
 		{
-			renderDataMgr.SetObjectData<gr::Light::RenderDataAmbientIBL>(
+			renderDataMgr.SetObjectData<gr::Light::RenderDataIBL>(
 				cmdPtr->m_renderDataID, &cmdPtr->m_ambientData);
 		}
 		break;
@@ -757,9 +756,9 @@ namespace pr
 
 		switch (cmdPtr->m_type)
 		{
-		case pr::Light::Type::AmbientIBL:
+		case pr::Light::Type::IBL:
 		{
-			renderDataMgr.DestroyObjectData<gr::Light::RenderDataAmbientIBL>(cmdPtr->m_renderDataID);
+			renderDataMgr.DestroyObjectData<gr::Light::RenderDataIBL>(cmdPtr->m_renderDataID);
 		}
 		break;
 		case pr::Light::Type::Directional:

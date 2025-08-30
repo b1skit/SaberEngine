@@ -22,7 +22,7 @@ namespace
 		gr::RenderDataID lightID,
 		gr::RenderDataManager const& renderData)
 	{
-		SEAssert(lightType != gr::Light::Type::AmbientIBL,
+		SEAssert(lightType != gr::Light::Type::IBL,
 			"Ambient lights do not use the LightData structure");
 
 		gr::Transform::RenderData const& transformData = renderData.GetTransformDataFromRenderDataID(lightID);

@@ -377,45 +377,45 @@ namespace pr
 			{
 				pr::LightComponent& prevActiveLightComponent = GetComponent<pr::LightComponent>(prevActiveAmbient);
 
-				SEAssert(prevActiveLightComponent.GetLight().GetType() == pr::Light::Type::AmbientIBL,
+				SEAssert(prevActiveLightComponent.GetLight().GetType() == pr::Light::Type::IBL,
 					"Light component is not the correct type");
 
 				pr::Light::TypeProperties prevLightTypeProperties =
-					prevActiveLightComponent.GetLight().GetLightTypeProperties(pr::Light::Type::AmbientIBL);
+					prevActiveLightComponent.GetLight().GetLightTypeProperties(pr::Light::Type::IBL);
 
-				SEAssert(prevLightTypeProperties.m_ambient.m_isActive,
+				SEAssert(prevLightTypeProperties.m_ibl.m_isActive,
 					"Ambient light is not active. This should not be possible");
 
-				prevLightTypeProperties.m_ambient.m_isActive = false;
+				prevLightTypeProperties.m_ibl.m_isActive = false;
 
 				// This will mark the light as dirty, and trigger an update
 				prevActiveLightComponent.GetLight().SetLightTypeProperties(
-					pr::Light::Type::AmbientIBL, &prevLightTypeProperties.m_ambient);
+					pr::Light::Type::IBL, &prevLightTypeProperties.m_ibl);
 
-				RemoveComponent<pr::LightComponent::IsActiveAmbientDeferredMarker>(prevActiveAmbient);
+				RemoveComponent<pr::LightComponent::IsActiveIBLMarker>(prevActiveAmbient);
 			}
 
 			// Promote the new light to the active one:
 			pr::LightComponent& lightComponent = GetComponent<pr::LightComponent>(ambientLight);
 
-			SEAssert(lightComponent.GetLight().GetType() == pr::Light::Type::AmbientIBL,
+			SEAssert(lightComponent.GetLight().GetType() == pr::Light::Type::IBL,
 				"Light component is not the correct type");
 
 			// Update the active flag:
 			pr::Light::TypeProperties currentLightTypeProperties =
-				lightComponent.GetLight().GetLightTypeProperties(pr::Light::Type::AmbientIBL);
+				lightComponent.GetLight().GetLightTypeProperties(pr::Light::Type::IBL);
 
-			SEAssert(!currentLightTypeProperties.m_ambient.m_isActive,
+			SEAssert(!currentLightTypeProperties.m_ibl.m_isActive,
 				"Ambient light is already active. This is harmless, but unexpected");
 
-			currentLightTypeProperties.m_ambient.m_isActive = true;
+			currentLightTypeProperties.m_ibl.m_isActive = true;
 
 			// This will mark the light as dirty, and trigger an update
 			lightComponent.GetLight().SetLightTypeProperties(
-				pr::Light::Type::AmbientIBL, &currentLightTypeProperties.m_ambient);
+				pr::Light::Type::IBL, &currentLightTypeProperties.m_ibl);
 
 			// Mark the new light as the active light:
-			EmplaceComponent<pr::LightComponent::IsActiveAmbientDeferredMarker>(ambientLight);
+			EmplaceComponent<pr::LightComponent::IsActiveIBLMarker>(ambientLight);
 		}
 	}
 
@@ -428,7 +428,7 @@ namespace pr
 		{
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
-			auto currentActiveAmbient = m_registry.view<pr::LightComponent::IsActiveAmbientDeferredMarker>();
+			auto currentActiveAmbient = m_registry.view<pr::LightComponent::IsActiveIBLMarker>();
 			for (auto entity : currentActiveAmbient)
 			{
 				SEAssert(foundCurrentActiveAmbient == false,
@@ -925,7 +925,7 @@ namespace pr
 			std::unique_lock<std::recursive_mutex> lock(m_registeryMutex);
 
 			// Ambient lights:
-			auto ambientView = m_registry.view<pr::LightComponent, pr::LightComponent::AmbientIBLDeferredMarker>();
+			auto ambientView = m_registry.view<pr::LightComponent, pr::LightComponent::IBLDeferredMarker>();
 			for (auto entity : ambientView)
 			{
 				pr::LightComponent& lightComponent = ambientView.get<pr::LightComponent>(entity);
@@ -1162,7 +1162,7 @@ namespace pr
 					const entt::entity currentActiveAmbient = GetActiveAmbientLight();
 
 					auto ambientLightView =
-						m_registry.view<pr::LightComponent, pr::LightComponent::AmbientIBLDeferredMarker>();
+						m_registry.view<pr::LightComponent, pr::LightComponent::IBLDeferredMarker>();
 
 					// Find the index of the currently active ambient light:
 					int activeAmbientLightIndex = 0;

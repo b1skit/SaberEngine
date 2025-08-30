@@ -29,7 +29,7 @@ namespace
 			return luminousPower / glm::pi<float>();
 		}
 		break;
-		case pr::Light::AmbientIBL:
+		case pr::Light::IBL:
 		default: SEAssertF("Invalid light type")
 		}
 		return 0.f;
@@ -111,9 +111,9 @@ namespace pr
 				m_spot = rhs.m_spot;
 			}
 			break;
-			case AmbientIBL:
+			case IBL:
 			{
-				m_ambient = rhs.m_ambient;
+				m_ibl = rhs.m_ibl;
 			}
 			break;
 			default: SEAssertF("Invalid light type");
@@ -131,9 +131,9 @@ namespace pr
 		if (this != &rhs)
 		{
 			// Clean up before we replace anything:
-			if (m_type == AmbientIBL)
+			if (m_type == IBL)
 			{
-				m_ambient.m_IBLTex = nullptr; // Don't leak
+				m_ibl.m_IBLTex = nullptr; // Don't leak
 			}
 
 			// Move:
@@ -160,10 +160,10 @@ namespace pr
 				rhs.m_spot = {};
 			}
 			break;
-			case AmbientIBL:
+			case IBL:
 			{
-				m_ambient = rhs.m_ambient;
-				rhs.m_ambient = {};
+				m_ibl = rhs.m_ibl;
+				rhs.m_ibl = {};
 			}
 			break;
 			default: SEAssertF("Invalid light type");
@@ -198,9 +198,9 @@ namespace pr
 			//
 		}
 		break;
-		case AmbientIBL:
+		case IBL:
 		{
-			m_ambient.m_IBLTex = nullptr; // Make sure we don't leak
+			m_ibl.m_IBLTex = nullptr; // Make sure we don't leak
 		}
 		break;
 		default: SEAssertF("Invalid light type");
@@ -234,7 +234,7 @@ namespace pr
 			m_typeProperties.m_spot.m_outerConeAngle = glm::pi<float>() * 0.25f; // pi/4
 		}
 		break;
-		case AmbientIBL:
+		case IBL:
 		{
 			SEAssertF("This is the wrong constructor for AmbientIBL lights");
 		}
@@ -249,12 +249,12 @@ namespace pr
 	Light::Light(core::InvPtr<re::Texture> const& iblTex, Type lightType)
 		: m_isDirty(true)
 	{
-		SEAssert(lightType == Type::AmbientIBL, "This constructor is only for AmbientIBL lights");
+		SEAssert(lightType == Type::IBL, "This constructor is only for AmbientIBL lights");
 
-		m_typeProperties.m_type = Type::AmbientIBL;
-		m_typeProperties.m_ambient.m_IBLTex = iblTex;
-		m_typeProperties.m_ambient.m_diffuseScale = 1.f;
-		m_typeProperties.m_ambient.m_specularScale = 1.f;
+		m_typeProperties.m_type = Type::IBL;
+		m_typeProperties.m_ibl.m_IBLTex = iblTex;
+		m_typeProperties.m_ibl.m_diffuseScale = 1.f;
+		m_typeProperties.m_ibl.m_specularScale = 1.f;
 	}
 
 
@@ -262,7 +262,7 @@ namespace pr
 	{
 		switch (m_typeProperties.m_type)
 		{
-		case Type::AmbientIBL:
+		case Type::IBL:
 		{
 			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
@@ -299,7 +299,7 @@ namespace pr
 
 		switch (m_typeProperties.m_type)
 		{
-		case Type::AmbientIBL:
+		case Type::IBL:
 		{
 			//
 		}
@@ -342,7 +342,7 @@ namespace pr
 	{
 		switch (m_typeProperties.m_type)
 		{
-		case Type::AmbientIBL:
+		case Type::IBL:
 		{
 			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
@@ -383,12 +383,12 @@ namespace pr
 
 		switch (lightType)
 		{
-		case pr::Light::Type::AmbientIBL:
+		case pr::Light::Type::IBL:
 		{
-			pr::Light::TypeProperties::AmbientProperties const* properties = 
-				static_cast<pr::Light::TypeProperties::AmbientProperties const*>(typeProperties);
+			pr::Light::TypeProperties::IBLProperties const* properties = 
+				static_cast<pr::Light::TypeProperties::IBLProperties const*>(typeProperties);
 
-			m_typeProperties.m_ambient = *properties;
+			m_typeProperties.m_ibl = *properties;
 		}
 		break;
 		case pr::Light::Type::Directional:
@@ -485,7 +485,7 @@ namespace pr
 
 		switch (m_typeProperties.m_type)
 		{
-		case Type::AmbientIBL:
+		case Type::IBL:
 		{
 			ShowCommonOptions(nullptr);
 
@@ -493,7 +493,7 @@ namespace pr
 			{
 				ImGui::Indent();
 
-				re::Texture::ShowImGuiWindow(m_typeProperties.m_ambient.m_IBLTex);
+				re::Texture::ShowImGuiWindow(m_typeProperties.m_ibl.m_IBLTex);
 				
 				static bool s_unifyScale = true;
 				bool currentUnifyScale = s_unifyScale;
@@ -506,10 +506,10 @@ namespace pr
 					if (currentUnifyScale != s_unifyScale)
 					{
 						const float avgScale = 
-							(m_typeProperties.m_ambient.m_diffuseScale + m_typeProperties.m_ambient.m_specularScale) * 0.5f;
+							(m_typeProperties.m_ibl.m_diffuseScale + m_typeProperties.m_ibl.m_specularScale) * 0.5f;
 						
-						m_typeProperties.m_ambient.m_diffuseScale = avgScale;
-						m_typeProperties.m_ambient.m_specularScale = avgScale;
+						m_typeProperties.m_ibl.m_diffuseScale = avgScale;
+						m_typeProperties.m_ibl.m_specularScale = avgScale;
 						s_combinedScale = avgScale;
 
 						m_isDirty = true;
@@ -517,8 +517,8 @@ namespace pr
 					
 					if (ImGui::SliderFloat("Intensity scale", &s_combinedScale, 0.f, 10.f))
 					{
-						m_typeProperties.m_ambient.m_diffuseScale = s_combinedScale;
-						m_typeProperties.m_ambient.m_specularScale = s_combinedScale;
+						m_typeProperties.m_ibl.m_diffuseScale = s_combinedScale;
+						m_typeProperties.m_ibl.m_specularScale = s_combinedScale;
 						m_isDirty = true;
 					}
 				}
@@ -528,7 +528,7 @@ namespace pr
 					{
 						ImGui::BeginDisabled();
 					}
-					m_isDirty |= ImGui::SliderFloat("Diffuse scale", &m_typeProperties.m_ambient.m_diffuseScale, 0.f, 10.f);
+					m_isDirty |= ImGui::SliderFloat("Diffuse scale", &m_typeProperties.m_ibl.m_diffuseScale, 0.f, 10.f);
 					if (!m_typeProperties.m_diffuseEnabled)
 					{
 						ImGui::EndDisabled();
@@ -538,7 +538,7 @@ namespace pr
 					{
 						ImGui::BeginDisabled();
 					}
-					m_isDirty |= ImGui::SliderFloat("Specular scale", &m_typeProperties.m_ambient.m_specularScale, 0.f, 10.f);
+					m_isDirty |= ImGui::SliderFloat("Specular scale", &m_typeProperties.m_ibl.m_specularScale, 0.f, 10.f);
 					if (!m_typeProperties.m_specularEnabled)
 					{
 						ImGui::EndDisabled();

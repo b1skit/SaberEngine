@@ -150,7 +150,7 @@ namespace gr
 		// Update the active ambient light:
 		// First, check if our currently active light has been deleted:
 		std::vector<gr::RenderDataID> const* deletedAmbientLights =
-			m_renderData->GetIDsWithDeletedData<gr::Light::RenderDataAmbientIBL>();
+			m_renderData->GetIDsWithDeletedData<gr::Light::RenderDataIBL>();
 		if (deletedAmbientLights)
 		{
 			for (gr::RenderDataID ambientID : *deletedAmbientLights)
@@ -166,10 +166,10 @@ namespace gr
 
 		// If we have an active ambient light, check that it is still actually active:
 		if (m_activeAmbientLightRenderDataID != gr::k_invalidRenderDataID &&
-			m_renderData->IsDirty<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID))
+			m_renderData->IsDirty<gr::Light::RenderDataIBL>(m_activeAmbientLightRenderDataID))
 		{
-			gr::Light::RenderDataAmbientIBL const& activeAmbientData =
-				m_renderData->GetObjectData<gr::Light::RenderDataAmbientIBL>(m_activeAmbientLightRenderDataID);
+			gr::Light::RenderDataIBL const& activeAmbientData =
+				m_renderData->GetObjectData<gr::Light::RenderDataIBL>(m_activeAmbientLightRenderDataID);
 
 			if (!activeAmbientData.m_isActive)
 			{
@@ -180,11 +180,11 @@ namespace gr
 
 		// If we don't have an active light, see if any exist in the render data:
 		if (m_activeAmbientLightRenderDataID == gr::k_invalidRenderDataID &&
-			m_renderData->HasObjectData<gr::Light::RenderDataAmbientIBL>())
+			m_renderData->HasObjectData<gr::Light::RenderDataIBL>())
 		{
-			for (auto const& ambientItr : gr::LinearAdapter<gr::Light::RenderDataAmbientIBL>(*m_renderData))
+			for (auto const& ambientItr : gr::LinearAdapter<gr::Light::RenderDataIBL>(*m_renderData))
 			{
-				gr::Light::RenderDataAmbientIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataAmbientIBL>();
+				gr::Light::RenderDataIBL const& ambientData = ambientItr->Get<gr::Light::RenderDataIBL>();
 				if (ambientData.m_isActive)
 				{
 					m_activeAmbientLightRenderDataID = ambientData.m_renderDataID;

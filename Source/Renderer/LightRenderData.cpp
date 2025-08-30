@@ -4,7 +4,7 @@
 
 namespace gr
 {
-	Light::RenderDataAmbientIBL::RenderDataAmbientIBL(
+	Light::RenderDataIBL::RenderDataIBL(
 		char const* name, gr::RenderDataID renderDataID, gr::TransformID transformID)
 		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
